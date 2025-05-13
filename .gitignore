@@ -1,0 +1,29 @@
+# Betriebssystem-Dateien
+.DS_Store
+Thumbs.db
+
+# Umgebungsvariablen
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# Abhängigkeiten
+node_modules/
+
+# Builds
+/client/build
+/server/dist
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# IDE
+.idea
+.vscode/*
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/settings.json
