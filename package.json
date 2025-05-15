@@ -18,5 +18,9 @@
   "license": "ISC",
   "devDependencies": {
     "concurrently": "^8.2.2"
+  },
+  "dependencies": {
+    "@types/react": "^19.1.4",
+    "react": "^19.1.0"
   }
 }
