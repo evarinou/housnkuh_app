@@ -16,19 +16,18 @@ jobs:
       uses: actions/setup-node@v3
       with:
         node-version: '18'
-        # Entferne die cache-Option, da keine Sperrdateien vorhanden sind
-        # cache: 'npm'
+        # cache: 'npm' # Korrekt auskommentiert, wenn package-lock.json nicht im Client/Server commited ist
         
     - name: Install and build client
       run: |
         cd client
-        npm install
+        npm ci # Empfohlen für CI statt npm install
         npm run build
         
     - name: Install and build server
       run: |
         cd server
-        npm install
+        npm ci # Empfohlen für CI statt npm install
         npm run build
         
     - name: Deploy to VPS
@@ -38,49 +37,81 @@ jobs:
         username: ${{ secrets.VPS_USERNAME }}
         key: ${{ secrets.VPS_SSH_KEY }}
         script: |
-           # PATH explizit setzen (Pfade an deine Server-Konfiguration anpassen!)
-           # Beispielpfade - ersetze diese mit den Ergebnissen von 'which npm' etc.
-           # Achte darauf, nur das Verzeichnis (ohne den Befehl selbst) hinzuzufügen
-           export PATH=$PATH:/root/.nvm/versions/node/v22.15.0/bin/node # Falls npm/node hier ist
-           export PATH=$PATH:/root/.nvm/versions/node/v22.15.0/bin/pm2 # Falls npm/node/pm2 hier ist
-           # Wenn du NVM verwendest, ist dieser Block weiterhin gut:
-           export NVM_DIR="$HOME/.nvm"
-           [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+          echo "=== START VPS DEPLOYMENT SCRIPT ==="
 
-            # Sourcing der Profile beibehalten, schadet nicht
-            if [ -f ~/.profile ]; then
-             . ~/.profile
-              echo "~/.profile geladen."
+          # Umgebung für Node.js/npm/pm2 laden
+          echo "Versuche, NVM zu laden..."
+          export NVM_DIR="$HOME/.nvm"
+          if [ -s "$NVM_DIR/nvm.sh" ]; then
+            \. "$NVM_DIR/nvm.sh"  # Lädt NVM
+            echo "NVM-Skript gefunden und geladen."
+            if [ -s "$NVM_DIR/bash_completion" ]; then
+              \. "$NVM_DIR/bash_completion" # Lädt NVM Bash Completion (optional)
+              echo "NVM Bash Completion geladen."
             fi
-            if [ -f ~/.bashrc ]; then
-             . ~/.bashrc
-              echo "~/.bashrc geladen."
-                fi
+          else
+            echo "NVM-Skript nicht unter $NVM_DIR gefunden."
+          fi
 
-           echo "Aktueller Pfad nach explizitem Setzen und Laden der Profile: $PATH"
-           echo "npm Version: $(npm --version || echo 'npm immer noch nicht gefunden')"
-           echo "node Version: $(node --version || echo 'node immer noch nicht gefunden')"
-           echo "pm2 Version: $(pm2 --version || echo 'pm2 immer noch nicht gefunden')"
+          echo "Versuche, .profile und .bashrc zu laden..."
+          if [ -f "$HOME/.profile" ]; then
+            . "$HOME/.profile"
+            echo "$HOME/.profile geladen."
+          else
+            echo "$HOME/.profile nicht gefunden."
+          fi
+          
+          # Vorsicht mit dem Sourcing von .bashrc in nicht-interaktiven Skripten,
+          # es kann unerwartetes Verhalten oder einen Abbruch verursachen, wenn es für interaktive Nutzung geschrieben wurde.
+          # Oft ist es besser, spezifische PATH-Exporte aus .bashrc hierher zu kopieren, wenn nötig.
+          # if [ -f "$HOME/.bashrc" ]; then
+          #   . "$HOME/.bashrc"
+          #   echo "$HOME/.bashrc geladen."
+          # else
+          #   echo "$HOME/.bashrc nicht gefunden."
+          # fi
 
+          # --- ERSETZE DIESE BEISPIELPFADE DURCH DEINE TATSÄCHLICHEN PFADE ---
+          # Ermittle die Pfade auf deinem Server mit:
+          # which node
+          # which npm
+          # which pm2
+          # Füge dann die VERZEICHNISSE zum PATH hinzu, z.B.:
+          # export PATH="/usr/local/bin:$PATH"
+          # export PATH="/opt/node/bin:$PATH"
+          # Beispiel, falls Node über Nodesource direkt installiert wurde (oft in /usr/bin, das sollte schon im PATH sein):
+          # Falls PM2 global via npm installiert wurde und node im PATH ist, sollte pm2 auch im PATH sein.
+          # Wenn `which pm2` etwas wie /root/.nvm/versions/node/vXX.YY.Z/bin/pm2 zurückgibt,
+          # dann sollte das Sourcing von nvm.sh oben ausreichen.
 
-          # --- Dein restliches Deployment-Skript ---
+          echo "--- Umgebungs-Check ---"
+          echo "Aktueller Benutzer: $(whoami)"
+          echo "HOME-Verzeichnis: $HOME"
+          echo "Aktueller PATH: $PATH"
+          echo "Node Version: $(node --version || echo 'node NICHT GEFUNDEN')"
+          echo "npm Version: $(npm --version || echo 'npm NICHT GEFUNDEN')"
+          echo "pm2 Version: $(pm2 --version || echo 'pm2 NICHT GEFUNDEN')"
+          echo "--- Ende Umgebungs-Check ---"
+
           echo "Wechsle zu /var/www/housnkuh"
-          cd /var/www/housnkuh
+          cd /var/www/housnkuh || { echo "Fehler: Verzeichnis /var/www/housnkuh nicht gefunden"; exit 1; }
           
           echo "Repository wird aktualisiert..."
-          git pull
+          git pull origin main || { echo "Fehler bei git pull"; exit 1; }
           
           echo "Client-Abhängigkeiten werden installiert und Client wird gebaut..."
-          cd client
-          npm install --production --legacy-peer-deps
-          npm run build
+          cd client || { echo "Fehler: Verzeichnis client nicht gefunden"; exit 1; }
+          npm install --production --legacy-peer-deps || { echo "Fehler bei npm install im Client"; exit 1; }
+          npm run build || { echo "Fehler bei npm run build im Client"; exit 1; }
           
           echo "Server-Abhängigkeiten werden installiert und Server wird gebaut..."
-          cd ../server
-          npm install --production --legacy-peer-deps
-          npm run build
+          cd ../server || { echo "Fehler: Verzeichnis server nicht gefunden"; exit 1; }
+          npm install --production --legacy-peer-deps || { echo "Fehler bei npm install im Server"; exit 1; }
+          npm run build || { echo "Fehler bei npm run build im Server"; exit 1; }
           
           echo "PM2-Prozess wird neu gestartet/gestartet..."
-          pm2 restart housnkuh-server || pm2 start npm --name "housnkuh-server" -- start --prefix server
+          # Stelle sicher, dass pm2 gefunden wird oder verwende den vollen Pfad
+          pm2 restart housnkuh-server || pm2 start npm --name "housnkuh-server" -- start --prefix server --interpreter $(which node) || { echo "Fehler beim Starten/Neustarten von PM2"; exit 1; }
           
           echo "Deployment abgeschlossen."
+          echo "=== ENDE VPS DEPLOYMENT SCRIPT ==="
