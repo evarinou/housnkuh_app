@@ -38,18 +38,30 @@ jobs:
         username: ${{ secrets.VPS_USERNAME }}
         key: ${{ secrets.VPS_SSH_KEY }}
         script: |
-          # Versuche, die Umgebung für Node.js/npm/pm2 zu laden
-          # Wähle die passende Methode für deinen Server:
+           # PATH explizit setzen (Pfade an deine Server-Konfiguration anpassen!)
+           # Beispielpfade - ersetze diese mit den Ergebnissen von 'which npm' etc.
+           # Achte darauf, nur das Verzeichnis (ohne den Befehl selbst) hinzuzufügen
+           export PATH=$PATH:/root/.nvm/versions/node/v22.15.0/bin/node # Falls npm/node hier ist
+           export PATH=$PATH:/root/.nvm/versions/node/v22.15.0/bin/pm2 # Falls npm/node/pm2 hier ist
+           # Wenn du NVM verwendest, ist dieser Block weiterhin gut:
+           export NVM_DIR="$HOME/.nvm"
+           [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 
-          # Methode 2: Standard-Profildateien laden (kann auch helfen)
-          if [ -f ~/.profile ]; then
-            . ~/.profile
-            echo "~/.profile geladen."
-          fi
-          if [ -f ~/.bashrc ]; then
-            . ~/.bashrc
-            echo "~/.bashrc geladen."
-          fi
+            # Sourcing der Profile beibehalten, schadet nicht
+            if [ -f ~/.profile ]; then
+             . ~/.profile
+              echo "~/.profile geladen."
+            fi
+            if [ -f ~/.bashrc ]; then
+             . ~/.bashrc
+              echo "~/.bashrc geladen."
+                fi
+
+           echo "Aktueller Pfad nach explizitem Setzen und Laden der Profile: $PATH"
+           echo "npm Version: $(npm --version || echo 'npm immer noch nicht gefunden')"
+           echo "node Version: $(node --version || echo 'node immer noch nicht gefunden')"
+           echo "pm2 Version: $(pm2 --version || echo 'pm2 immer noch nicht gefunden')"
+
 
           # --- Dein restliches Deployment-Skript ---
           echo "Wechsle zu /var/www/housnkuh"
