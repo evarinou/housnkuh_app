@@ -1,0 +1,13 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary: #e17564;
+  --secondary: #09122c;
+  --white: #ffffff;
+}
+
+body {
+  font-family: 'Quicksand', system-ui, -apple-system, sans-serif;
+}

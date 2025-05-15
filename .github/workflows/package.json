@@ -1,0 +1,22 @@
+{
+  "name": "housnkuh",
+  "version": "1.0.0",
+  "description": "Regionaler Marktplatz für Direktvermarkter",
+  "scripts": {
+    "client": "cd client && npm start",
+    "server": "cd server && npm run dev",
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "install-all": "npm install && cd client && npm install && cd ../server && npm install",
+    "build-all": "cd client && npm run build && cd ../server && npm run build"
+  },
+  "keywords": [
+    "direktvermarkter",
+    "regional",
+    "marktplatz"
+  ],
+  "author": "Eva-Maria Schaller",
+  "license": "ISC",
+  "devDependencies": {
+    "concurrently": "^7.6.0"
+  }
+}

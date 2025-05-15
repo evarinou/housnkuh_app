@@ -1,0 +1,57 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Install and build client
+      run: |
+        cd client
+        npm ci
+        npm run build
+        
+    - name: Install and build server
+      run: |
+        cd server
+        npm ci
+        npm run build
+        
+    - name: Deploy to VPS
+      uses: appleboy/ssh-action@v0.1.10
+      with:
+        host: ${{ secrets.VPS_HOST }}
+        username: ${{ secrets.VPS_USERNAME }}
+        key: ${{ secrets.VPS_SSH_KEY }}
+        script: |
+          # Deployment-Verzeichnis
+          cd /var/www/housnkuh
+          
+          # Repository aktualisieren
+          git pull
+          
+          # Client bauen
+          cd client
+          npm ci --production
+          npm run build
+          
+          # Server bauen
+          cd ../server
+          npm ci --production
+          npm run build
+          
+          # Server neustarten
+          pm2 restart housnkuh-server
