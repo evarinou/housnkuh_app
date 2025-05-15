@@ -1,5 +1,5 @@
 {
-  "name": "housnkuh",
+  "name": "housnkuh-app",
   "version": "1.0.0",
   "description": "Regionaler Marktplatz für Direktvermarkter",
   "scripts": {
@@ -17,6 +17,6 @@
   "author": "Eva-Maria Schaller",
   "license": "ISC",
   "devDependencies": {
-    "concurrently": "^7.6.0"
+    "concurrently": "^8.2.2"
   }
 }
