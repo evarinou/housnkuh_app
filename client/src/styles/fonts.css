@@ -1,0 +1,19 @@
+@font-face {
+  font-family: 'Quicksand';
+  src: url('../components/assets/fonts/Quicksand-Regular.ttf') format('ttf'), /* Korrigierter Pfad */
+       url('../components/assets/fonts/Quicksand-Regular.ttf') format('truetype'); /* Korrigierter Pfad */
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Quicksand';
+  src: url('../components/assets/fonts/Quicksand-Bold.ttf') format('ttf'), /* Korrigierter Pfad */
+       url('../components/assets/fonts/Quicksand-Bold.ttf') format('truetype'); /* Korrigierter Pfad */
+  font-weight: bold;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Weitere Schriftschnitte hier definieren */

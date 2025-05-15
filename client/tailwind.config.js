@@ -8,7 +8,11 @@ module.exports = {
       colors: {
         primary: '#e17564',
         secondary: '#09122c',
-      }
+      },
+      animation: {
+        'spin-slow': 'spin 10s linear infinite',
+        'pulse-slow': 'pulse 3s linear infinite',
+      },
     },
   },
   plugins: [],
