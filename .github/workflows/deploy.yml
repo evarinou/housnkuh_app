@@ -38,21 +38,37 @@ jobs:
         username: ${{ secrets.VPS_USERNAME }}
         key: ${{ secrets.VPS_SSH_KEY }}
         script: |
-          # Deployment-Verzeichnis
+          # Versuche, die Umgebung für Node.js/npm/pm2 zu laden
+          # Wähle die passende Methode für deinen Server:
+
+          # Methode 2: Standard-Profildateien laden (kann auch helfen)
+          if [ -f ~/.profile ]; then
+            . ~/.profile
+            echo "~/.profile geladen."
+          fi
+          if [ -f ~/.bashrc ]; then
+            . ~/.bashrc
+            echo "~/.bashrc geladen."
+          fi
+
+          # --- Dein restliches Deployment-Skript ---
+          echo "Wechsle zu /var/www/housnkuh"
           cd /var/www/housnkuh
           
-          # Repository aktualisieren
+          echo "Repository wird aktualisiert..."
           git pull
           
-          # Client bauen
+          echo "Client-Abhängigkeiten werden installiert und Client wird gebaut..."
           cd client
-          npm install --production
+          npm install --production --legacy-peer-deps
           npm run build
           
-          # Server bauen
+          echo "Server-Abhängigkeiten werden installiert und Server wird gebaut..."
           cd ../server
-          npm install --production
+          npm install --production --legacy-peer-deps
           npm run build
           
-          # Server neustarten
+          echo "PM2-Prozess wird neu gestartet/gestartet..."
           pm2 restart housnkuh-server || pm2 start npm --name "housnkuh-server" -- start --prefix server
+          
+          echo "Deployment abgeschlossen."
