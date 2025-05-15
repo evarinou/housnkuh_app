@@ -101,12 +101,12 @@ jobs:
           
           echo "Client-Abhängigkeiten werden installiert und Client wird gebaut..."
           cd client || { echo "Fehler: Verzeichnis client nicht gefunden"; exit 1; }
-          npm install --production --legacy-peer-deps || { echo "Fehler bei npm install im Client"; exit 1; }
+          npm install --legacy-peer-deps || { echo "Fehler bei npm install im Client"; exit 1; }
           npm run build || { echo "Fehler bei npm run build im Client"; exit 1; }
           
           echo "Server-Abhängigkeiten werden installiert und Server wird gebaut..."
           cd ../server || { echo "Fehler: Verzeichnis server nicht gefunden"; exit 1; }
-          npm install --production --legacy-peer-deps || { echo "Fehler bei npm install im Server"; exit 1; }
+          npm install --legacy-peer-deps || { echo "Fehler bei npm install im Server"; exit 1; }
           npm run build || { echo "Fehler bei npm run build im Server"; exit 1; }
           
           echo "PM2-Prozess wird neu gestartet/gestartet..."
