@@ -95,6 +95,10 @@ jobs:
 
           echo "Wechsle zu /var/www/housnkuh"
           cd /var/www/housnkuh || { echo "Fehler: Verzeichnis /var/www/housnkuh nicht gefunden"; exit 1; }
+
+          echo "Stashing local changes to avoid conflicts..."
+          git stash || { echo "Fehler beim Stashen der lokalen Änderungen"; exit 1; }
+
           
           echo "Repository wird aktualisiert..."
           git pull origin main || { echo "Fehler bei git pull"; exit 1; }
