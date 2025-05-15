@@ -12,7 +12,7 @@ interface Marketer {
 const DirektvermarkterPage: React.FC = () => {
   const [marketers, setMarketers] = useState<Marketer[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  //const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     // Beispiel für das Laden von Daten (muss an Ihr Backend angepasst werden)
@@ -36,7 +36,7 @@ const DirektvermarkterPage: React.FC = () => {
   }, []);
 
   if (loading) return <p className="text-center p-4">Lade Direktvermarkter...</p>;
-  if (error) return <p className="text-center text-red-500 p-4">{error}</p>;
+ // if (error) return <p className="text-center text-red-500 p-4">{error}</p>;
 
   return (
     <div className="container mx-auto p-4">
