@@ -16,18 +16,19 @@ jobs:
       uses: actions/setup-node@v3
       with:
         node-version: '18'
-        cache: 'npm'
+        # Entferne die cache-Option, da keine Sperrdateien vorhanden sind
+        # cache: 'npm'
         
     - name: Install and build client
       run: |
         cd client
-        npm ci
+        npm install
         npm run build
         
     - name: Install and build server
       run: |
         cd server
-        npm ci
+        npm install
         npm run build
         
     - name: Deploy to VPS
@@ -45,13 +46,13 @@ jobs:
           
           # Client bauen
           cd client
-          npm ci --production
+          npm install --production
           npm run build
           
           # Server bauen
           cd ../server
-          npm ci --production
+          npm install --production
           npm run build
           
           # Server neustarten
-          pm2 restart housnkuh-server
+          pm2 restart housnkuh-server || pm2 start npm --name "housnkuh-server" -- start --prefix server
