@@ -78,3 +78,106 @@ body {
 .feature-card:nth-child(4) { animation-delay: 0.4s; }
 .feature-card:nth-child(5) { animation-delay: 0.5s; }
 .feature-card:nth-child(6) { animation-delay: 0.6s; }
+
+.glass {
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  background-color: rgba(9, 18, 44, 0.6); /* --secondary mit Transparenz */
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.15);
+}
+
+.glass-light {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  background-color: rgba(255, 255, 255, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.1);
+}
+
+.glass-primary {
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  background-color: rgba(225, 117, 100, 0.5); /* --primary mit Transparenz */
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.15);
+}
+
+/* Textschatten für bessere Lesbarkeit */
+.text-shadow {
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.text-shadow-sm {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* Anpassungen für Navigation und Komponenten mit Glaseffekt */
+.nav-fixed {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  transition: all 0.3s ease;
+}
+
+.nav-glass {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  background-color: rgba(255, 255, 255, 0.8);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+}
+
+/* Abstand für Hauptinhalt, um Überlappung mit der Navigation zu vermeiden */
+.main-content {
+  padding-top: 80px; /* Passe diesen Wert an die Höhe deiner Navigationsleiste an */
+}
+
+/* Animationen für Glaselemente */
+@keyframes glassReveal {
+  0% {
+    opacity: 0;
+    backdrop-filter: blur(0);
+    -webkit-backdrop-filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+}
+
+.glass-reveal {
+  animation: glassReveal 0.6s ease-out forwards;
+}
+
+/* Zusätzliche Animationen für Hover-Effekte */
+.glass-hover {
+  transition: all 0.3s ease;
+}
+
+.glass-hover:hover {
+  background-color: rgba(9, 18, 44, 0.7);
+  transform: translateY(-5px);
+  box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.2);
+}
+
+.glass-light-hover:hover {
+  background-color: rgba(255, 255, 255, 0.35);
+  transform: translateY(-5px);
+  box-shadow: 0 8px 24px 0 rgba(0, 0, 0, 0.15);
+}
+
+/* Medienabfragen für mobile Anpassungen */
+@media (max-width: 768px) {
+  .glass, .glass-light, .glass-primary {
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+  
+  .text-shadow {
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  }
+}
