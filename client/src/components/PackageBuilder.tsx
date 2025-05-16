@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react'; // Added useCallback
+import React, { useState, useEffect, useCallback, useMemo } from 'react'; // Added useMemo
 import { Package, Check, AlertTriangle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -48,8 +48,8 @@ const PackageBuilder: React.FC = () => {
   });
 
   // Daten für die verschiedenen Optionen
-  // These are stable as they are defined directly in the component body
-  const provisionTypes: ProvisionType[] = [
+  // Memoized with useMemo to ensure stable references across renders
+  const provisionTypes: ProvisionType[] = useMemo(() => [
     {
       id: 'basic',
       name: 'Basismodell',
@@ -75,15 +75,15 @@ const PackageBuilder: React.FC = () => {
         'Kartenzahlungsgebühren inklusive'
       ]
     }
-  ];
+  ], []); // Empty dependency array means it's created once
 
-  const packageOptions: PackageOption[] = [
+  const packageOptions: PackageOption[] = useMemo(() => [
     {
       id: 'block-a',
       name: 'Verkaufsblock Lage A',
       price: 35,
       description: 'Regal auf Augenhöhe, 80x39x67cm (2 Ebenen)',
-      image: '/api/placeholder/200/150',
+      image: '/api/placeholder/200/150', // Placeholder, replace with actual image path or logic
       detail: 'Optimale Sichtbarkeit, beste Platzierung'
     },
     {
@@ -91,7 +91,7 @@ const PackageBuilder: React.FC = () => {
       name: 'Verkaufsblock Lage B',
       price: 15,
       description: 'Standard Regalfläche, 80x39x33,5cm (1 Ebene)',
-      image: '/api/placeholder/200/150',
+      image: '/api/placeholder/200/150', // Placeholder
       detail: 'Kostengünstige Option für Einsteiger'
     },
     {
@@ -99,7 +99,7 @@ const PackageBuilder: React.FC = () => {
       name: 'Verkaufsblock gekühlt',
       price: 50,
       description: 'Gekühlter Bereich für temperaturempfindliche Produkte',
-      image: '/api/placeholder/200/150',
+      image: '/api/placeholder/200/150', // Placeholder
       detail: 'Für Frischeprodukte, konstante Kühlung'
     },
     {
@@ -107,12 +107,12 @@ const PackageBuilder: React.FC = () => {
       name: 'Verkaufsblock Tisch',
       price: 40,
       description: 'Präsentationstisch für besondere Produkte',
-      image: '/api/placeholder/200/150',
+      image: '/api/placeholder/200/150', // Placeholder
       detail: 'Ideale Präsentationsfläche für Spezialprodukte'
     }
-  ];
+  ], []); // Empty dependency array
 
-  const addonOptions: AddonOption[] = [
+  const addonOptions: AddonOption[] = useMemo(() => [
     {
       id: 'storage',
       name: 'Lagerservice',
@@ -142,7 +142,7 @@ const PackageBuilder: React.FC = () => {
       description: 'Hervorhebung deiner Produkte auf Instagram/Facebook für 1 Woche',
       requiresPremium: false
     }
-  ];
+  ], []); // Empty dependency array
 
   // Rabatte basierend auf Mietdauer
   // Memoized with useCallback as it's a dependency of useEffect
@@ -153,44 +153,44 @@ const PackageBuilder: React.FC = () => {
   }, [rentalDuration]); // Dependency: rentalDuration
 
   // Berechnet die monatlichen Kosten
-  // useEffect on line 177 (approximately)
+  // useEffect on line 180 (approximately, after useMemo additions)
   useEffect(() => {
-    const discount = getDiscountRate(); // Call the memoized function
-    const packageCosts = selectedPackages.reduce((sum, pkgId) => { // Renamed pkg to pkgId for clarity
+    const discount = getDiscountRate();
+    const packageCosts = selectedPackages.reduce((sum, pkgId) => {
       const option = packageOptions.find(p => p.id === pkgId);
       return sum + (option ? option.price : 0);
     }, 0);
 
-    const addonCosts = selectedAddons.reduce((sum, addonId) => { // Renamed addon to addonId for clarity
+    const addonCosts = selectedAddons.reduce((sum, addonId) => {
       const option = addonOptions.find(a => a.id === addonId);
       if (!option) return sum;
 
-      // Wenn Social Media (wöchentlich), multipliziere mit 4 für den Monat
       if (option.isWeekly) return sum + (option.price * 4);
       return sum + option.price;
     }, 0);
 
     const monthlyCost = (packageCosts + addonCosts) * (1 - discount);
+    const currentProvisionType = provisionTypes.find(p => p.id === selectedProvisionType);
 
     setTotalCost({
       monthly: monthlyCost,
-      oneTime: 0, // Keine einmaligen Kosten im aktuellen Modell
-      provision: provisionTypes.find(p => p.id === selectedProvisionType)?.rate || 4
+      oneTime: 0,
+      provision: currentProvisionType ? currentProvisionType.rate : 4 // Default to 4 if not found
     });
   }, [
     selectedProvisionType,
     selectedPackages,
     selectedAddons,
     rentalDuration,
-    addonOptions,      // Added missing dependency
-    getDiscountRate,   // Added missing dependency (now memoized)
-    packageOptions,    // Added missing dependency
-    provisionTypes     // Added missing dependency
+    addonOptions,      // Now a stable reference from useMemo
+    getDiscountRate,   // Stable reference from useCallback
+    packageOptions,    // Now a stable reference from useMemo
+    provisionTypes     // Now a stable reference from useMemo
   ]);
 
   // Paket hinzufügen/entfernen
   const togglePackage = (packageId: string) => {
-    setSelectedPackages(prevSelectedPackages => // Use functional update
+    setSelectedPackages(prevSelectedPackages =>
       prevSelectedPackages.includes(packageId)
         ? prevSelectedPackages.filter(id => id !== packageId)
         : [...prevSelectedPackages, packageId]
@@ -199,7 +199,7 @@ const PackageBuilder: React.FC = () => {
 
   // Addon hinzufügen/entfernen
   const toggleAddon = (addonId: string) => {
-    setSelectedAddons(prevSelectedAddons => // Use functional update
+    setSelectedAddons(prevSelectedAddons =>
       prevSelectedAddons.includes(addonId)
         ? prevSelectedAddons.filter(id => id !== addonId)
         : [...prevSelectedAddons, addonId]
@@ -207,7 +207,6 @@ const PackageBuilder: React.FC = () => {
   };
 
   // Prüft, ob ein Addon verfügbar ist (Premium-Check)
-  // This function is used in the render, so it doesn't need useCallback unless it were a useEffect dependency itself.
   const isAddonAvailable = (addon: AddonOption) => {
     if (addon.requiresPremium && selectedProvisionType !== 'premium') {
       return false;
@@ -218,7 +217,6 @@ const PackageBuilder: React.FC = () => {
   // Zusammenfassung anzeigen und Anfrage absenden
   const handleSubmitRequest = () => {
     setShowSummary(true);
-    // Hier könnte später die Funktionalität zum Absenden der Anfrage implementiert werden
   };
 
   return (
@@ -235,7 +233,6 @@ const PackageBuilder: React.FC = () => {
               <span className="bg-[#e17564] text-white rounded-full w-8 h-8 inline-flex items-center justify-center mr-2">1</span>
               Provisionsmodell wählen
             </h3>
-
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {provisionTypes.map((type) => (
                 <div
@@ -253,9 +250,7 @@ const PackageBuilder: React.FC = () => {
                       {type.rate}% Provision
                     </span>
                   </div>
-
                   <p className="text-gray-600 mb-4">{type.description}</p>
-
                   <ul className="space-y-2">
                     {type.benefits.map((benefit, index) => (
                       <li key={index} className="flex items-start">
@@ -275,7 +270,6 @@ const PackageBuilder: React.FC = () => {
               <span className="bg-[#e17564] text-white rounded-full w-8 h-8 inline-flex items-center justify-center mr-2">2</span>
               Verkaufsflächen auswählen
             </h3>
-
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {packageOptions.map((pkg) => (
                 <div
@@ -291,10 +285,10 @@ const PackageBuilder: React.FC = () => {
                     <h4 className="text-lg font-medium text-[#09122c]">{pkg.name}</h4>
                     <span className="text-[#e17564] font-bold">{pkg.price}€/Monat</span>
                   </div>
-
                   <p className="text-gray-600 mb-2">{pkg.description}</p>
                   <p className="text-sm text-gray-500 italic">{pkg.detail}</p>
-
+                  {/* Image placeholder for package option */}
+                  {/* <img src={pkg.image} alt={pkg.name} className="w-full h-32 object-cover rounded-md my-2"/> */}
                   <div className="flex justify-end mt-3">
                     <span className={`px-3 py-1 rounded-full text-sm ${
                       selectedPackages.includes(pkg.id)
@@ -315,11 +309,9 @@ const PackageBuilder: React.FC = () => {
               <span className="bg-[#e17564] text-white rounded-full w-8 h-8 inline-flex items-center justify-center mr-2">3</span>
               Zusatzoptionen wählen
             </h3>
-
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {addonOptions.map((addon) => {
                 const isAvailable = isAddonAvailable(addon);
-
                 return (
                   <div
                     key={addon.id}
@@ -338,9 +330,7 @@ const PackageBuilder: React.FC = () => {
                         {addon.price}€/{addon.isWeekly ? 'Woche' : 'Monat'}
                       </span>
                     </div>
-
                     <p className="text-gray-600 mb-2">{addon.description}</p>
-
                     {addon.requiresPremium && (
                       <div className={`flex items-center text-sm ${
                         isAvailable ? 'text-green-600' : 'text-amber-600'
@@ -357,7 +347,6 @@ const PackageBuilder: React.FC = () => {
                         </span>
                       </div>
                     )}
-
                     <div className="flex justify-end mt-3">
                       <span className={`px-3 py-1 rounded-full text-sm ${
                         !isAvailable
@@ -385,7 +374,6 @@ const PackageBuilder: React.FC = () => {
               <span className="bg-[#e17564] text-white rounded-full w-8 h-8 inline-flex items-center justify-center mr-2">4</span>
               Mietdauer wählen
             </h3>
-
             <div className="bg-gray-50 p-4 rounded-lg">
               <div className="flex flex-wrap items-center gap-4">
                 <div className="flex items-center space-x-4">
@@ -399,7 +387,6 @@ const PackageBuilder: React.FC = () => {
                   >
                     3 Monate
                   </button>
-
                   <button
                     onClick={() => setRentalDuration(6)}
                     className={`px-4 py-2 rounded-lg transition-all ${
@@ -411,7 +398,6 @@ const PackageBuilder: React.FC = () => {
                     6 Monate
                     <span className="ml-1 text-xs font-bold text-[#e17564]">-5%</span>
                   </button>
-
                   <button
                     onClick={() => setRentalDuration(12)}
                     className={`px-4 py-2 rounded-lg transition-all ${
@@ -424,8 +410,7 @@ const PackageBuilder: React.FC = () => {
                     <span className="ml-1 text-xs font-bold text-[#e17564]">-10%</span>
                   </button>
                 </div>
-
-                {getDiscountRate() > 0 && ( // Call memoized function
+                {getDiscountRate() > 0 && (
                   <div className="bg-[#e17564]/10 text-[#e17564] px-3 py-1 rounded-full text-sm font-medium">
                     {getDiscountRate() * 100}% Rabatt bei {rentalDuration} Monaten Laufzeit
                   </div>
@@ -437,7 +422,6 @@ const PackageBuilder: React.FC = () => {
           {/* Zusammenfassung und Total */}
           <div className="bg-gray-50 p-6 rounded-lg mb-6">
             <h3 className="text-xl font-semibold mb-4">Zusammenfassung</h3>
-
             <div className="flex justify-between items-center mb-3">
               <span className="text-gray-600">Provisionsmodell:</span>
               <span className="font-medium">
@@ -445,7 +429,6 @@ const PackageBuilder: React.FC = () => {
                 ({totalCost.provision}%)
               </span>
             </div>
-
             <div className="flex justify-between items-center mb-3">
               <span className="text-gray-600">Ausgewählte Flächen:</span>
               <span className="font-medium">
@@ -454,7 +437,6 @@ const PackageBuilder: React.FC = () => {
                   : 'Keine ausgewählt'}
               </span>
             </div>
-
             <div className="flex justify-between items-center mb-3">
               <span className="text-gray-600">Zusatzoptionen:</span>
               <span className="font-medium">
@@ -463,21 +445,17 @@ const PackageBuilder: React.FC = () => {
                   : 'Keine ausgewählt'}
               </span>
             </div>
-
             <div className="flex justify-between items-center mb-3">
               <span className="text-gray-600">Mietdauer:</span>
               <span className="font-medium">{rentalDuration} Monate</span>
             </div>
-
-            {getDiscountRate() > 0 && ( // Call memoized function
+            {getDiscountRate() > 0 && (
               <div className="flex justify-between items-center mb-3 text-[#e17564]">
                 <span>Rabatt:</span>
                 <span className="font-medium">-{getDiscountRate() * 100}%</span>
               </div>
             )}
-
             <div className="border-t border-gray-300 my-4"></div>
-
             <div className="flex justify-between items-center text-xl font-bold">
               <span>Monatliche Kosten:</span>
               <span>{totalCost.monthly.toFixed(2)}€</span>
@@ -505,15 +483,12 @@ const PackageBuilder: React.FC = () => {
           <div className="mb-6 inline-block bg-green-100 p-3 rounded-full">
             <Check className="w-12 h-12 text-green-600" />
           </div>
-
           <h2 className="text-2xl font-bold text-[#09122c] mb-3">Deine Mietanfrage</h2>
           <p className="text-gray-600 mb-6">
             Vielen Dank für dein Interesse an housnkuh! Wir melden uns schnellstmöglich bei dir.
           </p>
-
           <div className="bg-gray-50 p-6 rounded-lg mb-6 max-w-md mx-auto text-left">
             <h3 className="text-xl font-semibold mb-4 text-center">Dein ausgewähltes Paket:</h3>
-
             <div className="space-y-3">
               <div className="flex justify-between">
                 <span className="text-gray-600">Provisionsmodell:</span>
@@ -521,14 +496,12 @@ const PackageBuilder: React.FC = () => {
                   {provisionTypes.find(p => p.id === selectedProvisionType)?.name} ({totalCost.provision}%)
                 </span>
               </div>
-
               <div className="flex justify-between">
                 <span className="text-gray-600">Verkaufsflächen:</span>
                 <span className="font-semibold">
-                  {selectedPackages.map(id => packageOptions.find(p => p.id === id)?.name).join(', ')}
+                  {selectedPackages.map(id => packageOptions.find(p => p.id === id)?.name).join(', ') || 'Keine'}
                 </span>
               </div>
-
               {selectedAddons.length > 0 && (
                 <div className="flex justify-between">
                   <span className="text-gray-600">Zusatzoptionen:</span>
@@ -537,19 +510,16 @@ const PackageBuilder: React.FC = () => {
                   </span>
                 </div>
               )}
-
               <div className="flex justify-between">
                 <span className="text-gray-600">Mietdauer:</span>
                 <span className="font-semibold">{rentalDuration} Monate</span>
               </div>
-
               <div className="flex justify-between pt-3 border-t border-gray-300 text-lg font-bold">
                 <span>Monatliche Kosten:</span>
                 <span>{totalCost.monthly.toFixed(2)}€</span>
               </div>
             </div>
           </div>
-
           <div className="flex justify-center gap-4">
             <button
               onClick={() => setShowSummary(false)}
@@ -557,7 +527,6 @@ const PackageBuilder: React.FC = () => {
             >
               Zurück zum Konfigurator
             </button>
-
             <Link
               to="/kontakt"
               className="bg-[#e17564] text-white px-6 py-2 rounded-lg font-medium hover:bg-[#e17564]/90 transition-colors inline-flex items-center justify-center"
