@@ -32,10 +32,12 @@ export interface IService {
   monatspreis: number;
 }
 
+// server/src/types/modelTypes.ts - Ergänzung für Admin-Flag
 export interface IUser extends Document {
   username?: string;
   password?: string;
-  isFullAccount: boolean;  // Flag für vollständige Accounts vs. Newsletter-only
+  isFullAccount: boolean;
+  isAdmin?: boolean; // Flag für Administratorrechte
   kontakt: IKontakt;
   adressen: IAdresse[];
   createdAt: Date;

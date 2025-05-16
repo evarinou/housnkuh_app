@@ -13,6 +13,15 @@ import VendorsPage from './pages/VendorsPage'; // Neue Seite
 import PricingPage from './pages/PricingPage'; // Neue Seite
 import NewsletterConfirmPage from './pages/NewsletterConfirmPage';
 
+// Admin-Komponenten importieren
+import { AuthProvider } from './contexts/AuthContext';
+import ProtectedRoute from './components/admin/ProtectedRoute';
+import LoginPage from './pages/admin/LoginPage';
+import SetupPage from './pages/admin/SetupPage';
+import DashboardPage from './pages/admin/DashboardPage';
+import NewsletterPage from './pages/admin/NewsletterPage';
+import UnauthorizedPage from './pages/admin/UnauthorizedPage';
+
 function App() {
   return (
     <Router>
@@ -21,6 +30,17 @@ function App() {
         <main className="flex-grow pt-24"> {/* Ausreichend Platz für die Navigation */}
         {/* Hero nur auf der Startseite anzeigen */}
         <Routes>
+          {/* Admin-Routen */}
+          <Route path="/admin/login" element={<LoginPage />} />
+          <Route path="/admin/setup" element={<SetupPage />} />
+          <Route path="/admin/unauthorized" element={<UnauthorizedPage />} />
+          
+          {/* Geschützte Admin-Routen */}
+          <Route path="/admin" element={<ProtectedRoute />}>
+            <Route index element={<DashboardPage />} />
+            <Route path="newsletter" element={<NewsletterPage />} />
+            {/* Weitere Admin-Routen können hier hinzugefügt werden */}
+          </Route>
           <Route path="/" element={
             <>
               <Hero />

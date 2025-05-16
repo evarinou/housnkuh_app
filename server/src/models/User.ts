@@ -58,6 +58,10 @@ const UserSchema = new Schema({
       return this.isFullAccount === true;
     }
   },
+    isAdmin: {
+    type: Boolean,
+    default: false
+  },
 
   kontakt: {
     type: KontaktSchema,
