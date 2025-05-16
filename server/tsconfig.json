@@ -1,7 +1,9 @@
 {
   "compilerOptions": {
     "target": "es2018",
-    "module": "commonjs",
+    //"module": "commonjs",
+    "module": "nodenext",
+  //  "moduleResolution": "node",
     "outDir": "./dist",
     "rootDir": "./src",
     "strict": true,

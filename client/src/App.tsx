@@ -16,7 +16,7 @@ function App() {
     <Router>
       <div className="flex flex-col min-h-screen">
         <Navigation />
-        
+        <main className="flex-grow pt-24"> {/* Ausreichend Platz für die Navigation */}
         {/* Hero nur auf der Startseite anzeigen */}
         <Routes>
           <Route path="/" element={
@@ -33,7 +33,7 @@ function App() {
           {/* <Route path="/impressum" element={<ImpressumPage />} /> */}
           {/* <Route path="/datenschutz" element={<DatenschutzPage />} /> */}
         </Routes>
-        
+        </main>
         <Footer />
       </div>
     </Router>

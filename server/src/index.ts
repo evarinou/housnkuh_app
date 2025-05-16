@@ -1,9 +1,11 @@
-import express, { Request, Response } from 'express';
+import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
+import connectDB from './config/db';
+import routes from './routes';
 
 // Konfigurationsdatei laden
 dotenv.config();
@@ -17,25 +19,19 @@ app.use(cors());
 app.use(helmet());
 app.use(morgan('dev'));
 
+// MongoDB-Verbindung herstellen
+connectDB();
+
+// API-Routen
+app.use('/api', routes);
+
 // Basis-Route zum Testen
-app.get('/', (req: Request, res: Response) => {
+app.get('/', (req, res) => {
   res.json({ message: 'Willkommen bei der housnkuh API!' });
 });
 
-// MongoDB-Verbindung herstellen
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/housnkuh';
-
-mongoose
-  .connect(MONGO_URI)
-  .then(() => {
-    console.log('Mit MongoDB verbunden');
-    
-    // Server starten
-    const PORT = process.env.PORT || 4000;
-    app.listen(PORT, () => {
-      console.log(`Server läuft auf Port ${PORT}`);
-    });
-  })
-  .catch((error) => {
-    console.error('MongoDB-Verbindungsfehler:', error);
-  });
+// Server starten
+const PORT = process.env.PORT || 4000;
+app.listen(PORT, () => {
+  console.log(`Server läuft auf Port ${PORT}`);
+});

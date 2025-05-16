@@ -17,10 +17,13 @@
   "author": "Eva-Maria Schaller",
   "license": "ISC",
   "devDependencies": {
+    "@types/bcrypt": "^5.0.2",
     "concurrently": "^8.2.2"
   },
   "dependencies": {
     "@types/react": "^19.1.4",
+    "dotenv": "^16.5.0",
+    "mongoose": "^8.14.3",
     "react": "^19.1.0"
   }
 }
