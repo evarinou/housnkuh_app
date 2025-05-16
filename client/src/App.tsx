@@ -11,6 +11,7 @@ import MietenPage from './pages/MietenPage';
 import KontaktPage from './pages/KontaktPage';
 import VendorsPage from './pages/VendorsPage'; // Neue Seite
 import PricingPage from './pages/PricingPage'; // Neue Seite
+import NewsletterConfirmPage from './pages/NewsletterConfirmPage';
 
 function App() {
   return (
@@ -32,6 +33,11 @@ function App() {
           <Route path="/mieten" element={<MietenPage />} />
           <Route path="/pricing" element={<PricingPage />} /> {/* Neue Route */}
           <Route path="/kontakt" element={<KontaktPage />} />
+          <Route path="/newsletter/confirm" element={<NewsletterConfirmPage />} />
+          {/* Hier kannst du weitere Routen hinzufügen */}
+          {/* Beispiel: <Route path="/about" element={<AboutPage />} /> */}
+
+      
           {/* Füge hier Routen für Impressum und Datenschutz hinzu, wenn du separate Seiten erstellen möchtest */}
           {/* <Route path="/impressum" element={<ImpressumPage />} /> */}
           {/* <Route path="/datenschutz" element={<DatenschutzPage />} /> */}

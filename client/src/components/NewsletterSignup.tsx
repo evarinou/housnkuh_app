@@ -1,52 +1,45 @@
 // client/src/components/NewsletterSignup.tsx
 import React, { useState } from 'react';
-import { Send, Check } from 'lucide-react';
+import { Send, Check, AlertCircle } from 'lucide-react';
+import axios from 'axios';
 
 const NewsletterSignup: React.FC = () => {
   const [email, setEmail] = useState('');
-  const [type, setType] = useState<'customer' | 'vendor'>('customer'); // 'customer' oder 'vendor'
-  const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle'); // idle, submitting, success, error
-  const [errorMessage, setErrorMessage] = useState('');
+  const [name, setName] = useState(''); // Optional: Name für den Newsletter
+  const [type, setType] = useState<'customer' | 'vendor'>('customer');
+  const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
+  const [message, setMessage] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatus('submitting');
-    setErrorMessage('');
+    setMessage('');
     
     try {
-      // Im lokalen Entwicklungsmodus simulieren wir einfach den Erfolg
-      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-        // Simulierte Antwort für lokale Entwicklung
-        setTimeout(() => {
-          setStatus('success');
-          setEmail('');
-        }, 1000);
-        return;
-      }
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
       
-      // Auf dem Server: FormData verwenden für bessere Kompatibilität
-      const formData = new FormData();
-      formData.append('email', email);
-      formData.append('type', type);
-      
-      // Da der bestehende newsletter.php funktioniert, verwenden wir ihn weiterhin
-      const response = await fetch('./newsletter.php', {
-        method: 'POST',
-        body: formData,
+      const response = await axios.post(`${apiUrl}/newsletter/subscribe`, {
+        email,
+        name,
+        type
       });
       
-      const data = await response.json();
-      
-      if (data.success) {
+      if (response.data.success) {
         setStatus('success');
+        setMessage(response.data.message);
         setEmail('');
+        setName('');
       } else {
         setStatus('error');
-        setErrorMessage(data.message || 'Ein Fehler ist aufgetreten.');
+        setMessage(response.data.message || 'Ein Fehler ist aufgetreten.');
       }
     } catch (error) {
       setStatus('error');
-      setErrorMessage('Verbindungsfehler. Bitte versuchen Sie es später erneut.');
+      if (axios.isAxiosError(error) && error.response) {
+        setMessage(error.response.data.message || 'Ein Fehler ist aufgetreten bei der Anmeldung.');
+      } else {
+        setMessage('Verbindungsfehler. Bitte versuchen Sie es später erneut.');
+      }
       console.error('Newsletter error:', error);
     }
   };
@@ -61,20 +54,33 @@ const NewsletterSignup: React.FC = () => {
       {status === 'success' ? (
         <div className="flex items-center justify-center text-lg">
           <Check className="mr-2" />
-          Vielen Dank für Ihre Anmeldung!
+          {message || 'Vielen Dank für Ihre Anmeldung! Bitte bestätigen Sie Ihre E-Mail-Adresse.'}
         </div>
       ) : (
-        <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-4 justify-center">
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Ihre E-Mail-Adresse"
-            className="px-4 py-2 rounded-lg text-gray-900 w-full sm:w-auto"
-            required
-          />
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Optional: Namensfeld */}
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Ihr Name (optional)"
+              className="px-4 py-2 rounded-lg text-gray-900 w-full sm:w-auto"
+            />
+          </div>
           
-          <div className="flex items-center gap-4 text-white">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Ihre E-Mail-Adresse"
+              className="px-4 py-2 rounded-lg text-gray-900 w-full sm:w-auto"
+              required
+            />
+          </div>
+          
+          <div className="flex items-center justify-center gap-4 text-white">
             <label className="flex items-center">
               <input
                 type="radio"
@@ -100,28 +106,31 @@ const NewsletterSignup: React.FC = () => {
             </label>
           </div>
           
-          <button 
-            type="submit"
-            disabled={status === 'submitting'}
-            className="bg-primary text-white px-6 py-2 rounded-lg hover:bg-opacity-90 
-                     transition-all duration-200 flex items-center justify-center gap-2
-                     disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {status === 'submitting' ? (
-              'Wird angemeldet...'
-            ) : (
-              <>
-                <span>Anmelden</span>
-                <Send size={18} />
-              </>
-            )}
-          </button>
+          <div className="flex justify-center mt-4">
+            <button 
+              type="submit"
+              disabled={status === 'submitting'}
+              className="bg-primary text-white px-6 py-2 rounded-lg hover:bg-opacity-90 
+                      transition-all duration-200 flex items-center justify-center gap-2
+                      disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {status === 'submitting' ? (
+                'Wird angemeldet...'
+              ) : (
+                <>
+                  <span>Anmelden</span>
+                  <Send size={18} />
+                </>
+              )}
+            </button>
+          </div>
         </form>
       )}
       
       {status === 'error' && (
-        <div className="mt-4 p-4 bg-red-600 text-white rounded-lg">
-          {errorMessage}
+        <div className="mt-4 p-4 bg-red-600 text-white rounded-lg flex items-center gap-2">
+          <AlertCircle className="h-5 w-5 flex-shrink-0" />
+          <span>{message}</span>
         </div>
       )}
     </div>

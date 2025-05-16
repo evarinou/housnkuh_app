@@ -16,9 +16,12 @@ export interface IAdresse {
 
 export interface IKontakt {
   name: string;
-  newslettertype?: string;
+  newslettertype?: 'customer' | 'vendor' | string;
   mailNewsletter: boolean;
-  status: 'aktiv' | 'inaktiv';
+  newsletterConfirmed?: boolean;        // Neues Feld für Bestätigung
+  confirmationToken?: string | null;    // Token für E-Mail-Bestätigung
+  tokenExpires?: Date | null;           // Ablaufzeit des Tokens
+  status: 'aktiv' | 'inaktiv' | 'pending';
   usrID?: string;
 }
 
@@ -29,10 +32,10 @@ export interface IService {
   monatspreis: number;
 }
 
-// Document-Interfaces für Mongoose
 export interface IUser extends Document {
-  username: string;
-  password: string;
+  username?: string;
+  password?: string;
+  isFullAccount: boolean;  // Flag für vollständige Accounts vs. Newsletter-only
   kontakt: IKontakt;
   adressen: IAdresse[];
   createdAt: Date;

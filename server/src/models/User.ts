@@ -19,31 +19,46 @@ const AdresseSchema = new Schema({
   name2: String
 });
 
-// Kontakt Schema
+// Kontakt Schema - erweitern
 const KontaktSchema = new Schema({
   name: { type: String, required: true },
   newslettertype: String,
   mailNewsletter: { type: Boolean, default: false },
+  newsletterConfirmed: { type: Boolean, default: false }, // Neues Feld für Bestätigung
+  confirmationToken: { type: String, default: null },     // Token für E-Mail-Bestätigung
+  tokenExpires: { type: Date, default: null },           // Ablaufzeit des Tokens
   status: {
     type: String,
-    enum: ['aktiv', 'inaktiv'],
+    enum: ['aktiv', 'inaktiv', 'pending'],               // 'pending' für unbestätigte Newsletter
     default: 'aktiv'
   },
   usrID: String
 });
 
-// User Schema
+// User Schema anpassen - für Newsletter-Nutzer
 const UserSchema = new Schema({
   username: {
     type: String,
-    required: true,
+    required: function(this: any) {
+      // Username ist nur erforderlich, wenn es ein vollständiger Account ist
+      return this.isFullAccount === true;
+    },
     unique: true,
+    sparse: true,  // Erlaubt null/undefined für username bei Newsletter-only Nutzern
     trim: true
+  },
+    isFullAccount: {
+    type: Boolean,
+    default: false  // Standardmäßig ist es nur ein Newsletter-Abonnent
   },
   password: {
     type: String,
-    required: true
+    required: function(this: any) {
+      // Passwort ist nur erforderlich, wenn es ein vollständiger Account ist
+      return this.isFullAccount === true;
+    }
   },
+
   kontakt: {
     type: KontaktSchema,
     required: true
