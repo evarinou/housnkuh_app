@@ -1,14 +1,13 @@
-// src/components/layout/Navigation.tsx
+// client/src/components/layout/Navigation.tsx oder Navbar.tsx
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
-import logo from '../assets/logo.svg'; // Pfad anpassen falls nötig
+import logo from '../assets/logo.svg';
 
 const Navigation: React.FC = () => {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [scrolled, setScrolled] = useState<boolean>(false);
-  const location = useLocation();
-
+  
   // Scroll-Handler für Hintergrundeffekt
   useEffect(() => {
     const handleScroll = () => {
@@ -22,16 +21,6 @@ const Navigation: React.FC = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [scrolled]);
 
-  // Schließt das mobile Menü, wenn die Route wechselt
-  useEffect(() => {
-    setIsOpen(false);
-  }, [location.pathname]);
-  
-  // Prüft, ob ein Link aktiv ist
-  const isActive = (path: string): boolean => {
-    return location.pathname === path;
-  };
-  
   return (
     <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${
       scrolled ? 'bg-white shadow-md py-2' : 'bg-white shadow-lg py-4'
@@ -40,58 +29,66 @@ const Navigation: React.FC = () => {
         <div className="flex justify-between items-center">
           {/* Logo mit korrektem Abstand gemäß Styleguide */}
           <div className="flex-shrink-0 flex items-center">
-            <Link to="/" className="block p-2">
+            <NavLink to="/" className="block p-2">
               <img className="h-20 w-auto" src={logo} alt="housnkuh Logo" />
-            </Link>
+            </NavLink>
           </div>
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
-            <Link 
-              to="/direktvermarkter" 
-              className={`font-medium hover:text-[var(--primary)] transition-colors duration-200 pb-1 border-b-2 ${
-                isActive('/direktvermarkter') 
-                  ? 'text-[var(--primary)] border-[var(--primary)]' 
-                  : 'text-[var(--secondary)] border-transparent'
-              }`}
+            <NavLink 
+              //to="/direktvermarkter" 
+              to="/vendors" 
+              className={({ isActive }) => isActive 
+                ? "text-primary border-b-2 border-primary font-medium" 
+                : "hover:text-primary text-secondary border-transparent border-b-2 font-medium"
+              }
             >
               Direktvermarkter
-            </Link>
-            <Link 
+            </NavLink>
+             {/* Desktop Navigation <NavLink 
+              to="/vendors" 
+              className={({ isActive }) => isActive 
+                ? "text-primary border-b-2 border-primary font-medium" 
+                : "hover:text-primary text-secondary border-transparent border-b-2 font-medium"
+              }
+            >
+              Wettbewerb
+            </NavLink>*/}
+            <NavLink 
               to="/standort" 
-              className={`font-medium hover:text-[var(--primary)] transition-colors duration-200 pb-1 border-b-2 ${
-                isActive('/standort') 
-                  ? 'text-[var(--primary)] border-[var(--primary)]' 
-                  : 'text-[var(--secondary)] border-transparent'
-              }`}
+              className={({ isActive }) => isActive 
+                ? "text-primary border-b-2 border-primary font-medium" 
+                : "hover:text-primary text-secondary border-transparent border-b-2 font-medium"
+              }
             >
               Standort
-            </Link>
-            <Link 
-              to="/mieten"
-              className={`font-medium hover:text-[var(--primary)] transition-colors duration-200 pb-1 border-b-2 ${
-                isActive('/mieten') 
-                  ? 'text-[var(--primary)] border-[var(--primary)]' 
-                  : 'text-[var(--secondary)] border-transparent'
-              }`}
+            </NavLink>
+            <NavLink 
+              to="/pricing" 
+              className={({ isActive }) => isActive 
+                ? "text-primary border-b-2 border-primary font-medium" 
+                : "hover:text-primary text-secondary border-transparent border-b-2 font-medium"
+              }
             >
               Verkaufsfläche mieten
-            </Link>
-            <Link 
+            </NavLink>
+            <NavLink 
               to="/kontakt"
-              className={`text-white bg-[var(--primary)] hover:bg-[var(--primary)]/90 px-4 py-2 rounded-lg transition-colors duration-200 ${
-                isActive('/kontakt') ? 'ring-2 ring-[var(--primary)] ring-offset-2' : ''
-              }`}
+              className={({ isActive }) => isActive 
+                ? "bg-primary text-white px-4 py-2 rounded-lg ring-2 ring-primary ring-offset-2 font-medium" 
+                : "bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg transition-colors duration-200 font-medium"
+              }
             >
               Kontakt
-            </Link>
+            </NavLink>
           </div>
 
           {/* Mobile Menu Button */}
           <div className="flex items-center md:hidden">
             <button 
               onClick={() => setIsOpen(!isOpen)} 
-              className="focus:outline-none text-[var(--secondary)] hover:text-[var(--primary)] transition-colors duration-200 p-2"
+              className="focus:outline-none text-secondary hover:text-primary transition-colors duration-200 p-2"
               aria-expanded={isOpen}
               aria-label={isOpen ? "Menü schließen" : "Menü öffnen"}
             >
@@ -103,41 +100,54 @@ const Navigation: React.FC = () => {
       
       {/* Mobile Navigation - Verbesserte Animation */}
       <div className={`md:hidden transition-all duration-300 ease-in-out overflow-hidden ${
-        isOpen ? 'max-h-64 opacity-100' : 'max-h-0 opacity-0'
+        isOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
       }`}>
         <div className="px-4 py-2 bg-white shadow-inner">
-          <Link
+          <NavLink
             to="/direktvermarkter"
-            className={`block px-3 py-2 rounded-md font-medium hover:bg-gray-100 ${
-              isActive('/direktvermarkter') ? 'text-[var(--primary)]' : 'text-[var(--secondary)]'
+            className={({ isActive }) => `block px-3 py-2 rounded-md font-medium hover:bg-gray-100 ${
+              isActive ? 'text-primary' : 'text-secondary'
             }`}
+            onClick={() => setIsOpen(false)}
           >
             Direktvermarkter
-          </Link>
-          <Link
-            to="/standort"
-            className={`block px-3 py-2 rounded-md font-medium hover:bg-gray-100 ${
-              isActive('/standort') ? 'text-[var(--primary)]' : 'text-[var(--secondary)]'
+          </NavLink>
+          <NavLink
+            to="/vendors"
+            className={({ isActive }) => `block px-3 py-2 rounded-md font-medium hover:bg-gray-100 ${
+              isActive ? 'text-primary' : 'text-secondary'
             }`}
+            onClick={() => setIsOpen(false)}
+          >
+            Wettbewerb
+          </NavLink>
+          <NavLink
+            to="/standort"
+            className={({ isActive }) => `block px-3 py-2 rounded-md font-medium hover:bg-gray-100 ${
+              isActive ? 'text-primary' : 'text-secondary'
+            }`}
+            onClick={() => setIsOpen(false)}
           >
             Standort
-          </Link>
-          <Link
-            to="/mieten"
-            className={`block px-3 py-2 rounded-md font-medium hover:bg-gray-100 ${
-              isActive('/mieten') ? 'text-[var(--primary)]' : 'text-[var(--secondary)]'
+          </NavLink>
+          <NavLink
+            to="/pricing"
+            className={({ isActive }) => `block px-3 py-2 rounded-md font-medium hover:bg-gray-100 ${
+              isActive ? 'text-primary' : 'text-secondary'
             }`}
+            onClick={() => setIsOpen(false)}
           >
             Verkaufsfläche mieten
-          </Link>
-          <Link
+          </NavLink>
+          <NavLink
             to="/kontakt"
-            className={`block px-3 py-2 mt-2 bg-[var(--primary)] text-white rounded-md font-medium hover:bg-[var(--primary)]/90 ${
-              isActive('/kontakt') ? 'ring-2 ring-offset-2 ring-[var(--primary)]' : ''
+            className={({ isActive }) => `block px-3 py-2 mt-2 bg-primary text-white rounded-md font-medium hover:bg-primary/90 ${
+              isActive ? 'ring-2 ring-offset-2 ring-primary' : ''
             }`}
+            onClick={() => setIsOpen(false)}
           >
             Kontakt
-          </Link>
+          </NavLink>
         </div>
       </div>
     </nav>

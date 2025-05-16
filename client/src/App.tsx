@@ -9,7 +9,8 @@ import DirektvermarkterPage from './pages/DirektvermarkterPage';
 import StandortPage from './pages/StandortPage';
 import MietenPage from './pages/MietenPage';
 import KontaktPage from './pages/KontaktPage';
-// import './App.css'; // Deine bestehenden App-weiten Stile, falls vorhanden
+import VendorsPage from './pages/VendorsPage'; // Neue Seite
+import PricingPage from './pages/PricingPage'; // Neue Seite
 
 function App() {
   return (
@@ -26,8 +27,10 @@ function App() {
             </>
           } />
           <Route path="/direktvermarkter" element={<DirektvermarkterPage />} />
+          <Route path="/vendors" element={<VendorsPage />} /> {/* Neue Route */}
           <Route path="/standort" element={<StandortPage />} />
           <Route path="/mieten" element={<MietenPage />} />
+          <Route path="/pricing" element={<PricingPage />} /> {/* Neue Route */}
           <Route path="/kontakt" element={<KontaktPage />} />
           {/* Füge hier Routen für Impressum und Datenschutz hinzu, wenn du separate Seiten erstellen möchtest */}
           {/* <Route path="/impressum" element={<ImpressumPage />} /> */}
