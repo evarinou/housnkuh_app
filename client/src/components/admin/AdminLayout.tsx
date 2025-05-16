@@ -175,8 +175,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                 <span className="text-gray-700 mr-2">{user?.name}</span>
                 <button
                   onClick={handleLogout}
-                  className="p-1 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
-                >
+                  className="p-1 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"                >
                   <LogOut className="h-6 w-6" />// Fortsetzung von AdminLayout.tsx
                 </button>
               </div>

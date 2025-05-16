@@ -14,7 +14,7 @@ import PricingPage from './pages/PricingPage'; // Neue Seite
 import NewsletterConfirmPage from './pages/NewsletterConfirmPage';
 
 // Admin-Komponenten importieren
-import { AuthProvider } from './contexts/AuthContext';
+//import { AuthProvider } from './contexts/AuthContext';
 import ProtectedRoute from './components/admin/ProtectedRoute';
 import LoginPage from './pages/admin/LoginPage';
 import SetupPage from './pages/admin/SetupPage';
