@@ -14,7 +14,7 @@ import PricingPage from './pages/PricingPage'; // Neue Seite
 import NewsletterConfirmPage from './pages/NewsletterConfirmPage';
 
 // Admin-Komponenten importieren
-//import { AuthProvider } from './contexts/AuthContext';
+import { AuthProvider } from './contexts/AuthContext';
 import ProtectedRoute from './components/admin/ProtectedRoute';
 import LoginPage from './pages/admin/LoginPage';
 import SetupPage from './pages/admin/SetupPage';
@@ -22,8 +22,10 @@ import DashboardPage from './pages/admin/DashboardPage';
 import NewsletterPage from './pages/admin/NewsletterPage';
 import UnauthorizedPage from './pages/admin/UnauthorizedPage';
 
+
 function App() {
   return (
+    <AuthProvider>
     <Router>
       <div className="flex flex-col min-h-screen">
         <Navigation />
@@ -66,6 +68,7 @@ function App() {
         <Footer />
       </div>
     </Router>
+    </AuthProvider>
   );
 }
 
