@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { Check, AlertCircle, Loader, Package, User } from 'lucide-react';
 import axios from 'axios';
-import { useVendorAuth } from '../contexts/VendorAuthContext';
+//import { useVendorAuth } from '../contexts/VendorAuthContext';
 
 const VendorConfirmPage: React.FC = () => {
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
@@ -11,7 +11,7 @@ const VendorConfirmPage: React.FC = () => {
   const [userConfirmed, setUserConfirmed] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { login } = useVendorAuth();
+ // const { login } = useVendorAuth();
 
   useEffect(() => {
     const confirmAccount = async () => {

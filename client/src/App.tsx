@@ -1,4 +1,3 @@
-
 // client/src/App.tsx
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
@@ -13,10 +12,10 @@ import KontaktPage from './pages/KontaktPage';
 import VendorsPage from './pages/VendorsPage';
 import PricingPage from './pages/PricingPage';
 import NewsletterConfirmPage from './pages/NewsletterConfirmPage';
+import VendorConfirmPage from './pages/VendorConfirmPage'; // Neu
 
 // Admin-Komponenten importieren
 import { AuthProvider } from './contexts/AuthContext';
-import { VendorAuthProvider } from './contexts/VendorAuthContext';
 import ProtectedRoute from './components/admin/ProtectedRoute';
 import LoginPage from './pages/admin/LoginPage';
 import SetupPage from './pages/admin/SetupPage';
@@ -50,6 +49,9 @@ const AppContent: React.FC = () => {
             {/* Weitere Admin-Routen können hier hinzugefügt werden */}
           </Route>
           
+          {/* Vendor-Routen */}
+          <Route path="/vendor/confirm" element={<VendorConfirmPage />} />
+          
           {/* Öffentliche Routen - mit Haupt-Navigation */}
           <Route path="/" element={
             <>
@@ -76,11 +78,9 @@ const AppContent: React.FC = () => {
 function App() {
   return (
     <AuthProvider>
-      <VendorAuthProvider>
-        <Router>
-          <AppContent />
-        </Router>
-      </VendorAuthProvider>
+      <Router>
+        <AppContent />
+      </Router>
     </AuthProvider>
   );
 }

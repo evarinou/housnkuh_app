@@ -85,15 +85,24 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = ({
     switch (stepNumber) {
       case 1:
         if (isLogin) {
-          return formData.email && formData.password;
+          return formData.email !== '' && formData.password !== '';
         } else {
-          return formData.email && formData.password && formData.confirmPassword && 
-                 formData.password === formData.confirmPassword;
+          return (
+            formData.email.trim() !== '' &&
+            formData.password.trim() !== '' &&
+            formData.confirmPassword.trim() !== '' &&
+            formData.password === formData.confirmPassword
+          );
         }
       case 2:
         return formData.name.trim() !== '';
       case 3:
-        return formData.strasse && formData.hausnummer && formData.plz && formData.ort;
+        return (
+          formData.strasse.trim() !== '' &&
+          formData.hausnummer.trim() !== '' &&
+          formData.plz.trim() !== '' &&
+          formData.ort.trim() !== ''
+        );
       case 4:
         return formData.agreeToTerms && formData.agreeToPrivacy;
       default:
