@@ -157,6 +157,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       </div>
       
       <div className="flex flex-col w-0 flex-1 overflow-hidden">
+        {/* Hier war das Problem - die Navigation hatte keine feste Höhe definiert */}
         <div className="relative z-10 flex-shrink-0 flex h-16 bg-white shadow">
           <button
             className="md:hidden px-4 border-r border-gray-200 text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary"
@@ -175,7 +176,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                 <span className="text-gray-700 mr-2">{user?.name}</span>
                 <button
                   onClick={handleLogout}
-                  className="p-1 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"                >
+                  className="p-1 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+                >
                   <LogOut className="h-6 w-6" />
                 </button>
               </div>
@@ -183,7 +185,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
           </div>
         </div>
         
-        <main className="flex-1 relative overflow-y-auto focus:outline-none">
+        {/* Hier wurde der Platz für die Navigation hinzugefügt */}
+        <main className="flex-1 relative overflow-y-auto focus:outline-none pt-0">
           <div className="py-6">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
               {children}
