@@ -1,3 +1,4 @@
+// server/src/types/modelTypes.ts - Erweiterte User-Types
 import { Document } from 'mongoose';
 
 // Basis-Interface für Subdokumente
@@ -18,11 +19,13 @@ export interface IKontakt {
   name: string;
   newslettertype?: 'customer' | 'vendor' | string;
   mailNewsletter: boolean;
-  newsletterConfirmed?: boolean;        // Neues Feld für Bestätigung
-  confirmationToken?: string | null;    // Token für E-Mail-Bestätigung
-  tokenExpires?: Date | null;           // Ablaufzeit des Tokens
+  newsletterConfirmed?: boolean;
+  confirmationToken?: string | null;
+  tokenExpires?: Date | null;
   status: 'aktiv' | 'inaktiv' | 'pending';
   usrID?: string;
+  email: string; // E-Mail ist jetzt erforderlich
+  telefon?: string;
 }
 
 export interface IService {
@@ -32,14 +35,21 @@ export interface IService {
   monatspreis: number;
 }
 
-// server/src/types/modelTypes.ts - Ergänzung für Admin-Flag
+// Erweiterte User-Interface für vollständige Direktvermarkter-Accounts
 export interface IUser extends Document {
   username?: string;
   password?: string;
   isFullAccount: boolean;
-  isAdmin?: boolean; // Flag für Administratorrechte
+  isAdmin?: boolean;
+  isVendor?: boolean; // Neu: Flag für Direktvermarkter
   kontakt: IKontakt;
   adressen: IAdresse[];
+  // Buchungsspezifische Felder
+  pendingBooking?: {
+    packageData: any; // Package-Konfiguration
+    createdAt: Date;
+    status: 'pending' | 'completed' | 'cancelled';
+  };
   createdAt: Date;
   updatedAt: Date;
 }
@@ -55,6 +65,11 @@ export interface IVertrag extends Document {
   user: string; // ObjectId als String
   datum: Date;
   services: IService[];
+  packageConfiguration?: any; // Gespeicherte Package-Konfiguration
+  totalMonthlyPrice: number;
+  contractDuration: number; // in Monaten
+  discount: number; // Rabatt als Dezimalwert (0.1 = 10%)
+  status: 'active' | 'pending' | 'cancelled' | 'expired';
   createdAt: Date;
   updatedAt: Date;
 }

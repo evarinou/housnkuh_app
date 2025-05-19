@@ -19,55 +19,70 @@ const AdresseSchema = new Schema({
   name2: String
 });
 
-// Kontakt Schema - erweitern
+// Kontakt Schema - erweitert
 const KontaktSchema = new Schema({
   name: { type: String, required: true },
+  email: { type: String, required: true }, // E-Mail ist jetzt immer erforderlich
+  telefon: String,
   newslettertype: String,
   mailNewsletter: { type: Boolean, default: false },
-  newsletterConfirmed: { type: Boolean, default: false }, // Neues Feld für Bestätigung
-  confirmationToken: { type: String, default: null },     // Token für E-Mail-Bestätigung
-  tokenExpires: { type: Date, default: null },           // Ablaufzeit des Tokens
+  newsletterConfirmed: { type: Boolean, default: false },
+  confirmationToken: { type: String, default: null },
+  tokenExpires: { type: Date, default: null },
   status: {
     type: String,
-    enum: ['aktiv', 'inaktiv', 'pending'],               // 'pending' für unbestätigte Newsletter
+    enum: ['aktiv', 'inaktiv', 'pending'],
     default: 'aktiv'
   },
   usrID: String
 });
 
-// User Schema anpassen - für Newsletter-Nutzer
+// Pending Booking Schema für ausstehende Buchungen
+const PendingBookingSchema = new Schema({
+  packageData: { type: Schema.Types.Mixed, required: true },
+  createdAt: { type: Date, default: Date.now },
+  status: {
+    type: String,
+    enum: ['pending', 'completed', 'cancelled'],
+    default: 'pending'
+  }
+});
+
+// User Schema angepasst für Vendor-Support
 const UserSchema = new Schema({
   username: {
     type: String,
     required: function(this: any) {
-      // Username ist nur erforderlich, wenn es ein vollständiger Account ist
       return this.isFullAccount === true;
     },
     unique: true,
-    sparse: true,  // Erlaubt null/undefined für username bei Newsletter-only Nutzern
+    sparse: true,
     trim: true
-  },
-    isFullAccount: {
-    type: Boolean,
-    default: false  // Standardmäßig ist es nur ein Newsletter-Abonnent
   },
   password: {
     type: String,
     required: function(this: any) {
-      // Passwort ist nur erforderlich, wenn es ein vollständiger Account ist
       return this.isFullAccount === true;
     }
   },
-    isAdmin: {
+  isFullAccount: {
     type: Boolean,
     default: false
   },
-
+  isAdmin: {
+    type: Boolean,
+    default: false
+  },
+  isVendor: {
+    type: Boolean,
+    default: false
+  },
   kontakt: {
     type: KontaktSchema,
     required: true
   },
-  adressen: [AdresseSchema]
+  adressen: [AdresseSchema],
+  pendingBooking: PendingBookingSchema // Neue Eigenschaft für ausstehende Buchungen
 }, { timestamps: true });
 
 export default mongoose.model<IUser>('User', UserSchema);
