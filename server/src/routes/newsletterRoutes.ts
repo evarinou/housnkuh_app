@@ -18,7 +18,7 @@ router.get('/test-email', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Fehler beim Testen der E-Mail-Verbindung',
-      error: error.message
+      error: error instanceof Error ? error.message : String(error)
     });
   }
 });
