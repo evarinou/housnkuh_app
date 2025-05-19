@@ -1,8 +1,8 @@
-import User from './User';
-import Mietfach from './Mietfach';
-import Vertrag from './Vertrag';
+const User = require('./User');
+const Mietfach = require('./Mietfach');
+const Vertrag = require('./Vertrag');
 
-export {
+module.exports = {
   User,
   Mietfach,
   Vertrag

@@ -1,3 +1,4 @@
+// server/src/controllers/vertragController.ts
 import { Request, Response } from 'express';
 import Vertrag from '../models/Vertrag';
 
@@ -7,9 +8,16 @@ export const getAllVertraege = async (req: Request, res: Response): Promise<void
     const vertraege = await Vertrag.find()
       .populate('user', 'username kontakt.name')
       .populate('services.mietfach', 'bezeichnung typ');
-    res.json(vertraege);
+    res.json({
+      success: true,
+      vertraege
+    });
   } catch (err) {
-    res.status(500).json({ message: 'Serverfehler beim Abrufen der Verträge' });
+    console.error('Fehler beim Abrufen der Verträge:', err);
+    res.status(500).json({ 
+      success: false,
+      message: 'Serverfehler beim Abrufen der Verträge' 
+    });
   }
 };
 
@@ -21,13 +29,23 @@ export const getVertragById = async (req: Request, res: Response): Promise<void>
       .populate('services.mietfach', 'bezeichnung typ');
     
     if (!vertrag) {
-      res.status(404).json({ message: 'Vertrag nicht gefunden' });
+      res.status(404).json({ 
+        success: false,
+        message: 'Vertrag nicht gefunden' 
+      });
       return;
     }
     
-    res.json(vertrag);
+    res.json({
+      success: true,
+      vertrag
+    });
   } catch (err) {
-    res.status(500).json({ message: 'Serverfehler beim Abrufen des Vertrags' });
+    console.error('Fehler beim Abrufen des Vertrags:', err);
+    res.status(500).json({ 
+      success: false,
+      message: 'Serverfehler beim Abrufen des Vertrags' 
+    });
   }
 };
 
@@ -42,9 +60,16 @@ export const createVertrag = async (req: Request, res: Response): Promise<void> 
       .populate('user', 'username kontakt.name')
       .populate('services.mietfach', 'bezeichnung typ');
     
-    res.status(201).json(populatedVertrag);
+    res.status(201).json({
+      success: true,
+      vertrag: populatedVertrag
+    });
   } catch (err) {
-    res.status(400).json({ message: 'Fehler beim Erstellen des Vertrags' });
+    console.error('Fehler beim Erstellen des Vertrags:', err);
+    res.status(400).json({ 
+      success: false,
+      message: 'Fehler beim Erstellen des Vertrags' 
+    });
   }
 };
 
@@ -60,13 +85,23 @@ export const updateVertrag = async (req: Request, res: Response): Promise<void> 
       .populate('services.mietfach', 'bezeichnung typ');
     
     if (!updatedVertrag) {
-      res.status(404).json({ message: 'Vertrag nicht gefunden' });
+      res.status(404).json({ 
+        success: false,
+        message: 'Vertrag nicht gefunden' 
+      });
       return;
     }
     
-    res.json(updatedVertrag);
+    res.json({
+      success: true,
+      vertrag: updatedVertrag
+    });
   } catch (err) {
-    res.status(400).json({ message: 'Fehler beim Aktualisieren des Vertrags' });
+    console.error('Fehler beim Aktualisieren des Vertrags:', err);
+    res.status(400).json({ 
+      success: false,
+      message: 'Fehler beim Aktualisieren des Vertrags' 
+    });
   }
 };
 
@@ -76,13 +111,23 @@ export const deleteVertrag = async (req: Request, res: Response): Promise<void> 
     const deletedVertrag = await Vertrag.findByIdAndDelete(req.params.id);
     
     if (!deletedVertrag) {
-      res.status(404).json({ message: 'Vertrag nicht gefunden' });
+      res.status(404).json({ 
+        success: false,
+        message: 'Vertrag nicht gefunden' 
+      });
       return;
     }
     
-    res.json({ message: 'Vertrag erfolgreich gelöscht' });
+    res.json({ 
+      success: true,
+      message: 'Vertrag erfolgreich gelöscht' 
+    });
   } catch (err) {
-    res.status(500).json({ message: 'Serverfehler beim Löschen des Vertrags' });
+    console.error('Fehler beim Löschen des Vertrags:', err);
+    res.status(500).json({ 
+      success: false,
+      message: 'Serverfehler beim Löschen des Vertrags' 
+    });
   }
 };
 
@@ -93,9 +138,16 @@ export const getVertraegeByUser = async (req: Request, res: Response): Promise<v
     const vertraege = await Vertrag.find({ user: userId })
       .populate('services.mietfach', 'bezeichnung typ');
     
-    res.json(vertraege);
+    res.json({
+      success: true,
+      vertraege
+    });
   } catch (err) {
-    res.status(500).json({ message: 'Serverfehler beim Abrufen der Verträge für diesen Benutzer' });
+    console.error('Fehler beim Abrufen der Verträge für den Benutzer:', err);
+    res.status(500).json({ 
+      success: false,
+      message: 'Serverfehler beim Abrufen der Verträge für diesen Benutzer' 
+    });
   }
 };
 
@@ -108,7 +160,10 @@ export const addServiceToVertrag = async (req: Request, res: Response): Promise<
     const vertrag = await Vertrag.findById(id);
     
     if (!vertrag) {
-      res.status(404).json({ message: 'Vertrag nicht gefunden' });
+      res.status(404).json({ 
+        success: false,
+        message: 'Vertrag nicht gefunden' 
+      });
       return;
     }
     
@@ -120,8 +175,38 @@ export const addServiceToVertrag = async (req: Request, res: Response): Promise<
       .populate('user', 'username kontakt.name')
       .populate('services.mietfach', 'bezeichnung typ');
     
-    res.json(populatedVertrag);
+    res.json({
+      success: true,
+      vertrag: populatedVertrag
+    });
   } catch (err) {
-    res.status(400).json({ message: 'Fehler beim Hinzufügen des Services zum Vertrag' });
+    console.error('Fehler beim Hinzufügen des Services:', err);
+    res.status(400).json({ 
+      success: false,
+      message: 'Fehler beim Hinzufügen des Services zum Vertrag' 
+    });
+  }
+};
+
+// Vertrag aus pendingBooking erstellen
+export const createVertragFromPendingBooking = async (userId: string, packageData: any): Promise<boolean> => {
+  try {
+    // Hier würden Sie die Package-Daten in ein Vertrag-Format transformieren
+    const newVertrag = new Vertrag({
+      user: userId,
+      datum: new Date(),
+      packageConfiguration: packageData,
+      totalMonthlyPrice: packageData.totalCost?.monthly || 0,
+      contractDuration: packageData.rentalDuration || 3,
+      discount: packageData.discount || 0,
+      status: 'pending',
+      services: [] // Hier würden Sie die Services aus packageData extrahieren
+    });
+
+    await newVertrag.save();
+    return true;
+  } catch (error) {
+    console.error('Fehler beim Erstellen des Vertrags aus pendingBooking:', error);
+    return false;
   }
 };
