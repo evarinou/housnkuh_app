@@ -187,7 +187,7 @@ const HomePage: React.FC = () => {
           <div className="backdrop-blur-md bg-white/40 rounded-xl p-8 border border-white/30 shadow-lg">
             <h2 className="text-3xl font-bold text-secondary mb-6">Was ist housnkuh?</h2>
             <p className="text-lg text-gray-700 leading-relaxed">
-              Housnkuh wird Ihr neuer Lieblingsort für regionale Spezialitäten und Produkte aus Kronach und Umgebung. 
+              housnkuh wird Ihr neuer Lieblingsort für regionale Spezialitäten und Produkte aus Kronach und Umgebung. 
               Im modern gestalteten Laden in der Strauer Straße 15 werden lokale Erzeuger und 
               Genießer zusammengebracht – und das beinahe rund um die Uhr!
             </p>
