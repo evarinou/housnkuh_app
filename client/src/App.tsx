@@ -12,10 +12,11 @@ import KontaktPage from './pages/KontaktPage';
 import VendorsPage from './pages/VendorsPage';
 import PricingPage from './pages/PricingPage';
 import NewsletterConfirmPage from './pages/NewsletterConfirmPage';
-import VendorConfirmPage from './pages/VendorConfirmPage'; // Neu
+import VendorConfirmPage from './pages/VendorConfirmPage';
 
 // Admin-Komponenten importieren
 import { AuthProvider } from './contexts/AuthContext';
+import { VendorAuthProvider } from './contexts/VendorAuthContext'; // NEU
 import ProtectedRoute from './components/admin/ProtectedRoute';
 import LoginPage from './pages/admin/LoginPage';
 import SetupPage from './pages/admin/SetupPage';
@@ -78,9 +79,11 @@ const AppContent: React.FC = () => {
 function App() {
   return (
     <AuthProvider>
-      <Router>
-        <AppContent />
-      </Router>
+      <VendorAuthProvider> {/* NEU: VendorAuthProvider hinzugefügt */}
+        <Router>
+          <AppContent />
+        </Router>
+      </VendorAuthProvider>
     </AuthProvider>
   );
 }

@@ -1,6 +1,6 @@
 // client/src/components/VendorRegistrationModal.tsx
 import React, { useState } from 'react';
-import { X, User, Mail, Phone, MapPin, Lock, Package, Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react';
+import { X, User, Mail, Phone, Lock, Package, Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react';
 import { useVendorAuth } from '../contexts/VendorAuthContext';
 
 interface PackageData {
