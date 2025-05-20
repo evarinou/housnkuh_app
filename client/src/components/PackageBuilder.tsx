@@ -39,6 +39,8 @@ const PackageBuilder: React.FC = () => {
   // State für gewählte Optionen
   const [selectedProvisionType, setSelectedProvisionType] = useState('basic');
   const [selectedPackages, setSelectedPackages] = useState<string[]>([]);
+  // State für das Tracking der Anzahl jeder Verkaufsfläche
+  const [packageCounts, setPackageCounts] = useState<Record<string, number>>({});
   const [selectedAddons, setSelectedAddons] = useState<string[]>([]);
   const [rentalDuration, setRentalDuration] = useState(3); // Monate
   const [totalCost, setTotalCost] = useState<TotalCost>({
@@ -156,9 +158,12 @@ const PackageBuilder: React.FC = () => {
   // Berechnet die monatlichen Kosten
   useEffect(() => {
     const discount = getDiscountRate();
-    const packageCosts = selectedPackages.reduce((sum, pkgId) => {
+    
+    // Berechnung der Kosten basierend auf den Zählern
+    const packageCosts = Object.entries(packageCounts).reduce((sum, [pkgId, count]) => {
+      if (count <= 0) return sum;
       const option = packageOptions.find(p => p.id === pkgId);
-      return sum + (option ? option.price : 0);
+      return sum + (option ? option.price * count : 0);
     }, 0);
 
     const addonCosts = selectedAddons.reduce((sum, addonId) => {
@@ -180,6 +185,7 @@ const PackageBuilder: React.FC = () => {
   }, [
     selectedProvisionType,
     selectedPackages,
+    packageCounts, // Wichtig: packageCounts als Abhängigkeit hinzufügen
     selectedAddons,
     rentalDuration,
     addonOptions,
@@ -188,13 +194,33 @@ const PackageBuilder: React.FC = () => {
     provisionTypes
   ]);
 
-  // Paket hinzufügen/entfernen
-  const togglePackage = (packageId: string) => {
-    setSelectedPackages(prevSelectedPackages =>
-      prevSelectedPackages.includes(packageId)
-        ? prevSelectedPackages.filter(id => id !== packageId)
-        : [...prevSelectedPackages, packageId]
-    );
+  // Paket hinzufügen (mit Counter)
+  const togglePackage = (packageId: string, isIncrementing: boolean = true) => {
+    if (isIncrementing) {
+      // Paket hinzufügen
+      setSelectedPackages(prev => [...prev, packageId]);
+      setPackageCounts(prev => ({
+        ...prev,
+        [packageId]: (prev[packageId] || 0) + 1
+      }));
+    } else {
+      // Paket entfernen (nur eines der gleichen Art)
+      if (packageCounts[packageId] > 0) {
+        // Nur das letzte Vorkommen des packageId entfernen
+        const index = [...selectedPackages].reverse().findIndex(id => id === packageId);
+        if (index !== -1) {
+          const newPackages = [...selectedPackages];
+          newPackages.splice(selectedPackages.length - 1 - index, 1);
+          setSelectedPackages(newPackages);
+        }
+        
+        // Counter reduzieren
+        setPackageCounts(prev => ({
+          ...prev,
+          [packageId]: prev[packageId] - 1
+        }));
+      }
+    }
   };
 
   // Addon hinzufügen/entfernen
@@ -218,6 +244,7 @@ const PackageBuilder: React.FC = () => {
   const getPackageData = () => ({
     selectedProvisionType,
     selectedPackages,
+    packageCounts, // Zähler für die Verkaufsflächen hinzufügen
     selectedAddons,
     rentalDuration,
     totalCost,
@@ -285,9 +312,8 @@ const PackageBuilder: React.FC = () => {
             {packageOptions.map((pkg) => (
               <div
                 key={pkg.id}
-                onClick={() => togglePackage(pkg.id)}
-                className={`border-2 rounded-lg p-4 cursor-pointer transition-all duration-200 ${
-                  selectedPackages.includes(pkg.id)
+                className={`border-2 rounded-lg p-4 transition-all duration-200 ${
+                  (packageCounts[pkg.id] || 0) > 0
                     ? 'border-[#e17564] bg-[#e17564]/5'
                     : 'border-gray-200 hover:border-gray-300'
                 }`}
@@ -298,14 +324,41 @@ const PackageBuilder: React.FC = () => {
                 </div>
                 <p className="text-gray-600 mb-2">{pkg.description}</p>
                 <p className="text-sm text-gray-500 italic">{pkg.detail}</p>
-                <div className="flex justify-end mt-3">
-                  <span className={`px-3 py-1 rounded-full text-sm ${
-                    selectedPackages.includes(pkg.id)
-                      ? 'bg-[#e17564] text-white'
-                      : 'bg-gray-200 text-gray-700'
-                  }`}>
-                    {selectedPackages.includes(pkg.id) ? 'Ausgewählt' : 'Auswählen'}
-                  </span>
+                
+                <div className="flex justify-between items-center mt-4">
+                  {/* Anzahl und Steuerelemente */}
+                  <div className="flex items-center">
+                    {(packageCounts[pkg.id] || 0) > 0 && (
+                      <div className="flex items-center bg-[#e17564]/10 text-[#e17564] px-3 py-1 rounded-full font-medium">
+                        <span>Anzahl: {packageCounts[pkg.id] || 0}</span>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Steuerelemente zum Hinzufügen/Entfernen */}
+                  <div className="flex items-center space-x-2">
+                    {(packageCounts[pkg.id] || 0) > 0 && (
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          togglePackage(pkg.id, false);
+                        }}
+                        className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-300 hover:bg-gray-100"
+                      >
+                        <span className="text-gray-700 font-bold">-</span>
+                      </button>
+                    )}
+                    
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        togglePackage(pkg.id, true);
+                      }}
+                      className="w-8 h-8 flex items-center justify-center rounded-full bg-[#e17564] text-white hover:bg-[#e17564]/90"
+                    >
+                      <span className="font-bold">+</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -438,13 +491,29 @@ const PackageBuilder: React.FC = () => {
               ({totalCost.provision}%)
             </span>
           </div>
-          <div className="flex justify-between items-center mb-3">
-            <span className="text-gray-600">Ausgewählte Flächen:</span>
-            <span className="font-medium">
-              {selectedPackages.length > 0
-                ? selectedPackages.length
-                : 'Keine ausgewählt'}
-            </span>
+          <div className="mb-3">
+            <div className="flex justify-between items-center mb-1">
+              <span className="text-gray-600">Ausgewählte Flächen:</span>
+              <span className="font-medium">
+                {Object.values(packageCounts).reduce((sum, count) => sum + count, 0) > 0
+                  ? `${Object.values(packageCounts).reduce((sum, count) => sum + count, 0)} Fläche(n)`
+                  : 'Keine ausgewählt'}
+              </span>
+            </div>
+            {Object.values(packageCounts).reduce((sum, count) => sum + count, 0) > 0 && (
+              <div className="text-sm text-gray-500 mt-1">
+                {Object.entries(packageCounts).map(([id, count]) => {
+                  if (count <= 0) return null;
+                  const pkg = packageOptions.find(p => p.id === id);
+                  return pkg ? (
+                    <div key={id} className="flex justify-between">
+                      <span>{count}x {pkg.name}</span>
+                      <span className="font-medium">{(pkg.price * count).toFixed(2)}€</span>
+                    </div>
+                  ) : null;
+                }).filter(Boolean)}
+              </div>
+            )}
           </div>
           <div className="flex justify-between items-center mb-3">
             <span className="text-gray-600">Zusatzoptionen:</span>
@@ -474,10 +543,10 @@ const PackageBuilder: React.FC = () => {
         <div className="flex justify-center">
           <button
             onClick={() => setShowRegistrationModal(true)}
-            disabled={selectedPackages.length === 0}
+            disabled={Object.values(packageCounts).reduce((sum, count) => sum + count, 0) === 0}
             className={`bg-[#e17564] text-white px-6 py-3 rounded-lg font-medium
               transition-all duration-200 flex items-center gap-2
-              ${selectedPackages.length === 0
+              ${Object.values(packageCounts).reduce((sum, count) => sum + count, 0) === 0
                 ? 'opacity-50 cursor-not-allowed'
                 : 'hover:bg-[#e17564]/90 transform hover:scale-105'
               }`}

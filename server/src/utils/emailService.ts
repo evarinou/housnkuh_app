@@ -1,10 +1,10 @@
-// server/src/utils/emailService.ts - Erweitert um sendVendorWelcomeEmail
-import nodemailer from 'nodemailer';
-import dotenv from 'dotenv';
+// server/src/utils/emailService.ts - Korrigierte Version
+import * as nodemailer from 'nodemailer';
+import * as dotenv from 'dotenv';
 
 dotenv.config();
 
-// Erweiterte E-Mail-Service-Konfiguration mit Debugging
+// Erweiterte E-Mail-Service-Konfiguration mit Debugging und Verbindungstests
 const createTransporter = () => {
   const config = {
     host: process.env.EMAIL_HOST,
@@ -15,7 +15,10 @@ const createTransporter = () => {
       pass: process.env.EMAIL_PASS
     },
     debug: true, // Debug-Logs aktivieren
-    logger: true // Detaillierte Logs
+    logger: true, // Detaillierte Logs
+    tls: {
+      rejectUnauthorized: false // Erlaubt Verbindungen zu Servern mit selbst-signierten Zertifikaten
+    }
   };
   
   console.log('Creating email transporter with config:', {
@@ -46,6 +49,14 @@ export const testEmailConnection = async (): Promise<boolean> => {
 export const sendNewsletterConfirmation = async (to: string, token: string, type: string): Promise<boolean> => {
   try {
     console.log(`Sending newsletter confirmation to: ${to}, type: ${type}`);
+    
+    // Fake success in development mode if email settings are not available
+    if (process.env.NODE_ENV === 'development' && 
+        (!process.env.EMAIL_HOST || !process.env.EMAIL_USER || !process.env.EMAIL_PASS)) {
+      console.warn('⚠️ Running in development mode without email configuration');
+      console.log('🔗 Confirmation URL would be:', `${process.env.FRONTEND_URL || 'http://localhost:3000'}/newsletter/confirm?token=${token}&type=${type}`);
+      return true; // Return success in development mode
+    }
     
     const transporter = createTransporter();
     const baseUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
@@ -101,19 +112,35 @@ export const sendNewsletterConfirmation = async (to: string, token: string, type
       subject: mailOptions.subject
     });
     
-    const result = await transporter.sendMail(mailOptions);
-    console.log('Email sent successfully:', result.messageId);
-    
-    return true;
+    try {
+      const result = await transporter.sendMail(mailOptions);
+      console.log('Email sent successfully:', result.messageId);
+      return true;
+    } catch (emailError) {
+      console.error('Email sending error:', emailError);
+      
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('⚠️ In development mode, treating email as sent successfully');
+        console.log('🔗 Confirmation URL would be:', confirmUrl);
+        return true; // Return success in development mode
+      }
+      
+      return false;
+    }
   } catch (error) {
     if (error instanceof Error) {
       console.error('Detailed email error:', {
         message: error.message,
-        // Optionally add more properties if you know the error type
       });
     } else {
       console.error('Detailed email error:', error);
     }
+    
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('⚠️ In development mode, treating email as sent successfully');
+      return true; // Return success in development mode
+    }
+    
     return false;
   }
 };

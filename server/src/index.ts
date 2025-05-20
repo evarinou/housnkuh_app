@@ -31,7 +31,7 @@ app.get('/', (req, res) => {
 });
 
 // Server starten
-const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => {
-  console.log(`Server läuft auf Port ${PORT}`);
+const PORT = parseInt(process.env.PORT || '4000', 10);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server läuft auf Port ${PORT} auf allen Interfaces`);
 });

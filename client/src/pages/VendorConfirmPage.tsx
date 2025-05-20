@@ -27,6 +27,7 @@ const VendorConfirmPage: React.FC = () => {
       try {
         const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
         
+        // Using the token as a path parameter to match the API's route definition
         const response = await axios.get(`${apiUrl}/vendor-auth/confirm/${token}`);
         
         if (response.data.success) {

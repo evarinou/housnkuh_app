@@ -39,12 +39,22 @@ export const registerVendorWithBooking = async (req: Request, res: Response): Pr
       return;
     }
     
+    // E-Mail-Format validieren
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      res.status(400).json({ 
+        success: false, 
+        message: 'Bitte geben Sie eine gültige E-Mail-Adresse ein' 
+      });
+      return;
+    }
+    
     // Prüfen, ob E-Mail bereits existiert
     const existingUser = await User.findOne({ 'kontakt.email': email });
     if (existingUser && existingUser.isFullAccount) {
       res.status(400).json({ 
         success: false, 
-        message: 'Ein Account mit dieser E-Mail existiert bereits' 
+        message: 'Ein vollständiger Account mit dieser E-Mail existiert bereits. Bitte melden Sie sich an.' 
       });
       return;
     }
@@ -65,13 +75,54 @@ export const registerVendorWithBooking = async (req: Request, res: Response): Pr
     let user;
     if (existingUser && !existingUser.isFullAccount) {
       // Existierenden Newsletter-Account zu vollständigem Account erweitern
+      console.log(`Erweiterung eines bestehenden Newsletter-Accounts (${existingUser._id}) zu einem Vendor-Account`);
+      
       user = existingUser;
       user.username = username;
       user.password = hashedPassword;
       user.isFullAccount = true;
       user.isVendor = true;
+      
+      // Aktualisiere den Kontakt mit neuen Daten, aber behalte vorhandene Newsletter-Einstellungen bei
+      const existingNewsletterConfirmed = user.kontakt.newsletterConfirmed;
+      
+      user.kontakt = {
+        ...user.kontakt,
+        name,
+        telefon,
+        newslettertype: 'vendor',
+        confirmationToken: emailConfirmationToken,
+        tokenExpires,
+        status: 'pending',
+        // Newsletter-Status beibehalten, falls bereits bestätigt
+        newsletterConfirmed: existingNewsletterConfirmed
+      };
+      
+      // Adresse hinzufügen
+      user.adressen = [
+        {
+          adresstyp: 'Hauptadresse',
+          strasse,
+          hausnummer,
+          plz,
+          ort,
+          telefon,
+          email,
+          name1: name,
+          name2: unternehmen || ''
+        }
+      ];
+      
+      // Buchung hinzufügen
+      user.pendingBooking = {
+        packageData,
+        createdAt: new Date(),
+        status: 'pending'
+      };
     } else {
       // Neuen Account erstellen
+      console.log('Erstellen eines neuen Vendor-Accounts');
+      
       user = new User({
         username,
         password: hashedPassword,

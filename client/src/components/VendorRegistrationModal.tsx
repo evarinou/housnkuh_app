@@ -81,15 +81,24 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = ({
     }));
   };
 
+  const validateEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
   const validateStep = (stepNumber: number): boolean => {
     switch (stepNumber) {
       case 1:
         if (isLogin) {
-          return formData.email !== '' && formData.password !== '';
+          return formData.email !== '' && 
+                 validateEmail(formData.email) && 
+                 formData.password !== '';
         } else {
           return (
             formData.email.trim() !== '' &&
+            validateEmail(formData.email) &&
             formData.password.trim() !== '' &&
+            formData.password.length >= 6 && // Mindestlänge für sicheres Passwort
             formData.confirmPassword.trim() !== '' &&
             formData.password === formData.confirmPassword
           );
@@ -115,7 +124,24 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = ({
       setError('');
       setStep(step + 1);
     } else {
-      setError('Bitte füllen Sie alle Pflichtfelder aus');
+      // Detailliertere Fehlermeldungen je nach Schritt
+      if (step === 1) {
+        if (!formData.email.trim() || !validateEmail(formData.email)) {
+          setError('Bitte geben Sie eine gültige E-Mail-Adresse ein');
+        } else if (!isLogin && formData.password.length < 6) {
+          setError('Das Passwort muss mindestens 6 Zeichen lang sein');
+        } else if (!isLogin && formData.password !== formData.confirmPassword) {
+          setError('Die Passwörter stimmen nicht überein');
+        } else {
+          setError('Bitte füllen Sie alle Pflichtfelder korrekt aus');
+        }
+      } else if (step === 2) {
+        setError('Bitte geben Sie Ihren vollständigen Namen ein');
+      } else if (step === 3) {
+        setError('Bitte füllen Sie alle Adressfelder aus');
+      } else {
+        setError('Bitte füllen Sie alle Pflichtfelder aus');
+      }
     }
   };
 
@@ -199,11 +225,23 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = ({
                   name="email"
                   value={formData.email}
                   onChange={handleInputChange}
-                  className="pl-10 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  className={`pl-10 w-full p-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent
+                    ${formData.email && !validateEmail(formData.email) 
+                      ? 'border-red-300 bg-red-50' 
+                      : 'border-gray-300'}`}
                   placeholder="ihre.email@example.com"
                   required
+                  autoComplete="email"
                 />
               </div>
+              {formData.email && !validateEmail(formData.email) && (
+                <p className="mt-1 text-sm text-red-600">
+                  Bitte geben Sie eine gültige E-Mail-Adresse ein
+                </p>
+              )}
+              <p className="mt-1 text-xs text-gray-500">
+                Wenn Sie bereits im Newsletter angemeldet sind, können Sie dieselbe E-Mail-Adresse verwenden.
+              </p>
             </div>
 
             <div>
@@ -218,9 +256,13 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = ({
                   name="password"
                   value={formData.password}
                   onChange={handleInputChange}
-                  className="pl-10 pr-10 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="Ihr Passwort"
+                  className={`pl-10 pr-10 w-full p-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent
+                    ${!isLogin && formData.password && formData.password.length < 6
+                      ? 'border-red-300 bg-red-50'
+                      : 'border-gray-300'}`}
+                  placeholder={isLogin ? "Ihr Passwort" : "Mind. 6 Zeichen"}
                   required
+                  autoComplete={isLogin ? "current-password" : "new-password"}
                 />
                 <button
                   type="button"
@@ -230,6 +272,11 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = ({
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
+              {!isLogin && formData.password && formData.password.length < 6 && (
+                <p className="mt-1 text-sm text-red-600">
+                  Das Passwort muss mindestens 6 Zeichen lang sein
+                </p>
+              )}
             </div>
 
             {!isLogin && (
@@ -245,9 +292,13 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = ({
                     name="confirmPassword"
                     value={formData.confirmPassword}
                     onChange={handleInputChange}
-                    className="pl-10 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                    className={`pl-10 w-full p-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent
+                      ${formData.password && formData.confirmPassword && formData.password !== formData.confirmPassword
+                        ? 'border-red-300 bg-red-50'
+                        : 'border-gray-300'}`}
                     placeholder="Passwort wiederholen"
                     required
+                    autoComplete="new-password"
                   />
                 </div>
                 {formData.password && formData.confirmPassword && formData.password !== formData.confirmPassword && (
