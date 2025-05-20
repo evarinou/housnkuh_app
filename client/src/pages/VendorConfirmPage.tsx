@@ -28,6 +28,8 @@ const VendorConfirmPage: React.FC = () => {
         const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
         
         // Using the token as a path parameter to match the API's route definition
+        // The email sends a URL with query parameter ?token=xyz but we need to use it in the path /:token
+        console.log(`Confirming vendor email with token: ${token}`);
         const response = await axios.get(`${apiUrl}/vendor-auth/confirm/${token}`);
         
         if (response.data.success) {

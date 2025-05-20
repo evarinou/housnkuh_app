@@ -150,6 +150,14 @@ export const sendVendorWelcomeEmail = async (to: string, token: string, packageD
   try {
     console.log(`Sending vendor welcome email to: ${to}`);
     
+    // Fake success in development mode if email settings are not available
+    if (process.env.NODE_ENV === 'development' && 
+        (!process.env.EMAIL_HOST || !process.env.EMAIL_USER || !process.env.EMAIL_PASS)) {
+      console.warn('⚠️ Running in development mode without email configuration');
+      console.log('🔗 Vendor confirmation URL would be:', `${process.env.FRONTEND_URL || 'http://localhost:3000'}/vendor/confirm?token=${token}`);
+      return true; // Return success in development mode
+    }
+    
     const transporter = createTransporter();
     const baseUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
     const confirmUrl = `${baseUrl}/vendor/confirm?token=${token}`;
@@ -283,10 +291,21 @@ export const sendVendorWelcomeEmail = async (to: string, token: string, packageD
       subject: mailOptions.subject
     });
     
-    const result = await transporter.sendMail(mailOptions);
-    console.log('Vendor welcome email sent successfully:', result.messageId);
-    
-    return true;
+    try {
+      const result = await transporter.sendMail(mailOptions);
+      console.log('Vendor welcome email sent successfully:', result.messageId);
+      return true;
+    } catch (emailError) {
+      console.error('Vendor email sending error:', emailError);
+      
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('⚠️ In development mode, treating vendor email as sent successfully');
+        console.log('🔗 Vendor confirmation URL would be:', confirmUrl);
+        return true; // Return success in development mode
+      }
+      
+      return false;
+    }
   } catch (error) {
     if (error instanceof Error) {
       console.error('Detailed vendor email error:', {
@@ -295,6 +314,12 @@ export const sendVendorWelcomeEmail = async (to: string, token: string, packageD
     } else {
       console.error('Detailed vendor email error:', error);
     }
+    
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('⚠️ In development mode, treating vendor email as sent successfully');
+      return true; // Return success in development mode
+    }
+    
     return false;
   }
 };
