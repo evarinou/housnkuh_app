@@ -1,6 +1,6 @@
 // client/src/pages/admin/MietfaecherPage.tsx
-import React, { useState, useEffect } from 'react';
-import { Package, Search, Filter, Edit, Trash2, Plus, CheckCircle, XCircle, Tag } from 'lucide-react';
+import React, { useState, useEffect, FormEvent } from 'react';
+import { Package, Search, Filter, Edit, Trash2, Plus, CheckCircle, XCircle, Tag, X, Save } from 'lucide-react';
 import axios from 'axios';
 
 interface Mietfach {
@@ -189,10 +189,186 @@ const MietfaecherPage: React.FC = () => {
     }
   };
   
+  // Form state für das Bearbeiten/Hinzufügen eines Mietfachs
+  const [formData, setFormData] = useState<{
+    name: string;
+    beschreibung: string;
+    typ: string;
+    flaeche: number;
+    einheit: string;
+    preis: number;
+    verfuegbar: boolean;
+    standort: string;
+    features: string;
+  }>({
+    name: '',
+    beschreibung: '',
+    typ: 'regal',
+    flaeche: 1,
+    einheit: 'm²',
+    preis: 100,
+    verfuegbar: true,
+    standort: '',
+    features: ''
+  });
+  
+  // Form Reset und Initialisierung
+  const resetForm = () => {
+    setFormData({
+      name: '',
+      beschreibung: '',
+      typ: 'regal',
+      flaeche: 1,
+      einheit: 'm²',
+      preis: 100,
+      verfuegbar: true,
+      standort: '',
+      features: ''
+    });
+  };
+  
   // Mietfach bearbeiten (Modal öffnen)
   const handleEditMietfach = (mietfach: Mietfach) => {
     setCurrentMietfach(mietfach);
+    setFormData({
+      name: mietfach.name,
+      beschreibung: mietfach.beschreibung,
+      typ: mietfach.typ,
+      flaeche: mietfach.groesse.flaeche,
+      einheit: mietfach.groesse.einheit,
+      preis: mietfach.preis,
+      verfuegbar: mietfach.verfuegbar,
+      standort: mietfach.standort,
+      features: mietfach.features.join(', ')
+    });
     setShowEditModal(true);
+  };
+  
+  // Hinzufügen-Modal öffnen
+  const handleAddMietfach = () => {
+    resetForm();
+    setShowAddModal(true);
+  };
+  
+  // Änderungen an einem existierenden Mietfach speichern
+  const handleSaveChanges = async (e: FormEvent) => {
+    e.preventDefault();
+    
+    if (!currentMietfach) return;
+    
+    try {
+      // Features String zu Array konvertieren
+      const featuresArray = formData.features
+        .split(',')
+        .map(item => item.trim())
+        .filter(item => item.length > 0);
+      
+      // Aktualisiertes Mietfach Objekt
+      const updatedMietfach: Mietfach = {
+        ...currentMietfach,
+        name: formData.name,
+        beschreibung: formData.beschreibung,
+        typ: formData.typ,
+        groesse: {
+          flaeche: formData.flaeche,
+          einheit: formData.einheit
+        },
+        preis: formData.preis,
+        verfuegbar: formData.verfuegbar,
+        standort: formData.standort,
+        features: featuresArray
+      };
+      
+      // Hier später durch API-Aufruf ersetzen
+      // const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+      // await axios.put(`${apiUrl}/admin/mietfaecher/${currentMietfach._id}`, updatedMietfach);
+      
+      // Mock-Implementation (lokales State Update)
+      setMietfaecher(prev => 
+        prev.map(mietfach => 
+          mietfach._id === currentMietfach._id ? updatedMietfach : mietfach
+        )
+      );
+      
+      setShowEditModal(false);
+      
+      // Erfolgsmeldung könnte hier hinzugefügt werden
+      
+    } catch (err) {
+      alert('Fehler beim Speichern der Änderungen');
+      console.error('Error saving changes:', err);
+    }
+  };
+  
+  // Neues Mietfach hinzufügen
+  const handleAddNewMietfach = async (e: FormEvent) => {
+    e.preventDefault();
+    
+    try {
+      // Features String zu Array konvertieren
+      const featuresArray = formData.features
+        .split(',')
+        .map(item => item.trim())
+        .filter(item => item.length > 0);
+      
+      // Neues Mietfach Objekt
+      // In einer realen Implementation würde die ID vom Server generiert
+      const newMietfach: Mietfach = {
+        _id: `temp-${Date.now()}`, // Temporäre ID
+        name: formData.name,
+        beschreibung: formData.beschreibung,
+        typ: formData.typ,
+        groesse: {
+          flaeche: formData.flaeche,
+          einheit: formData.einheit
+        },
+        preis: formData.preis,
+        verfuegbar: formData.verfuegbar,
+        standort: formData.standort,
+        features: featuresArray,
+        createdAt: new Date().toISOString()
+      };
+      
+      // Hier später durch API-Aufruf ersetzen
+      // const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+      // const response = await axios.post(`${apiUrl}/admin/mietfaecher`, newMietfach);
+      // const savedMietfach = response.data.mietfach;
+      
+      // Mock-Implementation (lokales State Update)
+      setMietfaecher(prev => [...prev, newMietfach]);
+      
+      setShowAddModal(false);
+      resetForm();
+      
+      // Erfolgsmeldung könnte hier hinzugefügt werden
+      
+    } catch (err) {
+      alert('Fehler beim Hinzufügen des Mietfachs');
+      console.error('Error adding mietfach:', err);
+    }
+  };
+  
+  // Form Input Handler
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value, type } = e.target;
+    
+    if (type === 'checkbox') {
+      const checkbox = e.target as HTMLInputElement;
+      setFormData({
+        ...formData,
+        [name]: checkbox.checked
+      });
+    } else if (type === 'number') {
+      setFormData({
+        ...formData,
+        [name]: parseFloat(value)
+      });
+    } else {
+      setFormData({
+        ...formData,
+        [name]: value
+      });
+    }
   };
   
   // Mietfach-Typ Anzeige formatieren
@@ -251,7 +427,7 @@ const MietfaecherPage: React.FC = () => {
         <h1 className="text-2xl font-bold">Mietfächer verwalten</h1>
         
         <button
-          onClick={() => setShowAddModal(true)}
+          onClick={handleAddMietfach}
           className="flex items-center px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90"
         >
           <Plus className="h-5 w-5 mr-2" />
@@ -468,38 +644,384 @@ const MietfaecherPage: React.FC = () => {
         )}
       </div>
       
-      {/* Add Mietfach Modal (Placeholder) */}
+      {/* Add Mietfach Modal */}
       {showAddModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-lg">
-            <h2 className="text-xl font-bold mb-4">Neues Mietfach hinzufügen</h2>
-            <p className="text-gray-500 mb-4">Diese Funktion wird in einer zukünftigen Version implementiert.</p>
-            <div className="flex justify-end">
+          <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold">Neues Mietfach hinzufügen</h2>
               <button
                 onClick={() => setShowAddModal(false)}
-                className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
+                className="text-gray-400 hover:text-gray-600"
               >
-                Schließen
+                <X className="h-6 w-6" />
               </button>
             </div>
+            
+            <form onSubmit={handleAddNewMietfach}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                {/* Name */}
+                <div className="col-span-2">
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                    Name *
+                  </label>
+                  <input
+                    type="text"
+                    id="name"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary"
+                    required
+                  />
+                </div>
+                
+                {/* Typ */}
+                <div>
+                  <label htmlFor="typ" className="block text-sm font-medium text-gray-700 mb-1">
+                    Typ *
+                  </label>
+                  <select
+                    id="typ"
+                    name="typ"
+                    value={formData.typ}
+                    onChange={handleInputChange}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary"
+                    required
+                  >
+                    <option value="regal">Regal</option>
+                    <option value="kuehlregal">Kühlregal</option>
+                    <option value="vitrine">Vitrine</option>
+                  </select>
+                </div>
+                
+                {/* Standort */}
+                <div>
+                  <label htmlFor="standort" className="block text-sm font-medium text-gray-700 mb-1">
+                    Standort *
+                  </label>
+                  <input
+                    type="text"
+                    id="standort"
+                    name="standort"
+                    value={formData.standort}
+                    onChange={handleInputChange}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary"
+                    required
+                    placeholder="z.B. Eingangsbereich, Mitte, etc."
+                  />
+                </div>
+                
+                {/* Fläche und Einheit */}
+                <div className="flex space-x-2">
+                  <div className="flex-grow">
+                    <label htmlFor="flaeche" className="block text-sm font-medium text-gray-700 mb-1">
+                      Fläche *
+                    </label>
+                    <input
+                      type="number"
+                      id="flaeche"
+                      name="flaeche"
+                      value={formData.flaeche}
+                      onChange={handleInputChange}
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary"
+                      required
+                      min="0.1"
+                      step="0.1"
+                    />
+                  </div>
+                  <div className="w-24">
+                    <label htmlFor="einheit" className="block text-sm font-medium text-gray-700 mb-1">
+                      Einheit
+                    </label>
+                    <select
+                      id="einheit"
+                      name="einheit"
+                      value={formData.einheit}
+                      onChange={handleInputChange}
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary"
+                    >
+                      <option value="m²">m²</option>
+                      <option value="m">m</option>
+                      <option value="Stück">Stück</option>
+                    </select>
+                  </div>
+                </div>
+                
+                {/* Preis */}
+                <div>
+                  <label htmlFor="preis" className="block text-sm font-medium text-gray-700 mb-1">
+                    Preis (€/Monat) *
+                  </label>
+                  <input
+                    type="number"
+                    id="preis"
+                    name="preis"
+                    value={formData.preis}
+                    onChange={handleInputChange}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary"
+                    required
+                    min="0"
+                    step="0.01"
+                  />
+                </div>
+                
+                {/* Verfügbar */}
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="verfuegbar"
+                    name="verfuegbar"
+                    checked={formData.verfuegbar}
+                    onChange={(e) => setFormData({...formData, verfuegbar: e.target.checked})}
+                    className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+                  />
+                  <label htmlFor="verfuegbar" className="ml-2 block text-sm font-medium text-gray-700">
+                    Verfügbar
+                  </label>
+                </div>
+                
+                {/* Beschreibung */}
+                <div className="col-span-2">
+                  <label htmlFor="beschreibung" className="block text-sm font-medium text-gray-700 mb-1">
+                    Beschreibung
+                  </label>
+                  <textarea
+                    id="beschreibung"
+                    name="beschreibung"
+                    value={formData.beschreibung}
+                    onChange={handleInputChange}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary"
+                    rows={3}
+                  />
+                </div>
+                
+                {/* Features */}
+                <div className="col-span-2">
+                  <label htmlFor="features" className="block text-sm font-medium text-gray-700 mb-1">
+                    Features (durch Kommas getrennt)
+                  </label>
+                  <input
+                    type="text"
+                    id="features"
+                    name="features"
+                    value={formData.features}
+                    onChange={handleInputChange}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary"
+                    placeholder="z.B. Beleuchtet, Abschließbar, Klimatisiert"
+                  />
+                  <p className="mt-1 text-xs text-gray-500">Geben Sie die Merkmale durch Kommas getrennt ein.</p>
+                </div>
+              </div>
+              
+              <div className="flex justify-end space-x-2 mt-6">
+                <button
+                  type="button"
+                  onClick={() => setShowAddModal(false)}
+                  className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
+                >
+                  Abbrechen
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 flex items-center"
+                >
+                  <Save className="h-5 w-5 mr-2" />
+                  Speichern
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
       
-      {/* Edit Mietfach Modal (Placeholder) */}
+      {/* Edit Mietfach Modal */}
       {showEditModal && currentMietfach && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-lg">
-            <h2 className="text-xl font-bold mb-4">Mietfach bearbeiten: {currentMietfach.name}</h2>
-            <p className="text-gray-500 mb-4">Diese Funktion wird in einer zukünftigen Version implementiert.</p>
-            <div className="flex justify-end">
+          <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold">Mietfach bearbeiten: {currentMietfach.name}</h2>
               <button
                 onClick={() => setShowEditModal(false)}
-                className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
+                className="text-gray-400 hover:text-gray-600"
               >
-                Schließen
+                <X className="h-6 w-6" />
               </button>
             </div>
+            
+            <form onSubmit={handleSaveChanges}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                {/* Name */}
+                <div className="col-span-2">
+                  <label htmlFor="edit-name" className="block text-sm font-medium text-gray-700 mb-1">
+                    Name *
+                  </label>
+                  <input
+                    type="text"
+                    id="edit-name"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary"
+                    required
+                  />
+                </div>
+                
+                {/* Typ */}
+                <div>
+                  <label htmlFor="edit-typ" className="block text-sm font-medium text-gray-700 mb-1">
+                    Typ *
+                  </label>
+                  <select
+                    id="edit-typ"
+                    name="typ"
+                    value={formData.typ}
+                    onChange={handleInputChange}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary"
+                    required
+                  >
+                    <option value="regal">Regal</option>
+                    <option value="kuehlregal">Kühlregal</option>
+                    <option value="vitrine">Vitrine</option>
+                  </select>
+                </div>
+                
+                {/* Standort */}
+                <div>
+                  <label htmlFor="edit-standort" className="block text-sm font-medium text-gray-700 mb-1">
+                    Standort *
+                  </label>
+                  <input
+                    type="text"
+                    id="edit-standort"
+                    name="standort"
+                    value={formData.standort}
+                    onChange={handleInputChange}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary"
+                    required
+                    placeholder="z.B. Eingangsbereich, Mitte, etc."
+                  />
+                </div>
+                
+                {/* Fläche und Einheit */}
+                <div className="flex space-x-2">
+                  <div className="flex-grow">
+                    <label htmlFor="edit-flaeche" className="block text-sm font-medium text-gray-700 mb-1">
+                      Fläche *
+                    </label>
+                    <input
+                      type="number"
+                      id="edit-flaeche"
+                      name="flaeche"
+                      value={formData.flaeche}
+                      onChange={handleInputChange}
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary"
+                      required
+                      min="0.1"
+                      step="0.1"
+                    />
+                  </div>
+                  <div className="w-24">
+                    <label htmlFor="edit-einheit" className="block text-sm font-medium text-gray-700 mb-1">
+                      Einheit
+                    </label>
+                    <select
+                      id="edit-einheit"
+                      name="einheit"
+                      value={formData.einheit}
+                      onChange={handleInputChange}
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary"
+                    >
+                      <option value="m²">m²</option>
+                      <option value="m">m</option>
+                      <option value="Stück">Stück</option>
+                    </select>
+                  </div>
+                </div>
+                
+                {/* Preis */}
+                <div>
+                  <label htmlFor="edit-preis" className="block text-sm font-medium text-gray-700 mb-1">
+                    Preis (€/Monat) *
+                  </label>
+                  <input
+                    type="number"
+                    id="edit-preis"
+                    name="preis"
+                    value={formData.preis}
+                    onChange={handleInputChange}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary"
+                    required
+                    min="0"
+                    step="0.01"
+                  />
+                </div>
+                
+                {/* Verfügbar */}
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="edit-verfuegbar"
+                    name="verfuegbar"
+                    checked={formData.verfuegbar}
+                    onChange={(e) => setFormData({...formData, verfuegbar: e.target.checked})}
+                    className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+                  />
+                  <label htmlFor="edit-verfuegbar" className="ml-2 block text-sm font-medium text-gray-700">
+                    Verfügbar
+                  </label>
+                </div>
+                
+                {/* Beschreibung */}
+                <div className="col-span-2">
+                  <label htmlFor="edit-beschreibung" className="block text-sm font-medium text-gray-700 mb-1">
+                    Beschreibung
+                  </label>
+                  <textarea
+                    id="edit-beschreibung"
+                    name="beschreibung"
+                    value={formData.beschreibung}
+                    onChange={handleInputChange}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary"
+                    rows={3}
+                  />
+                </div>
+                
+                {/* Features */}
+                <div className="col-span-2">
+                  <label htmlFor="edit-features" className="block text-sm font-medium text-gray-700 mb-1">
+                    Features (durch Kommas getrennt)
+                  </label>
+                  <input
+                    type="text"
+                    id="edit-features"
+                    name="features"
+                    value={formData.features}
+                    onChange={handleInputChange}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary"
+                    placeholder="z.B. Beleuchtet, Abschließbar, Klimatisiert"
+                  />
+                  <p className="mt-1 text-xs text-gray-500">Geben Sie die Merkmale durch Kommas getrennt ein.</p>
+                </div>
+              </div>
+              
+              <div className="flex justify-end space-x-2 mt-6">
+                <button
+                  type="button"
+                  onClick={() => setShowEditModal(false)}
+                  className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
+                >
+                  Abbrechen
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 flex items-center"
+                >
+                  <Save className="h-5 w-5 mr-2" />
+                  Änderungen speichern
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
