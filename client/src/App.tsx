@@ -25,6 +25,9 @@ import LoginPage from './pages/admin/LoginPage';
 import SetupPage from './pages/admin/SetupPage';
 import DashboardPage from './pages/admin/DashboardPage';
 import NewsletterPage from './pages/admin/NewsletterPage';
+import UsersPage from './pages/admin/UsersPage';
+import MietfaecherPage from './pages/admin/MietfaecherPage';
+import VertraegeePage from './pages/admin/VertraegeePage';
 import UnauthorizedPage from './pages/admin/UnauthorizedPage';
 
 // Komponente für das Layout mit Conditional Navigation
@@ -52,7 +55,9 @@ const AppContent: React.FC = () => {
           <Route path="/admin" element={<ProtectedRoute />}>
             <Route index element={<DashboardPage />} />
             <Route path="newsletter" element={<NewsletterPage />} />
-            {/* Weitere Admin-Routen können hier hinzugefügt werden */}
+            <Route path="users" element={<UsersPage />} />
+            <Route path="mietfaecher" element={<MietfaecherPage />} />
+            <Route path="vertraege" element={<VertraegeePage />} />
           </Route>
           
           {/* Vendor-Routen */}
