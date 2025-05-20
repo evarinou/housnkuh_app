@@ -1,7 +1,7 @@
 // client/src/components/layout/Navigation.tsx oder Navbar.tsx
 import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, User, LogIn } from 'lucide-react';
 import logo from '../assets/logo.svg';
 
 const Navigation: React.FC = () => {
@@ -82,6 +82,13 @@ const Navigation: React.FC = () => {
             >
               Kontakt
             </NavLink>
+            <NavLink 
+              to="/vendor/login"
+              className="flex items-center text-secondary hover:text-primary font-medium"
+            >
+              <User className="w-4 h-4 mr-1" />
+              <span>Login</span>
+            </NavLink>
           </div>
 
           {/* Mobile Menu Button */}
@@ -147,6 +154,14 @@ const Navigation: React.FC = () => {
             onClick={() => setIsOpen(false)}
           >
             Kontakt
+          </NavLink>
+          <NavLink
+            to="/vendor/login"
+            className="flex items-center px-3 py-2 mt-2 rounded-md font-medium text-secondary hover:bg-gray-100"
+            onClick={() => setIsOpen(false)}
+          >
+            <LogIn className="w-4 h-4 mr-2" />
+            Direktvermarkter Login
           </NavLink>
         </div>
       </div>

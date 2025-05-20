@@ -13,11 +13,14 @@ import VendorsPage from './pages/VendorsPage';
 import PricingPage from './pages/PricingPage';
 import NewsletterConfirmPage from './pages/NewsletterConfirmPage';
 import VendorConfirmPage from './pages/VendorConfirmPage';
+import VendorLoginPage from './pages/VendorLoginPage';
+import VendorDashboardPage from './pages/VendorDashboardPage';
 
 // Admin-Komponenten importieren
 import { AuthProvider } from './contexts/AuthContext';
-import { VendorAuthProvider } from './contexts/VendorAuthContext'; // NEU
+import { VendorAuthProvider } from './contexts/VendorAuthContext';
 import ProtectedRoute from './components/admin/ProtectedRoute';
+import VendorProtectedRoute from './components/vendor/VendorProtectedRoute';
 import LoginPage from './pages/admin/LoginPage';
 import SetupPage from './pages/admin/SetupPage';
 import DashboardPage from './pages/admin/DashboardPage';
@@ -28,15 +31,17 @@ import UnauthorizedPage from './pages/admin/UnauthorizedPage';
 const AppContent: React.FC = () => {
   const location = useLocation();
   
-  // Prüfen, ob wir uns im Admin-Bereich befinden
+  // Prüfen, ob wir uns im Admin- oder Vendor-Bereich befinden
   const isAdminRoute = location.pathname.startsWith('/admin');
+  const isVendorRoute = location.pathname.startsWith('/vendor') && 
+                       !location.pathname.startsWith('/vendor/confirm');
   
   return (
     <div className="flex flex-col min-h-screen">
-      {/* Navigation nur anzeigen, wenn wir NICHT im Admin-Bereich sind */}
-      {!isAdminRoute && <Navigation />}
+      {/* Navigation nur anzeigen, wenn wir NICHT im Admin- oder Vendor-Bereich sind */}
+      {!isAdminRoute && !isVendorRoute && <Navigation />}
       
-      <main className={`flex-grow ${!isAdminRoute ? 'pt-24' : ''}`}>
+      <main className={`flex-grow ${!isAdminRoute && !isVendorRoute ? 'pt-24' : ''}`}>
         <Routes>
           {/* Admin-Routen - ohne Haupt-Navigation */}
           <Route path="/admin/login" element={<LoginPage />} />
@@ -51,7 +56,14 @@ const AppContent: React.FC = () => {
           </Route>
           
           {/* Vendor-Routen */}
+          <Route path="/vendor/login" element={<VendorLoginPage />} />
           <Route path="/vendor/confirm" element={<VendorConfirmPage />} />
+          
+          {/* Geschützte Vendor-Routen */}
+          <Route path="/vendor" element={<VendorProtectedRoute />}>
+            <Route path="dashboard" element={<VendorDashboardPage />} />
+            {/* Weitere Vendor-Routen können hier hinzugefügt werden */}
+          </Route>
           
           {/* Öffentliche Routen - mit Haupt-Navigation */}
           <Route path="/" element={
@@ -70,8 +82,8 @@ const AppContent: React.FC = () => {
         </Routes>
       </main>
       
-      {/* Footer nur anzeigen, wenn wir NICHT im Admin-Bereich sind */}
-      {!isAdminRoute && <Footer />}
+      {/* Footer nur anzeigen, wenn wir NICHT im Admin- oder Vendor-Bereich sind */}
+      {!isAdminRoute && !isVendorRoute && <Footer />}
     </div>
   );
 };
