@@ -49,56 +49,46 @@ const VendorContest: React.FC = () => {
     }
 
     try {
-      // FormData für zuverlässigeren Datentransport
-      const formDataObj = new FormData();
+      // Filter out empty vendor guesses
+      const filteredVendors = formData.guessedVendors.filter(vendor => vendor.trim() !== '');
       
-      // Name, Email, Phone hinzufügen
-      formDataObj.append('name', formData.name);
-      formDataObj.append('email', formData.email);
-      formDataObj.append('phone', formData.phone || '');
-      
-      // Vermutete Vendoren als einzelne Felder
-      formData.guessedVendors.forEach((vendor, index) => {
-        formDataObj.append(`vendor${index+1}`, vendor);
-      });
-      
-      // Auch als Array für PHP-Handler, die JSON verarbeiten
-      formDataObj.append('guessedVendors', JSON.stringify(formData.guessedVendors));
+      // Prepare data for API
+      const apiData = {
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone || undefined,
+        guessedVendors: filteredVendors
+      };
 
-      // Im lokalen Entwicklungsmodus
-      const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-      
-      if (isLocal) {
-        // Simulieren einer erfolgreichen Antwort für Entwicklung
-        setTimeout(() => {
-          setStatus('success');
-        }, 1000);
-        return;
-      }
-      
-      // Verwende den vereinfachten Handler
-      const response = await fetch('/universal-form-handler.php?type=vendor-contest', {
+      // Send to our API
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000';
+      const response = await fetch(`${apiUrl}/api/vendor-contest/submit`, {
         method: 'POST',
-        body: formDataObj
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(apiData)
       });
       
-      // Für Debugging
-      const responseText = await response.text();
-      console.log('Server-Antwort:', responseText);
-      
-      // Versuche JSON zu parsen
-      let data;
-      try {
-        data = JSON.parse(responseText);
-      } catch (parseError) {
-        console.error('JSON-Parsing-Fehler:', parseError);
-        throw new Error('Ungültige Antwort vom Server erhalten');
+      // Check response
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Ein Fehler ist aufgetreten');
       }
       
-      if (data && data.success) {
+      const data = await response.json();
+      
+      if (data.success) {
         setStatus('success');
+        // Reset form
+        setFormData({
+          name: '',
+          email: '',
+          phone: '',
+          guessedVendors: ['', '', '']
+        });
       } else {
-        throw new Error((data && data.message) || 'Ein unbekannter Fehler ist aufgetreten');
+        throw new Error(data.message || 'Ein unbekannter Fehler ist aufgetreten');
       }
     } catch (error) {
       console.error('Fehler beim Absenden:', error);

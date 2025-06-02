@@ -37,6 +37,34 @@ const KontaktSchema = new Schema({
   usrID: String
 });
 
+// Vendor Profile Schema für erweiterte Direktvermarkter-Daten
+const VendorProfileSchema = new Schema({
+  unternehmen: { type: String },
+  beschreibung: { type: String },
+  profilBild: { type: String },
+  oeffnungszeiten: {
+    montag: { type: String },
+    dienstag: { type: String },
+    mittwoch: { type: String },
+    donnerstag: { type: String },
+    freitag: { type: String },
+    samstag: { type: String },
+    sonntag: { type: String }
+  },
+  kategorien: [{ type: String }],
+  slogan: { type: String },
+  website: { type: String },
+  socialMedia: {
+    facebook: { type: String },
+    instagram: { type: String }
+  },
+  verifyStatus: {
+    type: String,
+    enum: ['unverified', 'pending', 'verified'],
+    default: 'unverified'
+  }
+});
+
 // Pending Booking Schema für ausstehende Buchungen
 const PendingBookingSchema = new Schema({
   packageData: { type: Schema.Types.Mixed, required: true },
@@ -82,6 +110,34 @@ const UserSchema = new Schema({
     required: true
   },
   adressen: [AdresseSchema],
+  vendorProfile: VendorProfileSchema, // Vendor-spezifische Profildaten
+  
+  // Trial Period & Pre-Registration System (M001)
+  registrationDate: {
+    type: Date,
+    default: Date.now
+  },
+  registrationStatus: {
+    type: String,
+    enum: ['preregistered', 'trial_active', 'trial_expired', 'active', 'cancelled'],
+    default: function(this: any) {
+      // Vendors starten als "preregistered", normale Users als "active"
+      return this.isVendor ? 'preregistered' : 'active';
+    }
+  },
+  trialStartDate: {
+    type: Date,
+    default: null
+  },
+  trialEndDate: {
+    type: Date,
+    default: null
+  },
+  isPubliclyVisible: {
+    type: Boolean,
+    default: false // Vendors sind standardmäßig nicht öffentlich sichtbar
+  },
+  
   pendingBooking: PendingBookingSchema // Neue Eigenschaft für ausstehende Buchungen
 }, { timestamps: true });
 

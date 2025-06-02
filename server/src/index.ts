@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
+import path from 'path';
 import dotenv from 'dotenv';
 import connectDB from './config/db';
 import routes from './routes';
@@ -21,6 +22,9 @@ app.use(morgan('dev'));
 
 // MongoDB-Verbindung herstellen
 connectDB();
+
+// Statische Dateien für Uploads bereitstellen
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // API-Routen
 app.use('/api', routes);

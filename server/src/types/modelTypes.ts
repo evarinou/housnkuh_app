@@ -28,6 +28,30 @@ export interface IKontakt {
   telefon?: string;
 }
 
+// Vendor Profile Interface für erweiterte Direktvermarkter-Daten
+export interface IVendorProfile {
+  unternehmen?: string;
+  beschreibung?: string;
+  profilBild?: string;
+  oeffnungszeiten?: {
+    montag?: string;
+    dienstag?: string;
+    mittwoch?: string;
+    donnerstag?: string;
+    freitag?: string;
+    samstag?: string;
+    sonntag?: string;
+  };
+  kategorien?: string[];
+  slogan?: string;
+  website?: string;
+  socialMedia?: {
+    facebook?: string;
+    instagram?: string;
+  };
+  verifyStatus?: 'unverified' | 'pending' | 'verified';
+}
+
 export interface IService {
   mietfach: string; // ObjectId als String
   mietbeginn: Date;
@@ -44,6 +68,15 @@ export interface IUser extends Document {
   isVendor?: boolean; // Neu: Flag für Direktvermarkter
   kontakt: IKontakt;
   adressen: IAdresse[];
+  vendorProfile?: IVendorProfile; // Vendor-spezifische Profildaten
+  
+  // Trial Period & Pre-Registration System (M001)
+  registrationDate?: Date; // Datum der Erstregistrierung
+  registrationStatus?: 'preregistered' | 'trial_active' | 'trial_expired' | 'active' | 'cancelled';
+  trialStartDate?: Date; // Startdatum des Probemonats (= storeOpeningDate)
+  trialEndDate?: Date; // Enddatum des Probemonats (= storeOpeningDate + 30 Tage)
+  isPubliclyVisible?: boolean; // Manuelle Freischaltung für öffentliche Sichtbarkeit
+  
   // Buchungsspezifische Felder
   pendingBooking?: {
     packageData: any; // Package-Konfiguration
@@ -57,6 +90,16 @@ export interface IUser extends Document {
 export interface IMietfach extends Document {
   bezeichnung: string;
   typ: string;
+  beschreibung?: string;
+  groesse?: {
+    flaeche: number;
+    einheit: string;
+  };
+  verfuegbar?: boolean;
+  aktuellerVertrag?: string; // ObjectId des aktuellen Vertrags
+  zugewiesenAn?: string; // ObjectId des Direktvermarkters
+  standort?: string;
+  features?: string[];
   createdAt: Date;
   updatedAt: Date;
 }

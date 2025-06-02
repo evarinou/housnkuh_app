@@ -195,6 +195,7 @@ const HomePage: React.FC = () => {
         </motion.div>
       </section>
       
+      
       {/* Construction Banner einfügen */}
       <ConstructionBanner />
 

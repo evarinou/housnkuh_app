@@ -19,6 +19,7 @@ interface VendorAuthContextType {
   logout: () => void;
   checkAuth: () => Promise<boolean>;
   registerWithBooking: (registrationData: any) => Promise<{ success: boolean; message?: string; userId?: string }>;
+  preRegisterVendor: (registrationData: any) => Promise<{ success: boolean; message?: string; userId?: string; openingInfo?: any }>;
 }
 
 const VendorAuthContext = createContext<VendorAuthContextType | undefined>(undefined);
@@ -170,6 +171,36 @@ export const VendorAuthProvider: React.FC<VendorAuthProviderProps> = ({ children
     }
   };
 
+  // Pre-Registrierung für Vendors vor Store-Eröffnung (M001 R001)
+  const preRegisterVendor = async (registrationData: any): Promise<{ success: boolean; message?: string; userId?: string; openingInfo?: any }> => {
+    try {
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+
+      const response = await axios.post(`${apiUrl}/vendor-auth/preregister`, registrationData);
+
+      return {
+        success: response.data.success,
+        message: response.data.message,
+        userId: response.data.userId,
+        openingInfo: response.data.openingInfo
+      };
+    } catch (error) {
+      console.error('Vendor pre-registration error:', error);
+      
+      if (axios.isAxiosError(error) && error.response) {
+        return {
+          success: false,
+          message: error.response.data.message || 'Ein Fehler ist aufgetreten bei der Pre-Registrierung'
+        };
+      }
+      
+      return {
+        success: false,
+        message: 'Verbindungsfehler. Bitte versuchen Sie es später erneut.'
+      };
+    }
+  };
+
   const value = {
     user,
     token,
@@ -178,7 +209,8 @@ export const VendorAuthProvider: React.FC<VendorAuthProviderProps> = ({ children
     login,
     logout,
     checkAuth,
-    registerWithBooking
+    registerWithBooking,
+    preRegisterVendor
   };
 
   return <VendorAuthContext.Provider value={value}>{children}</VendorAuthContext.Provider>;

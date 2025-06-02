@@ -245,6 +245,7 @@ const PackageBuilder: React.FC = () => {
     selectedProvisionType,
     selectedPackages,
     packageCounts, // Zähler für die Verkaufsflächen hinzufügen
+    packageOptions, // Füge die kompletten Paketkonfigurationen hinzu
     selectedAddons,
     rentalDuration,
     totalCost,

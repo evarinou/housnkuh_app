@@ -1,6 +1,7 @@
 // client/src/pages/StandortPage.tsx
 import React from 'react';
 import { MapPin, Clock, Phone, Mail, Car, Bus } from 'lucide-react';
+import { Link } from 'react-router-dom';
 //import SimpleMapComponent from '../components/SimpleMapComponent';
 
 // Hilfsfunktion für Standortmerkmale (Adresse, Öffnungszeiten usw.)
@@ -122,8 +123,8 @@ const StandortPage: React.FC = () => {
 
         <HistorySection />
         
-        {/* Link zur größeren Karte */}
-        <div className="text-center mt-8">
+        {/* Links zur Karte */}
+        <div className="text-center mt-8 space-y-3">
           <a 
             href="https://www.openstreetmap.org/?mlat=50.241120&mlon=11.327709#map=17/50.241120/11.327709" 
             target="_blank" 
@@ -133,6 +134,15 @@ const StandortPage: React.FC = () => {
             <MapPin className="w-4 h-4 mr-1" />
             <span>Größere Karte anzeigen</span>
           </a>
+          
+          <div>
+            <Link
+              to="/standort/karte"
+              className="inline-block mt-4 bg-primary text-white px-6 py-3 rounded-lg hover:bg-primary-700 transition-colors"
+            >
+              Alle Standorte auf Karte anzeigen
+            </Link>
+          </div>
         </div>
       </div>
     </div>

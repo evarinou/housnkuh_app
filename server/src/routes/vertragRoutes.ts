@@ -1,28 +1,28 @@
 import { Router } from 'express';
 import * as vertragController from '../controllers/vertragController';
-// import { auth } from '../middleware/auth'; // Wenn du Auth-Middleware verwendest
+import { auth } from '../middleware/auth';
 
 const router = Router();
 
-// Alle Verträge abrufen
-router.get('/', vertragController.getAllVertraege);
+// Alle Verträge abrufen (nur für Admins)
+router.get('/', auth, vertragController.getAllVertraege);
 
 // Verträge nach Benutzer abrufen
-router.get('/user/:userId', vertragController.getVertraegeByUser);
+router.get('/user/:userId', auth, vertragController.getVertraegeByUser);
 
 // Einzelnen Vertrag abrufen
-router.get('/:id', vertragController.getVertragById);
+router.get('/:id', auth, vertragController.getVertragById);
 
 // Neuen Vertrag erstellen
-router.post('/', vertragController.createVertrag);
+router.post('/', auth, vertragController.createVertrag);
 
 // Vertrag aktualisieren
-router.put('/:id', vertragController.updateVertrag);
+router.put('/:id', auth, vertragController.updateVertrag);
 
 // Service zu Vertrag hinzufügen
-router.post('/:id/services', vertragController.addServiceToVertrag);
+router.post('/:id/services', auth, vertragController.addServiceToVertrag);
 
 // Vertrag löschen
-router.delete('/:id', vertragController.deleteVertrag);
+router.delete('/:id', auth, vertragController.deleteVertrag);
 
 export default router;

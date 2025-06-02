@@ -9,6 +9,7 @@ const router = Router();
 
 // API-Routen (ggf. mit Auth-Middleware schützen)
 router.get('/', mietfachController.getAllMietfaecher);
+router.get('/with-contracts', mietfachController.getAllMietfaecherWithContracts); // Mit Vertragsinformationen
 router.get('/typ', mietfachController.getMietfaecherByTyp); // Filter nach Typ
 router.get('/:id', mietfachController.getMietfachById);
 router.post('/', mietfachController.createMietfach);

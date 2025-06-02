@@ -21,6 +21,21 @@ housnkuh is a regional marketplace platform for direct marketers (Direktvermarkt
 - When debugging issues, focus on fixing the existing implementation, not replacing it
 
 - When something doesn't work, debug and fix it - don't start over with a simple version
+
+### Essential Workflow Commands
+
+**ALWAYS run these commands before considering work complete:**
+
+```bash
+# Test everything works
+cd client && npm test && cd ../server && npm test
+
+# Verify builds succeed
+cd client && npm run build && cd ../server && npm run build
+
+# Check TypeScript compilation
+cd client && npx tsc --noEmit && cd ../server && npx tsc --noEmit
+```
 ### Setup and Installation
 
 ```bash
@@ -57,8 +72,27 @@ npm run build-all
 ### Testing
 
 ```bash
-# Run tests for the client
-cd client && npm run test
+# Run client tests (Jest with React Testing Library)
+cd client && npm test
+
+# Run server tests (Jest with Supertest)
+cd server && npm test
+
+# Run tests in watch mode
+cd client && npm test -- --watch
+cd server && npm run test:watch
+```
+
+### Code Quality
+
+```bash
+# Check TypeScript compilation
+cd client && npx tsc --noEmit
+cd server && npm run build
+
+# Lint code (if configured)
+cd client && npm run lint  # if available
+cd server && npm run lint  # if available
 ```
 
 ## Architecture

@@ -1,7 +1,7 @@
 // client/src/components/vendor/VendorLayout.tsx
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { User, Package, Home, LogOut } from 'lucide-react';
+import { User, Package, Home, LogOut, Settings, CreditCard, FileText } from 'lucide-react';
 import { useVendorAuth } from '../../contexts/VendorAuthContext';
 
 interface VendorLayoutProps {
@@ -78,15 +78,63 @@ const VendorLayout: React.FC<VendorLayoutProps> = ({ children }) => {
                   Dashboard
                 </Link>
                 
-                {/* Weitere Menüpunkte können hier hinzugefügt werden */}
+                <Link
+                  to="/vendor/profile"
+                  className={`flex items-center px-3 py-2 rounded-md text-sm font-medium ${
+                    location.pathname === '/vendor/profile'
+                      ? 'bg-primary/10 text-primary'
+                      : 'text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  <User className="mr-3 h-5 w-5" />
+                  Mein Profil
+                </Link>
                 
                 <Link
-                  to="/"
-                  className="flex items-center px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100"
+                  to="/vendor/contracts"
+                  className={`flex items-center px-3 py-2 rounded-md text-sm font-medium ${
+                    location.pathname === '/vendor/contracts'
+                      ? 'bg-primary/10 text-primary'
+                      : 'text-gray-700 hover:bg-gray-100'
+                  }`}
                 >
-                  <Home className="mr-3 h-5 w-5" />
-                  Zurück zur Website
+                  <FileText className="mr-3 h-5 w-5" />
+                  Meine Verträge
                 </Link>
+                
+                <Link
+                  to="/vendor/payments"
+                  className={`flex items-center px-3 py-2 rounded-md text-sm font-medium ${
+                    location.pathname === '/vendor/payments'
+                      ? 'bg-primary/10 text-primary'
+                      : 'text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  <CreditCard className="mr-3 h-5 w-5" />
+                  Zahlungen
+                </Link>
+                
+                <Link
+                  to="/vendor/settings"
+                  className={`flex items-center px-3 py-2 rounded-md text-sm font-medium ${
+                    location.pathname === '/vendor/settings'
+                      ? 'bg-primary/10 text-primary'
+                      : 'text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  <Settings className="mr-3 h-5 w-5" />
+                  Einstellungen
+                </Link>
+                
+                <div className="pt-4 mt-4 border-t border-gray-200">
+                  <Link
+                    to="/"
+                    className="flex items-center px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100"
+                  >
+                    <Home className="mr-3 h-5 w-5" />
+                    Zurück zur Website
+                  </Link>
+                </div>
               </nav>
             </div>
           </div>

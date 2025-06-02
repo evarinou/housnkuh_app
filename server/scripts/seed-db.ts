@@ -22,6 +22,8 @@ const AdresseSchema = new mongoose.Schema({
 
 const KontaktSchema = new mongoose.Schema({
   name: String,
+  email: String,
+  telefon: String,
   newslettertype: String,
   mailNewsletter: Boolean,
   status: { type: String, enum: ['aktiv', 'inaktiv'] },
@@ -32,7 +34,23 @@ const UserSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   kontakt: KontaktSchema,
-  adressen: [AdresseSchema]
+  adressen: [AdresseSchema],
+  isAdmin: { type: Boolean, default: false },
+  isVendor: { type: Boolean, default: false },
+  isFullAccount: { type: Boolean, default: false },
+  vendorProfile: {
+    unternehmen: String,
+    beschreibung: String,
+    profilBild: String,
+    oeffnungszeiten: Object,
+    kategorien: [String],
+    slogan: String,
+    website: String,
+    socialMedia: Object,
+    verifyStatus: String
+  },
+  emailVerificationToken: String,
+  emailVerified: { type: Boolean, default: false }
 }, { timestamps: true });
 
 const MietfachSchema = new mongoose.Schema({
@@ -61,6 +79,7 @@ const Vertrag = mongoose.model('Vertrag', VertragSchema);
 async function connectDB(): Promise<void> {
   try {
     const mongoURI = process.env.MONGO_URI || 'mongodb://localhost:27017/housnkuh';
+    console.log('Versuche Verbindung zu MongoDB:', mongoURI);
     await mongoose.connect(mongoURI);
     console.log('MongoDB verbunden');
   } catch (error) {
@@ -84,35 +103,106 @@ async function seedDatabase(): Promise<void> {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash('password123', salt);
     
-    // Benutzer erstellen
-    const user1 = new User({
-      username: 'maxmustermann',
+    // Vendor-Benutzer erstellen
+    const vendor1 = new User({
+      username: 'hofmueller',
       password: hashedPassword,
+      isVendor: true,
+      isFullAccount: true,
+      emailVerified: true,
       kontakt: {
-        name: 'Max Mustermann',
+        name: 'Hof Müller',
+        email: 'info@hof-mueller.de',
+        telefon: '+49987654321',
         newslettertype: 'monatlich',
         mailNewsletter: true,
         status: 'aktiv',
-        usrID: 'usr123'
+        usrID: 'vendor001'
       },
       adressen: [
         {
           adresstyp: 'Hauptadresse',
-          strasse: 'Musterstraße',
-          hausnummer: '42',
-          plz: '12345',
-          ort: 'Musterstadt',
-          telefon: '+49123456789',
-          email: 'max@example.com',
-          anrede: 'Herr',
-          name1: 'Max',
-          name2: 'Mustermann'
+          strasse: 'Hofstraße',
+          hausnummer: '1',
+          plz: '54321',
+          ort: 'Bauernhausen',
+          telefon: '+49987654321',
+          email: 'info@hof-mueller.de',
+          anrede: 'Firma',
+          name1: 'Hof',
+          name2: 'Müller'
         }
       ]
     });
     
-    const savedUser = await user1.save();
-    console.log('Benutzer erstellt:', savedUser.username);
+    const vendor2 = new User({
+      username: 'biohof_schmidt',
+      password: hashedPassword,
+      isVendor: true,
+      isFullAccount: true,
+      emailVerified: true,
+      kontakt: {
+        name: 'Biohof Schmidt',
+        email: 'kontakt@biohof-schmidt.de',
+        telefon: '+49555123456',
+        newslettertype: 'wöchentlich',
+        mailNewsletter: true,
+        status: 'aktiv',
+        usrID: 'vendor002'
+      },
+      adressen: [
+        {
+          adresstyp: 'Hauptadresse',
+          strasse: 'Landstraße',
+          hausnummer: '15',
+          plz: '67890',
+          ort: 'Grüntal',
+          telefon: '+49555123456',
+          email: 'kontakt@biohof-schmidt.de',
+          anrede: 'Firma',
+          name1: 'Biohof',
+          name2: 'Schmidt'
+        }
+      ]
+    });
+
+    // Admin-Benutzer erstellen
+    const admin1 = new User({
+      username: 'admin',
+      password: hashedPassword,
+      isAdmin: true,
+      isFullAccount: true,
+      emailVerified: true,
+      kontakt: {
+        name: 'Admin User',
+        email: 'admin@housnkuh.de',
+        telefon: '+49111222333',
+        newslettertype: 'monatlich',
+        mailNewsletter: false,
+        status: 'aktiv',
+        usrID: 'admin001'
+      },
+      adressen: [
+        {
+          adresstyp: 'Hauptadresse',
+          strasse: 'Adminstraße',
+          hausnummer: '1',
+          plz: '10000',
+          ort: 'Adminstadt',
+          telefon: '+49111222333',
+          email: 'admin@housnkuh.de',
+          anrede: 'Herr',
+          name1: 'Admin',
+          name2: 'User'
+        }
+      ]
+    });
+    
+    const savedVendor1 = await vendor1.save();
+    const savedVendor2 = await vendor2.save();
+    const savedAdmin = await admin1.save();
+    console.log('Vendor-Benutzer erstellt:', savedVendor1.username, savedVendor2.username);
+    console.log('Admin-Benutzer erstellt:', savedAdmin.username);
     
     // Mietfächer erstellen
     const mietfach1 = new Mietfach({
@@ -125,13 +215,25 @@ async function seedDatabase(): Promise<void> {
       typ: 'Premium'
     });
     
+    const mietfach3 = new Mietfach({
+      bezeichnung: 'Mietfach C3',
+      typ: 'Standard'
+    });
+    
+    const mietfach4 = new Mietfach({
+      bezeichnung: 'Mietfach D4',
+      typ: 'Premium'
+    });
+    
     const savedMietfach1 = await mietfach1.save();
     const savedMietfach2 = await mietfach2.save();
-    console.log('Mietfächer erstellt:', savedMietfach1.bezeichnung, savedMietfach2.bezeichnung);
+    const savedMietfach3 = await mietfach3.save();
+    const savedMietfach4 = await mietfach4.save();
+    console.log('Mietfächer erstellt:', savedMietfach1.bezeichnung, savedMietfach2.bezeichnung, savedMietfach3.bezeichnung, savedMietfach4.bezeichnung);
     
-    // Vertrag erstellen
+    // Verträge erstellen
     const vertrag1 = new Vertrag({
-      user: savedUser._id,
+      user: savedVendor1._id,
       datum: new Date(),
       services: [
         {
@@ -143,8 +245,42 @@ async function seedDatabase(): Promise<void> {
       ]
     });
     
-    const savedVertrag = await vertrag1.save();
-    console.log('Vertrag erstellt:', savedVertrag._id);
+    const vertrag2 = new Vertrag({
+      user: savedVendor2._id,
+      datum: new Date(new Date().setMonth(new Date().getMonth() - 2)),
+      services: [
+        {
+          mietfach: savedMietfach2._id,
+          mietbeginn: new Date(new Date().setMonth(new Date().getMonth() - 2)),
+          mietende: new Date(new Date().setFullYear(new Date().getFullYear() + 2)),
+          monatspreis: 149.99
+        },
+        {
+          mietfach: savedMietfach3._id,
+          mietbeginn: new Date(),
+          mietende: new Date(new Date().setFullYear(new Date().getFullYear() + 1)),
+          monatspreis: 89.99
+        }
+      ]
+    });
+    
+    const vertrag3 = new Vertrag({
+      user: savedVendor1._id,
+      datum: new Date(new Date().setMonth(new Date().getMonth() - 3)),
+      services: [
+        {
+          mietfach: savedMietfach4._id,
+          mietbeginn: new Date(new Date().setMonth(new Date().getMonth() - 3)),
+          mietende: new Date(new Date().setMonth(new Date().getMonth() + 9)),
+          monatspreis: 199.99
+        }
+      ]
+    });
+    
+    const savedVertrag1 = await vertrag1.save();
+    const savedVertrag2 = await vertrag2.save();
+    const savedVertrag3 = await vertrag3.save();
+    console.log('Verträge erstellt:', savedVertrag1._id, savedVertrag2._id, savedVertrag3._id);
     
     console.log('Datenbankbefüllung abgeschlossen');
     
@@ -162,4 +298,10 @@ async function seedDatabase(): Promise<void> {
 }
 
 // Starte den Seed-Prozess
-module.exports = seedDatabase;
+seedDatabase().then(() => {
+  console.log('Seed-Prozess abgeschlossen');
+  process.exit(0);
+}).catch((error) => {
+  console.error('Fehler beim Seed-Prozess:', error);
+  process.exit(1);
+});

@@ -1,13 +1,17 @@
 // client/src/pages/VendorDashboardPage.tsx
-import React, { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { User, Package, Calendar, CreditCard, AlertTriangle } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { User, Package, Calendar, CreditCard, AlertTriangle, Clock } from 'lucide-react';
 import { useVendorAuth } from '../contexts/VendorAuthContext';
 import VendorLayout from '../components/vendor/VendorLayout';
+import axios from 'axios';
 
 const VendorDashboardPage: React.FC = () => {
   const { user, isAuthenticated, isLoading, logout } = useVendorAuth();
   const navigate = useNavigate();
+  const [storeOpeningDate, setStoreOpeningDate] = useState<Date | null>(null);
+  const [isStoreOpen, setIsStoreOpen] = useState(false);
+  const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0 });
   
   // Wenn nicht authentifiziert und das Laden abgeschlossen ist, zum Login weiterleiten
   useEffect(() => {
@@ -15,6 +19,51 @@ const VendorDashboardPage: React.FC = () => {
       navigate('/vendor/login');
     }
   }, [isLoading, isAuthenticated, navigate]);
+  
+  // Lade Eröffnungsdatum
+  useEffect(() => {
+    const fetchStoreOpening = async () => {
+      try {
+        const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+        const response = await axios.get(`${apiUrl}/public/store-opening`);
+        
+        if (response.data.success && response.data.storeOpening.enabled && response.data.storeOpening.openingDate) {
+          setStoreOpeningDate(new Date(response.data.storeOpening.openingDate));
+          setIsStoreOpen(response.data.storeOpening.isStoreOpen);
+        }
+      } catch (err) {
+        console.error('Error fetching store opening:', err);
+      }
+    };
+    
+    fetchStoreOpening();
+  }, []);
+  
+  // Countdown-Timer
+  useEffect(() => {
+    if (!storeOpeningDate || isStoreOpen) return;
+    
+    const calculateCountdown = () => {
+      const now = new Date().getTime();
+      const openingTime = storeOpeningDate.getTime();
+      const distance = openingTime - now;
+      
+      if (distance > 0) {
+        const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        
+        setCountdown({ days, hours, minutes });
+      } else {
+        setIsStoreOpen(true);
+      }
+    };
+    
+    calculateCountdown();
+    const interval = setInterval(calculateCountdown, 60000); // Update every minute
+    
+    return () => clearInterval(interval);
+  }, [storeOpeningDate, isStoreOpen]);
   
   // Diese Funktion können wir entfernen, da das Logout jetzt im VendorLayout behandelt wird
   
@@ -42,6 +91,43 @@ const VendorDashboardPage: React.FC = () => {
             </div>
           </div>
         </div>
+        
+        {/* Countdown bis zur Eröffnung */}
+        {storeOpeningDate && !isStoreOpen && (
+          <div className="bg-gradient-to-r from-orange-500 to-primary rounded-lg p-6 mb-8 text-white">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-bold mb-2 flex items-center">
+                  <Clock className="w-6 h-6 mr-2" />
+                  Countdown zur Eröffnung
+                </h2>
+                <p className="text-white/90">
+                  Ihr kostenloser Probemonat startet automatisch am{' '}
+                  {storeOpeningDate.toLocaleDateString('de-DE', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                  })}
+                </p>
+              </div>
+              <div className="flex gap-4 text-center">
+                <div className="bg-white/20 rounded-lg p-4">
+                  <div className="text-3xl font-bold">{countdown.days}</div>
+                  <div className="text-sm text-white/80">Tage</div>
+                </div>
+                <div className="bg-white/20 rounded-lg p-4">
+                  <div className="text-3xl font-bold">{countdown.hours}</div>
+                  <div className="text-sm text-white/80">Stunden</div>
+                </div>
+                <div className="bg-white/20 rounded-lg p-4">
+                  <div className="text-3xl font-bold">{countdown.minutes}</div>
+                  <div className="text-sm text-white/80">Minuten</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
         
         {/* Status-Karte für ausstehende Buchung */}
         {user?.hasPendingBooking && (
@@ -154,11 +240,13 @@ const VendorDashboardPage: React.FC = () => {
                   <p className="text-sm text-gray-500">E-Mail</p>
                   <p className="font-medium">{user?.email || '–'}</p>
                 </div>
-                <button
-                  className="mt-2 inline-block px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                <Link
+                  to="/vendor/profile"
+                  className="mt-2 inline-flex items-center px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
                 >
+                  <User className="h-4 w-4 mr-2" />
                   Profil bearbeiten
-                </button>
+                </Link>
               </div>
             </div>
           </div>

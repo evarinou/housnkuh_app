@@ -6,11 +6,52 @@ import Vertrag from '../models/Vertrag';
 export const getAllVertraege = async (req: Request, res: Response): Promise<void> => {
   try {
     const vertraege = await Vertrag.find()
-      .populate('user', 'username kontakt.name')
-      .populate('services.mietfach', 'bezeichnung typ');
+      .populate('user', 'username kontakt.name kontakt.email')
+      .populate('services.mietfach', 'bezeichnung typ beschreibung standort groesse preis')
+      .sort({ createdAt: -1 });
+    
+    // Verträge in das erwartete Frontend-Format transformieren
+    const transformedVertraege = vertraege.map((vertrag: any) => {
+      const user = vertrag.user as any;
+      const services = vertrag.services as any[];
+      
+      // Berechne Gesamtpreis und andere Werte (nur für gültige Mietfächer)
+      const validServices = services.filter(service => service.mietfach);
+      const monthlyTotal = validServices.reduce((sum, service) => sum + (service.monatspreis || 0), 0);
+      const contractDurationMonths = services.length > 0 && services[0].mietende && services[0].mietbeginn 
+        ? Math.ceil((new Date(services[0].mietende).getTime() - new Date(services[0].mietbeginn).getTime()) / (1000 * 60 * 60 * 24 * 30))
+        : 12;
+      const gesamtpreis = monthlyTotal * contractDurationMonths;
+      
+      return {
+        _id: vertrag._id,
+        vertragsnummer: `V${new Date(vertrag.datum).getFullYear()}-${String(vertrag._id).slice(-6)}`,
+        kunde: {
+          _id: user._id,
+          name: user.kontakt?.name || user.username || 'Unbekannt',
+          email: user.kontakt?.email || 'Keine E-Mail'
+        },
+        mietfaecher: validServices.map(service => ({
+          _id: service.mietfach._id,
+          name: service.mietfach.bezeichnung || `Mietfach ${service.mietfach._id}`,
+          typ: service.mietfach.typ || 'unbekannt',
+          preis: service.monatspreis || 0
+        })),
+        startdatum: services.length > 0 ? services[0].mietbeginn : vertrag.datum,
+        enddatum: services.length > 0 && services[0].mietende ? services[0].mietende : new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+        gesamtpreis: gesamtpreis,
+        provision: 5, // Standard-Provision
+        status: 'aktiv', // Default status
+        zahlungsart: 'Überweisung', // Default
+        zahlungsrhythmus: 'monatlich', // Default
+        createdAt: vertrag.createdAt,
+        updatedAt: vertrag.updatedAt
+      };
+    });
+    
     res.json({
       success: true,
-      vertraege
+      vertraege: transformedVertraege
     });
   } catch (err) {
     console.error('Fehler beim Abrufen der Verträge:', err);
@@ -188,25 +229,90 @@ export const addServiceToVertrag = async (req: Request, res: Response): Promise<
   }
 };
 
-// Vertrag aus pendingBooking erstellen
-export const createVertragFromPendingBooking = async (userId: string, packageData: any): Promise<boolean> => {
+// Mapping von packageBuilder IDs zu Mietfach-Typen
+const packageTypeMapping: Record<string, string> = {
+  'block-a': 'regal',         // Regal Typ A
+  'block-b': 'regal-b',       // Regal Typ B
+  'block-cold': 'kuehlregal', // Kühlregal
+  'block-table': 'vitrine'    // Verkaufstisch/Vitrine
+};
+
+// Vertrag aus pendingBooking erstellen mit spezifischen Mietfächern
+export const createVertragFromPendingBooking = async (userId: string, packageData: any, assignedMietfaecher: string[]): Promise<{ success: boolean; message?: string; vertragId?: string; vertrag?: any }> => {
   try {
-    // Hier würden Sie die Package-Daten in ein Vertrag-Format transformieren
+    console.log('createVertragFromPendingBooking called with:', { userId, assignedMietfaecher, packageDataKeys: Object.keys(packageData || {}) });
+    const Mietfach = require('../models/Mietfach').default;
+    
+    // Services für die zugewiesenen Mietfächer erstellen
+    const services = [];
+    const currentDate = new Date();
+    const mietende = new Date(currentDate);
+    mietende.setMonth(mietende.getMonth() + (packageData.rentalDuration || 3));
+    
+    // Alle zugewiesenen Mietfächer laden
+    const mietfaecher = await Mietfach.find({ _id: { $in: assignedMietfaecher } });
+    
+    for (const mietfach of mietfaecher) {
+      // Preis basierend auf Mietfach-Typ aus packageData ermitteln
+      let monatspreis = mietfach.preis || 0;
+      
+      // Versuche den Preis aus den packageOptions zu ermitteln
+      if (packageData.packageOptions) {
+        for (const packageOption of packageData.packageOptions) {
+          // Mapping zwischen PackageBuilder-Typ und Mietfach-Typ
+          const typeMapping: Record<string, string[]> = {
+            'block-a': ['regal', 'regal-a'],
+            'block-b': ['regal-b'],
+            'block-cold': ['kuehlregal', 'gekuehlt'],
+            'block-table': ['vitrine', 'tisch']
+          };
+          
+          // Prüfe ob der Mietfach-Typ zu diesem Package-Option passt
+          if (typeMapping[packageOption.id]?.includes(mietfach.typ)) {
+            monatspreis = packageOption.price || mietfach.preis || 0;
+            break;
+          }
+        }
+      }
+      
+      services.push({
+        mietfach: mietfach._id,
+        mietbeginn: currentDate,
+        mietende: mietende,
+        monatspreis: monatspreis
+      });
+    }
+    
+    // Vertrag erstellen - nur mit den Feldern, die im Schema definiert sind
     const newVertrag = new Vertrag({
       user: userId,
-      datum: new Date(),
-      packageConfiguration: packageData,
-      totalMonthlyPrice: packageData.totalCost?.monthly || 0,
-      contractDuration: packageData.rentalDuration || 3,
-      discount: packageData.discount || 0,
-      status: 'pending',
-      services: [] // Hier würden Sie die Services aus packageData extrahieren
+      datum: currentDate,
+      services: services
+    });
+    
+    console.log('Creating Vertrag with data:', { 
+      user: userId, 
+      datum: currentDate, 
+      servicesCount: services.length 
     });
 
-    await newVertrag.save();
-    return true;
+    const savedVertrag = await newVertrag.save();
+    
+    // Vollständigen Vertrag für E-Mail-Benachrichtigung laden
+    const populatedVertrag = await Vertrag.findById(savedVertrag._id)
+      .populate('user', 'kontakt.name kontakt.email')
+      .populate('services.mietfach', 'bezeichnung typ beschreibung standort groesse preis');
+    
+    return {
+      success: true,
+      vertragId: savedVertrag._id.toString(),
+      vertrag: populatedVertrag
+    };
   } catch (error) {
     console.error('Fehler beim Erstellen des Vertrags aus pendingBooking:', error);
-    return false;
+    return {
+      success: false,
+      message: 'Fehler beim Erstellen des Vertrags'
+    };
   }
 };

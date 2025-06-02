@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Lock,  AlertCircle } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import logo from '../../components/assets/logo.svg';
+import logo from '../../assets/images/logo.svg';
 
 const LoginPage: React.FC = () => {
   const [username, setUsername] = useState('');

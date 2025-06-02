@@ -1,9 +1,9 @@
 // client/src/components/admin/AdminLayout.tsx
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, X, Home, Users, Mail, Package, FileText, LogOut } from 'lucide-react';
+import { Menu, X, Home, Users, Mail, Package, FileText, LogOut, MessageSquare, Calendar, Trophy, Settings } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import logo from '../../components/assets/logo.svg';
+import logo from '../../assets/images/logo.svg';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -95,6 +95,42 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                 <FileText className="mr-4 h-6 w-6" />
                 Verträge
               </Link>
+              
+              <Link
+                to="/admin/contacts"
+                className="group flex items-center px-2 py-2 text-base font-medium rounded-md text-white hover:bg-primary"
+                onClick={() => setSidebarOpen(false)}
+              >
+                <MessageSquare className="mr-4 h-6 w-6" />
+                Kontaktanfragen
+              </Link>
+              
+              <Link
+                to="/admin/pending-bookings"
+                className="group flex items-center px-2 py-2 text-base font-medium rounded-md text-white hover:bg-primary"
+                onClick={() => setSidebarOpen(false)}
+              >
+                <Calendar className="mr-4 h-6 w-6" />
+                Ausstehende Buchungen
+              </Link>
+              
+              <Link
+                to="/admin/vendor-contest"
+                className="group flex items-center px-2 py-2 text-base font-medium rounded-md text-white hover:bg-primary"
+                onClick={() => setSidebarOpen(false)}
+              >
+                <Trophy className="mr-4 h-6 w-6" />
+                Vendor Contest
+              </Link>
+              
+              <Link
+                to="/admin/settings"
+                className="group flex items-center px-2 py-2 text-base font-medium rounded-md text-white hover:bg-primary"
+                onClick={() => setSidebarOpen(false)}
+              >
+                <Settings className="mr-4 h-6 w-6" />
+                Einstellungen
+              </Link>
             </nav>
           </div>
         </div>
@@ -149,6 +185,38 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                 >
                   <FileText className="mr-3 h-6 w-6" />
                   Verträge
+                </Link>
+                
+                <Link
+                  to="/admin/contacts"
+                  className="group flex items-center px-2 py-2 text-base font-medium rounded-md text-white hover:bg-primary"
+                >
+                  <MessageSquare className="mr-3 h-6 w-6" />
+                  Kontaktanfragen
+                </Link>
+                
+                <Link
+                  to="/admin/pending-bookings"
+                  className="group flex items-center px-2 py-2 text-base font-medium rounded-md text-white hover:bg-primary"
+                >
+                  <Calendar className="mr-3 h-6 w-6" />
+                  Ausstehende Buchungen
+                </Link>
+                
+                <Link
+                  to="/admin/vendor-contest"
+                  className="group flex items-center px-2 py-2 text-base font-medium rounded-md text-white hover:bg-primary"
+                >
+                  <Trophy className="mr-3 h-6 w-6" />
+                  Vendor Contest
+                </Link>
+                
+                <Link
+                  to="/admin/settings"
+                  className="group flex items-center px-2 py-2 text-base font-medium rounded-md text-white hover:bg-primary"
+                >
+                  <Settings className="mr-3 h-6 w-6" />
+                  Einstellungen
                 </Link>
               </nav>
             </div>

@@ -1,9 +1,59 @@
 // client/src/components/ConstructionBanner.tsx
-import React from 'react';
-import { Settings, AlertTriangle, Calendar } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Settings, AlertTriangle, Calendar, Clock } from 'lucide-react';
+import axios from 'axios';
 
 const ConstructionBanner: React.FC = () => {
-  // Berechnung der verbleibenden Zeit bis zur Eröffnung (ca. Juni 2025)
+  const [storeOpeningDate, setStoreOpeningDate] = useState<Date | null>(null);
+  const [isStoreOpen, setIsStoreOpen] = useState(false);
+  const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0 });
+  
+  // Lade Eröffnungsdatum
+  useEffect(() => {
+    const fetchStoreOpening = async () => {
+      try {
+        const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+        const response = await axios.get(`${apiUrl}/public/store-opening`);
+        
+        if (response.data.success && response.data.storeOpening.enabled && response.data.storeOpening.openingDate) {
+          setStoreOpeningDate(new Date(response.data.storeOpening.openingDate));
+          setIsStoreOpen(response.data.storeOpening.isStoreOpen);
+        }
+      } catch (err) {
+        console.error('Error fetching store opening:', err);
+      }
+    };
+    
+    fetchStoreOpening();
+  }, []);
+  
+  // Countdown-Timer
+  useEffect(() => {
+    if (!storeOpeningDate || isStoreOpen) return;
+    
+    const calculateCountdown = () => {
+      const now = new Date().getTime();
+      const openingTime = storeOpeningDate.getTime();
+      const distance = openingTime - now;
+      
+      if (distance > 0) {
+        const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        
+        setCountdown({ days, hours, minutes });
+      } else {
+        setIsStoreOpen(true);
+      }
+    };
+    
+    calculateCountdown();
+    const interval = setInterval(calculateCountdown, 60000); // Update every minute
+    
+    return () => clearInterval(interval);
+  }, [storeOpeningDate, isStoreOpen]);
+  
+  // Fallback für hardcodierte Zeit falls keine API-Daten
   const calculateTimeRemaining = () => {
     const openingDate = new Date('2025-06-01T00:00:00');
     const currentDate = new Date();
@@ -46,21 +96,63 @@ const ConstructionBanner: React.FC = () => {
             
             {/* Rechte Seite mit Countdown */}
             <div className="bg-white bg-opacity-10 rounded-lg px-5 py-4 text-center">
-              <div className="flex items-center justify-center mb-2">
-                <Calendar className="w-5 h-5 mr-2 text-primary" />
-                <span className="font-semibold">Eröffnung in ca.:</span>
-              </div>
-              <div className="flex items-center justify-center gap-4">
-                <div className="text-center">
-                  <span className="text-3xl font-bold">{months}</span>
-                  <p className="text-sm text-white text-opacity-80">Monate</p>
-                </div>
-                <div className="text-3xl font-bold">:</div>
-                <div className="text-center">
-                  <span className="text-3xl font-bold">{days}</span>
-                  <p className="text-sm text-white text-opacity-80">Tage</p>
-                </div>
-              </div>
+              {storeOpeningDate && !isStoreOpen ? (
+                <>
+                  <div className="flex items-center justify-center mb-2">
+                    <Clock className="w-5 h-5 mr-2 text-primary" />
+                    <span className="font-semibold">Eröffnung am:</span>
+                  </div>
+                  <div className="text-sm mb-3">
+                    {storeOpeningDate.toLocaleDateString('de-DE', { 
+                      weekday: 'long', 
+                      day: 'numeric', 
+                      month: 'long',
+                      year: 'numeric'
+                    })}
+                  </div>
+                  <div className="flex items-center justify-center gap-3">
+                    <div className="text-center">
+                      <span className="text-2xl font-bold">{countdown.days}</span>
+                      <p className="text-xs text-white text-opacity-80">Tage</p>
+                    </div>
+                    <div className="text-xl font-bold">:</div>
+                    <div className="text-center">
+                      <span className="text-2xl font-bold">{countdown.hours}</span>
+                      <p className="text-xs text-white text-opacity-80">Std</p>
+                    </div>
+                    <div className="text-xl font-bold">:</div>
+                    <div className="text-center">
+                      <span className="text-2xl font-bold">{countdown.minutes}</span>
+                      <p className="text-xs text-white text-opacity-80">Min</p>
+                    </div>
+                  </div>
+                </>
+              ) : isStoreOpen ? (
+                <>
+                  <div className="flex items-center justify-center mb-2">
+                    <Calendar className="w-5 h-5 mr-2 text-primary" />
+                    <span className="font-semibold">Wir sind geöffnet!</span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="flex items-center justify-center mb-2">
+                    <Calendar className="w-5 h-5 mr-2 text-primary" />
+                    <span className="font-semibold">Eröffnung in ca.:</span>
+                  </div>
+                  <div className="flex items-center justify-center gap-4">
+                    <div className="text-center">
+                      <span className="text-3xl font-bold">{months}</span>
+                      <p className="text-sm text-white text-opacity-80">Monate</p>
+                    </div>
+                    <div className="text-3xl font-bold">:</div>
+                    <div className="text-center">
+                      <span className="text-3xl font-bold">{days}</span>
+                      <p className="text-sm text-white text-opacity-80">Tage</p>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </div>
           

@@ -1,7 +1,7 @@
 // client/src/pages/admin/DashboardPage.tsx
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Mail, Users, ShoppingBag, Package, Clock, ArrowRight } from 'lucide-react';
+import { Mail, Users, ShoppingBag, Package, Clock, ArrowRight, Trophy, Calendar } from 'lucide-react';
 import axios from 'axios';
 
 interface DashboardData {
@@ -13,6 +13,11 @@ interface DashboardData {
   };
   mietfaecher: number;
   vertraege: number;
+  pendingBookings: number;
+  vendorContest?: {
+    total: number;
+    unread: number;
+  };
   recentSubscribers: Array<{
     _id: string;
     kontakt: {
@@ -152,7 +157,7 @@ const DashboardPage: React.FC = () => {
       </div>
       
       {/* Statistik-Karten */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-6">
         <StatCard
           title="Newsletter"
           value={dashboardData?.newsletter.total || 0}
@@ -182,12 +187,28 @@ const DashboardPage: React.FC = () => {
         />
         
         <StatCard
-          title="Benutzer"
-          value="-"
-          icon={Users}
+          title="Ausstehende Buchungen"
+          value={dashboardData?.pendingBookings || 0}
+          icon={Clock}
+          iconBgColor="bg-orange-100"
+          iconColor="text-orange-600"
+          link="/admin/pending-bookings"
+        />
+        
+        <StatCard
+          title="Vendor Contest"
+          value={dashboardData?.vendorContest?.total || 0}
+          icon={Trophy}
           iconBgColor="bg-yellow-100"
           iconColor="text-yellow-600"
-          link="/admin/users"
+          link="/admin/vendor-contest"
+          subtitle={
+            dashboardData?.vendorContest?.unread ? (
+              <span className="text-sm text-yellow-600">
+                {dashboardData.vendorContest.unread} ungelesen
+              </span>
+            ) : undefined
+          }
         />
       </div>
       
@@ -287,6 +308,19 @@ const DashboardPage: React.FC = () => {
               <div className="ml-3">
                 <p className="font-medium text-gray-900">Mietfächer verwalten</p>
                 <p className="text-sm text-gray-500">Verkaufsflächen konfigurieren</p>
+              </div>
+            </div>
+          </Link>
+          
+          <Link
+            to="/admin/settings"
+            className="p-4 border border-gray-200 rounded-lg hover:border-primary hover:shadow-md transition-all group"
+          >
+            <div className="flex items-center">
+              <Calendar className="h-8 w-8 text-purple-600 group-hover:text-primary" />
+              <div className="ml-3">
+                <p className="font-medium text-gray-900">Eröffnungsdatum</p>
+                <p className="text-sm text-gray-500">Ladeneröffnung konfigurieren</p>
               </div>
             </div>
           </Link>

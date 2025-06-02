@@ -1,7 +1,8 @@
 // client/src/components/VendorRegistrationModal.tsx
 import React, { useState } from 'react';
-import { X, User, Mail, Phone, Lock, Package, Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react';
+import { X, User, Mail, Phone, Lock, Package, Eye, EyeOff, AlertCircle, CheckCircle, Clock } from 'lucide-react';
 import { useVendorAuth } from '../contexts/VendorAuthContext';
+import { useStoreSettings } from '../contexts/StoreSettingsContext';
 
 interface PackageData {
   selectedProvisionType: string;
@@ -70,8 +71,10 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [step, setStep] = useState(1); // 1: Login/Register, 2: Persönliche Daten, 3: Adresse, 4: Zusammenfassung
+  const [isPreRegistration, setIsPreRegistration] = useState(false);
   
-  const { login, registerWithBooking } = useVendorAuth();
+  const { login, registerWithBooking, preRegisterVendor } = useVendorAuth();
+  const { settings: storeSettings } = useStoreSettings();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
@@ -84,6 +87,12 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = ({
   const validateEmail = (email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
+  };
+
+  // PLZ Validierung für deutsche Postleitzahlen (5 Ziffern)  
+  const validatePLZ = (plz: string): boolean => {
+    const plzRegex = /^\d{5}$/;
+    return plzRegex.test(plz);
   };
 
   const validateStep = (stepNumber: number): boolean => {
@@ -110,6 +119,7 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = ({
           formData.strasse.trim() !== '' &&
           formData.hausnummer.trim() !== '' &&
           formData.plz.trim() !== '' &&
+          validatePLZ(formData.plz) &&
           formData.ort.trim() !== ''
         );
       case 4:
@@ -138,7 +148,11 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = ({
       } else if (step === 2) {
         setError('Bitte geben Sie Ihren vollständigen Namen ein');
       } else if (step === 3) {
-        setError('Bitte füllen Sie alle Adressfelder aus');
+        if (!validatePLZ(formData.plz)) {
+          setError('Bitte geben Sie eine gültige Postleitzahl ein (5 Ziffern)');
+        } else {
+          setError('Bitte füllen Sie alle Adressfelder aus');
+        }
       } else {
         setError('Bitte füllen Sie alle Pflichtfelder aus');
       }
@@ -170,20 +184,50 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = ({
           setError('Ungültige Anmeldedaten');
         }
       } else {
-        // Registrierung mit Buchung
-        const registrationData = {
-          ...formData,
-          packageData
-        };
+        // Prüfe, ob Store bereits geöffnet ist
+        const isStoreOpen = storeSettings?.isStoreOpen ?? true; // Default: reguläre Registrierung
         
-        const result = await registerWithBooking(registrationData);
-        
-        if (result.success) {
-          // Erfolgreiche Registrierung - zeige Bestätigungsseite
-          onSuccess();
-          onClose();
+        if (!isStoreOpen) {
+          // Pre-Registrierung für Store vor Eröffnung
+          const preRegistrationData = {
+            email: formData.email,
+            password: formData.password,
+            name: formData.name,
+            telefon: formData.telefon,
+            strasse: formData.strasse,
+            hausnummer: formData.hausnummer,
+            plz: formData.plz,
+            ort: formData.ort,
+            unternehmen: formData.unternehmen,
+            beschreibung: '' // Optional für Pre-Registration
+          };
+          
+          const result = await preRegisterVendor(preRegistrationData);
+          
+          if (result.success) {
+            // Erfolgreiche Pre-Registrierung
+            setIsPreRegistration(true);
+            onSuccess();
+            onClose();
+          } else {
+            setError(result.message || 'Ein Fehler ist aufgetreten bei der Pre-Registrierung');
+          }
         } else {
-          setError(result.message || 'Ein Fehler ist aufgetreten');
+          // Reguläre Registrierung mit Buchung
+          const registrationData = {
+            ...formData,
+            packageData
+          };
+          
+          const result = await registerWithBooking(registrationData);
+          
+          if (result.success) {
+            // Erfolgreiche Registrierung - zeige Bestätigungsseite
+            onSuccess();
+            onClose();
+          } else {
+            setError(result.message || 'Ein Fehler ist aufgetreten');
+          }
         }
       }
     } catch (err) {
@@ -211,6 +255,28 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = ({
                   : 'Erstellen Sie einen Account, um Ihre Buchung abzuschließen'
                 }
               </p>
+              
+              {/* Pre-Registration Info Banner */}
+              {!isLogin && storeSettings && !storeSettings.isStoreOpen && (
+                <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-center space-x-2">
+                    <Clock className="w-5 h-5 text-blue-500" />
+                    <div className="text-left">
+                      <p className="text-sm font-medium text-blue-800">
+                        Vor-Registrierung vor Store-Eröffnung
+                      </p>
+                      <p className="text-xs text-blue-600 mt-1">
+                        Ihr kostenloser Probemonat startet automatisch mit der Store-Eröffnung
+                        {storeSettings.openingDate && (
+                          <span className="font-medium">
+                            {' '}am {new Date(storeSettings.openingDate).toLocaleDateString('de-DE')}
+                          </span>
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div>
@@ -436,10 +502,19 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = ({
                   name="plz"
                   value={formData.plz}
                   onChange={handleInputChange}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent ${
+                    formData.plz && !validatePLZ(formData.plz) 
+                    ? 'border-red-300 bg-red-50' 
+                    : 'border-gray-300'
+                  }`}
                   placeholder="12345"
                   required
                 />
+                {formData.plz && !validatePLZ(formData.plz) && (
+                  <p className="mt-1 text-sm text-red-600">
+                    Bitte geben Sie eine gültige Postleitzahl ein (5 Ziffern)
+                  </p>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="ort">

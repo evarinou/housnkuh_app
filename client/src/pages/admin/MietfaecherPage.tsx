@@ -1,22 +1,59 @@
 // client/src/pages/admin/MietfaecherPage.tsx
 import React, { useState, useEffect, FormEvent } from 'react';
-import { Package, Search, Filter, Edit, Trash2, Plus, CheckCircle, XCircle, Tag, X, Save } from 'lucide-react';
+import { Package, Search, Edit, Trash2, Plus, CheckCircle, XCircle, Tag, X, Save } from 'lucide-react';
 import axios from 'axios';
 
+// Frontend-Darstellung eines Mietfachs
 interface Mietfach {
   _id: string;
-  name: string;
-  beschreibung: string;
+  name: string;         // Entspricht 'bezeichnung' im Backend
+  beschreibung: string; // Optional im Backend, aber für Frontend-Konsistenz als required
   typ: string;
-  groesse: {
+  groesse: {            // Optional im Backend, aber für Frontend-Konsistenz als required
     flaeche: number;
     einheit: string;
   };
-  preis: number;
-  verfuegbar: boolean;
-  standort: string;
-  features: string[];
+  verfuegbar: boolean;  // Optional im Backend, aber für Frontend-Konsistenz als required
+  standort: string;     // Optional im Backend, aber für Frontend-Konsistenz als required
+  features: string[];   // Optional im Backend, aber für Frontend-Konsistenz als required
   createdAt: string;
+  belegungen?: Belegung[]; // Vertragsinformationen
+  istBelegt?: boolean;     // Aktueller Belegungsstatus
+}
+
+interface Belegung {
+  vertragId: string;
+  user: {
+    _id: string;
+    username?: string;
+    kontakt?: {
+      name: string;
+      email: string;
+    };
+  };
+  mietbeginn: string;
+  mietende?: string;
+  monatspreis: number;
+  status: 'aktiv' | 'beendet';
+}
+
+// Backend-Repräsentation eines Mietfachs für API-Kommunikation
+interface MietfachAPI {
+  _id?: string;
+  bezeichnung: string;  // Entspricht 'name' im Frontend
+  typ: string;
+  beschreibung?: string;
+  groesse?: {
+    flaeche: number;
+    einheit: string;
+  };
+  verfuegbar?: boolean;
+  standort?: string;
+  features?: string[];
+  createdAt?: string;
+  updatedAt?: string;
+  belegungen?: Belegung[];
+  istBelegt?: boolean;
 }
 
 const MietfaecherPage: React.FC = () => {
@@ -42,7 +79,6 @@ const MietfaecherPage: React.FC = () => {
         flaeche: 2,
         einheit: 'm²'
       },
-      preis: 100,
       verfuegbar: true,
       standort: 'Eingangsbereich',
       features: ['Beleuchtet', 'Sichtbar vom Eingang'],
@@ -57,7 +93,6 @@ const MietfaecherPage: React.FC = () => {
         flaeche: 1.5,
         einheit: 'm²'
       },
-      preis: 150,
       verfuegbar: false,
       standort: 'Kühlbereich',
       features: ['Gekühlt (2-8°C)', 'Beleuchtung'],
@@ -72,7 +107,6 @@ const MietfaecherPage: React.FC = () => {
         flaeche: 1,
         einheit: 'm²'
       },
-      preis: 200,
       verfuegbar: true,
       standort: 'Kassenbereich',
       features: ['Abschließbar', 'Spezialbeleuchtung', 'Temperaturreguliert'],
@@ -87,7 +121,6 @@ const MietfaecherPage: React.FC = () => {
         flaeche: 2.5,
         einheit: 'm²'
       },
-      preis: 120,
       verfuegbar: true,
       standort: 'Mittelgang',
       features: ['Beleuchtet'],
@@ -102,18 +135,47 @@ const MietfaecherPage: React.FC = () => {
       setError('');
       
       try {
-        // Hier später durch API-Aufruf ersetzen
-        // const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
-        // const response = await axios.get(`${apiUrl}/admin/mietfaecher`);
+        // Von der API abrufen mit Vertragsinformationen
+        const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+        const response = await axios.get(`${apiUrl}/mietfaecher/with-contracts`);
         
-        // Mock-Daten verwenden
-        setTimeout(() => {
+        if (response.data && response.data.length > 0) {
+          // Echte Daten verwenden, wenn vorhanden, aber Format umwandeln
+          console.log('Mietfächer vom Server geladen:', response.data);
+          
+          // API-Format in Frontend-Format umwandeln
+          const convertedMietfaecher: Mietfach[] = response.data.map((m: MietfachAPI) => ({
+            _id: m._id || 'temp',
+            name: m.bezeichnung,
+            beschreibung: m.beschreibung || '',        // Leerer String als Fallback
+            typ: m.typ,
+            groesse: m.groesse || {                    // Default-Objekt als Fallback
+              flaeche: 1,
+              einheit: 'm²'
+            },
+            belegungen: m.belegungen || [],
+            istBelegt: m.istBelegt || false,
+            verfuegbar: m.verfuegbar !== undefined ? m.verfuegbar : true,
+            standort: m.standort || '',
+            features: m.features || [],
+            createdAt: m.createdAt || new Date().toISOString()
+          }));
+          
+          setMietfaecher(convertedMietfaecher);
+          setFilteredMietfaecher(convertedMietfaecher);
+        } else {
+          // Fallback auf Mock-Daten, wenn keine Daten vom Server
+          console.log('Keine Mietfächer auf dem Server, verwende Mock-Daten');
           setMietfaecher(mockMietfaecher);
           setFilteredMietfaecher(mockMietfaecher);
-          setIsLoading(false);
-        }, 500);
-      } catch (err) {
-        setError('Ein Fehler ist aufgetreten beim Laden der Mietfächer');
+        }
+        setIsLoading(false);
+      } catch (error) {
+        console.error('Fehler beim Laden der Mietfächer:', error);
+        // Fallback auf Mock-Daten bei Fehler
+        setMietfaecher(mockMietfaecher);
+        setFilteredMietfaecher(mockMietfaecher);
+        setError('Ein Fehler ist aufgetreten beim Laden der Mietfächer vom Server. Zeige Mock-Daten an.');
         setIsLoading(false);
       }
     };
@@ -160,43 +222,66 @@ const MietfaecherPage: React.FC = () => {
     }
     
     try {
-      // Hier später durch API-Aufruf ersetzen
-      // const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
-      // await axios.delete(`${apiUrl}/admin/mietfaecher/${id}`);
+      // Prüfen, ob es eine temporäre ID ist (für Mockdaten)
+      if (id.startsWith('temp-')) {
+        // Lokales Mietfach (Mock) löschen
+        setMietfaecher(prev => prev.filter(mietfach => mietfach._id !== id));
+        return;
+      }
       
-      // Mock-Implementation
+      // Über die API löschen
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+      await axios.delete(`${apiUrl}/mietfaecher/${id}`);
+      
+      // Aus dem lokalen State entfernen
       setMietfaecher(prev => prev.filter(mietfach => mietfach._id !== id));
-    } catch (err) {
+      
+      alert('Mietfach erfolgreich gelöscht');
+    } catch (error) {
       alert('Fehler beim Löschen des Mietfachs');
+      console.error('Error deleting mietfach:', error);
     }
   };
   
   // Verfügbarkeitsstatus ändern
   const toggleVerfuegbarkeit = async (id: string, currentStatus: boolean) => {
     try {
-      // Hier später durch API-Aufruf ersetzen
-      // const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
-      // await axios.patch(`${apiUrl}/admin/mietfaecher/${id}`, { verfuegbar: !currentStatus });
+      // Prüfen, ob es eine temporäre ID ist (für Mockdaten)
+      if (id.startsWith('temp-')) {
+        // Mock-Daten lokal aktualisieren
+        setMietfaecher(prev => 
+          prev.map(mietfach => 
+            mietfach._id === id ? { ...mietfach, verfuegbar: !currentStatus } : mietfach
+          )
+        );
+        return;
+      }
       
-      // Mock-Implementation
+      // Über die API aktualisieren
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+      await axios.put(`${apiUrl}/mietfaecher/${id}`, { 
+        verfuegbar: !currentStatus 
+      });
+      
+      // Lokalen State aktualisieren
       setMietfaecher(prev => 
         prev.map(mietfach => 
           mietfach._id === id ? { ...mietfach, verfuegbar: !currentStatus } : mietfach
         )
       );
-    } catch (err) {
+    } catch (error) {
       alert('Fehler beim Ändern der Verfügbarkeit');
+      console.error('Error toggling availability:', error);
     }
   };
   
-  // Form state für das Bearbeiten/Hinzufügen eines Mietfachs
-  const [formData, setFormData] = useState<{
+  // Separate Form states für Add und Edit Modals
+  const [addFormData, setAddFormData] = useState<{
     name: string;
     beschreibung: string;
     typ: string;
     flaeche: number;
     einheit: string;
-    preis: number;
     verfuegbar: boolean;
     standort: string;
     features: string;
@@ -206,21 +291,53 @@ const MietfaecherPage: React.FC = () => {
     typ: 'regal',
     flaeche: 1,
     einheit: 'm²',
-    preis: 100,
     verfuegbar: true,
     standort: '',
     features: ''
   });
   
-  // Form Reset und Initialisierung
-  const resetForm = () => {
-    setFormData({
+  const [editFormData, setEditFormData] = useState<{
+    name: string;
+    beschreibung: string;
+    typ: string;
+    flaeche: number;
+    einheit: string;
+    verfuegbar: boolean;
+    standort: string;
+    features: string;
+  }>({
+    name: '',
+    beschreibung: '',
+    typ: 'regal',
+    flaeche: 1,
+    einheit: 'm²',
+    verfuegbar: true,
+    standort: '',
+    features: ''
+  });
+  
+  // Form Reset für Add Modal
+  const resetAddForm = () => {
+    setAddFormData({
       name: '',
       beschreibung: '',
       typ: 'regal',
       flaeche: 1,
       einheit: 'm²',
-      preis: 100,
+      verfuegbar: true,
+      standort: '',
+      features: ''
+    });
+  };
+  
+  // Form Reset für Edit Modal
+  const resetEditForm = () => {
+    setEditFormData({
+      name: '',
+      beschreibung: '',
+      typ: 'regal',
+      flaeche: 1,
+      einheit: 'm²',
       verfuegbar: true,
       standort: '',
       features: ''
@@ -229,27 +346,31 @@ const MietfaecherPage: React.FC = () => {
   
   // Mietfach bearbeiten (Modal öffnen)
   const handleEditMietfach = (mietfach: Mietfach) => {
+    // State für das neue Mietfach setzen
     setCurrentMietfach(mietfach);
-    setFormData({
+    setEditFormData({
       name: mietfach.name,
       beschreibung: mietfach.beschreibung,
       typ: mietfach.typ,
       flaeche: mietfach.groesse.flaeche,
       einheit: mietfach.groesse.einheit,
-      preis: mietfach.preis,
       verfuegbar: mietfach.verfuegbar,
       standort: mietfach.standort,
       features: mietfach.features.join(', ')
     });
+    
+    // Modal öffnen
     setShowEditModal(true);
   };
   
   // Hinzufügen-Modal öffnen
   const handleAddMietfach = () => {
-    resetForm();
+    resetAddForm();
     setShowAddModal(true);
   };
   
+  // Entfernt - Fokus wird jetzt direkt in der EditMietfachModal Komponente gehandhabt
+
   // Änderungen an einem existierenden Mietfach speichern
   const handleSaveChanges = async (e: FormEvent) => {
     e.preventDefault();
@@ -258,45 +379,97 @@ const MietfaecherPage: React.FC = () => {
     
     try {
       // Features String zu Array konvertieren
-      const featuresArray = formData.features
+      const featuresArray = editFormData.features
         .split(',')
         .map(item => item.trim())
         .filter(item => item.length > 0);
       
+      // Prüfen, ob es eine temporäre ID ist (für Mockdaten)
+      if (currentMietfach._id.startsWith('temp-')) {
+        // Aktualisiertes Mietfach Objekt für Mockdaten
+        const updatedMietfach: Mietfach = {
+          ...currentMietfach,
+          name: editFormData.name,
+          beschreibung: editFormData.beschreibung,
+          typ: editFormData.typ,
+          groesse: {
+            flaeche: editFormData.flaeche,
+            einheit: editFormData.einheit
+          },
+          verfuegbar: editFormData.verfuegbar,
+          standort: editFormData.standort,
+          features: featuresArray
+        };
+        
+        // Mock-Implementation (lokales State Update)
+        setMietfaecher(prev => 
+          prev.map(mietfach => 
+            mietfach._id === currentMietfach._id ? updatedMietfach : mietfach
+          )
+        );
+        
+        // Modal schließen und State zurücksetzen
+        setShowEditModal(false);
+        setCurrentMietfach(null);
+        resetEditForm();
+        alert('Mietfach erfolgreich aktualisiert');
+        return;
+      }
+      
+      // API-Update-Daten vorbereiten - angepasst an das Mongoose-Modell
+      // Einfachere Version mit nur den Pflichtfeldern
+      const updateData: MietfachAPI = {
+        bezeichnung: editFormData.name,
+        typ: editFormData.typ
+      };
+      
+      // Optional weitere Felder hinzufügen
+      if (editFormData.beschreibung) updateData.beschreibung = editFormData.beschreibung;
+      if (editFormData.flaeche) updateData.groesse = {
+        flaeche: editFormData.flaeche,
+        einheit: editFormData.einheit || 'm²'
+      };
+      if (editFormData.verfuegbar !== undefined) updateData.verfuegbar = editFormData.verfuegbar;
+      if (editFormData.standort) updateData.standort = editFormData.standort;
+      if (featuresArray.length > 0) updateData.features = featuresArray;
+      
+      // Über die API aktualisieren
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+      console.log('Updating mietfach via API:', updateData);
+      await axios.put(`${apiUrl}/mietfaecher/${currentMietfach._id}`, updateData);
+      
       // Aktualisiertes Mietfach Objekt
       const updatedMietfach: Mietfach = {
         ...currentMietfach,
-        name: formData.name,
-        beschreibung: formData.beschreibung,
-        typ: formData.typ,
+        name: editFormData.name,
+        beschreibung: editFormData.beschreibung,
+        typ: editFormData.typ,
         groesse: {
-          flaeche: formData.flaeche,
-          einheit: formData.einheit
+          flaeche: editFormData.flaeche,
+          einheit: editFormData.einheit
         },
-        preis: formData.preis,
-        verfuegbar: formData.verfuegbar,
-        standort: formData.standort,
+        verfuegbar: editFormData.verfuegbar,
+        standort: editFormData.standort,
         features: featuresArray
       };
       
-      // Hier später durch API-Aufruf ersetzen
-      // const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
-      // await axios.put(`${apiUrl}/admin/mietfaecher/${currentMietfach._id}`, updatedMietfach);
-      
-      // Mock-Implementation (lokales State Update)
+      // Lokalen State aktualisieren
       setMietfaecher(prev => 
         prev.map(mietfach => 
           mietfach._id === currentMietfach._id ? updatedMietfach : mietfach
         )
       );
       
+      // Modal schließen und State sofort zurücksetzen
       setShowEditModal(false);
+      setCurrentMietfach(null);
+      resetEditForm();
       
-      // Erfolgsmeldung könnte hier hinzugefügt werden
+      alert('Mietfach erfolgreich aktualisiert');
       
-    } catch (err) {
+    } catch (error) {
       alert('Fehler beim Speichern der Änderungen');
-      console.error('Error saving changes:', err);
+      console.error('Error saving changes:', error);
     }
   };
   
@@ -306,66 +479,118 @@ const MietfaecherPage: React.FC = () => {
     
     try {
       // Features String zu Array konvertieren
-      const featuresArray = formData.features
+      const featuresArray = addFormData.features
         .split(',')
         .map(item => item.trim())
         .filter(item => item.length > 0);
       
-      // Neues Mietfach Objekt
-      // In einer realen Implementation würde die ID vom Server generiert
-      const newMietfach: Mietfach = {
-        _id: `temp-${Date.now()}`, // Temporäre ID
-        name: formData.name,
-        beschreibung: formData.beschreibung,
-        typ: formData.typ,
-        groesse: {
-          flaeche: formData.flaeche,
-          einheit: formData.einheit
-        },
-        preis: formData.preis,
-        verfuegbar: formData.verfuegbar,
-        standort: formData.standort,
-        features: featuresArray,
-        createdAt: new Date().toISOString()
+      // API-Format für das Mietfach (angepasst an das Mongoose-Modell)
+      // Einfachere Version mit nur den Pflichtfeldern
+      const newMietfachData: MietfachAPI = {
+        bezeichnung: addFormData.name,
+        typ: addFormData.typ
       };
       
-      // Hier später durch API-Aufruf ersetzen
-      // const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
-      // const response = await axios.post(`${apiUrl}/admin/mietfaecher`, newMietfach);
-      // const savedMietfach = response.data.mietfach;
+      // Optional weitere Felder hinzufügen
+      if (addFormData.beschreibung) newMietfachData.beschreibung = addFormData.beschreibung;
+      if (addFormData.flaeche) newMietfachData.groesse = {
+        flaeche: addFormData.flaeche,
+        einheit: addFormData.einheit || 'm²'
+      };
+      if (addFormData.verfuegbar !== undefined) newMietfachData.verfuegbar = addFormData.verfuegbar;
+      if (addFormData.standort) newMietfachData.standort = addFormData.standort;
+      if (featuresArray.length > 0) newMietfachData.features = featuresArray;
       
-      // Mock-Implementation (lokales State Update)
+      // An die API senden
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+      console.log('Sending mietfach data to server:', newMietfachData);
+      const response = await axios.post(`${apiUrl}/mietfaecher`, newMietfachData);
+      
+      // Das vom Server zurückgegebene Mietfach mit seiner echten ID verwenden
+      const savedMietfach: MietfachAPI = response.data;
+      console.log('Received from server:', savedMietfach);
+      
+      // Das vom Server gespeicherte Mietfach zum State hinzufügen (API-Format in Frontend-Format umwandeln)
+      const newMietfach: Mietfach = {
+        _id: savedMietfach._id || 'temp',
+        name: savedMietfach.bezeichnung, // Dies ist das Pflichtfeld
+        beschreibung: savedMietfach.beschreibung || addFormData.beschreibung || '',
+        typ: savedMietfach.typ, // Dies ist das Pflichtfeld
+        groesse: savedMietfach.groesse || {
+          flaeche: addFormData.flaeche || 1,
+          einheit: addFormData.einheit || 'm²'
+        },
+        verfuegbar: savedMietfach.verfuegbar !== undefined ? savedMietfach.verfuegbar : (addFormData.verfuegbar || true),
+        standort: savedMietfach.standort || addFormData.standort || '',
+        features: savedMietfach.features || featuresArray || [],
+        createdAt: savedMietfach.createdAt || new Date().toISOString()
+      };
+      
       setMietfaecher(prev => [...prev, newMietfach]);
       
+      // Modal schließen und State zurücksetzen
       setShowAddModal(false);
-      resetForm();
+      resetAddForm();
       
-      // Erfolgsmeldung könnte hier hinzugefügt werden
+      alert('Mietfach erfolgreich hinzugefügt!');
       
-    } catch (err) {
-      alert('Fehler beim Hinzufügen des Mietfachs');
-      console.error('Error adding mietfach:', err);
+    } catch (error) {
+      // Detailliertere Fehlermeldung
+      let errorMsg = 'Fehler beim Hinzufügen des Mietfachs';
+      
+      if (axios.isAxiosError(error) && error.response && error.response.data) {
+        // API-Fehlermeldung anzeigen, wenn verfügbar
+        const responseData = error.response.data as any;
+        errorMsg += ': ' + (responseData.message || JSON.stringify(responseData));
+        console.error('Server-Fehler:', responseData);
+      }
+      
+      alert(errorMsg);
+      console.error('Error adding mietfach:', error);
     }
   };
   
-  // Form Input Handler
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  // Form Input Handler für Add Modal
+  const handleAddInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
     
     if (type === 'checkbox') {
       const checkbox = e.target as HTMLInputElement;
-      setFormData({
-        ...formData,
+      setAddFormData({
+        ...addFormData,
         [name]: checkbox.checked
       });
     } else if (type === 'number') {
-      setFormData({
-        ...formData,
+      setAddFormData({
+        ...addFormData,
         [name]: parseFloat(value)
       });
     } else {
-      setFormData({
-        ...formData,
+      setAddFormData({
+        ...addFormData,
+        [name]: value
+      });
+    }
+  };
+  
+  // Form Input Handler für Edit Modal
+  const handleEditInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value, type } = e.target;
+    
+    if (type === 'checkbox') {
+      const checkbox = e.target as HTMLInputElement;
+      setEditFormData({
+        ...editFormData,
+        [name]: checkbox.checked
+      });
+    } else if (type === 'number') {
+      setEditFormData({
+        ...editFormData,
+        [name]: parseFloat(value)
+      });
+    } else {
+      setEditFormData({
+        ...editFormData,
         [name]: value
       });
     }
@@ -606,14 +831,43 @@ const MietfaecherPage: React.FC = () => {
                     <span className="font-medium">{mietfach.groesse.flaeche} {mietfach.groesse.einheit}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Preis:</span>
-                    <span className="font-medium">{mietfach.preis.toFixed(2)}€ / Monat</span>
-                  </div>
-                  <div className="flex justify-between">
                     <span>Standort:</span>
                     <span className="font-medium">{mietfach.standort}</span>
                   </div>
                 </div>
+                
+                {/* Vertragsinformationen */}
+                {mietfach.belegungen && mietfach.belegungen.length > 0 && (
+                  <div className="mt-3 mb-3">
+                    <h4 className="text-xs uppercase tracking-wide text-gray-500 mb-2">Aktuelle Belegungen</h4>
+                    <div className="space-y-2">
+                      {mietfach.belegungen
+                        .filter(b => b.status === 'aktiv')
+                        .map((belegung, idx) => (
+                          <div key={idx} className="text-sm bg-blue-50 p-2 rounded">
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <span className="font-medium">
+                                  {belegung.user.kontakt?.name || belegung.user.username || 'Unbekannt'}
+                                </span>
+                                <div className="text-xs text-gray-600">
+                                  {new Date(belegung.mietbeginn).toLocaleDateString('de-DE')} - 
+                                  {belegung.mietende ? new Date(belegung.mietende).toLocaleDateString('de-DE') : 'unbefristet'}
+                                </div>
+                              </div>
+                              <span className="font-medium text-blue-800">
+                                {belegung.monatspreis.toFixed(2)}€/M
+                              </span>
+                            </div>
+                          </div>
+                        ))
+                      }
+                      {mietfach.belegungen.filter(b => b.status === 'aktiv').length === 0 && (
+                        <div className="text-sm text-gray-500 italic">Keine aktiven Belegungen</div>
+                      )}
+                    </div>
+                  </div>
+                )}
                 
                 {/* Features */}
                 <div className="mt-3">
@@ -651,7 +905,10 @@ const MietfaecherPage: React.FC = () => {
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold">Neues Mietfach hinzufügen</h2>
               <button
-                onClick={() => setShowAddModal(false)}
+                onClick={() => {
+                  setShowAddModal(false);
+                  resetAddForm();
+                }}
                 className="text-gray-400 hover:text-gray-600"
               >
                 <X className="h-6 w-6" />
@@ -669,8 +926,8 @@ const MietfaecherPage: React.FC = () => {
                     type="text"
                     id="name"
                     name="name"
-                    value={formData.name}
-                    onChange={handleInputChange}
+                    value={addFormData.name}
+                    onChange={handleAddInputChange}
                     className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary"
                     required
                   />
@@ -684,8 +941,8 @@ const MietfaecherPage: React.FC = () => {
                   <select
                     id="typ"
                     name="typ"
-                    value={formData.typ}
-                    onChange={handleInputChange}
+                    value={addFormData.typ}
+                    onChange={handleAddInputChange}
                     className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary"
                     required
                   >
@@ -704,8 +961,8 @@ const MietfaecherPage: React.FC = () => {
                     type="text"
                     id="standort"
                     name="standort"
-                    value={formData.standort}
-                    onChange={handleInputChange}
+                    value={addFormData.standort}
+                    onChange={handleAddInputChange}
                     className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary"
                     required
                     placeholder="z.B. Eingangsbereich, Mitte, etc."
@@ -722,8 +979,8 @@ const MietfaecherPage: React.FC = () => {
                       type="number"
                       id="flaeche"
                       name="flaeche"
-                      value={formData.flaeche}
-                      onChange={handleInputChange}
+                      value={addFormData.flaeche}
+                      onChange={handleAddInputChange}
                       className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary"
                       required
                       min="0.1"
@@ -737,8 +994,8 @@ const MietfaecherPage: React.FC = () => {
                     <select
                       id="einheit"
                       name="einheit"
-                      value={formData.einheit}
-                      onChange={handleInputChange}
+                      value={addFormData.einheit}
+                      onChange={handleAddInputChange}
                       className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary"
                     >
                       <option value="m²">m²</option>
@@ -748,32 +1005,14 @@ const MietfaecherPage: React.FC = () => {
                   </div>
                 </div>
                 
-                {/* Preis */}
-                <div>
-                  <label htmlFor="preis" className="block text-sm font-medium text-gray-700 mb-1">
-                    Preis (€/Monat) *
-                  </label>
-                  <input
-                    type="number"
-                    id="preis"
-                    name="preis"
-                    value={formData.preis}
-                    onChange={handleInputChange}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary"
-                    required
-                    min="0"
-                    step="0.01"
-                  />
-                </div>
-                
                 {/* Verfügbar */}
                 <div className="flex items-center">
                   <input
                     type="checkbox"
                     id="verfuegbar"
                     name="verfuegbar"
-                    checked={formData.verfuegbar}
-                    onChange={(e) => setFormData({...formData, verfuegbar: e.target.checked})}
+                    checked={addFormData.verfuegbar}
+                    onChange={(e) => setAddFormData({...addFormData, verfuegbar: e.target.checked})}
                     className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
                   />
                   <label htmlFor="verfuegbar" className="ml-2 block text-sm font-medium text-gray-700">
@@ -789,8 +1028,8 @@ const MietfaecherPage: React.FC = () => {
                   <textarea
                     id="beschreibung"
                     name="beschreibung"
-                    value={formData.beschreibung}
-                    onChange={handleInputChange}
+                    value={addFormData.beschreibung}
+                    onChange={handleAddInputChange}
                     className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary"
                     rows={3}
                   />
@@ -805,8 +1044,8 @@ const MietfaecherPage: React.FC = () => {
                     type="text"
                     id="features"
                     name="features"
-                    value={formData.features}
-                    onChange={handleInputChange}
+                    value={addFormData.features}
+                    onChange={handleAddInputChange}
                     className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary"
                     placeholder="z.B. Beleuchtet, Abschließbar, Klimatisiert"
                   />
@@ -817,7 +1056,10 @@ const MietfaecherPage: React.FC = () => {
               <div className="flex justify-end space-x-2 mt-6">
                 <button
                   type="button"
-                  onClick={() => setShowAddModal(false)}
+                  onClick={() => {
+                    setShowAddModal(false);
+                    resetAddForm();
+                  }}
                   className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
                 >
                   Abbrechen
@@ -842,7 +1084,11 @@ const MietfaecherPage: React.FC = () => {
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold">Mietfach bearbeiten: {currentMietfach.name}</h2>
               <button
-                onClick={() => setShowEditModal(false)}
+                onClick={() => {
+                  setShowEditModal(false);
+                  setCurrentMietfach(null);
+                  resetEditForm();
+                }}
                 className="text-gray-400 hover:text-gray-600"
               >
                 <X className="h-6 w-6" />
@@ -860,8 +1106,8 @@ const MietfaecherPage: React.FC = () => {
                     type="text"
                     id="edit-name"
                     name="name"
-                    value={formData.name}
-                    onChange={handleInputChange}
+                    value={editFormData.name}
+                    onChange={handleEditInputChange}
                     className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary"
                     required
                   />
@@ -875,8 +1121,8 @@ const MietfaecherPage: React.FC = () => {
                   <select
                     id="edit-typ"
                     name="typ"
-                    value={formData.typ}
-                    onChange={handleInputChange}
+                    value={editFormData.typ}
+                    onChange={handleEditInputChange}
                     className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary"
                     required
                   >
@@ -895,8 +1141,8 @@ const MietfaecherPage: React.FC = () => {
                     type="text"
                     id="edit-standort"
                     name="standort"
-                    value={formData.standort}
-                    onChange={handleInputChange}
+                    value={editFormData.standort}
+                    onChange={handleEditInputChange}
                     className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary"
                     required
                     placeholder="z.B. Eingangsbereich, Mitte, etc."
@@ -913,8 +1159,8 @@ const MietfaecherPage: React.FC = () => {
                       type="number"
                       id="edit-flaeche"
                       name="flaeche"
-                      value={formData.flaeche}
-                      onChange={handleInputChange}
+                      value={editFormData.flaeche}
+                      onChange={handleEditInputChange}
                       className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary"
                       required
                       min="0.1"
@@ -928,8 +1174,8 @@ const MietfaecherPage: React.FC = () => {
                     <select
                       id="edit-einheit"
                       name="einheit"
-                      value={formData.einheit}
-                      onChange={handleInputChange}
+                      value={editFormData.einheit}
+                      onChange={handleEditInputChange}
                       className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary"
                     >
                       <option value="m²">m²</option>
@@ -939,32 +1185,14 @@ const MietfaecherPage: React.FC = () => {
                   </div>
                 </div>
                 
-                {/* Preis */}
-                <div>
-                  <label htmlFor="edit-preis" className="block text-sm font-medium text-gray-700 mb-1">
-                    Preis (€/Monat) *
-                  </label>
-                  <input
-                    type="number"
-                    id="edit-preis"
-                    name="preis"
-                    value={formData.preis}
-                    onChange={handleInputChange}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary"
-                    required
-                    min="0"
-                    step="0.01"
-                  />
-                </div>
-                
                 {/* Verfügbar */}
                 <div className="flex items-center">
                   <input
                     type="checkbox"
                     id="edit-verfuegbar"
                     name="verfuegbar"
-                    checked={formData.verfuegbar}
-                    onChange={(e) => setFormData({...formData, verfuegbar: e.target.checked})}
+                    checked={editFormData.verfuegbar}
+                    onChange={handleEditInputChange}
                     className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
                   />
                   <label htmlFor="edit-verfuegbar" className="ml-2 block text-sm font-medium text-gray-700">
@@ -980,8 +1208,8 @@ const MietfaecherPage: React.FC = () => {
                   <textarea
                     id="edit-beschreibung"
                     name="beschreibung"
-                    value={formData.beschreibung}
-                    onChange={handleInputChange}
+                    value={editFormData.beschreibung}
+                    onChange={handleEditInputChange}
                     className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary"
                     rows={3}
                   />
@@ -996,8 +1224,8 @@ const MietfaecherPage: React.FC = () => {
                     type="text"
                     id="edit-features"
                     name="features"
-                    value={formData.features}
-                    onChange={handleInputChange}
+                    value={editFormData.features}
+                    onChange={handleEditInputChange}
                     className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary"
                     placeholder="z.B. Beleuchtet, Abschließbar, Klimatisiert"
                   />
@@ -1008,7 +1236,11 @@ const MietfaecherPage: React.FC = () => {
               <div className="flex justify-end space-x-2 mt-6">
                 <button
                   type="button"
-                  onClick={() => setShowEditModal(false)}
+                  onClick={() => {
+                    setShowEditModal(false);
+                    setCurrentMietfach(null);
+                    resetEditForm();
+                  }}
                   className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
                 >
                   Abbrechen

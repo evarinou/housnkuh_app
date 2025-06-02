@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Shield, AlertCircle } from 'lucide-react';
 import axios from 'axios';
 import { useAuth } from '../../contexts/AuthContext';
-import logo from '../../components/assets/logo.svg';
+import logo from '../../assets/images/logo.svg';
 
 const SetupPage: React.FC = () => {
   const [username, setUsername] = useState('');

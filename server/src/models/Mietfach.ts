@@ -11,6 +11,40 @@ const MietfachSchema = new Schema({
   typ: {
     type: String,
     required: true
+  },
+  beschreibung: {
+    type: String,
+    trim: true
+  },
+  groesse: {
+    flaeche: {
+      type: Number,
+      default: 1
+    },
+    einheit: {
+      type: String,
+      default: 'm²'
+    }
+  },
+  verfuegbar: {
+    type: Boolean,
+    default: true
+  },
+  aktuellerVertrag: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Vertrag'
+  },
+  zugewiesenAn: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  },
+  standort: {
+    type: String,
+    trim: true
+  },
+  features: {
+    type: [String],
+    default: []
   }
 }, { timestamps: true });
 

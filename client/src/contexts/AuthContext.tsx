@@ -1,7 +1,8 @@
 // client/src/contexts/AuthContext.tsx
-import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import axios from 'axios';
 
+// Interface für Benutzerinformationen
 interface User {
   id: string;
   username: string;
@@ -9,6 +10,7 @@ interface User {
   isAdmin: boolean;
 }
 
+// Interface für den AuthContext
 interface AuthContextType {
   user: User | null;
   token: string | null;
@@ -19,6 +21,7 @@ interface AuthContextType {
   checkAuth: () => Promise<boolean>;
 }
 
+// AuthContext erstellen
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 interface AuthProviderProps {
@@ -27,29 +30,28 @@ interface AuthProviderProps {
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
+  const [token, setToken] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   // Logout-Funktion
-  // Memoized using useCallback to prevent re-creation on every render
-  const logout = useCallback((): void => {
+  const logout = (): void => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
 
+    // Token aus axios headers entfernen
     delete axios.defaults.headers.common['x-auth-token'];
 
     setToken(null);
     setUser(null);
     setIsAuthenticated(false);
-  }, []); // No dependencies, so it's created once
+  };
 
   // Authentifizierung prüfen
-  // Memoized using useCallback to prevent re-creation on every render unless its dependencies (token, logout) change
-  const checkAuth = useCallback(async (): Promise<boolean> => {
-    setIsLoading(true);
-
-    if (!token) {
+  const checkAuth = async (): Promise<boolean> => {
+    const storedToken = localStorage.getItem('token');
+    
+    if (!storedToken) {
       setIsAuthenticated(false);
       setUser(null);
       setIsLoading(false);
@@ -60,7 +62,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
 
       // Token-Header setzen
-      axios.defaults.headers.common['x-auth-token'] = token;
+      axios.defaults.headers.common['x-auth-token'] = storedToken;
 
       // Auth-Status überprüfen
       const response = await axios.get(`${apiUrl}/auth/check`);
@@ -69,7 +71,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         // User-Daten aus dem lokalen Storage abrufen
         const userData = localStorage.getItem('user');
         if (userData) {
-          setUser(JSON.parse(userData));
+          const parsedUser = JSON.parse(userData);
+          setUser(parsedUser);
+          setToken(storedToken);
           setIsAuthenticated(true);
         }
 
@@ -77,30 +81,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         return true;
       } else {
         // Bei Fehler ausloggen
-        logout(); // Call the memoized logout function
+        logout();
         setIsLoading(false);
         return false;
       }
     } catch (error) {
       console.error('Auth check error:', error);
-      logout(); // Call the memoized logout function
+      logout();
       setIsLoading(false);
       return false;
     }
-  }, [token, logout]); // Dependencies: token and the memoized logout
+  };
 
   // Beim Laden der Komponente nach Token suchen und Auth-Status prüfen
   useEffect(() => {
-    const initAuth = async () => {
-      if (token) {
-        await checkAuth();
-      } else {
-        setIsLoading(false); // Ensure loading is set to false if there's no token
-      }
-    };
-
-    initAuth();
-  }, [checkAuth, token]); // Dependencies are now stable or correctly handled
+    checkAuth();
+  }, []); // Nur einmal beim Mount ausführen
 
   // Login-Funktion
   const login = async (username: string, password: string): Promise<boolean> => {
@@ -146,8 +142,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     isAuthenticated,
     isLoading,
     login,
-    logout, // Provide the memoized logout
-    checkAuth // Provide the memoized checkAuth
+    logout,
+    checkAuth
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

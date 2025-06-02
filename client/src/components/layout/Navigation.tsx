@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import { Menu, X, User, LogIn } from 'lucide-react';
-import logo from '../assets/logo.svg';
+import logo from '../../assets/images/logo.svg';
 
 const Navigation: React.FC = () => {
   const [isOpen, setIsOpen] = useState<boolean>(false);
@@ -37,8 +37,7 @@ const Navigation: React.FC = () => {
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
             <NavLink 
-              //to="/direktvermarkter" 
-              to="/vendors" 
+              to="/direktvermarkter" 
               className={({ isActive }) => isActive 
                 ? "text-primary border-b-2 border-primary font-medium" 
                 : "hover:text-primary text-secondary border-transparent border-b-2 font-medium"
@@ -46,7 +45,7 @@ const Navigation: React.FC = () => {
             >
               Direktvermarkter
             </NavLink>
-             {/* Desktop Navigation <NavLink 
+            <NavLink 
               to="/vendors" 
               className={({ isActive }) => isActive 
                 ? "text-primary border-b-2 border-primary font-medium" 
@@ -54,7 +53,7 @@ const Navigation: React.FC = () => {
               }
             >
               Wettbewerb
-            </NavLink>*/}
+            </NavLink>
             <NavLink 
               to="/standort" 
               className={({ isActive }) => isActive 

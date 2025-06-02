@@ -1,42 +1,63 @@
 // client/src/pages/KontaktPage.tsx
 import React from 'react';
+import ContactForm from '../components/ContactForm';
+import SimpleMapComponent from '../components/SimpleMapComponent';
 
 const KontaktPage: React.FC = () => {
-  // Basic form state and handlers would go here
-  // For a real form, consider libraries like Formik or React Hook Form
-
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-3xl font-bold text-secondary my-6 text-center">Kontaktieren Sie uns</h1>
-      <div className="bg-white shadow-lg rounded-lg p-6 max-w-2xl mx-auto">
-        <form>
-          <div className="mb-4">
-            <label htmlFor="name" className="block text-gray-700 text-sm font-bold mb-2">Name:</label>
-            <input type="text" id="name" name="name" className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" />
+    <div className="container mx-auto p-4 pb-12">
+      <h1 className="text-3xl font-bold text-primary-900 my-6 text-center">Kontaktieren Sie uns</h1>
+      
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
+        {/* Linke Seite - Kontaktformular */}
+        <div>
+          <ContactForm className="h-full" />
+        </div>
+        
+        {/* Rechte Seite - Kontaktinformationen und Karte */}
+        <div className="flex flex-col">
+          <div className="bg-white shadow-lg rounded-lg p-6 mb-6">
+            <h2 className="text-2xl font-bold text-primary-900 mb-4">Unsere Kontaktdaten</h2>
+            
+            <div className="mb-4">
+              <h3 className="text-lg font-semibold text-primary-800 mb-2">Adresse:</h3>
+              <p className="text-gray-700">housnkuh - Regionaler Marktplatz</p>
+              <p className="text-gray-700">Strauer Str. 15</p>
+              <p className="text-gray-700">96317 Kronach</p>
+            </div>
+            
+            <div className="mb-4">
+              <h3 className="text-lg font-semibold text-primary-800 mb-2">Telefon:</h3>
+              <p className="text-gray-700">
+                <a href="tel:015735711257" className="hover:text-primary-600 transition duration-300">0157 35711257</a>
+              </p>
+            </div>
+            
+            <div className="mb-4">
+              <h3 className="text-lg font-semibold text-primary-800 mb-2">E-Mail:</h3>
+              <p className="text-gray-700">
+                <a href="mailto:eva-maria.schaller@housnkuh.de" className="text-primary-600 hover:underline transition duration-300">
+                  eva-maria.schaller@housnkuh.de
+                </a>
+              </p>
+            </div>
+            
+            <div className="mb-4">
+              <h3 className="text-lg font-semibold text-primary-800 mb-2">Öffnungszeiten:</h3>
+              <p className="text-gray-700">Montag - Freitag: 9:00 - 18:00 Uhr</p>
+              <p className="text-gray-700">Samstag: 9:00 - 13:00 Uhr</p>
+            </div>
           </div>
-          <div className="mb-4">
-            <label htmlFor="email" className="block text-gray-700 text-sm font-bold mb-2">E-Mail:</label>
-            <input type="email" id="email" name="email" className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" />
+          
+          {/* Karte - Verwenden der SimpleMapComponent, falls vorhanden */}
+          <div className="bg-white shadow-lg rounded-lg p-6 h-[300px]">
+            <SimpleMapComponent 
+              center={{ lat: 50.244722, lng: 11.325833 }} 
+              zoom={14} 
+              markerPosition={{ lat: 50.244722, lng: 11.325833 }}
+              markerTitle="housnkuh - Regionaler Marktplatz"
+            />
           </div>
-          <div className="mb-4">
-            <label htmlFor="subject" className="block text-gray-700 text-sm font-bold mb-2">Betreff:</label>
-            <input type="text" id="subject" name="subject" className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" />
-          </div>
-          <div className="mb-6">
-            <label htmlFor="message" className="block text-gray-700 text-sm font-bold mb-2">Nachricht:</label>
-            <textarea id="message" name="message" rows={5} className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"></textarea>
-          </div>
-          <div className="flex items-center justify-center">
-            <button type="submit" className="bg-primary hover:bg-red-700 text-white font-bold py-2 px-6 rounded focus:outline-none focus:shadow-outline">
-              Senden
-            </button>
-          </div>
-        </form>
-        <div className="mt-8 text-center">
-          <h3 className="text-xl font-semibold text-secondary mb-2">Oder erreichen Sie uns direkt:</h3>
-          <p className="text-gray-700">Strauer Str. 15, 96317 Kronach</p>
-          <p className="text-gray-700">Tel: 0157/35711257</p>
-          <p className="text-gray-700">E-Mail: <a href="mailto:eva-maria.schaller@housnkuh.de" className="text-primary hover:underline">eva-maria.schaller@housnkuh.de</a></p>
         </div>
       </div>
     </div>

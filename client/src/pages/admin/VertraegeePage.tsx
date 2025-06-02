@@ -160,18 +160,27 @@ const VertraegeePage: React.FC = () => {
       setError('');
       
       try {
-        // Hier später durch API-Aufruf ersetzen
-        // const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
-        // const response = await axios.get(`${apiUrl}/admin/vertraege`);
+        const token = localStorage.getItem('adminToken');
+        const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
         
-        // Mock-Daten verwenden
-        setTimeout(() => {
-          setVertraege(mockVertraege);
-          setFilteredVertraege(mockVertraege);
-          setIsLoading(false);
-        }, 500);
-      } catch (err) {
-        setError('Ein Fehler ist aufgetreten beim Laden der Verträge');
+        const response = await axios.get(`${apiUrl}/vertraege`);
+        
+        if (response.data.success) {
+          setVertraege(response.data.vertraege);
+          setFilteredVertraege(response.data.vertraege);
+        } else {
+          throw new Error(response.data.message || 'Unbekannter Fehler');
+        }
+        setIsLoading(false);
+      } catch (err: any) {
+        console.error('Error fetching vertraege:', err);
+        console.error('Error details:', {
+          status: err.response?.status,
+          statusText: err.response?.statusText,
+          data: err.response?.data,
+          url: err.config?.url
+        });
+        setError(`Fehler ${err.response?.status || 'unbekannt'}: ${err.response?.data?.message || err.message}`);
         setIsLoading(false);
       }
     };
@@ -193,10 +202,10 @@ const VertraegeePage: React.FC = () => {
       const term = searchTerm.toLowerCase();
       result = result.filter(
         vertrag => 
-          vertrag.vertragsnummer.toLowerCase().includes(term) || 
-          vertrag.kunde.name.toLowerCase().includes(term) || 
-          vertrag.kunde.email.toLowerCase().includes(term) ||
-          vertrag.mietfaecher.some(m => m.name.toLowerCase().includes(term))
+          vertrag.vertragsnummer?.toLowerCase().includes(term) || 
+          vertrag.kunde?.name?.toLowerCase().includes(term) || 
+          vertrag.kunde?.email?.toLowerCase().includes(term) ||
+          vertrag.mietfaecher?.some(m => m?.name?.toLowerCase().includes(term))
       );
     }
     
@@ -227,6 +236,16 @@ const VertraegeePage: React.FC = () => {
   
   // Status mit Icon
   const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
+    // Sicherheitscheck für undefined status
+    if (!status) {
+      return (
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+          <AlertCircle className="h-3 w-3 mr-1" />
+          Unbekannt
+        </span>
+      );
+    }
+    
     let icon;
     switch (status) {
       case 'aktiv':
@@ -407,18 +426,18 @@ const VertraegeePage: React.FC = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900">
-                      {vertrag.kunde.name}
+                      {vertrag.kunde?.name || 'Unbekannt'}
                     </div>
                     <div className="text-sm text-gray-500">
-                      {vertrag.kunde.email}
+                      {vertrag.kunde?.email || 'Keine E-Mail'}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900">
-                      {formatMietfaecherCount(vertrag.mietfaecher.length)}
+                      {formatMietfaecherCount(vertrag.mietfaecher?.length || 0)}
                     </div>
                     <div className="text-sm text-gray-500">
-                      {vertrag.mietfaecher.map(m => m.name).join(', ')}
+                      {vertrag.mietfaecher?.map(m => m?.name || 'Unbekannt').join(', ') || 'Keine Mietfächer'}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -434,7 +453,7 @@ const VertraegeePage: React.FC = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900">
-                      {vertrag.gesamtpreis.toFixed(2)}€
+                      {(vertrag.gesamtpreis || 0).toFixed(2)}€
                     </div>
                     <div className="text-sm text-gray-500">
                       {vertrag.zahlungsrhythmus}, {vertrag.zahlungsart}
@@ -502,11 +521,11 @@ const VertraegeePage: React.FC = () => {
                 <div className="space-y-2">
                   <div>
                     <span className="text-sm text-gray-500">Name:</span>
-                    <p className="font-medium">{currentVertrag.kunde.name}</p>
+                    <p className="font-medium">{currentVertrag.kunde?.name || 'Unbekannt'}</p>
                   </div>
                   <div>
                     <span className="text-sm text-gray-500">E-Mail:</span>
-                    <p className="font-medium">{currentVertrag.kunde.email}</p>
+                    <p className="font-medium">{currentVertrag.kunde?.email || 'Keine E-Mail'}</p>
                   </div>
                   <div className="pt-2">
                     <button className="text-primary hover:underline text-sm">Alle Kundendaten anzeigen</button>
@@ -549,16 +568,16 @@ const VertraegeePage: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {currentVertrag.mietfaecher.map(mietfach => (
-                      <tr key={mietfach._id}>
-                        <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">{mietfach.name}</td>
-                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{mietfach.typ}</td>
-                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{mietfach.preis.toFixed(2)}€</td>
+                    {currentVertrag.mietfaecher?.map(mietfach => (
+                      <tr key={mietfach?._id}>
+                        <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">{mietfach?.name || 'Unbekannt'}</td>
+                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{mietfach?.typ || 'Unbekannt'}</td>
+                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{(mietfach?.preis || 0).toFixed(2)}€</td>
                       </tr>
-                    ))}
+                    )) || []}
                     <tr className="bg-gray-50">
                       <td colSpan={2} className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900 text-right">Gesamtpreis/Monat:</td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm font-bold text-gray-900">{currentVertrag.mietfaecher.reduce((sum, item) => sum + item.preis, 0).toFixed(2)}€</td>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm font-bold text-gray-900">{(currentVertrag.mietfaecher?.reduce((sum, item) => sum + (item?.preis || 0), 0) || 0).toFixed(2)}€</td>
                     </tr>
                   </tbody>
                 </table>
@@ -571,12 +590,12 @@ const VertraegeePage: React.FC = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <h4 className="text-sm text-gray-500 uppercase mb-2">Vertragswert</h4>
-                  <p className="text-2xl font-bold text-gray-900">{currentVertrag.gesamtpreis.toFixed(2)}€</p>
+                  <p className="text-2xl font-bold text-gray-900">{(currentVertrag.gesamtpreis || 0).toFixed(2)}€</p>
                   <p className="text-sm text-gray-500">Gesamtlaufzeit</p>
                 </div>
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <h4 className="text-sm text-gray-500 uppercase mb-2">Provision</h4>
-                  <p className="text-2xl font-bold text-gray-900">{currentVertrag.provision}%</p>
+                  <p className="text-2xl font-bold text-gray-900">{currentVertrag.provision || 0}%</p>
                   <p className="text-sm text-gray-500">auf Verkäufe</p>
                 </div>
               </div>

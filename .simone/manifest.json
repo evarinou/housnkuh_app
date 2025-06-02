@@ -1,0 +1,94 @@
+{
+  "project": {
+    "name": "housnkuh",
+    "description": "Regionaler Marktplatz für Direktvermarkter",
+    "type": "Full-Stack JavaScript/TypeScript",
+    "version": "1.0.0",
+    "author": "Eva-Maria Schaller",
+    "created": "2025-01-06",
+    "lastUpdated": "2025-01-06"
+  },
+  "technology": {
+    "frontend": {
+      "framework": "React 18.2",
+      "language": "TypeScript",
+      "styling": "Tailwind CSS",
+      "state": "React Context API",
+      "routing": "React Router v6"
+    },
+    "backend": {
+      "runtime": "Node.js",
+      "framework": "Express.js",
+      "language": "TypeScript",
+      "database": "MongoDB with Mongoose",
+      "auth": "JWT"
+    }
+  },
+  "structure": {
+    "documents": [
+      {
+        "path": "01_PROJECT_DOCS/ARCHITECTURE.md",
+        "description": "Complete system architecture documentation",
+        "created": "2025-01-06"
+      }
+    ],
+    "milestones": [
+      {
+        "id": "M000",
+        "name": "Critical Infrastructure Fix",
+        "status": "critical",
+        "description": "Fix test infrastructure and project management issues (BLOCKING)",
+        "requirements": 7,
+        "completed": 0,
+        "created": "2025-06-02"
+      },
+      {
+        "id": "M001",
+        "name": "Vendor Registration with Trial Period",
+        "status": "blocked",
+        "description": "Pre-launch registration system with trial period starting at store opening",
+        "requirements": 10,
+        "completed": 7,
+        "created": "2025-01-06"
+      },
+      {
+        "id": "M002",
+        "name": "Product Management Foundation",
+        "status": "planned",
+        "description": "Vendor product management interface implementation",
+        "requirements": 10,
+        "completed": 0,
+        "created": "2025-01-06"
+      }
+    ],
+    "sprints": [],
+    "tasks": []
+  },
+  "team": {
+    "roles": [
+      {
+        "role": "Developer",
+        "name": "Eva-Maria Schaller",
+        "responsibilities": ["Full-Stack Development", "Project Management"]
+      }
+    ]
+  },
+  "goals": {
+    "current": "Implement pre-launch vendor registration with trial period system",
+    "next": [
+      "Vendor product management interface",
+      "POS system integration",
+      "Daily sales reporting",
+      "Public product catalog"
+    ],
+    "longTerm": "Complete marketplace platform with POS integration and analytics"
+  },
+  "metrics": {
+    "milestonesTotal": 2,
+    "milestonesCompleted": 0,
+    "requirementsTotal": 20,
+    "requirementsCompleted": 0,
+    "tasksTotal": 0,
+    "tasksCompleted": 0
+  }
+}

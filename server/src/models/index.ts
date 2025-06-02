@@ -1,9 +1,15 @@
-const User = require('./User');
-const Mietfach = require('./Mietfach');
-const Vertrag = require('./Vertrag');
+import User from './User';
+import Mietfach from './Mietfach';
+import Vertrag from './Vertrag';
+import VendorContest from './VendorContest';
+import Contact from './Contact';
+import Settings from './Settings';
 
-module.exports = {
+export {
   User,
   Mietfach,
-  Vertrag
+  Vertrag,
+  VendorContest,
+  Contact,
+  Settings
 };

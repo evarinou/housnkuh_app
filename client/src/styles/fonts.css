@@ -1,7 +1,7 @@
 @font-face {
   font-family: 'Quicksand';
-  src: url('../components/assets/fonts/Quicksand-Regular.ttf') format('ttf'), /* Korrigierter Pfad */
-       url('../components/assets/fonts/Quicksand-Regular.ttf') format('truetype'); /* Korrigierter Pfad */
+  src: url('../assets/fonts/Quicksand-Regular.ttf') format('ttf'),
+       url('../assets/fonts/Quicksand-Regular.ttf') format('truetype');
   font-weight: normal;
   font-style: normal;
   font-display: swap;
@@ -9,8 +9,8 @@
 
 @font-face {
   font-family: 'Quicksand';
-  src: url('../components/assets/fonts/Quicksand-Bold.ttf') format('ttf'), /* Korrigierter Pfad */
-       url('../components/assets/fonts/Quicksand-Bold.ttf') format('truetype'); /* Korrigierter Pfad */
+  src: url('../assets/fonts/Quicksand-Bold.ttf') format('ttf'),
+       url('../assets/fonts/Quicksand-Bold.ttf') format('truetype');
   font-weight: bold;
   font-style: normal;
   font-display: swap;
