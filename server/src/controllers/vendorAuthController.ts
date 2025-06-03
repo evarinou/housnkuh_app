@@ -9,7 +9,7 @@ import fs from 'fs';
 import path from 'path';
 import multer from 'multer';
 import config from '../config/config';
-import { sendVendorWelcomeEmail, sendPreRegistrationConfirmation } from '../utils/emailService';
+import { sendVendorWelcomeEmail, sendPreRegistrationConfirmation, sendTrialActivationEmail, sendCancellationConfirmationEmail } from '../utils/emailService';
 import Settings from '../models/Settings';
 
 // Pre-Registrierung für Direktvermarkter vor Store-Eröffnung (M001 R001)
@@ -220,6 +220,10 @@ export const registerVendorWithBooking = async (req: Request, res: Response): Pr
     const tokenExpires = new Date();
     tokenExpires.setHours(tokenExpires.getHours() + 24); // 24 Stunden gültig
     
+    // Check if store is open to determine registration status
+    const settings = await Settings.getSettings();
+    const isStoreOpen = settings.isStoreOpen();
+    
     // User erstellen oder aktualisieren
     let user;
     if (existingUser && !existingUser.isFullAccount) {
@@ -231,6 +235,18 @@ export const registerVendorWithBooking = async (req: Request, res: Response): Pr
       user.password = hashedPassword;
       user.isFullAccount = true;
       user.isVendor = true;
+      
+      // Set registration status based on store status
+      if (isStoreOpen) {
+        user.registrationStatus = 'trial_active';
+        user.trialStartDate = new Date();
+        const trialEndDate = new Date();
+        trialEndDate.setDate(trialEndDate.getDate() + 30);
+        user.trialEndDate = trialEndDate;
+      } else {
+        user.registrationStatus = 'preregistered';
+      }
+      user.registrationDate = new Date();
       
       // Aktualisiere den Kontakt mit neuen Daten, aber behalte vorhandene Newsletter-Einstellungen bei
       const existingNewsletterConfirmed = user.kontakt.newsletterConfirmed;
@@ -285,6 +301,14 @@ export const registerVendorWithBooking = async (req: Request, res: Response): Pr
         password: hashedPassword,
         isFullAccount: true,
         isVendor: true,
+        registrationStatus: isStoreOpen ? 'trial_active' : 'preregistered',
+        registrationDate: new Date(),
+        trialStartDate: isStoreOpen ? new Date() : undefined,
+        trialEndDate: isStoreOpen ? (() => {
+          const endDate = new Date();
+          endDate.setDate(endDate.getDate() + 30);
+          return endDate;
+        })() : undefined,
         kontakt: {
           name,
           email,
@@ -324,15 +348,21 @@ export const registerVendorWithBooking = async (req: Request, res: Response): Pr
     await user.save();
     
     // Bestätigungs-E-Mail senden
+    console.log('Attempting to send vendor welcome email to:', email);
+    console.log('Email token:', emailConfirmationToken);
+    
     const emailSent = await sendVendorWelcomeEmail(email, emailConfirmationToken, packageData);
     
     if (!emailSent) {
+      console.error('Failed to send vendor welcome email');
       res.status(500).json({ 
         success: false, 
         message: 'Account erstellt, aber E-Mail konnte nicht gesendet werden' 
       });
       return;
     }
+    
+    console.log('Vendor welcome email sent successfully');
     
     res.status(201).json({ 
       success: true, 
@@ -405,7 +435,10 @@ export const loginVendor = async (req: Request, res: Response): Promise<void> =>
         name: user.kontakt.name,
         email: user.kontakt.email,
         isVendor: user.isVendor,
-        hasPendingBooking: !!user.pendingBooking
+        hasPendingBooking: !!user.pendingBooking,
+        registrationStatus: user.registrationStatus,
+        trialStartDate: user.trialStartDate,
+        trialEndDate: user.trialEndDate
       }
     });
   } catch (err) {
@@ -490,6 +523,38 @@ export const confirmVendorEmail = async (req: Request, res: Response): Promise<v
     user.kontakt.tokenExpires = null;
     
     await user.save();
+    
+    // Create contract from pending booking if exists
+    if (user.pendingBooking && user.pendingBooking.packageData) {
+      try {
+        const { createVertragFromPendingBooking } = require('./vertragController');
+        const userId = user._id ? user._id.toString() : '';
+        const contractCreated = await createVertragFromPendingBooking(userId, user.pendingBooking.packageData, []);
+        
+        if (contractCreated) {
+          // Clear pending booking after successful contract creation
+          user.pendingBooking = undefined;
+          await user.save();
+          
+          console.log('Contract created successfully for user:', user._id?.toString());
+        } else {
+          console.error('Failed to create contract for user:', user._id?.toString());
+        }
+      } catch (contractError) {
+        console.error('Error creating contract:', contractError);
+        // Don't fail the email confirmation if contract creation fails
+      }
+    }
+    
+    // If user is in trial status and store is open, send trial activation email
+    if (user.registrationStatus === 'trial_active' && user.trialStartDate && user.trialEndDate) {
+      await sendTrialActivationEmail(
+        user.kontakt.email,
+        user.kontakt.name,
+        user.trialStartDate,
+        user.trialEndDate
+      );
+    }
     
     res.json({ 
       success: true, 
@@ -998,5 +1063,77 @@ export const getVendorContracts = async (req: Request, res: Response): Promise<v
   } catch (error) {
     console.error("Fehler beim Abrufen der Vendor-Verträge:", error);
     res.status(500).json({ error: "Fehler beim Abrufen der Verträge" });
+  }
+};
+
+// Cancel vendor trial/subscription
+export const cancelVendorSubscription = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { userId } = req.params;
+    const { reason } = req.body;
+    
+    // Verify the user is cancelling their own subscription
+    if ((req as any).user?.id !== userId) {
+      res.status(403).json({ 
+        success: false, 
+        message: "Keine Berechtigung" 
+      });
+      return;
+    }
+    
+    // Find the vendor
+    const user = await User.findById(userId);
+    if (!user || !user.isVendor) {
+      res.status(404).json({ 
+        success: false, 
+        message: "Vendor nicht gefunden" 
+      });
+      return;
+    }
+    
+    // Check current registration status
+    if (user.registrationStatus === 'cancelled') {
+      res.status(400).json({ 
+        success: false, 
+        message: "Account ist bereits gekündigt" 
+      });
+      return;
+    }
+    
+    // Update registration status to cancelled
+    user.registrationStatus = 'cancelled';
+    user.isPubliclyVisible = false; // Hide from public listings
+    
+    // Log cancellation reason if provided
+    if (reason) {
+      console.log(`Vendor ${user.kontakt.email} cancelled subscription. Reason: ${reason}`);
+    }
+    
+    await user.save();
+    
+    // Send cancellation confirmation email
+    try {
+      const { sendCancellationConfirmationEmail } = require('../utils/emailService');
+      await sendCancellationConfirmationEmail(
+        user.kontakt.email,
+        user.kontakt.name,
+        user.trialEndDate
+      );
+    } catch (emailError) {
+      console.error('Failed to send cancellation confirmation email:', emailError);
+      // Continue even if email fails
+    }
+    
+    res.json({ 
+      success: true, 
+      message: "Ihre Registrierung wurde erfolgreich gekündigt. Sie können sich jederzeit wieder anmelden."
+    });
+    
+  } catch (error) {
+    console.error("Fehler beim Kündigen der Vendor-Registrierung:", error);
+    res.status(500).json({ 
+      success: false, 
+      message: "Ein Serverfehler ist aufgetreten" 
+    });
   }
 };

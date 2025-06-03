@@ -29,4 +29,7 @@ router.get('/check', vendorAuth, (_req, res) => {
 // Vendor Verträge
 router.get('/contracts/:userId', vendorAuth, vendorAuthController.getVendorContracts);
 
+// Vendor Subscription Management
+router.post('/cancel/:userId', vendorAuth, vendorAuthController.cancelVendorSubscription);
+
 export default router;

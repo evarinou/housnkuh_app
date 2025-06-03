@@ -226,7 +226,9 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = ({
           if (result.success) {
             // Erfolgreiche Registrierung - zeige Bestätigungsseite
             setShowSuccess(true);
-            setSuccessMessage(`Herzlich willkommen bei housnkuh! Ihre Registrierung war erfolgreich. Sie erhalten eine Bestätigungs-E-Mail an ${formData.email} mit allen weiteren Details zu Ihrem Paket und den nächsten Schritten.`);
+            const trialEndDate = new Date();
+            trialEndDate.setDate(trialEndDate.getDate() + 30);
+            setSuccessMessage(`Herzlich willkommen bei housnkuh! Ihre Registrierung war erfolgreich. Ihr 30-tägiger kostenloser Probemonat hat begonnen und läuft bis zum ${trialEndDate.toLocaleDateString('de-DE')}. Sie erhalten eine Bestätigungs-E-Mail an ${formData.email} mit allen weiteren Details.`);
           } else {
             setError(result.message || 'Ein Fehler ist aufgetreten');
           }
@@ -257,6 +259,28 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = ({
                   : 'Erstellen Sie einen Account, um Ihre Buchung abzuschließen'
                 }
               </p>
+              
+              {/* Trial Info Banner - Show for regular registration */}
+              {!isLogin && (!storeSettings || storeSettings.isStoreOpen) && (
+                <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+                  <div className="flex items-start space-x-3">
+                    <CheckCircle className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
+                    <div className="text-left">
+                      <p className="text-sm font-semibold text-green-800">
+                        30 Tage kostenlos testen!
+                      </p>
+                      <p className="text-xs text-green-700 mt-1">
+                        Ihr Probemonat startet sofort nach der Registrierung. Sie können jederzeit kündigen.
+                      </p>
+                      <ul className="text-xs text-green-600 mt-2 space-y-1">
+                        <li>✓ Keine Kreditkarte erforderlich</li>
+                        <li>✓ Automatische Aktivierung</li>
+                        <li>✓ Voller Funktionsumfang</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              )}
               
               {/* Pre-Registration Info Banner */}
               {!isLogin && storeSettings && !storeSettings.isStoreOpen && (
@@ -545,11 +569,25 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = ({
               <p className="text-gray-600">Prüfen Sie Ihre Daten und bestätigen Sie die Buchung</p>
             </div>
 
+            {/* Trial Info */}
+            <div className="bg-green-50 p-4 rounded-lg mb-4">
+              <h4 className="font-semibold text-green-800 mb-2 flex items-center">
+                <CheckCircle className="w-5 h-5 mr-2" />
+                30 Tage kostenloses Probeabo
+              </h4>
+              <div className="text-sm text-green-700 space-y-1">
+                <p>✓ Ihr Probemonat beginnt sofort nach der Registrierung</p>
+                <p>✓ Keine Zahlungsinformationen erforderlich</p>
+                <p>✓ Sie können jederzeit kündigen</p>
+                <p>✓ Nach 30 Tagen wird Ihr gewähltes Paket automatisch aktiviert</p>
+              </div>
+            </div>
+
             {/* Package-Zusammenfassung */}
             <div className="bg-gray-50 p-4 rounded-lg">
               <h4 className="font-semibold text-secondary mb-3 flex items-center">
                 <Package className="w-5 h-5 mr-2" />
-                Ihr gewähltes Paket
+                Ihr gewähltes Paket (nach Probemonat)
               </h4>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
@@ -661,6 +699,23 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = ({
             <p className="text-gray-700 mb-6 leading-relaxed">
               {successMessage}
             </p>
+            
+            {!isPreRegistration && (
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+                <div className="flex items-start space-x-2">
+                  <CheckCircle className="w-5 h-5 text-green-500 mt-0.5" />
+                  <div className="text-left">
+                    <p className="text-sm font-medium text-green-800">Ihre Probezeit-Vorteile:</p>
+                    <ul className="text-xs text-green-600 mt-2 space-y-1">
+                      <li>• 30 Tage kostenloses Testen</li>
+                      <li>• Zugang zu allen Funktionen</li>
+                      <li>• Jederzeitige Kündigung möglich</li>
+                      <li>• Automatische E-Mail-Erinnerung vor Ablauf</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            )}
             
             {isPreRegistration && (
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">

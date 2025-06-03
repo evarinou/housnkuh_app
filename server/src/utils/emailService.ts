@@ -171,18 +171,23 @@ export const sendNewsletterConfirmation = async (to: string, token: string, type
 export const sendVendorWelcomeEmail = async (to: string, token: string, packageData: any): Promise<boolean> => {
   try {
     console.log(`Sending vendor welcome email to: ${to}`);
+    console.log('Token:', token);
+    console.log('Package data:', JSON.stringify(packageData, null, 2));
+    
+    const baseUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const confirmUrl = `${baseUrl}/vendor/confirm?token=${token}`;
+    console.log('🔗 Vendor confirmation URL:', confirmUrl);
     
     // Fake success in development mode if email settings are not available
     if (process.env.NODE_ENV === 'development' && 
         (!process.env.EMAIL_HOST || !process.env.EMAIL_USER || !process.env.EMAIL_PASS)) {
       console.warn('⚠️ Running in development mode without email configuration');
-      console.log('🔗 Vendor confirmation URL would be:', `${process.env.FRONTEND_URL || 'http://localhost:3000'}/vendor/confirm?token=${token}`);
+      console.log('📧 Email would be sent to:', to);
+      console.log('🔗 Click here to confirm: ', confirmUrl);
       return true; // Return success in development mode
     }
     
     const transporter = createTransporter();
-    const baseUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-    const confirmUrl = `${baseUrl}/vendor/confirm?token=${token}`;
     
     const subject = 'Willkommen bei housnkuh - Bestätigen Sie Ihre Registrierung';
     
@@ -1607,6 +1612,114 @@ export const sendTrialExpiredEmail = async (
     
     if (process.env.NODE_ENV === 'development') {
       console.warn('⚠️ In development mode, treating trial expired email as sent successfully');
+      return true;
+    }
+    
+    return false;
+  }
+};
+
+// Send cancellation confirmation email
+export const sendCancellationConfirmationEmail = async (to: string, name: string, trialEndDate: Date | null): Promise<boolean> => {
+  try {
+    console.log(`Sending cancellation confirmation email to: ${to}`);
+    
+    // Fake success in development mode if email settings are not available
+    if (process.env.NODE_ENV === 'development' && 
+        (!process.env.EMAIL_HOST || !process.env.EMAIL_USER || !process.env.EMAIL_PASS)) {
+      console.warn('⚠️ Running in development mode without email configuration');
+      console.log('📧 Cancellation confirmation would be sent to:', to);
+      return true; // Return success in development mode
+    }
+    
+    const transporter = createTransporter();
+    
+    const subject = 'Bestätigung Ihrer Kündigung bei housnkuh';
+    
+    const formatDate = (date: Date | null) => {
+      if (!date) return 'N/A';
+      return new Date(date).toLocaleDateString('de-DE', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+    };
+    
+    const html = `
+      <div style="font-family: 'Quicksand', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
+        <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="color: #09122c; margin: 0;">Kündigung bestätigt</h1>
+          </div>
+          
+          <p style="color: #333; line-height: 1.6;">
+            Hallo ${name},
+          </p>
+          
+          <p style="color: #333; line-height: 1.6;">
+            Ihre Registrierung bei housnkuh wurde erfolgreich gekündigt.
+          </p>
+          
+          ${trialEndDate ? `
+          <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
+            <p style="color: #333; margin: 0;">
+              <strong>Zugang bis:</strong> ${formatDate(trialEndDate)}<br>
+              <small style="color: #666;">Sie können Ihr Konto bis zu diesem Datum weiterhin nutzen.</small>
+            </p>
+          </div>
+          ` : ''}
+          
+          <p style="color: #333; line-height: 1.6;">
+            Wir bedauern, dass Sie sich entschieden haben, housnkuh zu verlassen. 
+            Falls Sie Ihre Meinung ändern, können Sie sich jederzeit wieder anmelden.
+          </p>
+          
+          <p style="color: #333; line-height: 1.6;">
+            Vielen Dank, dass Sie housnkuh ausprobiert haben!
+          </p>
+          
+          <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee;">
+            <h4 style="color: #09122c;">Bei Fragen kontaktieren Sie uns:</h4>
+            <p style="color: #333; margin: 5px 0;">📞 Telefon: 0157 35711257</p>
+            <p style="color: #333; margin: 5px 0;">✉️ E-Mail: info@housnkuh.de</p>
+          </div>
+          
+          <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; text-align: center;">
+            <p style="color: #666; font-size: 12px; margin: 0;">
+              © housnkuh - Ihr regionaler Marktplatz<br>
+              <a href="https://housnkuh.de" style="color: #e17564;">www.housnkuh.de</a>
+            </p>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    const mailOptions = {
+      from: `"housnkuh" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`,
+      to,
+      subject,
+      html
+    };
+    
+    try {
+      const result = await transporter.sendMail(mailOptions);
+      console.log('Cancellation confirmation email sent successfully:', result.messageId);
+      return true;
+    } catch (emailError) {
+      console.error('Cancellation confirmation email sending error:', emailError);
+      
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('⚠️ In development mode, treating cancellation email as sent successfully');
+        return true;
+      }
+      
+      return false;
+    }
+  } catch (error) {
+    console.error('Error in sendCancellationConfirmationEmail:', error);
+    
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('⚠️ In development mode, treating cancellation email as sent successfully');
       return true;
     }
     

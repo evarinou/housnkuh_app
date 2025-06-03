@@ -8,6 +8,9 @@ interface VendorUser {
   email: string;
   isVendor: boolean;
   hasPendingBooking?: boolean;
+  registrationStatus?: 'preregistered' | 'trial_active' | 'trial_expired' | 'active' | 'cancelled';
+  trialStartDate?: string | null;
+  trialEndDate?: string | null;
 }
 
 interface VendorAuthContextType {
