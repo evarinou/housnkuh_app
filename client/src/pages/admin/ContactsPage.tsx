@@ -36,6 +36,7 @@ const ContactsPage: React.FC = () => {
     
     // Kontaktanfragen laden
     fetchContacts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, user, navigate]);
   
   const fetchContacts = async () => {

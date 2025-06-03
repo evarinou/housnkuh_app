@@ -40,7 +40,7 @@ const VertraegeePage: React.FC = () => {
   const [currentVertrag, setCurrentVertrag] = useState<Vertrag | null>(null);
   
   // Mock Daten für die Entwicklung
-  const mockVertraege: Vertrag[] = [
+  /* const mockVertraege: Vertrag[] = [
     {
       _id: '1',
       vertragsnummer: 'V2023-001',
@@ -151,7 +151,7 @@ const VertraegeePage: React.FC = () => {
       createdAt: '2023-02-15T00:00:00.000Z',
       updatedAt: '2023-05-10T00:00:00.000Z'
     }
-  ];
+  ]; */
   
   // Daten vom Server abrufen
   useEffect(() => {
@@ -160,7 +160,7 @@ const VertraegeePage: React.FC = () => {
       setError('');
       
       try {
-        const token = localStorage.getItem('adminToken');
+        // const token = localStorage.getItem('adminToken');
         const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
         
         const response = await axios.get(`${apiUrl}/vertraege`);

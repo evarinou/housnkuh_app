@@ -37,10 +37,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Logout-Funktion
   const logout = (): void => {
     localStorage.removeItem('token');
+    localStorage.removeItem('adminToken');
     localStorage.removeItem('user');
 
     // Token aus axios headers entfernen
     delete axios.defaults.headers.common['x-auth-token'];
+    delete axios.defaults.headers.common['Authorization'];
 
     setToken(null);
     setUser(null);
@@ -61,8 +63,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
 
-      // Token-Header setzen
+      // Token-Header setzen (beide Formate für Kompatibilität)
       axios.defaults.headers.common['x-auth-token'] = storedToken;
+      axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
+      
+      // AdminToken auch setzen
+      localStorage.setItem('adminToken', storedToken);
 
       // Auth-Status überprüfen
       const response = await axios.get(`${apiUrl}/auth/check`);
@@ -96,6 +102,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Beim Laden der Komponente nach Token suchen und Auth-Status prüfen
   useEffect(() => {
     checkAuth();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Nur einmal beim Mount ausführen
 
   // Login-Funktion
@@ -114,14 +121,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       if (success && authToken) {
         localStorage.setItem('token', authToken);
+        localStorage.setItem('adminToken', authToken); // Auch als adminToken speichern für Kompatibilität
         localStorage.setItem('user', JSON.stringify(userData));
 
         setToken(authToken);
         setUser(userData);
         setIsAuthenticated(true);
 
-        // Token-Header für künftige Anfragen setzen
+        // Token-Header für künftige Anfragen setzen (beide Formate für Kompatibilität)
         axios.defaults.headers.common['x-auth-token'] = authToken;
+        axios.defaults.headers.common['Authorization'] = `Bearer ${authToken}`;
 
         setIsLoading(false);
         return true;

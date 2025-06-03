@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
+// import { useAuth } from '../../contexts/AuthContext';
 import { AlertCircle, Check, X, Users, Trophy, TrendingUp } from 'lucide-react';
 
 interface VendorContestEntry {
@@ -20,7 +20,7 @@ interface ContestStats {
 }
 
 export default function VendorContestPage() {
-  const { user } = useAuth();
+  // const { user } = useAuth();
   const [entries, setEntries] = useState<VendorContestEntry[]>([]);
   const [stats, setStats] = useState<ContestStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -36,7 +36,8 @@ export default function VendorContestPage() {
   const fetchEntries = async () => {
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch('http://localhost:4000/api/vendor-contest', {
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+      const response = await fetch(`${apiUrl}/vendor-contest`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -58,7 +59,8 @@ export default function VendorContestPage() {
   const fetchStats = async () => {
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch('http://localhost:4000/api/vendor-contest/stats', {
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+      const response = await fetch(`${apiUrl}/vendor-contest/stats`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -78,7 +80,8 @@ export default function VendorContestPage() {
   const markAsRead = async (id: string) => {
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch(`http://localhost:4000/api/vendor-contest/${id}`, {
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+      const response = await fetch(`${apiUrl}/vendor-contest/${id}`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -115,7 +118,8 @@ export default function VendorContestPage() {
 
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch(`http://localhost:4000/api/vendor-contest/${id}`, {
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+      const response = await fetch(`${apiUrl}/vendor-contest/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -140,7 +144,8 @@ export default function VendorContestPage() {
   const viewDetails = async (id: string) => {
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch(`http://localhost:4000/api/vendor-contest/${id}`, {
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+      const response = await fetch(`${apiUrl}/vendor-contest/${id}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }

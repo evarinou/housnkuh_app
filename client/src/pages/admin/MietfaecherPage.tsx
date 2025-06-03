@@ -67,6 +67,7 @@ const MietfaecherPage: React.FC = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [currentMietfach, setCurrentMietfach] = useState<Mietfach | null>(null);
+  const [successMessage, setSuccessMessage] = useState('');
   
   // Mock Daten für die Entwicklung
   const mockMietfaecher: Mietfach[] = [
@@ -181,6 +182,7 @@ const MietfaecherPage: React.FC = () => {
     };
     
     fetchMietfaecher();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   
   // Filter und Suche anwenden
@@ -236,9 +238,10 @@ const MietfaecherPage: React.FC = () => {
       // Aus dem lokalen State entfernen
       setMietfaecher(prev => prev.filter(mietfach => mietfach._id !== id));
       
-      alert('Mietfach erfolgreich gelöscht');
+      setSuccessMessage('Mietfach erfolgreich gelöscht');
+      setTimeout(() => setSuccessMessage(''), 3000);
     } catch (error) {
-      alert('Fehler beim Löschen des Mietfachs');
+      setError('Fehler beim Löschen des Mietfachs');
       console.error('Error deleting mietfach:', error);
     }
   };
@@ -270,7 +273,7 @@ const MietfaecherPage: React.FC = () => {
         )
       );
     } catch (error) {
-      alert('Fehler beim Ändern der Verfügbarkeit');
+      setError('Fehler beim Ändern der Verfügbarkeit');
       console.error('Error toggling availability:', error);
     }
   };
@@ -408,11 +411,16 @@ const MietfaecherPage: React.FC = () => {
           )
         );
         
-        // Modal schließen und State zurücksetzen
+        // Modal schließen und Success-Message zeigen
         setShowEditModal(false);
         setCurrentMietfach(null);
         resetEditForm();
-        alert('Mietfach erfolgreich aktualisiert');
+        setSuccessMessage('Mietfach erfolgreich aktualisiert');
+        
+        // Success message nach 3 Sekunden ausblenden
+        setTimeout(() => {
+          setSuccessMessage('');
+        }, 3000);
         return;
       }
       
@@ -460,15 +468,19 @@ const MietfaecherPage: React.FC = () => {
         )
       );
       
-      // Modal schließen und State sofort zurücksetzen
+      // Modal schließen und Success-Message zeigen
       setShowEditModal(false);
       setCurrentMietfach(null);
       resetEditForm();
+      setSuccessMessage('Mietfach erfolgreich aktualisiert');
       
-      alert('Mietfach erfolgreich aktualisiert');
+      // Success message nach 3 Sekunden ausblenden
+      setTimeout(() => {
+        setSuccessMessage('');
+      }, 3000);
       
     } catch (error) {
-      alert('Fehler beim Speichern der Änderungen');
+      setError('Fehler beim Speichern der Änderungen');
       console.error('Error saving changes:', error);
     }
   };
@@ -528,11 +540,15 @@ const MietfaecherPage: React.FC = () => {
       
       setMietfaecher(prev => [...prev, newMietfach]);
       
-      // Modal schließen und State zurücksetzen
+      // Modal schließen und Success-Message zeigen
       setShowAddModal(false);
       resetAddForm();
+      setSuccessMessage('Mietfach erfolgreich hinzugefügt!');
       
-      alert('Mietfach erfolgreich hinzugefügt!');
+      // Success message nach 3 Sekunden ausblenden
+      setTimeout(() => {
+        setSuccessMessage('');
+      }, 3000);
       
     } catch (error) {
       // Detailliertere Fehlermeldung
@@ -545,7 +561,7 @@ const MietfaecherPage: React.FC = () => {
         console.error('Server-Fehler:', responseData);
       }
       
-      alert(errorMsg);
+      setError(errorMsg);
       console.error('Error adding mietfach:', error);
     }
   };
@@ -659,6 +675,16 @@ const MietfaecherPage: React.FC = () => {
           Mietfach hinzufügen
         </button>
       </div>
+      
+      {/* Success Message */}
+      {successMessage && (
+        <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-md">
+          <div className="flex items-center">
+            <CheckCircle className="h-5 w-5 text-green-600 mr-2" />
+            <p className="text-green-800 font-medium">{successMessage}</p>
+          </div>
+        </div>
+      )}
       
       {/* Filter- und Suchleiste */}
       <div className="bg-white rounded-lg shadow p-4 mb-6">
@@ -905,9 +931,12 @@ const MietfaecherPage: React.FC = () => {
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold">Neues Mietfach hinzufügen</h2>
               <button
+                type="button"
                 onClick={() => {
                   setShowAddModal(false);
                   resetAddForm();
+                  // Force state reset
+                  setTimeout(() => resetAddForm(), 50);
                 }}
                 className="text-gray-400 hover:text-gray-600"
               >
@@ -930,6 +959,8 @@ const MietfaecherPage: React.FC = () => {
                     onChange={handleAddInputChange}
                     className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary"
                     required
+                    autoComplete="off"
+                    placeholder="Mietfach Name eingeben..."
                   />
                 </div>
                 
@@ -1084,10 +1115,16 @@ const MietfaecherPage: React.FC = () => {
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold">Mietfach bearbeiten: {currentMietfach.name}</h2>
               <button
+                type="button"
                 onClick={() => {
                   setShowEditModal(false);
                   setCurrentMietfach(null);
                   resetEditForm();
+                  // Force state reset
+                  setTimeout(() => {
+                    resetEditForm();
+                    setCurrentMietfach(null);
+                  }, 50);
                 }}
                 className="text-gray-400 hover:text-gray-600"
               >

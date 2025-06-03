@@ -7,7 +7,7 @@ import VendorLayout from '../components/vendor/VendorLayout';
 import axios from 'axios';
 
 const VendorDashboardPage: React.FC = () => {
-  const { user, isAuthenticated, isLoading, logout } = useVendorAuth();
+  const { user, isAuthenticated, isLoading } = useVendorAuth();
   const navigate = useNavigate();
   const [storeOpeningDate, setStoreOpeningDate] = useState<Date | null>(null);
   const [isStoreOpen, setIsStoreOpen] = useState(false);

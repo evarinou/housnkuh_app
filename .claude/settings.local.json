@@ -10,8 +10,13 @@
       "Bash(npm run dev:*)",
       "Bash(curl:*)",
       "Bash(ls:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npm test:*)",
+      "Bash(mv:*)",
+      "Bash(mkdir:*)"
     ],
     "deny": []
-  }
+  },
+  "enableAllProjectMcpServers": false
 }

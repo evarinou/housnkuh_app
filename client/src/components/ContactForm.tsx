@@ -50,7 +50,7 @@ const ContactForm: React.FC<ContactFormProps> = ({ className }) => {
     }
     
     // Telefon validieren (optional)
-    if (formData.phone && !/^[0-9\s\-\+\(\)]{6,20}$/.test(formData.phone)) {
+    if (formData.phone && !/^[0-9\s\-+()]{6,20}$/.test(formData.phone)) {
       newErrors.phone = 'Bitte geben Sie eine gültige Telefonnummer ein';
     }
     

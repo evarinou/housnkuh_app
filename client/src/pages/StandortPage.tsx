@@ -1,7 +1,6 @@
 // client/src/pages/StandortPage.tsx
 import React from 'react';
 import { MapPin, Clock, Phone, Mail, Car, Bus } from 'lucide-react';
-import { Link } from 'react-router-dom';
 //import SimpleMapComponent from '../components/SimpleMapComponent';
 
 // Hilfsfunktion für Standortmerkmale (Adresse, Öffnungszeiten usw.)
@@ -135,14 +134,6 @@ const StandortPage: React.FC = () => {
             <span>Größere Karte anzeigen</span>
           </a>
           
-          <div>
-            <Link
-              to="/standort/karte"
-              className="inline-block mt-4 bg-primary text-white px-6 py-3 rounded-lg hover:bg-primary-700 transition-colors"
-            >
-              Alle Standorte auf Karte anzeigen
-            </Link>
-          </div>
         </div>
       </div>
     </div>

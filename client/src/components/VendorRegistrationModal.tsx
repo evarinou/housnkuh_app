@@ -72,6 +72,8 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = ({
   const [error, setError] = useState('');
   const [step, setStep] = useState(1); // 1: Login/Register, 2: Persönliche Daten, 3: Adresse, 4: Zusammenfassung
   const [isPreRegistration, setIsPreRegistration] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
   
   const { login, registerWithBooking, preRegisterVendor } = useVendorAuth();
   const { settings: storeSettings } = useStoreSettings();
@@ -207,8 +209,8 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = ({
           if (result.success) {
             // Erfolgreiche Pre-Registrierung
             setIsPreRegistration(true);
-            onSuccess();
-            onClose();
+            setShowSuccess(true);
+            setSuccessMessage(`Vielen Dank für Ihre Vor-Registrierung! Sie erhalten eine Bestätigungs-E-Mail an ${formData.email}. Ihr kostenloser Probemonat startet automatisch mit der Store-Eröffnung${storeSettings?.openingDate ? ` am ${new Date(storeSettings.openingDate).toLocaleDateString('de-DE')}` : ''}.`);
           } else {
             setError(result.message || 'Ein Fehler ist aufgetreten bei der Pre-Registrierung');
           }
@@ -223,8 +225,8 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = ({
           
           if (result.success) {
             // Erfolgreiche Registrierung - zeige Bestätigungsseite
-            onSuccess();
-            onClose();
+            setShowSuccess(true);
+            setSuccessMessage(`Herzlich willkommen bei housnkuh! Ihre Registrierung war erfolgreich. Sie erhalten eine Bestätigungs-E-Mail an ${formData.email} mit allen weiteren Details zu Ihrem Paket und den nächsten Schritten.`);
           } else {
             setError(result.message || 'Ein Fehler ist aufgetreten');
           }
@@ -625,6 +627,73 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = ({
         return null;
     }
   };
+
+  // Success Screen
+  if (showSuccess) {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+          {/* Header */}
+          <div className="flex items-center justify-between p-6 border-b">
+            <div>
+              <h2 className="text-2xl font-bold text-secondary">
+                {isPreRegistration ? 'Vor-Registrierung erfolgreich!' : 'Registrierung erfolgreich!'}
+              </h2>
+            </div>
+            <button
+              onClick={() => {
+                setShowSuccess(false);
+                onSuccess();
+                onClose();
+              }}
+              className="text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <X className="w-6 h-6" />
+            </button>
+          </div>
+
+          {/* Success Content */}
+          <div className="p-6 text-center">
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <CheckCircle className="w-8 h-8 text-green-600" />
+            </div>
+            
+            <p className="text-gray-700 mb-6 leading-relaxed">
+              {successMessage}
+            </p>
+            
+            {isPreRegistration && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                <div className="flex items-start space-x-2">
+                  <Clock className="w-5 h-5 text-blue-500 mt-0.5" />
+                  <div className="text-left">
+                    <p className="text-sm font-medium text-blue-800">Was passiert als nächstes?</p>
+                    <ul className="text-xs text-blue-600 mt-2 space-y-1">
+                      <li>• Sie erhalten eine Bestätigungs-E-Mail</li>
+                      <li>• Wir informieren Sie über die Store-Eröffnung</li>
+                      <li>• Ihr kostenloser Probemonat startet automatisch</li>
+                      <li>• Sie können sofort nach Eröffnung verkaufen</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            <button
+              onClick={() => {
+                setShowSuccess(false);
+                onSuccess();
+                onClose();
+              }}
+              className="w-full px-6 py-3 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-colors"
+            >
+              Verstanden
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">

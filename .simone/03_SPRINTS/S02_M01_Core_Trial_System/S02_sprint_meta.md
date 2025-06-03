@@ -3,9 +3,9 @@ sprint_folder_name: S02_M01_Core_Trial_System
 sprint_sequence_id: S02
 milestone_id: M01
 title: Core Trial System Sprint - Pre-Registration & Public Visibility
-status: active
+status: completed
 goal: Implement foundational vendor pre-registration system and public visibility controls
-last_updated: 2025-06-02T15:55:00Z
+last_updated: 2025-06-02T21:45:00Z
 ---
 
 # Sprint: Core Trial System Sprint - Pre-Registration & Public Visibility (S02)
@@ -47,11 +47,11 @@ Implement the foundational components of the vendor trial system: pre-registrati
 - **Total**: ~16 hours (2-3 day sprint)
 
 ## Success Metrics
-- [ ] Pre-registration workflow functional end-to-end
-- [ ] Public visibility toggle working in admin
-- [ ] Public listings filtered correctly
-- [ ] Admin can manage vendor statuses
-- [ ] All features have test coverage
+- [x] Pre-registration workflow functional end-to-end
+- [x] Public visibility toggle working in admin
+- [x] Public listings filtered correctly
+- [x] Admin can manage vendor statuses
+- [ ] All features have test coverage (partial - integration tests only)
 
 ## Next Sprint Preview (S03)
 After S02 completion, S03 will focus on:

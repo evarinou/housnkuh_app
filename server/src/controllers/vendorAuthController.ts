@@ -9,7 +9,7 @@ import fs from 'fs';
 import path from 'path';
 import multer from 'multer';
 import config from '../config/config';
-import { sendVendorWelcomeEmail } from '../utils/emailService';
+import { sendVendorWelcomeEmail, sendPreRegistrationConfirmation } from '../utils/emailService';
 import Settings from '../models/Settings';
 
 // Pre-Registrierung für Direktvermarkter vor Store-Eröffnung (M001 R001)
@@ -126,6 +126,18 @@ export const preRegisterVendor = async (req: Request, res: Response): Promise<vo
           daysUntilOpening: Math.ceil((settings.storeOpening.openingDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
         }
       : null;
+    
+    // Send pre-registration confirmation email
+    try {
+      await sendPreRegistrationConfirmation(email, {
+        name,
+        openingDate: settings.storeOpening.openingDate
+      });
+      console.log('Pre-registration confirmation email sent successfully');
+    } catch (emailError) {
+      console.error('Failed to send pre-registration confirmation email:', emailError);
+      // Continue with registration even if email fails
+    }
     
     res.status(201).json({ 
       success: true, 
@@ -811,13 +823,14 @@ export const uploadVendorImage = async (req: Request, res: Response): Promise<vo
 // Alle Vendor-Profile für die öffentliche Übersicht abrufen
 export const getAllVendorProfiles = async (req: Request, res: Response): Promise<void> => {
   try {
-    // Nur verifizierte und aktive Vendors abrufen
+    // Nur verifizierte, aktive und öffentlich sichtbare Vendors abrufen
     const vendors = await User.find({
       isVendor: true,
       isFullAccount: true,
       'kontakt.status': 'aktiv',
-      'kontakt.newsletterConfirmed': true
-    }).select('kontakt vendorProfile adressen createdAt');
+      'kontakt.newsletterConfirmed': true,
+      isPubliclyVisible: true  // Filter für öffentliche Sichtbarkeit
+    }).select('kontakt vendorProfile adressen createdAt isPubliclyVisible');
     
     // Vendor-Daten für die öffentliche Anzeige formatieren
     const publicVendorData = vendors.map(vendor => ({
@@ -878,14 +891,15 @@ export const getPublicVendorProfile = async (req: Request, res: Response): Promi
       return;
     }
     
-    // Vendor suchen (nur aktive und bestätigte)
+    // Vendor suchen (nur aktive, bestätigte und öffentlich sichtbare)
     const vendor = await User.findOne({
       _id: vendorId,
       isVendor: true,
       isFullAccount: true,
       'kontakt.status': 'aktiv',
-      'kontakt.newsletterConfirmed': true
-    }).select('kontakt vendorProfile adressen createdAt');
+      'kontakt.newsletterConfirmed': true,
+      isPubliclyVisible: true  // Filter für öffentliche Sichtbarkeit
+    }).select('kontakt vendorProfile adressen createdAt isPubliclyVisible');
     
     if (!vendor) {
       res.status(404).json({ 

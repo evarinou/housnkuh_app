@@ -24,7 +24,7 @@ const SettingsPage: React.FC = () => {
   const fetchSettings = async () => {
     try {
       const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('adminToken');
       
       if (!token) {
         setError('Nicht authentifiziert');
@@ -34,7 +34,7 @@ const SettingsPage: React.FC = () => {
       
       const response = await axios.get(`${apiUrl}/admin/settings/store-opening`, {
         headers: {
-          'x-auth-token': token
+          'Authorization': `Bearer ${token}`
         }
       });
 
@@ -64,7 +64,7 @@ const SettingsPage: React.FC = () => {
 
     try {
       const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('adminToken');
       
       if (!token) {
         setError('Nicht authentifiziert');
@@ -77,7 +77,7 @@ const SettingsPage: React.FC = () => {
         openingDate: settings.openingDate || null
       }, {
         headers: {
-          'x-auth-token': token
+          'Authorization': `Bearer ${token}`
         }
       });
 

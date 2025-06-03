@@ -1,16 +1,13 @@
 // client/src/App.tsx
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation, Outlet } from 'react-router-dom';
-import Navigation from './components/layout/Navigation';
+import { BrowserRouter as Router, Routes, Route, Outlet } from 'react-router-dom';
 import Hero from './components/layout/Hero';
-import Footer from './components/layout/Footer';
 import PublicLayout from './components/layout/PublicLayout';
 import HomePage from './pages/HomePage';
 import DirektvermarkterPage from './pages/DirektvermarkterPage';
 import StandortPage from './pages/StandortPage';
 import MietenPage from './pages/MietenPage';
 import KontaktPage from './pages/KontaktPage';
-import VendorsPage from './pages/VendorsPage';
 import PricingPage from './pages/PricingPage';
 import NewsletterConfirmPage from './pages/NewsletterConfirmPage';
 import VendorConfirmPage from './pages/VendorConfirmPage';

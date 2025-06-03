@@ -1,7 +1,7 @@
 // client/src/pages/DirektvermarkterMapPage.tsx
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { MapPin, Search, Phone, Mail, ExternalLink, ArrowLeft, ChevronDown, ChevronUp, Filter } from 'lucide-react';
+import { Search, Phone, Mail, ExternalLink, ArrowLeft, ChevronDown, ChevronUp, Filter } from 'lucide-react';
 
 // Typen für die Direktvermarkter-Daten
 interface LocationCoordinates {
