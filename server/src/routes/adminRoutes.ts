@@ -25,6 +25,8 @@ router.post('/pending-bookings/reject/:userId', adminController.rejectPendingBoo
 
 // Benutzerverwaltung
 router.get('/users', adminController.getAllUsers);
+router.patch('/users/:id', require('../controllers/userController').updateUser);
+router.delete('/users/:id', require('../controllers/userController').deleteUser);
 
 // Vertragsverwaltung
 router.get('/vertraege', vertragController.getAllVertraege);
@@ -32,5 +34,12 @@ router.get('/vertraege', vertragController.getAllVertraege);
 // Store Opening Settings
 router.get('/settings/store-opening', adminController.getStoreOpeningSettings);
 router.put('/settings/store-opening', adminController.updateStoreOpeningSettings);
+
+// Trial Management (R003, R008)
+router.get('/trials/statistics', adminController.getTrialStatistics);
+router.post('/trials/activate', adminController.triggerTrialActivation);
+router.post('/trials/update-status', adminController.triggerTrialStatusUpdate);
+router.post('/trials/activate/:vendorId', adminController.activateVendorTrial);
+router.get('/jobs/status', adminController.getScheduledJobsStatus);
 
 export default router;

@@ -7,6 +7,7 @@ import path from 'path';
 import dotenv from 'dotenv';
 import connectDB from './config/db';
 import routes from './routes';
+import ScheduledJobs from './services/scheduledJobs';
 
 // Konfigurationsdatei laden
 dotenv.config();
@@ -32,6 +33,32 @@ app.use('/api', routes);
 // Basis-Route zum Testen
 app.get('/', (req, res) => {
   res.json({ message: 'Willkommen bei der housnkuh API!' });
+});
+
+// Initialize scheduled jobs after DB connection
+mongoose.connection.once('open', () => {
+  console.log('✅ MongoDB connected');
+  
+  // Initialize trial system scheduled jobs
+  try {
+    ScheduledJobs.initialize();
+    console.log('✅ Trial system scheduled jobs initialized');
+  } catch (error) {
+    console.error('❌ Failed to initialize scheduled jobs:', error);
+  }
+});
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('🛑 SIGTERM received, stopping scheduled jobs...');
+  ScheduledJobs.stopAll();
+  process.exit(0);
+});
+
+process.on('SIGINT', () => {
+  console.log('🛑 SIGINT received, stopping scheduled jobs...');
+  ScheduledJobs.stopAll();
+  process.exit(0);
 });
 
 // Server starten

@@ -851,6 +851,100 @@ export interface VendorContestData {
  * - Eine E-Mail an den Administrator mit allen Details
  * - Eine Bestätigungs-E-Mail an den Teilnehmer
  */
+// Pre-Registration E-Mail für Vendors
+export const sendPreRegistrationConfirmation = async (to: string, data: { name: string; openingDate?: Date | null }): Promise<boolean> => {
+  try {
+    const transporter = createTransporter();
+    
+    console.log(`Sending pre-registration confirmation to: ${to}`);
+    
+    const openingDateText = data.openingDate ? 
+      `am ${data.openingDate.toLocaleDateString('de-DE')}` : 
+      'in Kürze';
+    
+    const mailOptions = {
+      from: `"housnkuh" <${process.env.EMAIL_USER}>`,
+      to: to,
+      subject: 'Ihre Vor-Registrierung bei housnkuh - Bestätigung',
+      html: `
+      <div style="font-family: 'Quicksand', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
+        <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="color: #09122c; margin: 0;">housnkuh</h1>
+            <p style="color: #666; margin: 10px 0;">Regionaler Marktplatz Kronach</p>
+          </div>
+         
+          <h2 style="color: #09122c; text-align: center; margin-bottom: 20px;">Vor-Registrierung bestätigt!</h2>
+          
+          <p style="color: #333; line-height: 1.6;">Hallo ${data.name},</p>
+          
+          <p style="color: #333; line-height: 1.6;">
+            vielen Dank für Ihre Vor-Registrierung bei housnkuh! Wir freuen uns sehr, dass Sie zu den ersten Direktvermarktern gehören möchten, die unseren regionalen Marktplatz nutzen.
+          </p>
+          
+          <div style="background-color: #e8f4fd; border-left: 4px solid #2196f3; padding: 15px; margin: 20px 0; border-radius: 5px;">
+            <h3 style="color: #09122c; margin: 0 0 10px 0; font-size: 16px;">
+              🎉 Ihre Vorteile als Früh-Registrierter:
+            </h3>
+            <ul style="color: #333; margin: 0; padding-left: 20px;">
+              <li>Kostenloser Probemonat ab Store-Eröffnung</li>
+              <li>Bevorzugte Behandlung bei der Platzierung</li>
+              <li>Exklusiver Zugang zu neuen Features</li>
+              <li>Persönliche Betreuung beim Einstieg</li>
+            </ul>
+          </div>
+          
+          <div style="background-color: #fff3cd; border: 1px solid #ffeeba; padding: 15px; margin: 20px 0; border-radius: 5px;">
+            <h3 style="color: #856404; margin: 0 0 10px 0; font-size: 16px;">
+              📅 Store-Eröffnung ${openingDateText}
+            </h3>
+            <p style="color: #856404; margin: 0; font-size: 14px;">
+              Wir informieren Sie rechtzeitig über die genaue Eröffnung und alle nächsten Schritte. 
+              Ihr kostenloser Probemonat startet automatisch mit der Eröffnung.
+            </p>
+          </div>
+          
+          <h3 style="color: #09122c; margin: 30px 0 15px 0;">Was passiert als nächstes?</h3>
+          <ol style="color: #333; line-height: 1.6; padding-left: 20px;">
+            <li>Sie erhalten eine weitere E-Mail zur Store-Eröffnung</li>
+            <li>Wir aktivieren Ihren Account automatisch</li>
+            <li>Sie können sofort mit dem Verkauf beginnen</li>
+            <li>Unser Support-Team steht Ihnen zur Verfügung</li>
+          </ol>
+          
+          <div style="text-align: center; margin: 30px 0;">
+            <p style="color: #666; font-size: 14px;">
+              Bei Fragen können Sie uns jederzeit unter <a href="mailto:info@housnkuh.de" style="color: #e17564;">info@housnkuh.de</a> erreichen.
+            </p>
+          </div>
+          
+          <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; text-align: center;">
+            <p style="color: #666; font-size: 12px; margin: 0;">
+              © housnkuh - Strauer Str. 15, 96317 Kronach<br>
+              <a href="https://housnkuh.de" style="color: #e17564;">www.housnkuh.de</a>
+            </p>
+          </div>
+        </div>
+      </div>
+     `
+    };
+    
+    console.log('Sending email with options:', {
+      from: mailOptions.from,
+      to: mailOptions.to,
+      subject: mailOptions.subject
+    });
+    
+    const result = await transporter.sendMail(mailOptions);
+    console.log('Email sent successfully:', result.messageId);
+    
+    return true;
+  } catch (error) {
+    console.error('Error sending pre-registration confirmation email:', error);
+    return false;
+  }
+};
+
 export async function sendVendorContestEmail(contestData: VendorContestData): Promise<boolean> {
   if (!isConfigured()) {
     console.warn('Email service not configured - skipping vendor contest email send');
@@ -1040,6 +1134,480 @@ export async function sendVendorContestEmail(contestData: VendorContestData): Pr
     if (process.env.NODE_ENV === 'development') {
       console.warn('⚠️ In development mode, treating vendor contest emails as sent successfully');
       return true; // Return success in development mode
+    }
+    
+    return false;
+  }
+};
+
+/**
+ * Send trial activation email to vendor when their trial period starts
+ */
+export const sendTrialActivationEmail = async (
+  to: string, 
+  name: string, 
+  trialStartDate: Date, 
+  trialEndDate: Date
+): Promise<boolean> => {
+  try {
+    console.log(`Sending trial activation email to: ${to}`);
+    
+    // Fake success in development mode if email settings are not available
+    if (process.env.NODE_ENV === 'development' && 
+        (!process.env.EMAIL_HOST || !process.env.EMAIL_USER || !process.env.EMAIL_PASS)) {
+      console.warn('⚠️ Running in development mode without email configuration');
+      console.log('📧 Trial activation email would be sent to:', to);
+      return true;
+    }
+    
+    const transporter = createTransporter();
+    
+    const subject = '🎉 Ihr kostenloser Probemonat bei housnkuh hat begonnen!';
+    
+    const formatDate = (date: Date) => {
+      return new Date(date).toLocaleDateString('de-DE', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    };
+    
+    const html = `
+      <div style="font-family: 'Quicksand', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
+        <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="color: #09122c; margin: 0;">housnkuh</h1>
+            <p style="color: #666; margin: 10px 0;">Regionaler Marktplatz Kronach</p>
+          </div>
+          
+          <h2 style="color: #09122c; text-align: center; margin-bottom: 20px;">🎉 Ihr Probemonat ist gestartet!</h2>
+          
+          <p style="color: #333; line-height: 1.6;">
+            Liebe/r ${name},
+          </p>
+          
+          <p style="color: #333; line-height: 1.6;">
+            herzlichen Glückwunsch! housnkuh ist jetzt offiziell eröffnet und Ihr kostenloser Probemonat hat begonnen.
+          </p>
+          
+          <div style="background-color: #e8f5e8; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #28a745;">
+            <h3 style="color: #09122c; margin-top: 0;">✅ Ihr Probemonat im Überblick:</h3>
+            
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr>
+                <td style="padding: 8px 0; border-bottom: 1px solid #ddd; color: #666; width: 150px;"><strong>Startdatum:</strong></td>
+                <td style="padding: 8px 0; border-bottom: 1px solid #ddd; color: #333;">${formatDate(trialStartDate)}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; border-bottom: 1px solid #ddd; color: #666;"><strong>Enddatum:</strong></td>
+                <td style="padding: 8px 0; border-bottom: 1px solid #ddd; color: #333;">${formatDate(trialEndDate)}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; color: #666;"><strong>Dauer:</strong></td>
+                <td style="padding: 8px 0; color: #333;">30 Tage kostenlos</td>
+              </tr>
+            </table>
+          </div>
+          
+          <div style="background-color: #fff3cd; padding: 15px; border-radius: 5px; border-left: 4px solid #ffc107; margin: 20px 0;">
+            <h4 style="color: #09122c; margin-top: 0;">🚀 Was Sie jetzt tun können:</h4>
+            <ul style="color: #333; padding-left: 20px; margin: 10px 0;">
+              <li style="margin: 5px 0;">Loggen Sie sich in Ihr Vendor-Dashboard ein</li>
+              <li style="margin: 5px 0;">Vervollständigen Sie Ihr Profil</li>
+              <li style="margin: 5px 0;">Laden Sie Produktbilder hoch</li>
+              <li style="margin: 5px 0;">Starten Sie mit dem Verkauf Ihrer Produkte</li>
+              <li style="margin: 5px 0;">Nutzen Sie alle Features kostenfrei</li>
+            </ul>
+          </div>
+          
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/vendor/dashboard" style="background-color: #e17564; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block; font-size: 16px;">
+              Zu Ihrem Dashboard
+            </a>
+          </div>
+          
+          <div style="background-color: #e3f2fd; padding: 15px; border-radius: 5px; border-left: 4px solid #2196f3; margin: 20px 0;">
+            <h4 style="color: #09122c; margin-top: 0;">💡 Wichtige Informationen:</h4>
+            <ul style="color: #333; padding-left: 20px; margin: 10px 0;">
+              <li style="margin: 5px 0;">Der Probemonat ist völlig kostenfrei</li>
+              <li style="margin: 5px 0;">Sie können jederzeit kündigen</li>
+              <li style="margin: 5px 0;">Wir erinnern Sie rechtzeitig vor dem Ende</li>
+              <li style="margin: 5px 0;">Unser Support-Team steht Ihnen zur Verfügung</li>
+            </ul>
+          </div>
+          
+          <p style="color: #333; line-height: 1.6;">
+            Wir freuen uns darauf, Sie auf Ihrem Weg als Direktvermarkter bei housnkuh zu begleiten!
+          </p>
+          
+          <p style="color: #333; line-height: 1.6;">
+            Mit freundlichen Grüßen,<br>
+            Ihr housnkuh Team
+          </p>
+          
+          <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee;">
+            <h4 style="color: #09122c;">Bei Fragen stehen wir Ihnen gerne zur Verfügung:</h4>
+            <p style="color: #333; margin: 5px 0;">📞 Telefon: 0157 35711257</p>
+            <p style="color: #333; margin: 5px 0;">✉️ E-Mail: eva-maria.schaller@housnkuh.de</p>
+            <p style="color: #333; margin: 5px 0;">📍 Adresse: Strauer Str. 15, 96317 Kronach</p>
+          </div>
+          
+          <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; text-align: center;">
+            <p style="color: #666; font-size: 12px; margin: 0;">
+              © housnkuh - Ihr regionaler Marktplatz<br>
+              <a href="https://housnkuh.de" style="color: #e17564;">www.housnkuh.de</a>
+            </p>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    const mailOptions = {
+      from: `"housnkuh" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`,
+      to,
+      subject,
+      html
+    };
+    
+    try {
+      const result = await transporter.sendMail(mailOptions);
+      console.log('Trial activation email sent successfully:', result.messageId);
+      return true;
+    } catch (emailError) {
+      console.error('Trial activation email sending error:', emailError);
+      
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('⚠️ In development mode, treating trial activation email as sent successfully');
+        return true;
+      }
+      
+      return false;
+    }
+  } catch (error) {
+    console.error('Error in sendTrialActivationEmail:', error);
+    
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('⚠️ In development mode, treating trial activation email as sent successfully');
+      return true;
+    }
+    
+    return false;
+  }
+};
+
+/**
+ * Send trial expiration warning email (7 days before expiration)
+ */
+export const sendTrialExpirationWarning = async (
+  to: string, 
+  name: string, 
+  trialEndDate: Date
+): Promise<boolean> => {
+  try {
+    console.log(`Sending trial expiration warning to: ${to}`);
+    
+    // Fake success in development mode if email settings are not available
+    if (process.env.NODE_ENV === 'development' && 
+        (!process.env.EMAIL_HOST || !process.env.EMAIL_USER || !process.env.EMAIL_PASS)) {
+      console.warn('⚠️ Running in development mode without email configuration');
+      console.log('📧 Trial expiration warning would be sent to:', to);
+      return true;
+    }
+    
+    const transporter = createTransporter();
+    
+    const subject = '⏰ Ihr Probemonat bei housnkuh endet bald';
+    
+    const formatDate = (date: Date) => {
+      return new Date(date).toLocaleDateString('de-DE', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    };
+    
+    const html = `
+      <div style="font-family: 'Quicksand', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
+        <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="color: #09122c; margin: 0;">housnkuh</h1>
+            <p style="color: #666; margin: 10px 0;">Regionaler Marktplatz Kronach</p>
+          </div>
+          
+          <h2 style="color: #09122c; text-align: center; margin-bottom: 20px;">⏰ Ihr Probemonat endet in 7 Tagen</h2>
+          
+          <p style="color: #333; line-height: 1.6;">
+            Liebe/r ${name},
+          </p>
+          
+          <p style="color: #333; line-height: 1.6;">
+            Ihr kostenloser Probemonat bei housnkuh neigt sich dem Ende zu. 
+            Am <strong>${formatDate(trialEndDate)}</strong> endet Ihre Testphase.
+          </p>
+          
+          <div style="background-color: #fff3cd; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #ffc107;">
+            <h3 style="color: #09122c; margin-top: 0;">🤔 Wie geht es weiter?</h3>
+            <p style="color: #333; margin: 10px 0;">
+              Sie haben die Wahl: Setzen Sie Ihre erfolgreiche Verkaufstätigkeit bei housnkuh fort oder kündigen Sie rechtzeitig.
+            </p>
+          </div>
+          
+          <div style="background-color: #e8f5e8; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #28a745;">
+            <h3 style="color: #09122c; margin-top: 0;">✅ Weitermachen lohnt sich:</h3>
+            <ul style="color: #333; padding-left: 20px; margin: 10px 0;">
+              <li style="margin: 5px 0;">Etablierte Kundenbeziehungen weiter ausbauen</li>
+              <li style="margin: 5px 0;">Kontinuierliche Verkäufe ohne Unterbrechung</li>
+              <li style="margin: 5px 0;">Zugang zu allen Premium-Features</li>
+              <li style="margin: 5px 0;">Persönlicher Support und Beratung</li>
+              <li style="margin: 5px 0;">Faire Konditionen und transparente Preise</li>
+            </ul>
+          </div>
+          
+          <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h3 style="color: #09122c; margin-top: 0;">💰 Unsere Konditionen:</h3>
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr>
+                <td style="padding: 8px 0; border-bottom: 1px solid #eee; color: #666; width: 150px;"><strong>Monatliche Gebühr:</strong></td>
+                <td style="padding: 8px 0; border-bottom: 1px solid #eee; color: #333;">Je nach gewähltem Paket</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; border-bottom: 1px solid #eee; color: #666;"><strong>Provision:</strong></td>
+                <td style="padding: 8px 0; border-bottom: 1px solid #eee; color: #333;">4% auf Verkäufe</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; color: #666;"><strong>Kündigungsfrist:</strong></td>
+                <td style="padding: 8px 0; color: #333;">1 Monat zum Monatsende</td>
+              </tr>
+            </table>
+          </div>
+          
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/vendor/dashboard" style="background-color: #e17564; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block; font-size: 16px; margin: 10px;">
+              Dashboard aufrufen
+            </a>
+            <br>
+            <a href="mailto:eva-maria.schaller@housnkuh.de?subject=Fragen%20zu%20meinem%20Probemonat" style="background-color: #09122c; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block; font-size: 16px; margin: 10px;">
+              Fragen stellen
+            </a>
+          </div>
+          
+          <div style="background-color: #e3f2fd; padding: 15px; border-radius: 5px; border-left: 4px solid #2196f3; margin: 20px 0;">
+            <h4 style="color: #09122c; margin-top: 0;">ℹ️ Was passiert wenn Sie nichts tun?</h4>
+            <p style="color: #333; margin: 5px 0;">
+              Ihr Account wird nach Ablauf des Probemonats automatisch deaktiviert. 
+              Sie können aber jederzeit wieder aktivieren, wenn Sie sich doch für eine Fortsetzung entscheiden.
+            </p>
+          </div>
+          
+          <p style="color: #333; line-height: 1.6;">
+            Bei Fragen stehen wir Ihnen gerne zur Verfügung. Rufen Sie uns an oder schreiben Sie uns eine E-Mail!
+          </p>
+          
+          <p style="color: #333; line-height: 1.6;">
+            Mit freundlichen Grüßen,<br>
+            Ihr housnkuh Team
+          </p>
+          
+          <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee;">
+            <h4 style="color: #09122c;">Kontakt:</h4>
+            <p style="color: #333; margin: 5px 0;">📞 Telefon: 0157 35711257</p>
+            <p style="color: #333; margin: 5px 0;">✉️ E-Mail: eva-maria.schaller@housnkuh.de</p>
+            <p style="color: #333; margin: 5px 0;">📍 Adresse: Strauer Str. 15, 96317 Kronach</p>
+          </div>
+          
+          <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; text-align: center;">
+            <p style="color: #666; font-size: 12px; margin: 0;">
+              © housnkuh - Ihr regionaler Marktplatz<br>
+              <a href="https://housnkuh.de" style="color: #e17564;">www.housnkuh.de</a>
+            </p>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    const mailOptions = {
+      from: `"housnkuh" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`,
+      to,
+      subject,
+      html
+    };
+    
+    try {
+      const result = await transporter.sendMail(mailOptions);
+      console.log('Trial expiration warning email sent successfully:', result.messageId);
+      return true;
+    } catch (emailError) {
+      console.error('Trial expiration warning email sending error:', emailError);
+      
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('⚠️ In development mode, treating trial warning email as sent successfully');
+        return true;
+      }
+      
+      return false;
+    }
+  } catch (error) {
+    console.error('Error in sendTrialExpirationWarning:', error);
+    
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('⚠️ In development mode, treating trial warning email as sent successfully');
+      return true;
+    }
+    
+    return false;
+  }
+};
+
+/**
+ * Send trial expired email when trial period has ended
+ */
+export const sendTrialExpiredEmail = async (
+  to: string, 
+  name: string, 
+  trialEndDate: Date
+): Promise<boolean> => {
+  try {
+    console.log(`Sending trial expired email to: ${to}`);
+    
+    // Fake success in development mode if email settings are not available
+    if (process.env.NODE_ENV === 'development' && 
+        (!process.env.EMAIL_HOST || !process.env.EMAIL_USER || !process.env.EMAIL_PASS)) {
+      console.warn('⚠️ Running in development mode without email configuration');
+      console.log('📧 Trial expired email would be sent to:', to);
+      return true;
+    }
+    
+    const transporter = createTransporter();
+    
+    const subject = '📋 Ihr Probemonat bei housnkuh ist beendet';
+    
+    const formatDate = (date: Date) => {
+      return new Date(date).toLocaleDateString('de-DE', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    };
+    
+    const html = `
+      <div style="font-family: 'Quicksand', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
+        <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="color: #09122c; margin: 0;">housnkuh</h1>
+            <p style="color: #666; margin: 10px 0;">Regionaler Marktplatz Kronach</p>
+          </div>
+          
+          <h2 style="color: #09122c; text-align: center; margin-bottom: 20px;">📋 Ihr Probemonat ist beendet</h2>
+          
+          <p style="color: #333; line-height: 1.6;">
+            Liebe/r ${name},
+          </p>
+          
+          <p style="color: #333; line-height: 1.6;">
+            Ihr kostenloser Probemonat bei housnkuh ist am ${formatDate(trialEndDate)} beendet. 
+            Vielen Dank, dass Sie housnkuh ausprobiert haben!
+          </p>
+          
+          <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h3 style="color: #09122c; margin-top: 0;">📊 Was passiert jetzt?</h3>
+            <ul style="color: #333; padding-left: 20px; margin: 10px 0;">
+              <li style="margin: 5px 0;">Ihr Account wurde temporär deaktiviert</li>
+              <li style="margin: 5px 0;">Ihre Produktdaten bleiben gespeichert</li>
+              <li style="margin: 5px 0;">Sie können jederzeit reaktivieren</li>
+              <li style="margin: 5px 0;">Keine automatischen Abbuchungen</li>
+            </ul>
+          </div>
+          
+          <div style="background-color: #e8f5e8; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #28a745;">
+            <h3 style="color: #09122c; margin-top: 0;">🔄 Wieder einsteigen?</h3>
+            <p style="color: #333; margin: 10px 0;">
+              Falls Sie sich doch für eine Fortsetzung entscheiden möchten, kontaktieren Sie uns einfach. 
+              Wir reaktivieren Ihren Account gerne und alle Ihre Daten sind sofort wieder verfügbar.
+            </p>
+          </div>
+          
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="mailto:eva-maria.schaller@housnkuh.de?subject=Account%20reaktivieren" style="background-color: #e17564; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block; font-size: 16px; margin: 10px;">
+              Account reaktivieren
+            </a>
+            <br>
+            <a href="tel:015735711257" style="background-color: #09122c; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block; font-size: 16px; margin: 10px;">
+              Anrufen
+            </a>
+          </div>
+          
+          <div style="background-color: #e3f2fd; padding: 15px; border-radius: 5px; border-left: 4px solid #2196f3; margin: 20px 0;">
+            <h4 style="color: #09122c; margin-top: 0;">💬 Ihr Feedback ist wertvoll!</h4>
+            <p style="color: #333; margin: 5px 0;">
+              Wir würden uns sehr über Ihr Feedback freuen. Was hat Ihnen gefallen? 
+              Was können wir verbessern? Ihre Meinung hilft uns, housnkuh noch besser zu machen.
+            </p>
+          </div>
+          
+          <div style="background-color: #fffbf0; padding: 15px; border-radius: 5px; border-left: 4px solid #e17564; margin: 20px 0;">
+            <h4 style="color: #09122c; margin-top: 0;">🛍️ Als Kunde bleiben Sie willkommen!</h4>
+            <p style="color: #333; margin: 5px 0;">
+              Auch wenn Sie nicht als Direktvermarkter weitermachen möchten, sind Sie als Kunde 
+              jederzeit herzlich willkommen. Besuchen Sie uns gerne in der housnkuh!
+            </p>
+          </div>
+          
+          <p style="color: #333; line-height: 1.6;">
+            Vielen Dank für Ihr Vertrauen und die Zeit, die Sie mit housnkuh verbracht haben.
+          </p>
+          
+          <p style="color: #333; line-height: 1.6;">
+            Mit freundlichen Grüßen,<br>
+            Ihr housnkuh Team
+          </p>
+          
+          <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee;">
+            <h4 style="color: #09122c;">Kontakt:</h4>
+            <p style="color: #333; margin: 5px 0;">📞 Telefon: 0157 35711257</p>
+            <p style="color: #333; margin: 5px 0;">✉️ E-Mail: eva-maria.schaller@housnkuh.de</p>
+            <p style="color: #333; margin: 5px 0;">📍 Adresse: Strauer Str. 15, 96317 Kronach</p>
+          </div>
+          
+          <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; text-align: center;">
+            <p style="color: #666; font-size: 12px; margin: 0;">
+              © housnkuh - Ihr regionaler Marktplatz<br>
+              <a href="https://housnkuh.de" style="color: #e17564;">www.housnkuh.de</a>
+            </p>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    const mailOptions = {
+      from: `"housnkuh" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`,
+      to,
+      subject,
+      html
+    };
+    
+    try {
+      const result = await transporter.sendMail(mailOptions);
+      console.log('Trial expired email sent successfully:', result.messageId);
+      return true;
+    } catch (emailError) {
+      console.error('Trial expired email sending error:', emailError);
+      
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('⚠️ In development mode, treating trial expired email as sent successfully');
+        return true;
+      }
+      
+      return false;
+    }
+  } catch (error) {
+    console.error('Error in sendTrialExpiredEmail:', error);
+    
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('⚠️ In development mode, treating trial expired email as sent successfully');
+      return true;
     }
     
     return false;

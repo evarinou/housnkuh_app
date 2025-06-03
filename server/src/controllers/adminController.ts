@@ -4,6 +4,8 @@ import User from '../models/User';
 import Mietfach from '../models/Mietfach';
 import Vertrag from '../models/Vertrag';
 import Settings from '../models/Settings';
+import ScheduledJobs from '../services/scheduledJobs';
+import TrialService from '../services/trialService';
 
 // Alle Newsletter-Abonnenten abrufen
 export const getNewsletterSubscribers = async (req: Request, res: Response): Promise<void> => {
@@ -370,7 +372,7 @@ export const rejectPendingBooking = async (req: Request, res: Response): Promise
 export const getAllUsers = async (req: Request, res: Response): Promise<void> => {
   try {
     const users = await User.find({})
-      .select('username kontakt isAdmin isVendor isFullAccount pendingBooking createdAt')
+      .select('username kontakt isAdmin isVendor isFullAccount pendingBooking registrationStatus isPubliclyVisible createdAt')
       .sort({ createdAt: -1 });
     
     // Daten für Frontend formatieren
@@ -382,6 +384,8 @@ export const getAllUsers = async (req: Request, res: Response): Promise<void> =>
       isAdmin: user.isAdmin || false,
       isVendor: user.isVendor || false,
       isActive: user.kontakt.status === 'aktiv',
+      isPubliclyVisible: user.isPubliclyVisible,
+      registrationStatus: user.registrationStatus,
       hasPendingBooking: !!user.pendingBooking && user.pendingBooking.status === 'pending',
       createdAt: user.createdAt
     }));
@@ -494,6 +498,143 @@ export const updateStoreOpeningSettings = async (req: Request, res: Response): P
     res.status(500).json({ 
       success: false, 
       message: 'Serverfehler beim Aktualisieren der Store Opening Settings' 
+    });
+  }
+};
+
+// Trial Management Endpoints (R003, R008)
+
+// Get trial statistics for admin dashboard
+export const getTrialStatistics = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const result = await ScheduledJobs.getTrialStatistics();
+    
+    if (result.success) {
+      res.json({
+        success: true,
+        statistics: result.statistics,
+        timestamp: result.timestamp
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        message: result.error || 'Failed to get trial statistics'
+      });
+    }
+  } catch (err) {
+    console.error('Error getting trial statistics:', err);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server error getting trial statistics' 
+    });
+  }
+};
+
+// Manually trigger trial activation check
+export const triggerTrialActivation = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const result = await ScheduledJobs.triggerTrialActivationCheck();
+    
+    if (result.success) {
+      res.json({
+        success: true,
+        message: 'Trial activation check completed successfully',
+        activated: result.activated,
+        timestamp: result.timestamp
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        message: result.error || 'Trial activation check failed'
+      });
+    }
+  } catch (err) {
+    console.error('Error triggering trial activation:', err);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server error triggering trial activation' 
+    });
+  }
+};
+
+// Manually trigger trial status update
+export const triggerTrialStatusUpdate = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const result = await ScheduledJobs.triggerTrialStatusUpdate();
+    
+    if (result.success) {
+      res.json({
+        success: true,
+        message: 'Trial status update completed successfully',
+        result: result.result,
+        timestamp: result.timestamp
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        message: result.error || 'Trial status update failed'
+      });
+    }
+  } catch (err) {
+    console.error('Error triggering trial status update:', err);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server error triggering trial status update' 
+    });
+  }
+};
+
+// Manually activate trial for specific vendor
+export const activateVendorTrial = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { vendorId } = req.params;
+    
+    if (!vendorId) {
+      res.status(400).json({
+        success: false,
+        message: 'Vendor ID is required'
+      });
+      return;
+    }
+    
+    const result = await ScheduledJobs.activateVendorTrial(vendorId);
+    
+    if (result.success) {
+      res.json({
+        success: true,
+        message: `Trial activated successfully for vendor ${vendorId}`,
+        vendorId: result.vendorId,
+        timestamp: result.timestamp
+      });
+    } else {
+      res.status(400).json({
+        success: false,
+        message: result.error || 'Failed to activate vendor trial'
+      });
+    }
+  } catch (err) {
+    console.error('Error activating vendor trial:', err);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server error activating vendor trial' 
+    });
+  }
+};
+
+// Get scheduled jobs status
+export const getScheduledJobsStatus = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const status = ScheduledJobs.getJobsStatus();
+    
+    res.json({
+      success: true,
+      ...status
+    });
+  } catch (err) {
+    console.error('Error getting scheduled jobs status:', err);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server error getting scheduled jobs status' 
     });
   }
 };
