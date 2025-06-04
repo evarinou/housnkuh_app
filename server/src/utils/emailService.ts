@@ -1726,3 +1726,515 @@ export const sendCancellationConfirmationEmail = async (to: string, name: string
     return false;
   }
 };
+
+// Interface für Package Booking Daten
+export interface PackageBookingData {
+  vendorName: string;
+  email: string;
+  confirmationToken?: string; // Optional: für E-Mail-Bestätigung
+  packageData: {
+    selectedProvisionType: string;
+    packageCounts: Record<string, number>;
+    packageOptions: Array<{id: string, name: string, price: number}>;
+    selectedAddons: string[];
+    rentalDuration: number;
+    totalCost: {
+      monthly: number;
+      provision: number;
+    };
+  };
+}
+
+// Funktion zum Senden einer Buchungsbestätigung für Package Builder
+export const sendBookingConfirmation = async (bookingData: PackageBookingData): Promise<boolean> => {
+  try {
+    console.log(`Sending booking confirmation to: ${bookingData.email}`);
+    
+    // Fake success in development mode if email settings are not available
+    if (process.env.NODE_ENV === 'development' && 
+        (!process.env.EMAIL_HOST || !process.env.EMAIL_USER || !process.env.EMAIL_PASS)) {
+      console.warn('⚠️ Running in development mode without email configuration');
+      console.log('📧 Booking confirmation would be sent with data:', bookingData);
+      return true; // Return success in development mode
+    }
+    
+    const transporter = createTransporter();
+    
+    const subject = 'Buchungsbestätigung - Ihr housnkuh Paket';
+    
+    // Berechne Verkaufsflächen Details
+    const selectedPackages = Object.entries(bookingData.packageData.packageCounts || {})
+      .map(([packageId, count]) => {
+        if (count > 0) {
+          const packageOption = bookingData.packageData.packageOptions?.find(p => p.id === packageId);
+          return {
+            count,
+            name: packageOption?.name || packageId,
+            price: packageOption?.price || 0,
+            total: (packageOption?.price || 0) * count
+          };
+        }
+        return null;
+      })
+      .filter(Boolean);
+
+    // Store Status prüfen für korrekte Trial-Nachrichten
+    const Settings = require('../models/Settings').default;
+    const settings = await Settings.getSettings();
+    const isStoreOpen = settings.isStoreOpen();
+    
+    let trialStartDate = new Date();
+    let trialEndDate = new Date();
+    let trialMessage = '';
+    
+    if (isStoreOpen) {
+      // Store ist offen - Trial startet sofort
+      trialEndDate.setDate(trialEndDate.getDate() + 30);
+      trialMessage = `
+        <div style="background-color: #e8f5e8; border: 1px solid #4caf50; padding: 20px; margin: 20px 0; border-radius: 8px;">
+          <h3 style="color: #2e7d32; margin: 0 0 15px 0; font-size: 18px;">
+            ✅ 30 Tage kostenloser Probemonat startet jetzt!
+          </h3>
+          <p style="color: #2e7d32; margin: 0; font-size: 14px;">
+            Ihr Probemonat läuft bis zum <strong>${trialEndDate.toLocaleDateString('de-DE')}</strong>. 
+            Sie können in dieser Zeit alle Funktionen kostenlos nutzen und jederzeit kündigen.
+          </p>
+        </div>`;
+    } else {
+      // Store ist noch nicht offen - Trial startet bei Eröffnung
+      if (settings.storeOpening.openingDate) {
+        trialStartDate = new Date(settings.storeOpening.openingDate);
+        trialEndDate = new Date(settings.storeOpening.openingDate);
+        trialEndDate.setDate(trialEndDate.getDate() + 30);
+        trialMessage = `
+          <div style="background-color: #e8f4fd; border: 1px solid #2196f3; padding: 20px; margin: 20px 0; border-radius: 8px;">
+            <h3 style="color: #1565c0; margin: 0 0 15px 0; font-size: 18px;">
+              🗓️ 30 Tage kostenloser Probemonat startet bei Store-Eröffnung!
+            </h3>
+            <p style="color: #1565c0; margin: 0; font-size: 14px;">
+              Ihr Probemonat startet automatisch am <strong>${trialStartDate.toLocaleDateString('de-DE')}</strong> mit der Store-Eröffnung 
+              und läuft bis zum <strong>${trialEndDate.toLocaleDateString('de-DE')}</strong>. 
+              Die Mietdauer Ihrer Verkaufsflächen beginnt ebenfalls erst ab der Store-Eröffnung.
+            </p>
+          </div>`;
+      } else {
+        trialMessage = `
+          <div style="background-color: #e8f4fd; border: 1px solid #2196f3; padding: 20px; margin: 20px 0; border-radius: 8px;">
+            <h3 style="color: #1565c0; margin: 0 0 15px 0; font-size: 18px;">
+              🗓️ 30 Tage kostenloser Probemonat startet bei Store-Eröffnung!
+            </h3>
+            <p style="color: #1565c0; margin: 0; font-size: 14px;">
+              Ihr Probemonat startet automatisch mit der Store-Eröffnung. 
+              Die Mietdauer Ihrer Verkaufsflächen beginnt ebenfalls erst ab der Store-Eröffnung.
+              Wir informieren Sie rechtzeitig über den genauen Eröffnungstermin.
+            </p>
+          </div>`;
+      }
+    }
+    
+    const html = `
+      <div style="font-family: 'Quicksand', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
+        <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="color: #09122c; margin: 0;">housnkuh</h1>
+            <p style="color: #666; margin: 10px 0;">Regionaler Marktplatz Kronach</p>
+          </div>
+          
+          <h2 style="color: #09122c; text-align: center; margin-bottom: 20px;">🎉 Buchungsbestätigung</h2>
+          
+          <p style="color: #333; line-height: 1.6;">
+            Hallo ${bookingData.vendorName},
+          </p>
+          
+          <p style="color: #333; line-height: 1.6;">
+            herzlich willkommen bei housnkuh! Ihre Paket-Buchung war erfolgreich und wir freuen uns, Sie als neuen Direktvermarkter bei uns begrüßen zu dürfen.
+          </p>
+          
+          ${trialMessage}
+
+          <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h3 style="color: #09122c; margin-top: 0;">📦 Ihr gebuchtes Paket:</h3>
+            
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px;">
+              <tr>
+                <td style="padding: 8px 0; border-bottom: 1px solid #eee; color: #666; width: 180px;"><strong>Provisionsmodell:</strong></td>
+                <td style="padding: 8px 0; border-bottom: 1px solid #eee; color: #333;">
+                  ${bookingData.packageData.selectedProvisionType === 'premium' ? 'Premium-Modell' : 'Basismodell'} 
+                  (${bookingData.packageData.totalCost.provision}% Provision)
+                </td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; border-bottom: 1px solid #eee; color: #666;"><strong>Vertragslaufzeit:</strong></td>
+                <td style="padding: 8px 0; border-bottom: 1px solid #eee; color: #333;">${bookingData.packageData.rentalDuration} Monate (nach Probemonat)</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; border-bottom: 1px solid #eee; color: #666;"><strong>Monatliche Kosten:</strong></td>
+                <td style="padding: 8px 0; border-bottom: 1px solid #eee; color: #333; font-weight: bold;">
+                  ${bookingData.packageData.totalCost.monthly.toFixed(2)}€ ${isStoreOpen ? `(ab ${trialEndDate.toLocaleDateString('de-DE')})` : `(ab Store-Eröffnung ${trialStartDate.toLocaleDateString('de-DE')})`}
+                </td>
+              </tr>
+            </table>
+
+            ${selectedPackages && selectedPackages.length > 0 ? `
+            <h4 style="color: #09122c; margin: 15px 0 10px 0;">Gewählte Verkaufsflächen:</h4>
+            ${selectedPackages.map(pkg => {
+              if (!pkg) return '';
+              return `
+              <div style="display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px dotted #ddd;">
+                <span style="color: #333;">${pkg.count}x ${pkg.name}</span>
+                <span style="color: #333; font-weight: bold;">${pkg.total.toFixed(2)}€/Monat</span>
+              </div>
+              `;
+            }).join('')}
+            ` : ''}
+
+            ${bookingData.packageData.selectedAddons && bookingData.packageData.selectedAddons.length > 0 ? `
+            <h4 style="color: #09122c; margin: 15px 0 10px 0;">Zusatzoptionen:</h4>
+            <p style="color: #333; font-size: 14px;">${bookingData.packageData.selectedAddons.join(', ')}</p>
+            ` : ''}
+          </div>
+          
+${bookingData.confirmationToken ? `
+          <div style="background-color: #fff3cd; border: 1px solid #ffeeba; padding: 15px; margin: 20px 0; border-radius: 5px;">
+            <h3 style="color: #856404; margin: 0 0 10px 0; font-size: 16px;">
+              ⚠️ Wichtig: E-Mail-Adresse bestätigen
+            </h3>
+            <p style="color: #856404; margin: 10px 0; font-size: 14px;">
+              Bitte bestätigen Sie zuerst Ihre E-Mail-Adresse, um Ihre Buchung zu aktivieren:
+            </p>
+            <div style="text-align: center; margin: 15px 0;">
+              <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/vendor/confirm?token=${bookingData.confirmationToken}" 
+                 style="background-color: #e17564; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">
+                E-Mail-Adresse bestätigen
+              </a>
+            </div>
+          </div>
+          ` : ''}
+          
+          <div style="background-color: #fff3cd; border: 1px solid #ffeeba; padding: 15px; margin: 20px 0; border-radius: 5px;">
+            <h3 style="color: #856404; margin: 0 0 10px 0; font-size: 16px;">
+              📋 Was passiert als nächstes?
+            </h3>
+            <ol style="color: #856404; margin: 10px 0; padding-left: 20px; font-size: 14px;">
+              ${bookingData.confirmationToken ? '<li>Bestätigen Sie Ihre E-Mail-Adresse (Link oben)</li>' : ''}
+              <li>Unser Team prüft Ihre Buchung (innerhalb von 2 Werktagen)</li>
+              <li>Wir weisen Ihnen passende Mietfächer zu</li>
+              <li>Sie erhalten eine weitere E-Mail mit den finalen Details</li>
+              <li>Der Vertrag wird erstellt und Sie können starten!</li>
+            </ol>
+          </div>
+          
+          <h3 style="color: #09122c; margin: 30px 0 15px 0;">🎯 Ihre Vorteile im Probemonat:</h3>
+          <ul style="color: #333; line-height: 1.6; padding-left: 20px;">
+            <li>Kostenloser Test aller Funktionen</li>
+            <li>Zugang zum housnkuh-Kassensystem</li>
+            <li>Tägliche Verkaufsübersichten</li>
+            <li>Support und Beratung</li>
+            <li>Jederzeit kündbar ohne Kosten</li>
+          </ul>
+          
+          <div style="text-align: center; margin: 30px 0;">
+            <p style="color: #666; font-size: 14px;">
+              Bei Fragen können Sie uns jederzeit unter <a href="mailto:info@housnkuh.de" style="color: #e17564;">info@housnkuh.de</a> erreichen.
+            </p>
+          </div>
+          
+          <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee;">
+            <h4 style="color: #09122c;">Kontakt & Support:</h4>
+            <p style="color: #333; margin: 5px 0;">📞 Telefon: 0157 35711257</p>
+            <p style="color: #333; margin: 5px 0;">✉️ E-Mail: eva-maria.schaller@housnkuh.de</p>
+            <p style="color: #333; margin: 5px 0;">📍 Adresse: Strauer Str. 15, 96317 Kronach</p>
+          </div>
+          
+          <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; text-align: center;">
+            <p style="color: #666; font-size: 12px; margin: 0;">
+              © housnkuh - Ihr regionaler Marktplatz<br>
+              <a href="https://housnkuh.de" style="color: #e17564;">www.housnkuh.de</a>
+            </p>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    const mailOptions = {
+      from: `"housnkuh" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`,
+      to: bookingData.email,
+      subject,
+      html
+    };
+    
+    console.log('Sending booking confirmation email with options:', {
+      from: mailOptions.from,
+      to: mailOptions.to,
+      subject: mailOptions.subject
+    });
+    
+    try {
+      const result = await transporter.sendMail(mailOptions);
+      console.log('Booking confirmation email sent successfully:', result.messageId);
+      return true;
+    } catch (emailError) {
+      console.error('Booking confirmation email sending error:', emailError);
+      
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('⚠️ In development mode, treating booking confirmation email as sent successfully');
+        return true; // Return success in development mode
+      }
+      
+      return false;
+    }
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error('Detailed booking confirmation email error:', {
+        message: error.message,
+      });
+    } else {
+      console.error('Detailed booking confirmation email error:', error);
+    }
+    
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('⚠️ In development mode, treating booking confirmation email as sent successfully');
+      return true; // Return success in development mode
+    }
+    
+    return false;
+  }
+};
+
+// Interface für Admin-Bestätigung
+export interface AdminConfirmationData {
+  vendorName: string;
+  email: string;
+  mietfaecher: Array<{_id: string, bezeichnung: string, typ: string, preis: number}>;
+  vertrag: any;
+  packageData: any;
+}
+
+// Funktion zum Senden einer Admin-Bestätigung für zugewiesene Mietfächer
+export const sendAdminConfirmationEmail = async (adminConfirmationData: AdminConfirmationData): Promise<boolean> => {
+  try {
+    console.log(`Sending admin confirmation email to: ${adminConfirmationData.email}`);
+    
+    // Fake success in development mode if email settings are not available
+    if (process.env.NODE_ENV === 'development' && 
+        (!process.env.EMAIL_HOST || !process.env.EMAIL_USER || !process.env.EMAIL_PASS)) {
+      console.warn('⚠️ Running in development mode without email configuration');
+      console.log('📧 Admin confirmation would be sent with data:', adminConfirmationData);
+      return true; // Return success in development mode
+    }
+    
+    const transporter = createTransporter();
+    
+    const subject = 'Mietfach-Zuweisung bestätigt - Ihr housnkuh Vertrag ist aktiv!';
+    
+    // Store Status prüfen
+    const Settings = require('../models/Settings').default;
+    const settings = await Settings.getSettings();
+    const isStoreOpen = settings.isStoreOpen();
+    
+    // Berechne wichtige Daten abhängig vom Store Status
+    let trialStartDate: Date;
+    let trialEndDate: Date;
+    let contractEndDate: Date;
+    let statusMessage: string;
+    
+    if (isStoreOpen) {
+      // Store ist offen - alles startet sofort
+      trialStartDate = new Date();
+      trialEndDate = new Date();
+      trialEndDate.setDate(trialEndDate.getDate() + 30);
+      
+      contractEndDate = new Date(trialEndDate);
+      contractEndDate.setMonth(contractEndDate.getMonth() + (adminConfirmationData.packageData.rentalDuration || 3));
+      
+      statusMessage = `✅ Ihr kostenloser Probemonat läuft noch bis zum ${trialEndDate.toLocaleDateString('de-DE')}`;
+    } else {
+      // Store ist noch nicht offen - alles startet bei Store-Eröffnung
+      if (settings.storeOpening.openingDate) {
+        trialStartDate = new Date(settings.storeOpening.openingDate);
+        trialEndDate = new Date(settings.storeOpening.openingDate);
+        trialEndDate.setDate(trialEndDate.getDate() + 30);
+        
+        contractEndDate = new Date(trialEndDate);
+        contractEndDate.setMonth(contractEndDate.getMonth() + (adminConfirmationData.packageData.rentalDuration || 3));
+        
+        statusMessage = `🗓️ Ihr kostenloser Probemonat startet mit der Store-Eröffnung am ${trialStartDate.toLocaleDateString('de-DE')} und läuft bis zum ${trialEndDate.toLocaleDateString('de-DE')}`;
+      } else {
+        // Fallback wenn kein Öffnungsdatum gesetzt
+        trialStartDate = new Date();
+        trialStartDate.setMonth(trialStartDate.getMonth() + 3);
+        trialEndDate = new Date(trialStartDate);
+        trialEndDate.setDate(trialEndDate.getDate() + 30);
+        
+        contractEndDate = new Date(trialEndDate);
+        contractEndDate.setMonth(contractEndDate.getMonth() + (adminConfirmationData.packageData.rentalDuration || 3));
+        
+        statusMessage = `🗓️ Ihr kostenloser Probemonat startet mit der Store-Eröffnung`;
+      }
+    }
+    
+    const totalMonthlyCost = adminConfirmationData.mietfaecher.reduce((sum, mietfach) => sum + mietfach.preis, 0);
+    
+    const html = `
+      <div style="font-family: 'Quicksand', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
+        <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="color: #09122c; margin: 0;">housnkuh</h1>
+            <p style="color: #666; margin: 10px 0;">Regionaler Marktplatz Kronach</p>
+          </div>
+          
+          <h2 style="color: #09122c; text-align: center; margin-bottom: 20px;">🎉 Ihre Mietfächer sind zugewiesen!</h2>
+          
+          <p style="color: #333; line-height: 1.6;">
+            Hallo ${adminConfirmationData.vendorName},
+          </p>
+          
+          <p style="color: #333; line-height: 1.6;">
+            großartige Neuigkeiten! Unser Team hat Ihre Buchung geprüft und Ihnen passende Mietfächer zugewiesen. 
+            Ihr Vertrag ist jetzt aktiv und Sie können mit dem Verkauf beginnen!
+          </p>
+          
+          <div style="background-color: ${isStoreOpen ? '#e8f5e8' : '#cfe2ff'}; border: 1px solid ${isStoreOpen ? '#4caf50' : '#86b7fe'}; padding: 20px; margin: 20px 0; border-radius: 8px;">
+            <h3 style="color: ${isStoreOpen ? '#2e7d32' : '#0c63e4'}; margin: 0 0 15px 0; font-size: 18px;">
+              ${statusMessage}
+            </h3>
+            <p style="color: ${isStoreOpen ? '#2e7d32' : '#0c63e4'}; margin: 0; font-size: 14px;">
+              Nach dem Probemonat beginnt Ihr gewählter Vertrag (${adminConfirmationData.packageData.rentalDuration} Monate) 
+              bis zum ${contractEndDate.toLocaleDateString('de-DE')}.
+            </p>
+          </div>
+
+          <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h3 style="color: #09122c; margin-top: 0;">📍 Ihre zugewiesenen Mietfächer:</h3>
+            
+            ${adminConfirmationData.mietfaecher.map(mietfach => `
+              <div style="background-color: white; padding: 15px; margin: 10px 0; border-radius: 8px; border: 1px solid #ddd;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <div>
+                    <h4 style="color: #09122c; margin: 0 0 5px 0;">${mietfach.bezeichnung}</h4>
+                    <p style="color: #666; margin: 0; font-size: 14px;">Typ: ${mietfach.typ}</p>
+                  </div>
+                  <div style="text-align: right;">
+                    <span style="color: #e17564; font-weight: bold; font-size: 16px;">${mietfach.preis}€/Monat</span>
+                  </div>
+                </div>
+              </div>
+            `).join('')}
+            
+            <div style="border-top: 2px solid #09122c; padding-top: 15px; margin-top: 15px;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="color: #09122c; font-weight: bold; font-size: 16px;">Gesamt monatlich:</span>
+                <span style="color: #e17564; font-weight: bold; font-size: 18px;">${totalMonthlyCost.toFixed(2)}€</span>
+              </div>
+              <p style="color: #666; font-size: 12px; margin: 5px 0 0 0;">
+                (Erste 30 Tage kostenlos, danach ${totalMonthlyCost.toFixed(2)}€/Monat)
+              </p>
+            </div>
+          </div>
+          
+          <div style="background-color: #fff3cd; border: 1px solid #ffeeba; padding: 15px; margin: 20px 0; border-radius: 5px;">
+            <h3 style="color: #856404; margin: 0 0 10px 0; font-size: 16px;">
+              🚀 So geht's weiter:
+            </h3>
+            <ol style="color: #856404; margin: 10px 0; padding-left: 20px; font-size: 14px;">
+              ${isStoreOpen ? `
+              <li>Besuchen Sie uns vor Ort, um Ihre Mietfächer zu besichtigen</li>
+              <li>Bringen Sie Ihre Produkte mit und richten Sie Ihre Flächen ein</li>
+              <li>Unser Team erklärt Ihnen das Kassensystem</li>
+              <li>Ab sofort können Kunden Ihre Produkte kaufen!</li>
+              ` : `
+              <li>Wir informieren Sie rechtzeitig vor der Store-Eröffnung</li>
+              <li>Sie können dann Ihre Mietfächer besichtigen</li>
+              <li>Richten Sie Ihre Flächen ein und bereiten Sie sich auf den Start vor</li>
+              <li>Ab Store-Eröffnung können Kunden Ihre Produkte kaufen!</li>
+              `}
+            </ol>
+          </div>
+          
+          <h3 style="color: #09122c; margin: 30px 0 15px 0;">📋 Vertragsinformationen:</h3>
+          <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+            <tr>
+              <td style="padding: 8px 0; border-bottom: 1px solid #eee; color: #666; width: 180px;"><strong>Vertragsnummer:</strong></td>
+              <td style="padding: 8px 0; border-bottom: 1px solid #eee; color: #333;">V${new Date().getFullYear()}-${String(adminConfirmationData.vertrag._id).slice(-6)}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; border-bottom: 1px solid #eee; color: #666;"><strong>${isStoreOpen ? 'Probemonat bis:' : 'Probemonat Start:'}</strong></td>
+              <td style="padding: 8px 0; border-bottom: 1px solid #eee; color: #333;">${isStoreOpen ? trialEndDate.toLocaleDateString('de-DE') : trialStartDate.toLocaleDateString('de-DE') + ' (bei Store-Eröffnung)'}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; border-bottom: 1px solid #eee; color: #666;"><strong>Vertrag bis:</strong></td>
+              <td style="padding: 8px 0; border-bottom: 1px solid #eee; color: #333;">${contractEndDate.toLocaleDateString('de-DE')}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; border-bottom: 1px solid #eee; color: #666;"><strong>Provision:</strong></td>
+              <td style="padding: 8px 0; border-bottom: 1px solid #eee; color: #333;">${adminConfirmationData.packageData.totalCost?.provision || 4}%</td>
+            </tr>
+          </table>
+          
+          <div style="text-align: center; margin: 30px 0;">
+            <p style="color: #666; font-size: 14px;">
+              Bei Fragen können Sie uns jederzeit unter <a href="mailto:info@housnkuh.de" style="color: #e17564;">info@housnkuh.de</a> erreichen.
+            </p>
+          </div>
+          
+          <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee;">
+            <h4 style="color: #09122c;">Kontakt & Öffnungszeiten:</h4>
+            <p style="color: #333; margin: 5px 0;">📞 Telefon: 0157 35711257</p>
+            <p style="color: #333; margin: 5px 0;">✉️ E-Mail: eva-maria.schaller@housnkuh.de</p>
+            <p style="color: #333; margin: 5px 0;">📍 Adresse: Strauer Str. 15, 96317 Kronach</p>
+          </div>
+          
+          <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; text-align: center;">
+            <p style="color: #666; font-size: 12px; margin: 0;">
+              © housnkuh - Ihr regionaler Marktplatz<br>
+              <a href="https://housnkuh.de" style="color: #e17564;">www.housnkuh.de</a>
+            </p>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    const mailOptions = {
+      from: `"housnkuh" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`,
+      to: adminConfirmationData.email,
+      subject,
+      html
+    };
+    
+    console.log('Sending admin confirmation email with options:', {
+      from: mailOptions.from,
+      to: mailOptions.to,
+      subject: mailOptions.subject
+    });
+    
+    try {
+      const result = await transporter.sendMail(mailOptions);
+      console.log('Admin confirmation email sent successfully:', result.messageId);
+      return true;
+    } catch (emailError) {
+      console.error('Admin confirmation email sending error:', emailError);
+      
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('⚠️ In development mode, treating admin confirmation email as sent successfully');
+        return true; // Return success in development mode
+      }
+      
+      return false;
+    }
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error('Detailed admin confirmation email error:', {
+        message: error.message,
+      });
+    } else {
+      console.error('Detailed admin confirmation email error:', error);
+    }
+    
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('⚠️ In development mode, treating admin confirmation email as sent successfully');
+      return true; // Return success in development mode
+    }
+    
+    return false;
+  }
+};

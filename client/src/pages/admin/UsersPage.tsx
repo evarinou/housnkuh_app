@@ -89,8 +89,8 @@ const UsersPage: React.FC = () => {
           headers: { Authorization: `Bearer ${token}` }
         });
         
-        setUsers(response.data);
-        setFilteredUsers(response.data);
+        setUsers(response.data.users || []);
+        setFilteredUsers(response.data.users || []);
         setIsLoading(false);
       } catch (err) {
         // Fallback auf Mock-Daten bei Fehler

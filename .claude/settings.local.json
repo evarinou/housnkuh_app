@@ -14,7 +14,8 @@
       "Bash(npx tsc:*)",
       "Bash(npm test:*)",
       "Bash(mv:*)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Bash(git checkout:*)"
     ],
     "deny": []
   },

@@ -7,6 +7,8 @@ import { useStoreSettings } from '../contexts/StoreSettingsContext';
 interface PackageData {
   selectedProvisionType: string;
   selectedPackages: string[];
+  packageCounts: Record<string, number>;
+  packageOptions: Array<{id: string, name: string, price: number, description?: string, image?: string, detail?: string}>;
   selectedAddons: string[];
   rentalDuration: number;
   totalCost: {
@@ -186,52 +188,60 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = ({
           setError('Ungültige Anmeldedaten');
         }
       } else {
-        // Prüfe, ob Store bereits geöffnet ist
-        const isStoreOpen = storeSettings?.isStoreOpen ?? true; // Default: reguläre Registrierung
-        
-        if (!isStoreOpen) {
-          // Pre-Registrierung für Store vor Eröffnung
-          const preRegistrationData = {
-            email: formData.email,
-            password: formData.password,
-            name: formData.name,
-            telefon: formData.telefon,
-            strasse: formData.strasse,
-            hausnummer: formData.hausnummer,
-            plz: formData.plz,
-            ort: formData.ort,
-            unternehmen: formData.unternehmen,
-            beschreibung: '' // Optional für Pre-Registration
-          };
-          
-          const result = await preRegisterVendor(preRegistrationData);
-          
-          if (result.success) {
-            // Erfolgreiche Pre-Registrierung
-            setIsPreRegistration(true);
-            setShowSuccess(true);
-            setSuccessMessage(`Vielen Dank für Ihre Vor-Registrierung! Sie erhalten eine Bestätigungs-E-Mail an ${formData.email}. Ihr kostenloser Probemonat startet automatisch mit der Store-Eröffnung${storeSettings?.openingDate ? ` am ${new Date(storeSettings.openingDate).toLocaleDateString('de-DE')}` : ''}.`);
-          } else {
-            setError(result.message || 'Ein Fehler ist aufgetreten bei der Pre-Registrierung');
+        // Immer normale Package-Registrierung verwenden (egal ob Store offen oder nicht)
+        // Package Data für Server formatieren
+        const formattedPackageData = {
+          selectedProvisionType: packageData.selectedProvisionType,
+          packageCounts: packageData.packageCounts || {},
+          packageOptions: packageData.packageOptions ? packageData.packageOptions.map(opt => ({
+            id: opt.id,
+            name: opt.name,
+            price: opt.price
+          })) : [],
+          selectedAddons: packageData.selectedAddons || [],
+          rentalDuration: packageData.rentalDuration,
+          totalCost: {
+            monthly: packageData.totalCost.monthly,
+            provision: packageData.totalCost.provision || 
+                     (packageData.selectedProvisionType === 'premium' ? 7 : 4)
           }
-        } else {
-          // Reguläre Registrierung mit Buchung
-          const registrationData = {
-            ...formData,
-            packageData
-          };
+        };
+        
+        const registrationData = {
+          ...formData,
+          packageData: formattedPackageData
+        };
+        
+        const result = await registerWithBooking(registrationData);
+        
+        if (result.success) {
+          // Erfolgreiche Registrierung - zeige Bestätigungsseite
+          setShowSuccess(true);
           
-          const result = await registerWithBooking(registrationData);
+          // Probemonat Start-Datum abhängig von Store Status
+          const isStoreOpen = storeSettings?.isStoreOpen ?? true;
+          let trialStartMessage = '';
           
-          if (result.success) {
-            // Erfolgreiche Registrierung - zeige Bestätigungsseite
-            setShowSuccess(true);
+          if (isStoreOpen) {
+            // Store ist offen - Probemonat startet sofort
             const trialEndDate = new Date();
             trialEndDate.setDate(trialEndDate.getDate() + 30);
-            setSuccessMessage(`Herzlich willkommen bei housnkuh! Ihre Registrierung war erfolgreich. Ihr 30-tägiger kostenloser Probemonat hat begonnen und läuft bis zum ${trialEndDate.toLocaleDateString('de-DE')}. Sie erhalten eine Bestätigungs-E-Mail an ${formData.email} mit allen weiteren Details.`);
+            trialStartMessage = `Ihr 30-tägiger kostenloser Probemonat hat begonnen und läuft bis zum ${trialEndDate.toLocaleDateString('de-DE')}.`;
           } else {
-            setError(result.message || 'Ein Fehler ist aufgetreten');
+            // Store ist noch nicht offen - Probemonat startet bei Eröffnung
+            const openingDate = storeSettings?.openingDate ? new Date(storeSettings.openingDate) : null;
+            if (openingDate) {
+              const trialEndDate = new Date(openingDate);
+              trialEndDate.setDate(trialEndDate.getDate() + 30);
+              trialStartMessage = `Ihr 30-tägiger kostenloser Probemonat startet automatisch mit der Store-Eröffnung am ${openingDate.toLocaleDateString('de-DE')} und läuft bis zum ${trialEndDate.toLocaleDateString('de-DE')}.`;
+            } else {
+              trialStartMessage = `Ihr 30-tägiger kostenloser Probemonat startet automatisch mit der Store-Eröffnung.`;
+            }
           }
+          
+          setSuccessMessage(`Herzlich willkommen bei housnkuh! Ihre Package-Buchung war erfolgreich. ${trialStartMessage} Sie erhalten eine Bestätigungs-E-Mail an ${formData.email} mit allen Details zu Ihrem gebuchten Paket.`);
+        } else {
+          setError(result.message || 'Ein Fehler ist aufgetreten');
         }
       }
     } catch (err) {

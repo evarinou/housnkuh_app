@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Package Builder</title>
+    <script>
+        // Test Package Builder data flow
+        function testPackageBuilder() {
+            console.log('Testing Package Builder data flow...');
+            
+            // Simulate what PackageBuilder.getPackageData() would return
+            const mockPackageData = {
+                selectedProvisionType: 'premium',
+                selectedPackages: ['block-a', 'block-a', 'block-b'],
+                packageCounts: {
+                    'block-a': 2,
+                    'block-b': 1
+                },
+                packageOptions: [
+                    {
+                        id: 'block-a',
+                        name: 'Verkaufsblock Lage A',
+                        price: 35,
+                        description: 'Regal auf Augenhöhe, 80x39x67cm (2 Ebenen)',
+                        image: '/api/placeholder/200/150',
+                        detail: 'Optimale Sichtbarkeit, beste Platzierung'
+                    },
+                    {
+                        id: 'block-b',
+                        name: 'Verkaufsblock Lage B',
+                        price: 15,
+                        description: 'Standard Regalfläche, 80x39x33,5cm (1 Ebene)',
+                        image: '/api/placeholder/200/150',
+                        detail: 'Kostengünstige Option für Einsteiger'
+                    }
+                ],
+                selectedAddons: ['digital-marketing'],
+                rentalDuration: 6,
+                totalCost: {
+                    monthly: 85.00,
+                    oneTime: 0,
+                    provision: 7
+                },
+                discount: 0.05
+            };
+            
+            console.log('Mock Package Data:', JSON.stringify(mockPackageData, null, 2));
+            
+            // Simulate VendorRegistrationModal formatting
+            const formattedPackageData = {
+                selectedProvisionType: mockPackageData.selectedProvisionType,
+                packageCounts: mockPackageData.packageCounts || {},
+                packageOptions: mockPackageData.packageOptions ? mockPackageData.packageOptions.map(opt => ({
+                    id: opt.id,
+                    name: opt.name,
+                    price: opt.price
+                })) : [],
+                selectedAddons: mockPackageData.selectedAddons || [],
+                rentalDuration: mockPackageData.rentalDuration,
+                totalCost: {
+                    monthly: mockPackageData.totalCost.monthly,
+                    provision: mockPackageData.totalCost.provision || 
+                            (mockPackageData.selectedProvisionType === 'premium' ? 7 : 4)
+                }
+            };
+            
+            console.log('Formatted Package Data for Server:', JSON.stringify(formattedPackageData, null, 2));
+            
+            // Test the registration call
+            testRegistration(formattedPackageData);
+        }
+        
+        async function testRegistration(packageData) {
+            const registrationData = {
+                // Persönliche Daten
+                email: 'frontend-test@example.com',
+                password: 'test123456',
+                name: 'Frontend Test User',
+                telefon: '01234567890',
+                
+                // Adressdaten
+                strasse: 'Frontend Test Straße',
+                hausnummer: '123',
+                plz: '12345',
+                ort: 'Frontend Test Stadt',
+                
+                // Unternehmensdaten
+                unternehmen: 'Frontend Test Unternehmen',
+                
+                // Package-Daten
+                packageData: packageData
+            };
+            
+            console.log('Sending registration data:', JSON.stringify(registrationData, null, 2));
+            
+            try {
+                const response = await fetch('http://localhost:4000/api/vendor-auth/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(registrationData)
+                });
+                
+                const result = await response.json();
+                console.log('Registration response:', result);
+                
+                if (result.success) {
+                    console.log('✅ Registration successful!');
+                } else {
+                    console.error('❌ Registration failed:', result.message);
+                }
+                
+            } catch (error) {
+                console.error('❌ Registration error:', error);
+            }
+        }
+        
+        // Run test when page loads
+        window.onload = testPackageBuilder;
+    </script>
+</head>
+<body>
+    <h1>Debug Package Builder Frontend</h1>
+    <p>Check console for debug output...</p>
+</body>
+</html>

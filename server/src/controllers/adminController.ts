@@ -176,11 +176,22 @@ export const deleteNewsletterSubscriber = async (req: Request, res: Response): P
 // Alle Users mit ausstehenden Buchungen abrufen
 export const getPendingBookings = async (req: Request, res: Response): Promise<void> => {
   try {
+    console.log('Getting pending bookings...');
+    
+    // Debug: Zuerst alle Vendor-Benutzer anzeigen
+    const allVendors = await User.find({ isVendor: true }).select('kontakt.email pendingBooking');
+    console.log('All vendors found:', allVendors.length);
+    allVendors.forEach(vendor => {
+      console.log(`Vendor: ${vendor.kontakt?.email}, has pendingBooking: ${!!vendor.pendingBooking}, status: ${vendor.pendingBooking?.status}`);
+    });
+    
     const usersWithPendingBookings = await User.find({
       isVendor: true,
       pendingBooking: { $exists: true, $ne: null },
       'pendingBooking.status': 'pending'
     }).select('kontakt adressen pendingBooking createdAt');
+    
+    console.log('Users with pending bookings found:', usersWithPendingBookings.length);
     
     res.json({
       success: true,
@@ -308,9 +319,10 @@ export const confirmPendingBooking = async (req: Request, res: Response): Promis
     );
     
     // E-Mail an Vendor senden
-    const { sendVendorConfirmationEmail } = require('../utils/emailService');
-    await sendVendorConfirmationEmail(user.kontakt.email, {
-      name: user.kontakt.name,
+    const { sendAdminConfirmationEmail } = require('../utils/emailService');
+    await sendAdminConfirmationEmail({
+      vendorName: user.kontakt.name,
+      email: user.kontakt.email,
       mietfaecher: mietfaecher,
       vertrag: vertragData.vertrag,
       packageData: user.pendingBooking.packageData

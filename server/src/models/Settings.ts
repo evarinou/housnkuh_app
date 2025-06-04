@@ -76,9 +76,17 @@ SettingsSchema.methods.updateStoreOpening = async function(
 
 // Check if store is currently open
 SettingsSchema.methods.isStoreOpen = function(): boolean {
-  if (!this.storeOpening.enabled || !this.storeOpening.openingDate) {
+  // Wenn Store Opening nicht aktiviert ist, ist der Store sofort offen
+  if (!this.storeOpening.enabled) {
+    return true;
+  }
+  
+  // Wenn aktiviert aber kein Datum gesetzt, ist der Store noch nicht offen
+  if (!this.storeOpening.openingDate) {
     return false;
   }
+  
+  // Wenn Datum gesetzt, prüfe ob es bereits erreicht wurde
   return new Date() >= new Date(this.storeOpening.openingDate);
 };
 

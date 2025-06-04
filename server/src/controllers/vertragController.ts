@@ -242,12 +242,37 @@ export const createVertragFromPendingBooking = async (userId: string, packageDat
   try {
     console.log('createVertragFromPendingBooking called with:', { userId, assignedMietfaecher, packageDataKeys: Object.keys(packageData || {}) });
     const Mietfach = require('../models/Mietfach').default;
+    const Settings = require('../models/Settings').default;
+    
+    // Store Status prüfen
+    const settings = await Settings.getSettings();
+    const isStoreOpen = settings.isStoreOpen();
     
     // Services für die zugewiesenen Mietfächer erstellen
     const services = [];
     const currentDate = new Date();
-    const mietende = new Date(currentDate);
-    mietende.setMonth(mietende.getMonth() + (packageData.rentalDuration || 3));
+    
+    // Mietbeginn abhängig vom Store Status
+    let mietbeginn: Date;
+    if (isStoreOpen) {
+      // Store ist offen - Mietbeginn sofort
+      mietbeginn = new Date();
+    } else {
+      // Store ist noch nicht offen - Mietbeginn bei Store-Eröffnung
+      if (settings.storeOpening.openingDate) {
+        mietbeginn = new Date(settings.storeOpening.openingDate);
+      } else {
+        // Fallback wenn kein Öffnungsdatum gesetzt ist
+        mietbeginn = new Date();
+        mietbeginn.setMonth(mietbeginn.getMonth() + 3); // Default: 3 Monate in der Zukunft
+      }
+    }
+    
+    // 30-Tage Probemonat + gewählte Dauer
+    const trialDays = 30;
+    const mietende = new Date(mietbeginn);
+    mietende.setDate(mietende.getDate() + trialDays); // 30 Tage Probemonat
+    mietende.setMonth(mietende.getMonth() + (packageData.rentalDuration || 3)); // + gewählte Dauer
     
     // Alle zugewiesenen Mietfächer laden
     const mietfaecher = await Mietfach.find({ _id: { $in: assignedMietfaecher } });
@@ -277,7 +302,7 @@ export const createVertragFromPendingBooking = async (userId: string, packageDat
       
       services.push({
         mietfach: mietfach._id,
-        mietbeginn: currentDate,
+        mietbeginn: mietbeginn,
         mietende: mietende,
         monatspreis: monatspreis
       });

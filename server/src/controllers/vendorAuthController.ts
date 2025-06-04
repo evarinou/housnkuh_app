@@ -9,7 +9,7 @@ import fs from 'fs';
 import path from 'path';
 import multer from 'multer';
 import config from '../config/config';
-import { sendVendorWelcomeEmail, sendPreRegistrationConfirmation, sendTrialActivationEmail, sendCancellationConfirmationEmail } from '../utils/emailService';
+import { sendVendorWelcomeEmail, sendPreRegistrationConfirmation, sendTrialActivationEmail, sendCancellationConfirmationEmail, sendBookingConfirmation } from '../utils/emailService';
 import Settings from '../models/Settings';
 
 // Pre-Registrierung für Direktvermarkter vor Store-Eröffnung (M001 R001)
@@ -159,6 +159,14 @@ export const preRegisterVendor = async (req: Request, res: Response): Promise<vo
 // Registrierung für Direktvermarkter mit Package-Buchung
 export const registerVendorWithBooking = async (req: Request, res: Response): Promise<void> => {
   try {
+    console.log('=== VENDOR REGISTRATION WITH BOOKING START ===');
+    console.log('Request body keys:', Object.keys(req.body));
+    console.log('Package data present:', !!req.body.packageData);
+    if (req.body.packageData) {
+      console.log('Package data keys:', Object.keys(req.body.packageData));
+      console.log('Full package data:', JSON.stringify(req.body.packageData, null, 2));
+    }
+    
     const {
       // Persönliche Daten
       email,
@@ -287,6 +295,7 @@ export const registerVendorWithBooking = async (req: Request, res: Response): Pr
       }
       
       // Buchung hinzufügen
+      console.log('Adding pendingBooking to existing user');
       user.pendingBooking = {
         packageData,
         createdAt: new Date(),
@@ -345,16 +354,26 @@ export const registerVendorWithBooking = async (req: Request, res: Response): Pr
       });
     }
     
-    await user.save();
+    const savedUser = await user.save();
     
-    // Bestätigungs-E-Mail senden
-    console.log('Attempting to send vendor welcome email to:', email);
+    console.log('User saved successfully with ID:', savedUser._id);
+    console.log('User pendingBooking status:', savedUser.pendingBooking?.status);
+    console.log('User isVendor:', savedUser.isVendor);
+    
+    // Buchungsbestätigungs-E-Mail senden (mit Package-Details und Bestätigungslink)
+    console.log('Sending booking confirmation email with package details to:', email);
     console.log('Email token:', emailConfirmationToken);
+    console.log('Package data for email:', JSON.stringify(packageData, null, 2));
     
-    const emailSent = await sendVendorWelcomeEmail(email, emailConfirmationToken, packageData);
+    const bookingEmailSent = await sendBookingConfirmation({
+      vendorName: name,
+      email: email,
+      confirmationToken: emailConfirmationToken,
+      packageData: packageData
+    });
     
-    if (!emailSent) {
-      console.error('Failed to send vendor welcome email');
+    if (!bookingEmailSent) {
+      console.error('Failed to send booking confirmation email');
       res.status(500).json({ 
         success: false, 
         message: 'Account erstellt, aber E-Mail konnte nicht gesendet werden' 
@@ -362,7 +381,7 @@ export const registerVendorWithBooking = async (req: Request, res: Response): Pr
       return;
     }
     
-    console.log('Vendor welcome email sent successfully');
+    console.log('Booking confirmation email sent successfully');
     
     res.status(201).json({ 
       success: true, 
@@ -524,26 +543,10 @@ export const confirmVendorEmail = async (req: Request, res: Response): Promise<v
     
     await user.save();
     
-    // Create contract from pending booking if exists
+    // Do NOT create contract here - wait for admin to assign Mietfächer
+    // This ensures the booking appears in admin dashboard as "Ausstehende Buchungen"
     if (user.pendingBooking && user.pendingBooking.packageData) {
-      try {
-        const { createVertragFromPendingBooking } = require('./vertragController');
-        const userId = user._id ? user._id.toString() : '';
-        const contractCreated = await createVertragFromPendingBooking(userId, user.pendingBooking.packageData, []);
-        
-        if (contractCreated) {
-          // Clear pending booking after successful contract creation
-          user.pendingBooking = undefined;
-          await user.save();
-          
-          console.log('Contract created successfully for user:', user._id?.toString());
-        } else {
-          console.error('Failed to create contract for user:', user._id?.toString());
-        }
-      } catch (contractError) {
-        console.error('Error creating contract:', contractError);
-        // Don't fail the email confirmation if contract creation fails
-      }
+      console.log('User has pending booking - waiting for admin to assign Mietfächer');
     }
     
     // If user is in trial status and store is open, send trial activation email
