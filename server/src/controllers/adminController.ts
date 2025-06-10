@@ -6,6 +6,7 @@ import Vertrag from '../models/Vertrag';
 import Settings from '../models/Settings';
 import ScheduledJobs from '../services/scheduledJobs';
 import TrialService from '../services/trialService';
+import { cache, CACHE_KEYS, CACHE_TTL } from '../utils/cache';
 
 // Alle Newsletter-Abonnenten abrufen
 export const getNewsletterSubscribers = async (req: Request, res: Response): Promise<void> => {
@@ -57,74 +58,89 @@ export const getNewsletterSubscribersByType = async (req: Request, res: Response
 // Dashboard-Übersicht
 export const getDashboardOverview = async (req: Request, res: Response): Promise<void> => {
   try {
-    // Anzahl der Newsletter-Abonnenten
-    const newsletterCount = await User.countDocuments({
-      'kontakt.mailNewsletter': true,
-      'kontakt.newsletterConfirmed': true
-    });
-    
-    // Anzahl der ausstehenden Bestätigungen
-    const pendingCount = await User.countDocuments({
-      'kontakt.mailNewsletter': true,
-      'kontakt.newsletterConfirmed': false
-    });
-    
-    // Aufschlüsselung nach Typ
-    const customerCount = await User.countDocuments({
-      'kontakt.mailNewsletter': true,
-      'kontakt.newsletterConfirmed': true,
-      'kontakt.newslettertype': 'customer'
-    });
-    
-    const vendorCount = await User.countDocuments({
-      'kontakt.mailNewsletter': true,
-      'kontakt.newsletterConfirmed': true,
-      'kontakt.newslettertype': 'vendor'
-    });
-    
-    // Anzahl der Mietfächer und Verträge
-    const mietfachCount = await Mietfach.countDocuments();
-    const vertragCount = await Vertrag.countDocuments();
-    
-    // Anzahl der ausstehenden Buchungen
-    const pendingBookingsCount = await User.countDocuments({
-      isVendor: true,
-      pendingBooking: { $exists: true, $ne: null },
-      'pendingBooking.status': 'pending'
-    });
-    
-    // Vendor Contest Statistiken
-    const VendorContest = require('../models/VendorContest').default;
-    const vendorContestCount = await VendorContest.countDocuments();
-    const unreadContestCount = await VendorContest.countDocuments({ isRead: false });
-    
-    // Neueste Abonnenten (letzte 5)
-    const recentSubscribers = await User.find({
-      'kontakt.mailNewsletter': true,
-      'kontakt.newsletterConfirmed': true
-    })
-    .sort({ createdAt: -1 })
-    .limit(5)
-    .select('kontakt createdAt');
+    // Use cache for dashboard overview with 2 minute TTL
+    const overview = await cache.getOrSet(
+      CACHE_KEYS.ADMIN_STATS,
+      async () => {
+        // Parallel execution of all database queries for better performance
+        const [
+          newsletterCount,
+          pendingCount,
+          customerCount,
+          vendorCount,
+          mietfachCount,
+          vertragCount,
+          pendingBookingsCount,
+          vendorContestCount,
+          unreadContestCount,
+          recentSubscribers
+        ] = await Promise.all([
+          User.countDocuments({
+            'kontakt.mailNewsletter': true,
+            'kontakt.newsletterConfirmed': true
+          }),
+          User.countDocuments({
+            'kontakt.mailNewsletter': true,
+            'kontakt.newsletterConfirmed': false
+          }),
+          User.countDocuments({
+            'kontakt.mailNewsletter': true,
+            'kontakt.newsletterConfirmed': true,
+            'kontakt.newslettertype': 'customer'
+          }),
+          User.countDocuments({
+            'kontakt.mailNewsletter': true,
+            'kontakt.newsletterConfirmed': true,
+            'kontakt.newslettertype': 'vendor'
+          }),
+          Mietfach.countDocuments(),
+          Vertrag.countDocuments(),
+          User.countDocuments({
+            isVendor: true,
+            pendingBooking: { $exists: true, $ne: null },
+            'pendingBooking.status': 'pending'
+          }),
+          // Vendor Contest Statistiken
+          (async () => {
+            const VendorContest = require('../models/VendorContest').default;
+            return await VendorContest.countDocuments();
+          })(),
+          (async () => {
+            const VendorContest = require('../models/VendorContest').default;
+            return await VendorContest.countDocuments({ isRead: false });
+          })(),
+          User.find({
+            'kontakt.mailNewsletter': true,
+            'kontakt.newsletterConfirmed': true
+          })
+          .sort({ createdAt: -1 })
+          .limit(5)
+          .select('kontakt createdAt')
+        ]);
+
+        return {
+          newsletter: {
+            total: newsletterCount,
+            pending: pendingCount,
+            customer: customerCount,
+            vendor: vendorCount
+          },
+          mietfaecher: mietfachCount,
+          vertraege: vertragCount,
+          pendingBookings: pendingBookingsCount,
+          vendorContest: {
+            total: vendorContestCount,
+            unread: unreadContestCount
+          },
+          recentSubscribers
+        };
+      },
+      CACHE_TTL.SHORT // 1 minute cache for admin stats
+    );
     
     res.json({
       success: true,
-      overview: {
-        newsletter: {
-          total: newsletterCount,
-          pending: pendingCount,
-          customer: customerCount,
-          vendor: vendorCount
-        },
-        mietfaecher: mietfachCount,
-        vertraege: vertragCount,
-        pendingBookings: pendingBookingsCount,
-        vendorContest: {
-          total: vendorContestCount,
-          unread: unreadContestCount
-        },
-        recentSubscribers
-      }
+      overview
     });
   } catch (err) {
     console.error('Fehler beim Abrufen der Dashboard-Übersicht:', err);
@@ -425,6 +441,7 @@ export const getStoreOpeningSettings = async (req: Request, res: Response): Prom
       settings: {
         enabled: settings.storeOpening.enabled,
         openingDate: settings.storeOpening.openingDate,
+        openingTime: settings.storeOpening.openingTime || '00:00',
         reminderDays: settings.storeOpening.reminderDays,
         isStoreOpen: settings.isStoreOpen(),
         lastModified: settings.storeOpening.lastModified,
@@ -443,7 +460,7 @@ export const getStoreOpeningSettings = async (req: Request, res: Response): Prom
 // Store Opening Settings aktualisieren
 export const updateStoreOpeningSettings = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { openingDate, enabled } = req.body;
+    const { openingDate, openingTime, enabled } = req.body;
     const modifiedBy = (req as any).user?.email || (req as any).user?.id || 'admin';
     
     // Validierung: Datum darf nicht in der Vergangenheit liegen
@@ -460,14 +477,25 @@ export const updateStoreOpeningSettings = async (req: Request, res: Response): P
         return;
       }
     }
+
+    // Validierung: Zeit im richtigen Format
+    if (openingTime && !/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(openingTime)) {
+      res.status(400).json({ 
+        success: false, 
+        message: 'Die Uhrzeit muss im Format HH:MM (24-Stunden) angegeben werden' 
+      });
+      return;
+    }
     
     const settings = await Settings.getSettings();
     const oldDate = settings.storeOpening.openingDate;
+    const oldTime = settings.storeOpening.openingTime;
     
     await settings.updateStoreOpening(
       openingDate ? new Date(openingDate) : null,
       enabled !== undefined ? enabled : settings.storeOpening.enabled,
-      modifiedBy
+      modifiedBy,
+      openingTime !== undefined ? openingTime : oldTime
     );
     
     // Wenn sich das Datum geändert hat, sende Benachrichtigungen
@@ -502,6 +530,7 @@ export const updateStoreOpeningSettings = async (req: Request, res: Response): P
       settings: {
         enabled: settings.storeOpening.enabled,
         openingDate: settings.storeOpening.openingDate,
+        openingTime: settings.storeOpening.openingTime || '00:00',
         isStoreOpen: settings.isStoreOpen()
       }
     });
@@ -538,6 +567,195 @@ export const getTrialStatistics = async (req: Request, res: Response): Promise<v
     res.status(500).json({ 
       success: false, 
       message: 'Server error getting trial statistics' 
+    });
+  }
+};
+
+// Get launch day monitoring metrics
+export const getLaunchDayMetrics = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const settings = await Settings.getSettings();
+    const now = new Date();
+    
+    // Calculate time until launch
+    let timeUntilLaunch = null;
+    let isLaunchDay = false;
+    let launchStatus = 'not_configured';
+    
+    if (settings.storeOpening.enabled && settings.storeOpening.openingDate) {
+      const openingDate = new Date(settings.storeOpening.openingDate);
+      if (settings.storeOpening.openingTime) {
+        const [hours, minutes] = settings.storeOpening.openingTime.split(':').map(Number);
+        openingDate.setHours(hours, minutes, 0, 0);
+      }
+      
+      const timeDiff = openingDate.getTime() - now.getTime();
+      
+      if (timeDiff > 0) {
+        timeUntilLaunch = {
+          days: Math.floor(timeDiff / (1000 * 60 * 60 * 24)),
+          hours: Math.floor((timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+          minutes: Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60)),
+          seconds: Math.floor((timeDiff % (1000 * 60)) / 1000),
+          totalMilliseconds: timeDiff
+        };
+        launchStatus = 'scheduled';
+      } else {
+        // Launch has occurred
+        const hoursSinceLaunch = Math.abs(timeDiff) / (1000 * 60 * 60);
+        isLaunchDay = hoursSinceLaunch < 24;
+        launchStatus = 'launched';
+      }
+    }
+    
+    // Get vendor statistics
+    const [
+      preregisteredCount,
+      activeTrialCount,
+      expiredTrialCount,
+      totalVendorCount,
+      recentActivations
+    ] = await Promise.all([
+      User.countDocuments({ isVendor: true, registrationStatus: 'preregistered' }),
+      User.countDocuments({ isVendor: true, registrationStatus: 'trial_active' }),
+      User.countDocuments({ isVendor: true, registrationStatus: 'trial_expired' }),
+      User.countDocuments({ isVendor: true }),
+      User.find({
+        isVendor: true,
+        registrationStatus: 'trial_active',
+        trialStartDate: { $gte: new Date(now.getTime() - 24 * 60 * 60 * 1000) }
+      }).select('kontakt.name kontakt.email trialStartDate').limit(10).sort('-trialStartDate')
+    ]);
+    
+    // Get job status
+    const jobsStatus = ScheduledJobs.getJobsStatus();
+    
+    // Compile metrics
+    const metrics = {
+      launchConfiguration: {
+        enabled: settings.storeOpening.enabled,
+        openingDate: settings.storeOpening.openingDate,
+        openingTime: settings.storeOpening.openingTime,
+        isStoreOpen: settings.isStoreOpen(),
+        launchStatus,
+        isLaunchDay,
+        timeUntilLaunch
+      },
+      vendorStatistics: {
+        preregistered: preregisteredCount,
+        activeTrials: activeTrialCount,
+        expiredTrials: expiredTrialCount,
+        totalVendors: totalVendorCount,
+        readyForActivation: preregisteredCount,
+        activationRate: totalVendorCount > 0 ? Math.round((activeTrialCount / totalVendorCount) * 100) : 0
+      },
+      recentActivations: recentActivations.map(v => ({
+        name: v.kontakt.name,
+        email: v.kontakt.email,
+        activatedAt: v.trialStartDate
+      })),
+      systemStatus: {
+        scheduledJobs: jobsStatus,
+        nextActivationCheck: new Date(now.getTime() + (5 * 60 * 1000)), // Next check in 5 minutes
+        serverTime: now,
+        timezone: 'Europe/Berlin'
+      }
+    };
+    
+    res.json({
+      success: true,
+      metrics,
+      timestamp: new Date()
+    });
+    
+  } catch (err) {
+    console.error('Error getting launch day metrics:', err);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server error getting launch day metrics' 
+    });
+  }
+};
+
+// Toggle vendor public visibility (R004)
+export const toggleVendorVisibility = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { vendorId } = req.params;
+    const { isPubliclyVisible } = req.body;
+    
+    const vendor = await User.findById(vendorId);
+    if (!vendor) {
+      res.status(404).json({
+        success: false,
+        message: 'Vendor nicht gefunden'
+      });
+      return;
+    }
+    
+    if (!vendor.isVendor) {
+      res.status(400).json({
+        success: false,
+        message: 'User ist kein Vendor'
+      });
+      return;
+    }
+    
+    vendor.isPubliclyVisible = isPubliclyVisible;
+    await vendor.save();
+    
+    res.json({
+      success: true,
+      message: `Vendor-Sichtbarkeit ${isPubliclyVisible ? 'aktiviert' : 'deaktiviert'}`,
+      vendor: {
+        id: vendor._id,
+        name: vendor.kontakt.name,
+        email: vendor.kontakt.email,
+        isPubliclyVisible: vendor.isPubliclyVisible,
+        registrationStatus: vendor.registrationStatus
+      }
+    });
+  } catch (err) {
+    console.error('Error toggling vendor visibility:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Server error toggling vendor visibility'
+    });
+  }
+};
+
+// Bulk toggle vendor visibility (R004)
+export const bulkToggleVendorVisibility = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { vendorIds, isPubliclyVisible } = req.body;
+    
+    if (!Array.isArray(vendorIds) || vendorIds.length === 0) {
+      res.status(400).json({
+        success: false,
+        message: 'Vendor IDs array ist erforderlich'
+      });
+      return;
+    }
+    
+    const result = await User.updateMany(
+      { 
+        _id: { $in: vendorIds },
+        isVendor: true
+      },
+      { 
+        isPubliclyVisible: isPubliclyVisible
+      }
+    );
+    
+    res.json({
+      success: true,
+      message: `${result.modifiedCount} Vendors ${isPubliclyVisible ? 'sichtbar' : 'versteckt'} gemacht`,
+      modifiedCount: result.modifiedCount
+    });
+  } catch (err) {
+    console.error('Error bulk toggling vendor visibility:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Server error bulk toggling vendor visibility'
     });
   }
 };
@@ -647,6 +865,58 @@ export const getScheduledJobsStatus = async (req: Request, res: Response): Promi
     res.status(500).json({ 
       success: false, 
       message: 'Server error getting scheduled jobs status' 
+    });
+  }
+};
+
+// Update vendor verification status (R007)
+export const updateVendorVerification = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { vendorId } = req.params;
+    const { verifyStatus } = req.body;
+    
+    if (!vendorId) {
+      res.status(400).json({
+        success: false,
+        message: 'Vendor ID is required'
+      });
+      return;
+    }
+    
+    if (!['verified', 'pending', 'unverified'].includes(verifyStatus)) {
+      res.status(400).json({
+        success: false,
+        message: 'Invalid verification status'
+      });
+      return;
+    }
+    
+    const vendor = await User.findById(vendorId);
+    if (!vendor || !vendor.isVendor) {
+      res.status(404).json({
+        success: false,
+        message: 'Vendor not found'
+      });
+      return;
+    }
+    
+    // Update vendor verification status
+    vendor.vendorProfile = vendor.vendorProfile || {};
+    vendor.vendorProfile.verifyStatus = verifyStatus;
+    
+    await vendor.save();
+    
+    res.json({
+      success: true,
+      message: `Vendor verification status updated to ${verifyStatus}`,
+      vendorId: vendor._id,
+      verifyStatus: verifyStatus
+    });
+  } catch (err) {
+    console.error('Error updating vendor verification:', err);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server error updating vendor verification' 
     });
   }
 };

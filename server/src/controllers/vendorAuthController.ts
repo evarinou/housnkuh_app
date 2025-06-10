@@ -888,17 +888,124 @@ export const uploadVendorImage = async (req: Request, res: Response): Promise<vo
   }
 };
 
-// Alle Vendor-Profile für die öffentliche Übersicht abrufen
+// Alle Vendor-Profile für die öffentliche Übersicht abrufen mit erweiterten Filteroptionen
 export const getAllVendorProfiles = async (req: Request, res: Response): Promise<void> => {
   try {
-    // Nur verifizierte, aktive und öffentlich sichtbare Vendors abrufen
-    const vendors = await User.find({
+    const {
+      search,
+      kategorien,
+      standorte,
+      verifyStatus,
+      registrationStatus,
+      page = 1,
+      limit = 50,
+      sortBy = 'name',
+      sortOrder = 'asc'
+    } = req.query;
+
+    // Base query - nur aktive, bestätigte und öffentlich sichtbare Vendors
+    const baseQuery: any = {
       isVendor: true,
       isFullAccount: true,
       'kontakt.status': 'aktiv',
       'kontakt.newsletterConfirmed': true,
-      isPubliclyVisible: true  // Filter für öffentliche Sichtbarkeit
-    }).select('kontakt vendorProfile adressen createdAt isPubliclyVisible');
+      isPubliclyVisible: true
+    };
+
+    // Search filter - sucht in Name, Unternehmen, Beschreibung und Kategorien
+    if (search && typeof search === 'string' && search.trim()) {
+      const searchRegex = new RegExp(search.trim(), 'i');
+      baseQuery.$or = [
+        { 'kontakt.name': searchRegex },
+        { 'vendorProfile.unternehmen': searchRegex },
+        { 'vendorProfile.beschreibung': searchRegex },
+        { 'vendorProfile.kategorien': { $in: [searchRegex] } }
+      ];
+    }
+
+    // Kategorien filter
+    if (kategorien) {
+      const kategorienArray = Array.isArray(kategorien) ? kategorien : [kategorien];
+      const validKategorien = kategorienArray.filter(kat => typeof kat === 'string' && kat.trim());
+      
+      if (validKategorien.length > 0) {
+        baseQuery['vendorProfile.kategorien'] = { $in: validKategorien };
+      }
+    }
+
+    // Standorte filter (basierend auf Vendor-Adresse)
+    if (standorte) {
+      const standorteArray = Array.isArray(standorte) ? standorte : [standorte];
+      const validStandorte = standorteArray.filter(ort => typeof ort === 'string' && ort.trim());
+      
+      if (validStandorte.length > 0) {
+        baseQuery['adressen.ort'] = { $in: validStandorte };
+      }
+    }
+
+    // Verify Status filter
+    if (verifyStatus && typeof verifyStatus === 'string') {
+      const validVerifyStatuses = ['verified', 'pending', 'unverified'];
+      if (validVerifyStatuses.includes(verifyStatus)) {
+        baseQuery['vendorProfile.verifyStatus'] = verifyStatus;
+      }
+    }
+
+    // Registration Status filter (für Trial-Status etc.)
+    if (registrationStatus && typeof registrationStatus === 'string') {
+      const validRegistrationStatuses = ['trial_active', 'active', 'preregistered'];
+      if (validRegistrationStatuses.includes(registrationStatus)) {
+        baseQuery.registrationStatus = registrationStatus;
+      }
+    }
+
+    // Pagination
+    const pageNum = Math.max(1, parseInt(page as string) || 1);
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit as string) || 50));
+    const skip = (pageNum - 1) * limitNum;
+
+    // Sorting
+    const sortOptions: any = {};
+    const validSortFields = ['name', 'unternehmen', 'registrationDate', 'verifyStatus'];
+    const sortField = validSortFields.includes(sortBy as string) ? sortBy as string : 'name';
+    const sortDirection = sortOrder === 'desc' ? -1 : 1;
+
+    if (sortField === 'name') {
+      sortOptions['kontakt.name'] = sortDirection;
+    } else if (sortField === 'unternehmen') {
+      sortOptions['vendorProfile.unternehmen'] = sortDirection;
+    } else if (sortField === 'registrationDate') {
+      sortOptions['registrationDate'] = sortDirection;
+    } else if (sortField === 'verifyStatus') {
+      sortOptions['vendorProfile.verifyStatus'] = sortDirection;
+    }
+
+    // Execute query with pagination
+    const [vendors, totalCount] = await Promise.all([
+      User.find(baseQuery)
+        .select('kontakt vendorProfile adressen createdAt isPubliclyVisible registrationStatus registrationDate')
+        .sort(sortOptions)
+        .skip(skip)
+        .limit(limitNum)
+        .lean(),
+      User.countDocuments(baseQuery)
+    ]);
+
+    // Verfügbare Filter-Optionen für Frontend ermitteln
+    const allVendors = await User.find({
+      isVendor: true,
+      isFullAccount: true,
+      'kontakt.status': 'aktiv',
+      'kontakt.newsletterConfirmed': true,
+      isPubliclyVisible: true
+    }).select('vendorProfile.kategorien adressen.ort vendorProfile.verifyStatus registrationStatus').lean();
+
+    const availableFilters = {
+      kategorien: [...new Set(allVendors.flatMap(v => v.vendorProfile?.kategorien || []))].sort(),
+      standorte: [...new Set(allVendors.flatMap(v => v.adressen?.map(a => a.ort) || []))].filter(Boolean).sort(),
+      verifyStatuses: [...new Set(allVendors.map(v => v.vendorProfile?.verifyStatus || 'unverified'))].sort(),
+      registrationStatuses: [...new Set(allVendors.map(v => v.registrationStatus))].filter(Boolean).sort()
+    };
     
     // Vendor-Daten für die öffentliche Anzeige formatieren
     const publicVendorData = vendors.map(vendor => ({
@@ -909,7 +1016,7 @@ export const getAllVendorProfiles = async (req: Request, res: Response): Promise
       profilBild: vendor.vendorProfile?.profilBild || '',
       telefon: vendor.kontakt.telefon || '',
       email: vendor.kontakt.email,
-      adresse: vendor.adressen.length > 0 ? {
+      adresse: vendor.adressen && vendor.adressen.length > 0 ? {
         strasse: vendor.adressen[0].strasse,
         hausnummer: vendor.adressen[0].hausnummer,
         plz: vendor.adressen[0].plz,
@@ -929,13 +1036,24 @@ export const getAllVendorProfiles = async (req: Request, res: Response): Promise
       },
       oeffnungszeiten: vendor.vendorProfile?.oeffnungszeiten || {},
       verifyStatus: vendor.vendorProfile?.verifyStatus || 'unverified',
+      registrationStatus: vendor.registrationStatus,
+      registrationDate: vendor.registrationDate,
       // TODO: Mietfächer werden später hinzugefügt, wenn die Vertragslogik fertig ist
       mietfaecher: []
     }));
-    
+
     res.json({ 
       success: true, 
-      vendors: publicVendorData 
+      vendors: publicVendorData,
+      pagination: {
+        currentPage: pageNum,
+        totalPages: Math.ceil(totalCount / limitNum),
+        totalCount,
+        limit: limitNum,
+        hasNextPage: pageNum < Math.ceil(totalCount / limitNum),
+        hasPrevPage: pageNum > 1
+      },
+      availableFilters
     });
   } catch (err) {
     console.error('Fehler beim Abrufen der Vendor-Profile:', err);

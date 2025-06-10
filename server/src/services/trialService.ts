@@ -1,7 +1,7 @@
 // server/src/services/trialService.ts
 import User from '../models/User';
 import Settings from '../models/Settings';
-import { sendTrialActivationEmail, sendTrialExpirationWarning, sendTrialExpiredEmail } from '../utils/emailService';
+import { sendTrialActivationEmail, sendTrialExpirationWarning, sendTrialExpiredEmail, sendLaunchDayActivationNotification } from '../utils/emailService';
 import { IUser } from '../types/modelTypes';
 
 export interface TrialActivationResult {
@@ -76,6 +76,30 @@ export class TrialService {
 
       // Log summary
       console.log(`Trial activation completed: ${result.activatedCount} activated, ${result.failedCount} failed`);
+      
+      // Send admin notification if vendors were activated
+      if (result.activatedCount > 0 || result.failedCount > 0) {
+        try {
+          // Get admin emails
+          const admins = await User.find({ isAdmin: true }).select('kontakt.email');
+          const adminEmails = admins.map(admin => admin.kontakt.email).filter(email => email);
+          
+          if (adminEmails.length > 0) {
+            await sendLaunchDayActivationNotification(adminEmails, {
+              activatedCount: result.activatedCount,
+              failedCount: result.failedCount,
+              errors: result.errors,
+              timestamp: new Date()
+            });
+            console.log('Admin notification sent for launch day activation');
+          } else {
+            console.warn('No admin emails found for launch day notification');
+          }
+        } catch (notificationError) {
+          console.error('Failed to send admin notification:', notificationError);
+          // Don't fail the activation process due to notification error
+        }
+      }
       
       return result;
     } catch (error) {

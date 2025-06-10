@@ -4,6 +4,7 @@ export interface ISettings extends Document {
   storeOpening: {
     enabled: boolean;
     openingDate: Date | null;
+    openingTime?: string; // Format: "HH:MM" in 24-hour format
     reminderDays: number[];
     lastModified: Date;
     modifiedBy?: string;
@@ -11,7 +12,7 @@ export interface ISettings extends Document {
   version: number;
   createdAt: Date;
   updatedAt: Date;
-  updateStoreOpening(openingDate: Date | null, enabled: boolean, modifiedBy?: string): Promise<ISettings>;
+  updateStoreOpening(openingDate: Date | null, enabled: boolean, modifiedBy?: string, openingTime?: string): Promise<ISettings>;
   isStoreOpen(): boolean;
 }
 
@@ -28,6 +29,16 @@ const SettingsSchema = new Schema<ISettings>({
     openingDate: {
       type: Date,
       default: null
+    },
+    openingTime: {
+      type: String,
+      default: '00:00',
+      validate: {
+        validator: function(v: string) {
+          return /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(v);
+        },
+        message: 'Opening time must be in HH:MM format (24-hour)'
+      }
     },
     reminderDays: {
       type: [Number],
@@ -63,13 +74,17 @@ SettingsSchema.statics.getSettings = async function(): Promise<ISettings> {
 SettingsSchema.methods.updateStoreOpening = async function(
   openingDate: Date | null,
   enabled: boolean,
-  modifiedBy?: string
+  modifiedBy?: string,
+  openingTime?: string
 ): Promise<ISettings> {
   this.storeOpening.openingDate = openingDate;
   this.storeOpening.enabled = enabled;
   this.storeOpening.lastModified = new Date();
   if (modifiedBy) {
     this.storeOpening.modifiedBy = modifiedBy;
+  }
+  if (openingTime !== undefined) {
+    this.storeOpening.openingTime = openingTime;
   }
   return await this.save();
 };
@@ -86,8 +101,20 @@ SettingsSchema.methods.isStoreOpen = function(): boolean {
     return false;
   }
   
-  // Wenn Datum gesetzt, prüfe ob es bereits erreicht wurde
-  return new Date() >= new Date(this.storeOpening.openingDate);
+  const now = new Date();
+  const openingDate = new Date(this.storeOpening.openingDate);
+  
+  // If we have a specific opening time, use it
+  if (this.storeOpening.openingTime) {
+    const [hours, minutes] = this.storeOpening.openingTime.split(':').map(Number);
+    openingDate.setHours(hours, minutes, 0, 0);
+  } else {
+    // Default to midnight if no time specified
+    openingDate.setHours(0, 0, 0, 0);
+  }
+  
+  // Check if current time is after the opening date and time
+  return now >= openingDate;
 };
 
 const Settings = mongoose.model<ISettings, ISettingsModel>('Settings', SettingsSchema);

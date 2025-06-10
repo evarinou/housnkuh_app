@@ -10,23 +10,14 @@ jest.mock('../src/utils/emailService');
 const mockSendTrialActivationEmail = sendTrialActivationEmail as jest.MockedFunction<typeof sendTrialActivationEmail>;
 
 describe('Trial System', () => {
-  beforeAll(async () => {
-    // Connect to test database
-    await mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/housnkuh_test');
-  });
-
   beforeEach(async () => {
-    // Clear test data
+    // Clear test data - no need to connect, setup.ts handles that
     await User.deleteMany({});
     await Settings.deleteMany({});
     
     // Reset email mock
     mockSendTrialActivationEmail.mockReset();
     mockSendTrialActivationEmail.mockResolvedValue(true);
-  });
-
-  afterAll(async () => {
-    await mongoose.disconnect();
   });
 
   describe('Trial Activation Logic (R003)', () => {

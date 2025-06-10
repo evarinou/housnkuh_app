@@ -25,17 +25,19 @@ export class ScheduledJobs {
   }
 
   /**
-   * Schedule trial activation check - runs every hour
+   * Schedule trial activation check - runs every 5 minutes
    * Checks if store has opened and activates waiting trials
    */
   private static scheduleTrialActivationCheck(): void {
-    const task = cron.schedule('0 * * * *', async () => {
+    const task = cron.schedule('*/5 * * * *', async () => {
       try {
         console.log('🔍 Running trial activation check...');
         const activated = await TrialService.checkForTrialActivation();
         
         if (activated) {
           console.log('✅ Trial activation check completed - trials were activated');
+          // After successful activation, reschedule to hourly checks
+          this.rescheduleToHourlyChecks();
         } else {
           console.log('ℹ️ Trial activation check completed - no action needed');
         }
@@ -47,7 +49,31 @@ export class ScheduledJobs {
     });
 
     this.jobs.set('trial-activation-check', task);
-    console.log('📅 Trial activation check scheduled (every hour)');
+    console.log('📅 Trial activation check scheduled (every 5 minutes)');
+  }
+
+  /**
+   * Reschedule trial activation check to hourly after launch
+   */
+  private static rescheduleToHourlyChecks(): void {
+    const existingTask = this.jobs.get('trial-activation-check');
+    if (existingTask) {
+      existingTask.stop();
+    }
+
+    const task = cron.schedule('0 * * * *', async () => {
+      try {
+        console.log('🔍 Running hourly trial activation check...');
+        await TrialService.checkForTrialActivation();
+      } catch (error) {
+        console.error('❌ Trial activation check failed:', error);
+      }
+    }, {
+      timezone: 'Europe/Berlin'
+    });
+
+    this.jobs.set('trial-activation-check', task);
+    console.log('📅 Trial activation check rescheduled to hourly');
   }
 
   /**

@@ -16,7 +16,11 @@ jest.mock('../src/utils/emailService', () => ({
   sendVendorWelcomeEmail: jest.fn().mockResolvedValue(true),
   sendNewsletterConfirmation: jest.fn().mockResolvedValue(true),
   sendWelcomeEmail: jest.fn().mockResolvedValue(true),
-  sendContactFormEmail: jest.fn().mockResolvedValue(true)
+  sendContactFormEmail: jest.fn().mockResolvedValue(true),
+  sendPreRegistrationConfirmation: jest.fn().mockResolvedValue(true),
+  sendBookingConfirmation: jest.fn().mockResolvedValue(true),
+  sendTrialActivationEmail: jest.fn().mockResolvedValue(true),
+  sendCancellationConfirmationEmail: jest.fn().mockResolvedValue(true)
 }));
 
 describe('Vendor Authentication & Registration', () => {

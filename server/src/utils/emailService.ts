@@ -2238,3 +2238,109 @@ export const sendAdminConfirmationEmail = async (adminConfirmationData: AdminCon
     return false;
   }
 };
+
+// Send admin notification for launch day activations
+export const sendLaunchDayActivationNotification = async (
+  adminEmails: string[],
+  activationResult: {
+    activatedCount: number;
+    failedCount: number;
+    errors: string[];
+    timestamp: Date;
+  }
+): Promise<boolean> => {
+  try {
+    console.log('Sending launch day activation notification to admins:', adminEmails);
+    
+    if (!isConfigured()) {
+      console.warn('⚠️ Email service not configured');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('📧 Would send launch day notification to:', adminEmails);
+        console.log('📊 Activation results:', activationResult);
+        return true;
+      }
+      return false;
+    }
+    
+    const transporter = createTransporter();
+    const subject = `🚀 housnkuh Launch Day Activation - ${activationResult.activatedCount} Vendors Activated`;
+    
+    const errorSection = activationResult.failedCount > 0 ? `
+      <div style="background-color: #fee; border: 1px solid #dc3545; padding: 15px; margin: 20px 0; border-radius: 8px;">
+        <h3 style="color: #dc3545; margin: 0 0 10px 0;">⚠️ ${activationResult.failedCount} Activations Failed</h3>
+        <ul style="margin: 0; padding-left: 20px;">
+          ${activationResult.errors.slice(0, 10).map(error => `<li style="color: #666;">${error}</li>`).join('')}
+          ${activationResult.errors.length > 10 ? `<li style="color: #666;">... and ${activationResult.errors.length - 10} more errors</li>` : ''}
+        </ul>
+      </div>
+    ` : '';
+    
+    const html = `
+      <div style="font-family: 'Quicksand', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
+        <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="color: #09122c; margin: 0;">housnkuh Admin</h1>
+            <p style="color: #666; margin: 10px 0;">Launch Day Activation Report</p>
+          </div>
+          
+          <h2 style="color: #09122c; text-align: center; margin-bottom: 20px;">🚀 Store Opening Activation Complete</h2>
+          
+          <div style="background-color: #e8f5e8; border: 1px solid #4caf50; padding: 20px; margin: 20px 0; border-radius: 8px;">
+            <h3 style="color: #2e7d32; margin: 0 0 15px 0;">Activation Summary</h3>
+            <p style="margin: 5px 0; color: #333;"><strong>Timestamp:</strong> ${activationResult.timestamp.toLocaleString('de-DE')}</p>
+            <p style="margin: 5px 0; color: #333;"><strong>Successfully Activated:</strong> ${activationResult.activatedCount} vendors</p>
+            <p style="margin: 5px 0; color: #333;"><strong>Failed Activations:</strong> ${activationResult.failedCount} vendors</p>
+            <p style="margin: 5px 0; color: #333;"><strong>Success Rate:</strong> ${activationResult.activatedCount > 0 ? Math.round((activationResult.activatedCount / (activationResult.activatedCount + activationResult.failedCount)) * 100) : 0}%</p>
+          </div>
+          
+          ${errorSection}
+          
+          <div style="margin-top: 30px; padding: 20px; background-color: #f5f5f5; border-radius: 8px;">
+            <h3 style="color: #09122c; margin: 0 0 10px 0;">Next Steps</h3>
+            <ul style="margin: 0; padding-left: 20px; color: #666;">
+              <li>Check vendor dashboard for active trials</li>
+              <li>Monitor email delivery status</li>
+              ${activationResult.failedCount > 0 ? '<li>Review and retry failed activations</li>' : ''}
+              <li>Monitor system performance and vendor activity</li>
+            </ul>
+          </div>
+          
+          <div style="text-align: center; margin-top: 30px;">
+            <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/admin/dashboard" 
+               style="display: inline-block; padding: 12px 30px; background-color: #09122c; color: white; text-decoration: none; border-radius: 5px;">
+              View Admin Dashboard
+            </a>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    // Send to all admin emails
+    const results = await Promise.all(
+      adminEmails.map(email => 
+        transporter.sendMail({
+          from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
+          to: email,
+          subject,
+          html
+        }).catch(err => {
+          console.error(`Failed to send launch notification to ${email}:`, err);
+          return null;
+        })
+      )
+    );
+    
+    const successCount = results.filter(r => r !== null).length;
+    console.log(`Launch day notification sent to ${successCount}/${adminEmails.length} admins`);
+    
+    return successCount > 0;
+    
+  } catch (error) {
+    console.error('Error sending launch day activation notification:', error);
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('⚠️ In development mode, treating launch notification as sent');
+      return true;
+    }
+    return false;
+  }
+};

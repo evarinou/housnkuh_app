@@ -9,6 +9,7 @@ import adminRoutes from './adminRoutes';
 import vendorAuthRoutes from './vendorAuthRoutes';
 import contactRoutes from './contactRoutes'; // Neu
 import vendorContestRoutes from './vendorContestRoutes'; // Neu für Vendor Contest
+import publicRoutes from './publicRoutes'; // Performance-optimized public endpoints
 import Settings from '../models/Settings';
 
 const router = Router();
@@ -22,6 +23,7 @@ router.use('/admin', adminRoutes);
 router.use('/vendor-auth', vendorAuthRoutes);
 router.use('/contact', contactRoutes); // Neu
 router.use('/vendor-contest', vendorContestRoutes); // Neu für Vendor Contest
+router.use('/public', publicRoutes); // Performance-optimized public endpoints
 
 // Public endpoint for store opening date
 router.get('/public/store-opening', async (req: Request, res: Response) => {
