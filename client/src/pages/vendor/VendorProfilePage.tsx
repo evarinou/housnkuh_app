@@ -5,6 +5,33 @@ import { useNavigate } from 'react-router-dom';
 import { useVendorAuth } from '../../contexts/VendorAuthContext';
 import VendorLayout from '../../components/vendor/VendorLayout';
 import axios from 'axios';
+import { resolveImageUrl } from '../../utils/imageUtils';
+
+interface Tag {
+  id?: string;
+  _id?: string;
+  name: string;
+  slug: string;
+  description?: string;
+  category: 'product' | 'certification' | 'method' | 'feature';
+  color?: string;
+  icon?: string;
+}
+
+interface BusinessDetails {
+  certifications: Tag[];
+  productionMethods: Tag[];
+  businessType: 'farm' | 'cooperative' | 'processing' | 'retail';
+  farmSize: string;
+  founded: string | null;
+}
+
+interface Location {
+  coordinates: [number, number] | null;
+  address: string;
+  deliveryRadius: number | null;
+  deliveryAreas: string[];
+}
 
 interface ProfileData {
   name: string;
@@ -13,6 +40,7 @@ interface ProfileData {
   unternehmen: string;
   beschreibung: string;
   profilBild: string;
+  bannerBild: string;
   adresse: {
     strasse: string;
     hausnummer: string;
@@ -28,8 +56,13 @@ interface ProfileData {
     samstag: string;
     sonntag: string;
   };
-  kategorien: string[];
-  // Neue Felder für Marketing
+  
+  // Tag-basiertes System
+  tags: Tag[];
+  businessDetails: BusinessDetails;
+  location: Location;
+  
+  // Marketing
   slogan: string;
   website: string;
   socialMedia: {
@@ -55,6 +88,7 @@ const VendorProfilePage: React.FC = () => {
     unternehmen: '',
     beschreibung: '',
     profilBild: '',
+    bannerBild: '', // Banner-Bild hinzugefügt
     adresse: {
       strasse: '',
       hausnummer: '',
@@ -70,7 +104,24 @@ const VendorProfilePage: React.FC = () => {
       samstag: '',
       sonntag: ''
     },
-    kategorien: [],
+    
+    // Tag-basiertes System
+    tags: [],
+    businessDetails: {
+      certifications: [],
+      productionMethods: [],
+      businessType: 'farm',
+      farmSize: '',
+      founded: null
+    },
+    location: {
+      coordinates: null,
+      address: '',
+      deliveryRadius: null,
+      deliveryAreas: []
+    },
+    
+    // Marketing
     slogan: '',
     website: '',
     socialMedia: {
@@ -79,28 +130,26 @@ const VendorProfilePage: React.FC = () => {
     }
   });
   
-  // State für Bild-Upload
+  // State für Profilbild-Upload
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>('');
   const [isUploading, setIsUploading] = useState(false);
   
-  // Kategorien für Direktvermarkter
-  const verfuegbareKategorien = [
-    'Obst & Gemüse',
-    'Fleisch & Wurst',
-    'Milchprodukte',
-    'Backwaren',
-    'Honig',
-    'Eier',
-    'Wein & Spirituosen',
-    'Marmeladen',
-    'Gewürze & Kräuter',
-    'Öle & Essige',
-    'Säfte',
-    'Tee',
-    'Nüsse & Trockenfrüchte',
-    'Handwerksprodukte'
-  ];
+  // State für Banner-Upload
+  const [selectedBannerFile, setSelectedBannerFile] = useState<File | null>(null);
+  const [bannerPreviewUrl, setBannerPreviewUrl] = useState<string>('');
+  const [isBannerUploading, setIsBannerUploading] = useState(false);
+  
+  // State für verfügbare Tags
+  const [availableTags, setAvailableTags] = useState<Tag[]>([]);
+  const [loadingTags, setLoadingTags] = useState(false);
+  
+  // State für neue Tag-Erstellung
+  const [newTagName, setNewTagName] = useState('');
+  const [newTagIcon, setNewTagIcon] = useState('');
+  const [newTagColor, setNewTagColor] = useState('#6B7280');
+  const [isCreatingTag, setIsCreatingTag] = useState(false);
+  
   
   // Wenn nicht authentifiziert und nicht mehr lädt, zum Login weiterleiten
   useEffect(() => {
@@ -130,8 +179,34 @@ const VendorProfilePage: React.FC = () => {
         });
         
         if (response.data.success) {
-          setProfileData(response.data.profile);
-          setPreviewUrl(response.data.profile.profilBild);
+          console.log('Profile data received:', response.data.profile);
+          console.log('Profile image URL:', response.data.profile.profilBild);
+          console.log('Banner image URL:', response.data.profile.bannerBild);
+          
+          const profileData = response.data.profile;
+          
+          // Handle tag-based fields - ensure they exist and have proper structure
+          const processedProfile = {
+            ...profileData,
+            tags: (profileData.tags || []).map(normalizeTag),
+            businessDetails: {
+              certifications: profileData.businessDetails?.certifications || [],
+              productionMethods: profileData.businessDetails?.productionMethods || [],
+              businessType: profileData.businessDetails?.businessType || 'farm',
+              farmSize: profileData.businessDetails?.farmSize || '',
+              founded: profileData.businessDetails?.founded || null
+            },
+            location: {
+              coordinates: profileData.location?.coordinates || null,
+              address: profileData.location?.address || '',
+              deliveryRadius: profileData.location?.deliveryRadius || null,
+              deliveryAreas: profileData.location?.deliveryAreas || []
+            }
+          };
+          
+          setProfileData(processedProfile);
+          setPreviewUrl(resolveImageUrl(profileData.profilBild));
+          setBannerPreviewUrl(resolveImageUrl(profileData.bannerBild)); // Banner-Vorschau setzen
         } else {
           setErrorMessage('Profildaten konnten nicht geladen werden.');
         }
@@ -152,10 +227,45 @@ const VendorProfilePage: React.FC = () => {
     }
   }, [user, navigate]);
   
-  // Datei-Input-Referenz
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  // Verfügbare Tags laden
+  useEffect(() => {
+    const loadAvailableTags = async () => {
+      setLoadingTags(true);
+      try {
+        const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+        console.log('Loading tags from:', `${apiUrl}/tags?category=product&active=true`);
+        const response = await axios.get(`${apiUrl}/tags?category=product&active=true`);
+        
+        console.log('Tags API response:', response.data);
+        
+        if (response.data.success) {
+          const tags = (response.data.data || []).map(normalizeTag);
+          console.log('Processed tags:', tags);
+          setAvailableTags(tags);
+        } else {
+          console.warn('Tags API returned success=false:', response.data);
+          setAvailableTags([]);
+        }
+      } catch (err) {
+        console.error('Fehler beim Laden der Tags:', err);
+        if (axios.isAxiosError(err)) {
+          console.error('Response data:', err.response?.data);
+          console.error('Response status:', err.response?.status);
+        }
+        setAvailableTags([]);
+      } finally {
+        setLoadingTags(false);
+      }
+    };
+    
+    loadAvailableTags();
+  }, []);
   
-  // Bild auswählen
+  // Datei-Input-Referenzen
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const bannerFileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Profilbild auswählen
   const handleFileSelect = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
@@ -170,7 +280,22 @@ const VendorProfilePage: React.FC = () => {
     }
   };
   
-  // Bildupload durchführen
+  // Banner-Bild auswählen
+  const handleBannerFileSelect = (e: ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setSelectedBannerFile(file);
+      
+      // Vorschau erstellen
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setBannerPreviewUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+  
+  // Profilbild-Upload durchführen
   const handleImageUpload = async (): Promise<string> => {
     if (!selectedFile) return profileData.profilBild;
     
@@ -194,9 +319,7 @@ const VendorProfilePage: React.FC = () => {
       });
       
       if (response.data.success) {
-        // Vollständige URL mit Server-URL konstruieren
-        const fullImageUrl = `${process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:4000'}${response.data.imageUrl}`;
-        return fullImageUrl;
+        return resolveImageUrl(response.data.imageUrl);
       } else {
         throw new Error(response.data.message || 'Upload fehlgeschlagen');
       }
@@ -212,7 +335,47 @@ const VendorProfilePage: React.FC = () => {
     }
   };
   
-  // Bild löschen
+  // Banner-Upload durchführen
+  const handleBannerUpload = async (): Promise<string> => {
+    if (!selectedBannerFile) return profileData.bannerBild;
+    
+    setIsBannerUploading(true);
+    try {
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+      const token = localStorage.getItem('vendorToken');
+      
+      if (!token) {
+        throw new Error('Nicht authentifiziert');
+      }
+      
+      const formData = new FormData();
+      formData.append('image', selectedBannerFile);
+      
+      const response = await axios.post(`${apiUrl}/vendor-auth/upload-image`, formData, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      
+      if (response.data.success) {
+        return resolveImageUrl(response.data.imageUrl);
+      } else {
+        throw new Error(response.data.message || 'Upload fehlgeschlagen');
+      }
+    } catch (err) {
+      console.error('Fehler beim Hochladen des Banner-Bildes:', err);
+      if (axios.isAxiosError(err) && err.response?.status === 401) {
+        localStorage.removeItem('vendorToken');
+        navigate('/vendor/login');
+      }
+      throw new Error('Banner-Bild konnte nicht hochgeladen werden');
+    } finally {
+      setIsBannerUploading(false);
+    }
+  };
+  
+  // Profilbild löschen
   const handleRemoveImage = () => {
     setSelectedFile(null);
     setPreviewUrl('');
@@ -222,9 +385,23 @@ const VendorProfilePage: React.FC = () => {
     }));
   };
   
-  // Datei-Input-Click simulieren
+  // Banner-Bild löschen
+  const handleRemoveBanner = () => {
+    setSelectedBannerFile(null);
+    setBannerPreviewUrl('');
+    setProfileData(prev => ({
+      ...prev,
+      bannerBild: ''
+    }));
+  };
+  
+  // Datei-Input-Clicks simulieren
   const triggerFileInput = () => {
     fileInputRef.current?.click();
+  };
+  
+  const triggerBannerFileInput = () => {
+    bannerFileInputRef.current?.click();
   };
   
   // Profil speichern
@@ -235,16 +412,38 @@ const VendorProfilePage: React.FC = () => {
     setErrorMessage(null);
     
     try {
-      // Zuerst das Bild hochladen, wenn eines ausgewählt wurde
+      // Zuerst das Profilbild hochladen, wenn eines ausgewählt wurde
       let imageUrl = profileData.profilBild;
       if (selectedFile) {
         imageUrl = await handleImageUpload();
       }
       
-      // Aktualisiertes Profil mit Bild-URL
+      // Banner-Bild hochladen, wenn eines ausgewählt wurde
+      let bannerUrl = profileData.bannerBild;
+      if (selectedBannerFile) {
+        bannerUrl = await handleBannerUpload();
+      }
+      
+      // Aktualisiertes Profil mit Bild-URLs und tag-basiertem System
       const updatedProfile = {
         ...profileData,
-        profilBild: imageUrl
+        profilBild: imageUrl,
+        bannerBild: bannerUrl,
+        // Ensure tag-based fields are properly structured
+        tags: profileData.tags || [],
+        businessDetails: {
+          certifications: profileData.businessDetails?.certifications || [],
+          productionMethods: profileData.businessDetails?.productionMethods || [],
+          businessType: profileData.businessDetails?.businessType || 'farm',
+          farmSize: profileData.businessDetails?.farmSize || '',
+          founded: profileData.businessDetails?.founded || null
+        },
+        location: {
+          coordinates: profileData.location?.coordinates || null,
+          address: profileData.location?.address || '',
+          deliveryRadius: profileData.location?.deliveryRadius || null,
+          deliveryAreas: profileData.location?.deliveryAreas || []
+        }
       };
       
       const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
@@ -266,6 +465,7 @@ const VendorProfilePage: React.FC = () => {
         // Profildaten aktualisieren
         setProfileData(updatedProfile);
         setSelectedFile(null);
+        setSelectedBannerFile(null);
         
         setSuccessMessage('Profil erfolgreich gespeichert!');
         
@@ -319,23 +519,136 @@ const VendorProfilePage: React.FC = () => {
     }
   };
   
-  // Kategorie-Toggle-Handler
-  const handleKategorieToggle = (kategorie: string) => {
+  // Helper function to get tag ID (handles both id and _id)
+  const getTagId = (tag: Tag): string => tag.id || tag._id || '';
+  
+  // Helper function to normalize tag format (convert _id to id)
+  const normalizeTag = (tag: any): Tag => ({
+    id: tag.id || tag._id,
+    _id: tag._id || tag.id,
+    name: tag.name,
+    slug: tag.slug,
+    description: tag.description,
+    category: tag.category,
+    color: tag.color,
+    icon: tag.icon
+  });
+  
+  // Tag-Toggle-Handler für moderne Tag-Auswahl
+  const handleTagToggle = (tag: Tag) => {
     setProfileData(prevData => {
-      const kategorien = [...prevData.kategorien];
+      const currentTags = prevData.tags || [];
+      const tagId = getTagId(tag);
+      const existingTagIndex = currentTags.findIndex(t => getTagId(t) === tagId);
       
-      if (kategorien.includes(kategorie)) {
+      if (existingTagIndex >= 0) {
+        // Remove the tag
         return {
           ...prevData,
-          kategorien: kategorien.filter(k => k !== kategorie)
+          tags: currentTags.filter((_, index) => index !== existingTagIndex)
         };
       } else {
+        // Add the tag
         return {
           ...prevData,
-          kategorien: [...kategorien, kategorie]
+          tags: [...currentTags, tag]
         };
       }
     });
+  };
+  
+  // Neuen Tag erstellen
+  const handleCreateNewTag = async () => {
+    if (!newTagName.trim()) {
+      setErrorMessage('Bitte geben Sie einen Tag-Namen ein.');
+      return;
+    }
+    
+    // Prüfen ob Tag bereits existiert
+    const existingTag = availableTags.find(tag => 
+      tag.name.toLowerCase() === newTagName.trim().toLowerCase()
+    );
+    
+    if (existingTag) {
+      // Wenn Tag bereits existiert, einfach hinzufügen
+      handleTagToggle(existingTag);
+      setNewTagName('');
+      setNewTagIcon('');
+      setNewTagColor('#6B7280');
+      return;
+    }
+    
+    setIsCreatingTag(true);
+    try {
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+      const token = localStorage.getItem('vendorToken');
+      
+      if (!token) {
+        navigate('/vendor/login');
+        return;
+      }
+      
+      // Tag über die vendor-auth API erstellen
+      const requestData = {
+        name: newTagName.trim(),
+        category: 'product',
+        description: `Von ${user?.name || 'Vendor'} erstellt`,
+        icon: newTagIcon.trim() || undefined,
+        color: newTagColor || '#6B7280'
+      };
+      
+      console.log('Creating tag with data:', requestData);
+      console.log('API URL:', `${apiUrl}/vendor-auth/create-tag`);
+      console.log('Token present:', !!token);
+      
+      const response = await axios.post(`${apiUrl}/vendor-auth/create-tag`, requestData, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      console.log('Tag creation response:', response.data);
+      
+      if (response.data.success) {
+        const newTag = normalizeTag(response.data.tag);
+        
+        // Tag zu verfügbaren Tags hinzufügen
+        setAvailableTags(prev => [...prev, newTag]);
+        
+        // Tag zu Profil hinzufügen
+        handleTagToggle(newTag);
+        
+        // Inputs zurücksetzen
+        setNewTagName('');
+        setNewTagIcon('');
+        setNewTagColor('#6B7280');
+        
+        setSuccessMessage(`Tag "${newTag.name}" wurde erfolgreich erstellt und hinzugefügt!`);
+        setTimeout(() => setSuccessMessage(null), 3000);
+      } else {
+        setErrorMessage(response.data.message || 'Tag konnte nicht erstellt werden.');
+      }
+    } catch (err) {
+      console.error('Fehler beim Erstellen des Tags:', err);
+      if (axios.isAxiosError(err)) {
+        console.log('Response status:', err.response?.status);
+        console.log('Response data:', err.response?.data);
+        
+        if (err.response?.status === 401) {
+          localStorage.removeItem('vendorToken');
+          navigate('/vendor/login');
+        } else if (err.response?.data?.message) {
+          setErrorMessage(err.response.data.message);
+        } else {
+          setErrorMessage(`Fehler ${err.response?.status}: Tag konnte nicht erstellt werden.`);
+        }
+      } else {
+        setErrorMessage('Netzwerkfehler: Tag konnte nicht erstellt werden.');
+      }
+    } finally {
+      setIsCreatingTag(false);
+    }
   };
   
   if (isLoading) {
@@ -445,6 +758,73 @@ const VendorProfilePage: React.FC = () => {
                     </p>
                     <p className="mt-1 text-xs text-gray-500">
                       Dieses Bild wird auf Ihrer öffentlichen Profilseite angezeigt.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Banner-Bild-Upload */}
+              <div className="col-span-2 mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Banner-Bild
+                </label>
+                <div className="flex items-start space-x-6">
+                  {/* Banner-Vorschau */}
+                  <div className="flex-shrink-0 relative">
+                    {bannerPreviewUrl ? (
+                      <div className="relative group">
+                        <img 
+                          src={bannerPreviewUrl} 
+                          alt="Banner-Bild"
+                          className="w-80 h-24 object-cover rounded-lg border border-gray-300"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleRemoveBanner}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
+                          title="Banner entfernen"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="w-80 h-24 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center bg-gray-50 text-gray-400">
+                        <Image className="w-8 h-8 mb-1" />
+                        <span className="text-xs text-center">Kein Banner</span>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Banner-Upload-Bereich */}
+                  <div className="flex-grow">
+                    <div className="flex items-center space-x-2">
+                      <button
+                        type="button"
+                        onClick={triggerBannerFileInput}
+                        className="px-4 py-2 bg-gray-100 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-200 transition-colors flex items-center"
+                        disabled={isBannerUploading}
+                      >
+                        <Upload className="w-4 h-4 mr-2" />
+                        {isBannerUploading ? 'Wird hochgeladen...' : 'Banner hochladen'}
+                      </button>
+                      
+                      <input
+                        ref={bannerFileInputRef}
+                        type="file"
+                        className="hidden"
+                        accept="image/*"
+                        onChange={handleBannerFileSelect}
+                      />
+                      
+                      {isBannerUploading && (
+                        <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin ml-2"></div>
+                      )}
+                    </div>
+                    <p className="mt-2 text-xs text-gray-500">
+                      Empfohlene Größe: 1200 x 400 Pixel. Max. 5 MB (JPG, PNG)
+                    </p>
+                    <p className="mt-1 text-xs text-gray-500">
+                      Das Banner wird prominent auf Ihrer Profilseite angezeigt.
                     </p>
                   </div>
                 </div>
@@ -806,31 +1186,182 @@ const VendorProfilePage: React.FC = () => {
                 </div>
               </div>
               
-              {/* Produktkategorien */}
+              {/* Produktkategorien - Tag-basiert */}
               <div className="col-span-2 mt-4">
                 <h2 className="text-lg font-semibold text-gray-900 mb-3 pb-1 border-b">
                   Produktkategorien
                 </h2>
                 <p className="mb-3 text-sm text-gray-600">
-                  Wählen Sie die Kategorien aus, die Ihre Produkte am besten beschreiben.
+                  Wählen Sie die Tags aus, die Ihre Produkte am besten beschreiben.
                 </p>
                 
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                  {verfuegbareKategorien.map(kategorie => (
-                    <div key={kategorie} className="flex items-center">
-                      <input
-                        type="checkbox"
-                        id={`kategorie-${kategorie}`}
-                        checked={profileData.kategorien.includes(kategorie)}
-                        onChange={() => handleKategorieToggle(kategorie)}
-                        className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
-                      />
-                      <label htmlFor={`kategorie-${kategorie}`} className="ml-2 block text-sm text-gray-700">
-                        {kategorie}
-                      </label>
+                {loadingTags ? (
+                  <div className="flex items-center justify-center p-4">
+                    <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mr-2"></div>
+                    <span className="text-gray-600">Tags werden geladen...</span>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {/* Ausgewählte Tags */}
+                    {profileData.tags && profileData.tags.length > 0 && (
+                      <div className="mb-4">
+                        <h3 className="text-sm font-medium text-gray-700 mb-2">Ausgewählte Tags:</h3>
+                        <div className="flex flex-wrap gap-2">
+                          {(profileData.tags || []).map(tag => (
+                            <span
+                              key={getTagId(tag)}
+                              className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium text-white border border-white/20"
+                              style={tag.color ? { backgroundColor: tag.color } : { backgroundColor: '#6B7280' }}
+                              title={tag.description || tag.name}
+                            >
+                              {tag.icon && <span className="mr-1">{tag.icon}</span>}
+                              {tag.name}
+                              <button
+                                type="button"
+                                onClick={() => handleTagToggle(tag)}
+                                className="ml-2 inline-flex items-center justify-center w-4 h-4 rounded-full hover:bg-black/20 transition-colors"
+                                title="Tag entfernen"
+                              >
+                                ×
+                              </button>
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Neuen Tag erstellen */}
+                    <div className="mb-4">
+                      <h3 className="text-sm font-medium text-gray-700 mb-2">Neuen Tag erstellen:</h3>
+                      
+                      {/* Tag Name */}
+                      <div className="mb-3">
+                        <label className="block text-xs font-medium text-gray-600 mb-1">Tag Name</label>
+                        <input
+                          type="text"
+                          value={newTagName}
+                          onChange={(e) => setNewTagName(e.target.value)}
+                          placeholder="z.B. Bio-Äpfel, Freilandhaltung, etc."
+                          className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                              e.preventDefault();
+                              handleCreateNewTag();
+                            }
+                          }}
+                          disabled={isCreatingTag}
+                        />
+                      </div>
+                      
+                      {/* Icon und Farbe */}
+                      <div className="grid grid-cols-2 gap-3 mb-3">
+                        {/* Icon Auswahl */}
+                        <div>
+                          <label className="block text-xs font-medium text-gray-600 mb-1">Icon (Emoji)</label>
+                          <input
+                            type="text"
+                            value={newTagIcon}
+                            onChange={(e) => setNewTagIcon(e.target.value)}
+                            placeholder="🥕 🥩 🥛 🍞 🥚"
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                            disabled={isCreatingTag}
+                            maxLength={2}
+                          />
+                        </div>
+                        
+                        {/* Farbe Auswahl */}
+                        <div>
+                          <label className="block text-xs font-medium text-gray-600 mb-1">Farbe</label>
+                          <div className="flex gap-2">
+                            <input
+                              type="color"
+                              value={newTagColor}
+                              onChange={(e) => setNewTagColor(e.target.value)}
+                              className="w-8 h-8 border border-gray-300 rounded cursor-pointer disabled:cursor-not-allowed"
+                              disabled={isCreatingTag}
+                            />
+                            <input
+                              type="text"
+                              value={newTagColor}
+                              onChange={(e) => setNewTagColor(e.target.value)}
+                              placeholder="#6B7280"
+                              className="flex-1 border border-gray-300 rounded-md px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                              disabled={isCreatingTag}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Vorschau */}
+                      {(newTagName.trim() || newTagIcon.trim()) && (
+                        <div className="mb-3">
+                          <label className="block text-xs font-medium text-gray-600 mb-1">Vorschau:</label>
+                          <span
+                            className="inline-block px-3 py-1 text-sm text-white rounded-full"
+                            style={{ backgroundColor: newTagColor }}
+                          >
+                            {newTagIcon && <span className="mr-1">{newTagIcon}</span>}
+                            {newTagName.trim() || 'Tag Name'}
+                          </span>
+                        </div>
+                      )}
+                      
+                      {/* Create Button */}
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={handleCreateNewTag}
+                          disabled={isCreatingTag || !newTagName.trim()}
+                          className="flex-1 px-4 py-2 bg-primary text-white rounded-md text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        >
+                          {isCreatingTag ? (
+                            <>
+                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                              Erstellen...
+                            </>
+                          ) : (
+                            'Tag erstellen'
+                          )}
+                        </button>
+                      </div>
+                      
+                      <p className="mt-2 text-xs text-gray-500">
+                        Erstellen Sie eigene Tags für Ihre Produkte. Diese werden nach Überprüfung auch anderen Direktvermarktern zur Verfügung gestellt.
+                      </p>
                     </div>
-                  ))}
-                </div>
+                    
+                    {/* Verfügbare Tags */}
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-700 mb-2">Verfügbare Tags:</h3>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 max-h-64 overflow-y-auto border border-gray-200 rounded-lg p-3">
+                        {availableTags && availableTags.length > 0 ? availableTags.map(tag => {
+                          const isSelected = profileData.tags?.some(t => getTagId(t) === getTagId(tag)) || false;
+                          return (
+                            <button
+                              key={getTagId(tag)}
+                              type="button"
+                              onClick={() => handleTagToggle(tag)}
+                              className={`text-left px-3 py-2 rounded-md text-sm font-medium transition-colors border ${
+                                isSelected
+                                  ? 'text-white border-white/20'
+                                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border-gray-200'
+                              }`}
+                              style={isSelected && tag.color ? { backgroundColor: tag.color } : undefined}
+                              title={tag.description || tag.name}
+                            >
+                              {tag.icon && <span className="mr-1">{tag.icon}</span>}
+                              {tag.name}
+                            </button>
+                          );
+                        }) : (
+                          <p className="text-sm text-gray-500 italic p-4 text-center col-span-full">
+                            Keine Tags verfügbar
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
             

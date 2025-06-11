@@ -1,8 +1,7 @@
 // client/src/components/VendorRegistrationModal.tsx
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { X, User, Mail, Phone, Lock, Package, Eye, EyeOff, AlertCircle, CheckCircle, Clock } from 'lucide-react';
 import { useVendorAuth } from '../contexts/VendorAuthContext';
-import { useStoreSettings } from '../contexts/StoreSettingsContext';
 
 interface PackageData {
   selectedProvisionType: string;
@@ -47,7 +46,7 @@ interface FormData {
   agreeToPrivacy: boolean;
 }
 
-const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = ({
+const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = React.memo(({
   isOpen,
   onClose,
   packageData,
@@ -73,31 +72,30 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [step, setStep] = useState(1); // 1: Login/Register, 2: Persönliche Daten, 3: Adresse, 4: Zusammenfassung
-  const [isPreRegistration, setIsPreRegistration] = useState(false);
+  const [isPreRegistration] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   
-  const { login, registerWithBooking, preRegisterVendor } = useVendorAuth();
-  const { settings: storeSettings } = useStoreSettings();
+  const { login, registerWithBooking } = useVendorAuth();
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
-  };
+  }, []);
 
-  const validateEmail = (email: string): boolean => {
+  const validateEmail = useCallback((email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
-  };
+  }, []);
 
   // PLZ Validierung für deutsche Postleitzahlen (5 Ziffern)  
-  const validatePLZ = (plz: string): boolean => {
+  const validatePLZ = useCallback((plz: string): boolean => {
     const plzRegex = /^\d{5}$/;
     return plzRegex.test(plz);
-  };
+  }, []);
 
   const validateStep = (stepNumber: number): boolean => {
     switch (stepNumber) {
@@ -218,26 +216,10 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = ({
           // Erfolgreiche Registrierung - zeige Bestätigungsseite
           setShowSuccess(true);
           
-          // Probemonat Start-Datum abhängig von Store Status
-          const isStoreOpen = storeSettings?.isStoreOpen ?? true;
-          let trialStartMessage = '';
-          
-          if (isStoreOpen) {
-            // Store ist offen - Probemonat startet sofort
-            const trialEndDate = new Date();
-            trialEndDate.setDate(trialEndDate.getDate() + 30);
-            trialStartMessage = `Ihr 30-tägiger kostenloser Probemonat hat begonnen und läuft bis zum ${trialEndDate.toLocaleDateString('de-DE')}.`;
-          } else {
-            // Store ist noch nicht offen - Probemonat startet bei Eröffnung
-            const openingDate = storeSettings?.openingDate ? new Date(storeSettings.openingDate) : null;
-            if (openingDate) {
-              const trialEndDate = new Date(openingDate);
-              trialEndDate.setDate(trialEndDate.getDate() + 30);
-              trialStartMessage = `Ihr 30-tägiger kostenloser Probemonat startet automatisch mit der Store-Eröffnung am ${openingDate.toLocaleDateString('de-DE')} und läuft bis zum ${trialEndDate.toLocaleDateString('de-DE')}.`;
-            } else {
-              trialStartMessage = `Ihr 30-tägiger kostenloser Probemonat startet automatisch mit der Store-Eröffnung.`;
-            }
-          }
+          // Probemonat startet sofort
+          const trialEndDate = new Date();
+          trialEndDate.setDate(trialEndDate.getDate() + 30);
+          const trialStartMessage = `Ihr 30-tägiger kostenloser Probemonat hat begonnen und läuft bis zum ${trialEndDate.toLocaleDateString('de-DE')}.`;
           
           setSuccessMessage(`Herzlich willkommen bei housnkuh! Ihre Package-Buchung war erfolgreich. ${trialStartMessage} Sie erhalten eine Bestätigungs-E-Mail an ${formData.email} mit allen Details zu Ihrem gebuchten Paket.`);
         } else {
@@ -271,7 +253,7 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = ({
               </p>
               
               {/* Trial Info Banner - Show for regular registration */}
-              {!isLogin && (!storeSettings || storeSettings.isStoreOpen) && (
+              {!isLogin && (
                 <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
                   <div className="flex items-start space-x-3">
                     <CheckCircle className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
@@ -292,27 +274,6 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = ({
                 </div>
               )}
               
-              {/* Pre-Registration Info Banner */}
-              {!isLogin && storeSettings && !storeSettings.isStoreOpen && (
-                <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                  <div className="flex items-center space-x-2">
-                    <Clock className="w-5 h-5 text-blue-500" />
-                    <div className="text-left">
-                      <p className="text-sm font-medium text-blue-800">
-                        Vor-Registrierung vor Store-Eröffnung
-                      </p>
-                      <p className="text-xs text-blue-600 mt-1">
-                        Ihr kostenloser Probemonat startet automatisch mit der Store-Eröffnung
-                        {storeSettings.openingDate && (
-                          <span className="font-medium">
-                            {' '}am {new Date(storeSettings.openingDate).toLocaleDateString('de-DE')}
-                          </span>
-                        )}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
 
             <div>
@@ -845,6 +806,8 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = ({
       </div>
     </div>
   );
-};
+});
+
+VendorRegistrationModal.displayName = 'VendorRegistrationModal';
 
 export default VendorRegistrationModal;

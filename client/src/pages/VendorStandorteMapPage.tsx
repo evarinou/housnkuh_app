@@ -2,6 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { MapPin, Search, Phone, Info, ArrowLeft, ChevronDown, ChevronUp, Filter } from 'lucide-react';
+import axios from 'axios';
+import SimpleMapComponent from '../components/SimpleMapComponent';
 
 // Typen für die Standortdaten
 interface LocationCoordinates {
@@ -47,81 +49,19 @@ const VendorStandorteMapPage: React.FC = () => {
   useEffect(() => {
     const fetchStandorte = async () => {
       try {
-        // In einer produktiven Umgebung würde hier ein API-Aufruf erfolgen
-        // const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
-        // const response = await axios.get(`${apiUrl}/standorte`);
-        // setStandorte(response.data);
-        
-        // Mock-Daten für die Entwicklung
-        const mockData: VendorStandort[] = [
-          {
-            id: '1',
-            name: 'housnkuh Kronach',
-            adresse: 'Strauer Str. 15',
-            plz: '96317',
-            ort: 'Kronach',
-            beschreibung: 'Hauptstandort mit vielfältigem Angebot von lokalen Direktvermarktern. Rund um die Uhr geöffnet mit Zugang per EC- oder Kreditkarte.',
-            telefon: '0157 35711257',
-            koordinaten: { lat: 50.241120, lng: 11.327709 },
-            kategorien: ['Kühlschrank', 'Tiefkühlung', 'Frische Produkte', 'Haltbare Waren', 'Getränke'],
-            direktvermarkter: ['Musterhof', 'Schmidts Bauernhof', 'Meyers Imkerei'],
-            aktiviert: true
-          },
-          {
-            id: '2',
-            name: 'housnkuh Kulmbach',
-            adresse: 'Marktplatz 3',
-            plz: '95326',
-            ort: 'Kulmbach',
-            beschreibung: 'Zentral am Marktplatz gelegen, bietet dieser Standort hauptsächlich Getränke und haltbare Waren an.',
-            telefon: '0157 36781234',
-            koordinaten: { lat: 50.102395, lng: 11.445330 },
-            kategorien: ['Haltbare Waren', 'Getränke', 'Handwerksprodukte'],
-            direktvermarkter: ['Schmidts Bauernhof', 'Wagners Hofladen'],
-            aktiviert: true
-          },
-          {
-            id: '3',
-            name: 'housnkuh Lichtenfels',
-            adresse: 'Coburger Str. 28',
-            plz: '96215',
-            ort: 'Lichtenfels',
-            beschreibung: 'Unser neuester Standort mit spezialisiertem Sortiment und besonderen Angeboten für Handwerksprodukte.',
-            telefon: '0157 36781235',
-            koordinaten: { lat: 50.144096, lng: 11.061096 },
-            kategorien: ['Kühlschrank', 'Frische Produkte', 'Handwerksprodukte'],
-            direktvermarkter: ['Schmidts Bauernhof'],
-            aktiviert: true
-          },
-          {
-            id: '4',
-            name: 'housnkuh Coburg',
-            adresse: 'Markt 2',
-            plz: '96450',
-            ort: 'Coburg',
-            beschreibung: 'In der Innenstadt von Coburg gelegen, bietet dieser Standort ein breites Sortiment aus der Region.',
-            telefon: '0157 36781236',
-            koordinaten: { lat: 50.261940, lng: 10.962679 },
-            kategorien: ['Kühlschrank', 'Tiefkühlung', 'Frische Produkte', 'Haltbare Waren'],
-            direktvermarkter: ['Meyers Imkerei', 'Wagners Hofladen'],
-            aktiviert: true
-          },
-          {
-            id: '5',
-            name: 'housnkuh Bamberg',
-            adresse: 'Obstmarkt 5',
-            plz: '96047',
-            ort: 'Bamberg',
-            beschreibung: 'Mitten in der Altstadt gelegen, mit Fokus auf Frische und Delikatessen aus der Region.',
-            telefon: '0157 36781237',
-            koordinaten: { lat: 49.891659, lng: 10.887770 },
-            kategorien: ['Frische Produkte', 'Haltbare Waren', 'Getränke', 'Handwerksprodukte'],
-            direktvermarkter: ['Musterhof', 'Meyers Imkerei', 'Wagners Hofladen'],
-            aktiviert: true
+        // API-Aufruf für Standort-Daten (wenn verfügbar)
+        try {
+          const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+          const response = await axios.get(`${apiUrl}/standorte`);
+          if (response.data && response.data.success) {
+            setStandorte(response.data.data || []);
+          } else {
+            setStandorte([]);
           }
-        ];
-        
-        setStandorte(mockData);
+        } catch (apiError) {
+          console.warn('API nicht verfügbar, keine Standort-Daten:', apiError);
+          setStandorte([]);
+        }
         setLoading(false);
       } catch (err) {
         console.error('Fehler beim Laden der Standorte:', err);
@@ -165,38 +105,58 @@ const VendorStandorteMapPage: React.FC = () => {
     setSelectedStandort(standort);
   };
   
-  // OpenStreetMap URL mit Markern für alle Standorte generieren
-  const generateOSMUrl = () => {
-    // Basis-URL für den iframe
-    let baseUrl = "https://www.openstreetmap.org/export/embed.html?bbox=";
-    
-    // Berechnung der Bounding Box für alle Standorte
-    if (filteredStandorte.length > 0) {
-      let minLat = Math.min(...filteredStandorte.map(s => s.koordinaten.lat));
-      let maxLat = Math.max(...filteredStandorte.map(s => s.koordinaten.lat));
-      let minLng = Math.min(...filteredStandorte.map(s => s.koordinaten.lng));
-      let maxLng = Math.max(...filteredStandorte.map(s => s.koordinaten.lng));
-      
-      // Füge etwas Padding hinzu
-      const padding = 0.1;
-      minLat -= padding;
-      maxLat += padding;
-      minLng -= padding;
-      maxLng += padding;
-      
-      // Bounding Box
-      baseUrl += `${minLng}%2C${minLat}%2C${maxLng}%2C${maxLat}&layer=mapnik`;
-    } else {
-      // Fallback für ganz Deutschland
-      baseUrl += "5.866%2C47.270%2C15.042%2C55.099&layer=mapnik";
-    }
-    
-    // Wenn ein Standort ausgewählt ist, auf diesen fokussieren
+  // Calculate map center based on all standorte or selected standort
+  const getMapCenter = () => {
     if (selectedStandort) {
-      baseUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${selectedStandort.koordinaten.lng - 0.01}%2C${selectedStandort.koordinaten.lat - 0.01}%2C${selectedStandort.koordinaten.lng + 0.01}%2C${selectedStandort.koordinaten.lat + 0.01}&layer=mapnik&marker=${selectedStandort.koordinaten.lat}%2C${selectedStandort.koordinaten.lng}`;
+      return {
+        lat: selectedStandort.koordinaten.lat,
+        lng: selectedStandort.koordinaten.lng
+      };
     }
     
-    return baseUrl;
+    if (filteredStandorte.length > 0) {
+      const avgLat = filteredStandorte.reduce((sum, s) => sum + s.koordinaten.lat, 0) / filteredStandorte.length;
+      const avgLng = filteredStandorte.reduce((sum, s) => sum + s.koordinaten.lng, 0) / filteredStandorte.length;
+      return { lat: avgLat, lng: avgLng };
+    }
+    
+    // Default center for Germany
+    return { lat: 51.1657, lng: 10.4515 };
+  };
+
+  // Get zoom level based on selection
+  const getMapZoom = () => {
+    if (selectedStandort) {
+      return 15; // Close zoom for selected standort
+    }
+    
+    if (filteredStandorte.length === 0) {
+      return 6; // Country-wide view
+    }
+    
+    if (filteredStandorte.length === 1) {
+      return 13; // Close view for single standort
+    }
+    
+    return 10; // Regional view for multiple standorte
+  };
+
+  // Convert standorte to markers for the map
+  const getStandortMarkers = () => {
+    return filteredStandorte.map(standort => ({
+      id: standort.id,
+      position: standort.koordinaten,
+      title: standort.name,
+      description: `${standort.ort} • ${standort.kategorien.slice(0, 2).join(', ')}${standort.kategorien.length > 2 ? '...' : ''}`
+    }));
+  };
+
+  // Handle marker click to select standort
+  const handleMarkerClick = (marker: any) => {
+    const standort = filteredStandorte.find(s => s.id === marker.id);
+    if (standort) {
+      setSelectedStandort(standort);
+    }
   };
   
   // Link zur Detailseite generieren
@@ -351,14 +311,27 @@ const VendorStandorteMapPage: React.FC = () => {
         
         {/* Karte */}
         <div className="lg:col-span-2">
-          <div className="bg-white rounded-lg shadow-md overflow-hidden h-[600px]">
-            <iframe 
-              src={generateOSMUrl()}
-              style={{ width: '100%', height: '100%', border: 0 }}
-              allowFullScreen
-              aria-hidden="false"
-              title="Standorte Karte"
-            ></iframe>
+          <div className="bg-white rounded-lg shadow-md overflow-hidden h-[600px] relative">
+            <SimpleMapComponent
+              center={getMapCenter()}
+              zoom={getMapZoom()}
+              markers={getStandortMarkers()}
+              onMarkerClick={handleMarkerClick}
+              showPopups={true}
+              selectedMarkerId={selectedStandort?.id}
+              fitBounds={!selectedStandort && filteredStandorte.length > 1}
+              className="h-full w-full"
+            />
+            
+            {/* Show All Standorte Button - only when a standort is selected */}
+            {selectedStandort && filteredStandorte.length > 1 && (
+              <button
+                onClick={() => setSelectedStandort(null)}
+                className="absolute top-4 left-4 bg-white shadow-md hover:shadow-lg px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-gray-900 transition-all z-10"
+              >
+                Alle anzeigen
+              </button>
+            )}
           </div>
         </div>
       </div>

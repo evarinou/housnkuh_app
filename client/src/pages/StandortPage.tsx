@@ -1,7 +1,7 @@
 // client/src/pages/StandortPage.tsx
 import React from 'react';
 import { MapPin, Clock, Phone, Mail, Car, Bus } from 'lucide-react';
-//import SimpleMapComponent from '../components/SimpleMapComponent';
+import SimpleMapComponent from '../components/SimpleMapComponent';
 
 // Hilfsfunktion für Standortmerkmale (Adresse, Öffnungszeiten usw.)
 interface LocationFeatureProps {
@@ -60,13 +60,14 @@ const StandortPage: React.FC = () => {
         
         {/* Kartenbereich mit kontrollierter Höhe */}
         <div className="w-full h-64 md:h-80 mb-12 rounded-lg overflow-hidden shadow-lg">
-          <iframe 
-            src="https://www.openstreetmap.org/export/embed.html?bbox=11.323390%2C50.238980%2C11.332028%2C50.243260&amp;layer=mapnik&amp;marker=50.241120%2C11.327709" 
-            style={{ width: '100%', height: '100%', border: 0 }}
-            allowFullScreen
-            aria-hidden="false"
-            title="Standort Karte"
-          ></iframe>
+          <SimpleMapComponent
+            center={{ lat: 50.241120, lng: 11.327709 }}
+            zoom={16}
+            markerPosition={{ lat: 50.241120, lng: 11.327709 }}
+            markerTitle="housnkuh Standort"
+            showPopups={true}
+            className="h-full w-full"
+          />
         </div>
         
         {/* Info-Bereich unter der Karte */}

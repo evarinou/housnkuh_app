@@ -1,8 +1,9 @@
 // client/src/pages/admin/DashboardPage.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Mail, Users, ShoppingBag, Package, Clock, ArrowRight, Trophy, Calendar } from 'lucide-react';
 import axios from 'axios';
+import LaunchDayMonitor from '../../components/admin/LaunchDayMonitor';
 
 interface DashboardData {
   newsletter: {
@@ -40,7 +41,7 @@ interface StatCardProps {
   subtitle?: React.ReactNode;
 }
 
-const StatCard: React.FC<StatCardProps> = ({ 
+const StatCard: React.FC<StatCardProps> = React.memo(({ 
   title, 
   value, 
   icon: Icon, 
@@ -76,9 +77,9 @@ const StatCard: React.FC<StatCardProps> = ({
       </div>
     )}
   </div>
-);
+));
 
-const DashboardPage: React.FC = () => {
+const DashboardPage: React.FC = React.memo(() => {
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
@@ -211,6 +212,9 @@ const DashboardPage: React.FC = () => {
           }
         />
       </div>
+
+      {/* Launch Day Monitor */}
+      <LaunchDayMonitor />
       
       {/* Neueste Newsletter-Anmeldungen */}
       <div className="bg-white rounded-lg shadow overflow-hidden">
@@ -328,6 +332,6 @@ const DashboardPage: React.FC = () => {
       </div>
     </div>
   );
-};
+});
 
 export default DashboardPage;

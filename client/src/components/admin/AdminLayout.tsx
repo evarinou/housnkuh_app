@@ -1,7 +1,7 @@
 // client/src/components/admin/AdminLayout.tsx
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, X, Home, Users, Mail, Package, FileText, LogOut, MessageSquare, Calendar, Trophy, Settings } from 'lucide-react';
+import { Menu, X, Home, Users, Mail, Package, FileText, LogOut, MessageSquare, Calendar, Trophy, Settings, Tag, HelpCircle } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import logo from '../../assets/images/logo.svg';
 
@@ -79,6 +79,15 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
               </Link>
               
               <Link
+                to="/admin/tags"
+                className="group flex items-center px-2 py-2 text-base font-medium rounded-md text-white hover:bg-primary"
+                onClick={() => setSidebarOpen(false)}
+              >
+                <Tag className="mr-4 h-6 w-6" />
+                Tags
+              </Link>
+              
+              <Link
                 to="/admin/mietfaecher"
                 className="group flex items-center px-2 py-2 text-base font-medium rounded-md text-white hover:bg-primary"
                 onClick={() => setSidebarOpen(false)}
@@ -121,6 +130,15 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
               >
                 <Trophy className="mr-4 h-6 w-6" />
                 Vendor Contest
+              </Link>
+              
+              <Link
+                to="/admin/faq"
+                className="group flex items-center px-2 py-2 text-base font-medium rounded-md text-white hover:bg-primary"
+                onClick={() => setSidebarOpen(false)}
+              >
+                <HelpCircle className="mr-4 h-6 w-6" />
+                FAQ-Verwaltung
               </Link>
               
               <Link
@@ -172,6 +190,14 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                 </Link>
                 
                 <Link
+                  to="/admin/tags"
+                  className="group flex items-center px-2 py-2 text-base font-medium rounded-md text-white hover:bg-primary"
+                >
+                  <Tag className="mr-3 h-6 w-6" />
+                  Tags
+                </Link>
+                
+                <Link
                   to="/admin/mietfaecher"
                   className="group flex items-center px-2 py-2 text-base font-medium rounded-md text-white hover:bg-primary"
                 >
@@ -209,6 +235,14 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                 >
                   <Trophy className="mr-3 h-6 w-6" />
                   Vendor Contest
+                </Link>
+                
+                <Link
+                  to="/admin/faq"
+                  className="group flex items-center px-2 py-2 text-base font-medium rounded-md text-white hover:bg-primary"
+                >
+                  <HelpCircle className="mr-3 h-6 w-6" />
+                  FAQ-Verwaltung
                 </Link>
                 
                 <Link

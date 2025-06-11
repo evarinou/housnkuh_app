@@ -1,12 +1,24 @@
 // client/src/components/layout/Navigation.tsx oder Navbar.tsx
 import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
-import { Menu, X, User, LogIn } from 'lucide-react';
+import { Menu, X, User, LogIn, LayoutDashboard } from 'lucide-react';
 import logo from '../../assets/images/logo.svg';
+import { useAuth } from '../../contexts/AuthContext';
+import { useVendorAuth } from '../../contexts/VendorAuthContext';
+import { resolveImageUrl } from '../../utils/imageUtils';
 
 const Navigation: React.FC = () => {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [scrolled, setScrolled] = useState<boolean>(false);
+  
+  // Authentication contexts
+  const { isAuthenticated: isAdminAuth, user: adminUser } = useAuth();
+  const { isAuthenticated: isVendorAuth, user: vendorUser } = useVendorAuth();
+  
+  // Determine if any user is authenticated and their dashboard route
+  const isAuthenticated = isAdminAuth || isVendorAuth;
+  const dashboardRoute = isAdminAuth ? '/admin' : '/vendor/dashboard';
+  const userDisplayName = adminUser?.name || vendorUser?.name || 'User';
   
   // Scroll-Handler für Hintergrundeffekt
   useEffect(() => {
@@ -81,13 +93,41 @@ const Navigation: React.FC = () => {
             >
               Kontakt
             </NavLink>
-            <NavLink 
-              to="/vendor/login"
-              className="flex items-center text-secondary hover:text-primary font-medium"
-            >
-              <User className="w-4 h-4 mr-1" />
-              <span>Login</span>
-            </NavLink>
+            {isAuthenticated ? (
+              <NavLink 
+                to={dashboardRoute}
+                className="flex items-center text-secondary hover:text-primary font-medium"
+              >
+                {/* Vendor Profile Image */}
+                {isVendorAuth && vendorUser?.profilBild ? (
+                  <img 
+                    src={resolveImageUrl(vendorUser.profilBild)} 
+                    alt={`${vendorUser.name} Profil`}
+                    className="w-8 h-8 rounded-full object-cover mr-2 border border-gray-200"
+                    onError={(e) => {
+                      // Fallback to default icon on error
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = 'none';
+                      const fallback = target.nextElementSibling as HTMLElement;
+                      if (fallback) fallback.style.display = 'inline-block';
+                    }}
+                  />
+                ) : null}
+                {isVendorAuth && !vendorUser?.profilBild ? (
+                  <User className="w-8 h-8 mr-2 p-1 rounded-full bg-gray-100 text-gray-600" />
+                ) : null}
+                <LayoutDashboard className="w-4 h-4 mr-1" />
+                <span>Dashboard</span>
+              </NavLink>
+            ) : (
+              <NavLink 
+                to="/vendor/login"
+                className="flex items-center text-secondary hover:text-primary font-medium"
+              >
+                <User className="w-4 h-4 mr-1" />
+                <span>Login</span>
+              </NavLink>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -154,14 +194,43 @@ const Navigation: React.FC = () => {
           >
             Kontakt
           </NavLink>
-          <NavLink
-            to="/vendor/login"
-            className="flex items-center px-3 py-2 mt-2 rounded-md font-medium text-secondary hover:bg-gray-100"
-            onClick={() => setIsOpen(false)}
-          >
-            <LogIn className="w-4 h-4 mr-2" />
-            Direktvermarkter Login
-          </NavLink>
+          {isAuthenticated ? (
+            <NavLink
+              to={dashboardRoute}
+              className="flex items-center px-3 py-2 mt-2 rounded-md font-medium text-secondary hover:bg-gray-100"
+              onClick={() => setIsOpen(false)}
+            >
+              {/* Vendor Profile Image for Mobile */}
+              {isVendorAuth && vendorUser?.profilBild ? (
+                <img 
+                  src={resolveImageUrl(vendorUser.profilBild)} 
+                  alt={`${vendorUser.name} Profil`}
+                  className="w-6 h-6 rounded-full object-cover mr-2 border border-gray-200"
+                  onError={(e) => {
+                    // Fallback to default icon on error
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                    const fallback = target.nextElementSibling as HTMLElement;
+                    if (fallback) fallback.style.display = 'inline-block';
+                  }}
+                />
+              ) : null}
+              {isVendorAuth && !vendorUser?.profilBild ? (
+                <User className="w-6 h-6 mr-2 p-1 rounded-full bg-gray-100 text-gray-600" />
+              ) : null}
+              <LayoutDashboard className="w-4 h-4 mr-2" />
+              Dashboard
+            </NavLink>
+          ) : (
+            <NavLink
+              to="/vendor/login"
+              className="flex items-center px-3 py-2 mt-2 rounded-md font-medium text-secondary hover:bg-gray-100"
+              onClick={() => setIsOpen(false)}
+            >
+              <LogIn className="w-4 h-4 mr-2" />
+              Direktvermarkter Login
+            </NavLink>
+          )}
         </div>
       </div>
     </nav>

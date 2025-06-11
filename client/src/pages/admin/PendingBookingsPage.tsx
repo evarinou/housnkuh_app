@@ -136,6 +136,11 @@ const PendingBookingsPage: React.FC = () => {
                     <p className="text-sm text-gray-500">
                       Angefragt am: {new Date(user.pendingBooking?.createdAt || user.createdAt).toLocaleDateString('de-DE')}
                     </p>
+                    {user.pendingBooking?.packageData?.bookingType === 'additional' && (
+                      <span className="inline-block mt-1 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                        Zusätzliche Buchung
+                      </span>
+                    )}
                   </div>
                   <div className="flex gap-2">
                     <button

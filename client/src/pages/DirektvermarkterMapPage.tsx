@@ -2,6 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, Phone, Mail, ExternalLink, ArrowLeft, ChevronDown, ChevronUp, Filter } from 'lucide-react';
+import VendorListPreview from '../components/VendorListPreview';
+import SimpleMapComponent from '../components/SimpleMapComponent';
 
 // Typen für die Direktvermarkter-Daten
 interface LocationCoordinates {
@@ -37,6 +39,7 @@ const DirektvermarkterMapPage: React.FC = () => {
   const [selectedKategorien, setSelectedKategorien] = useState<string[]>([]);
   const [showFilters, setShowFilters] = useState(false);
   const [selectedVendor, setSelectedVendor] = useState<Direktvermarkter | null>(null);
+  const [geocodingProgress, setGeocodingProgress] = useState<{current: number, total: number}>({current: 0, total: 0});
   
   // Verfügbare Kategorien für Filter
   const verfuegbareKategorien = [
@@ -55,112 +58,106 @@ const DirektvermarkterMapPage: React.FC = () => {
     'Nüsse & Trockenfrüchte',
     'Handwerksprodukte'
   ];
+
+  // Geocoding-Funktion für einzelne Adresse
+  const geocodeAddress = async (address: string): Promise<{lat: number, lng: number} | null> => {
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1&countrycodes=de`
+      );
+      const data = await response.json();
+      
+      if (data && data.length > 0) {
+        const result = data[0];
+        return {
+          lat: parseFloat(result.lat),
+          lng: parseFloat(result.lon)
+        };
+      }
+      return null;
+    } catch (error) {
+      console.error('Geocoding Fehler für:', address, error);
+      return null;
+    }
+  };
+
+  // Batch-Geocoding für alle Vendors ohne Koordinaten
+  const geocodeVendorsInBatches = async (vendors: Direktvermarkter[]) => {
+    const vendorsNeedingGeocode = vendors.filter(vendor => 
+      !vendor.koordinaten || 
+      vendor.koordinaten.lat === 0 || 
+      vendor.koordinaten.lng === 0 ||
+      (vendor.koordinaten.lat === 50.251120 && vendor.koordinaten.lng === 11.337709) // Remove fallback coords
+    );
+
+    if (vendorsNeedingGeocode.length === 0) return vendors;
+
+    setGeocodingProgress({current: 0, total: vendorsNeedingGeocode.length});
+    const updatedVendors = [...vendors];
+
+    for (let i = 0; i < vendorsNeedingGeocode.length; i++) {
+      const vendor = vendorsNeedingGeocode[i];
+      const fullAddress = `${vendor.adresse.strasse} ${vendor.adresse.hausnummer}, ${vendor.adresse.plz} ${vendor.adresse.ort}, Deutschland`;
+      
+      const coords = await geocodeAddress(fullAddress);
+      if (coords) {
+        const vendorIndex = updatedVendors.findIndex(v => v.id === vendor.id);
+        if (vendorIndex >= 0) {
+          updatedVendors[vendorIndex] = {
+            ...updatedVendors[vendorIndex],
+            koordinaten: coords
+          };
+        }
+      }
+      
+      setGeocodingProgress({current: i + 1, total: vendorsNeedingGeocode.length});
+      
+      // Small delay to be respectful to the API
+      if (i < vendorsNeedingGeocode.length - 1) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+    }
+
+    // Clear progress after completion
+    setTimeout(() => setGeocodingProgress({current: 0, total: 0}), 1000);
+    
+    return updatedVendors;
+  };
   
   // Laden der Direktvermarkter-Daten
   useEffect(() => {
     const fetchDirektvermarkter = async () => {
       try {
-        // In einer produktiven Umgebung würde hier ein API-Aufruf erfolgen
-        // const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
-        // const response = await axios.get(`${apiUrl}/direktvermarkter`);
-        // setDirektvermarkter(response.data);
+        const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+        const response = await fetch(`${apiUrl}/vendor-auth/public/profiles?limit=100`);
+        const data = await response.json();
         
-        // Mock-Daten für die Entwicklung
-        const mockData: Direktvermarkter[] = [
-          {
-            id: '1',
-            name: 'Max Mustermann',
-            unternehmen: 'Musterhof',
-            profilBild: 'https://images.unsplash.com/photo-1519748771451-a94c596fon67?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=300&q=80',
-            telefon: '01234 / 56789',
-            email: 'max@musterhof.de',
-            adresse: {
-              strasse: 'Musterstraße',
-              hausnummer: '123',
-              plz: '96317',
-              ort: 'Kronach'
-            },
-            koordinaten: { lat: 50.251120, lng: 11.337709 },
-            kategorien: ['Obst & Gemüse', 'Honig', 'Marmeladen'],
-            beschreibung: 'Wir sind ein Familienbetrieb in der 3. Generation und produzieren nachhaltige Produkte aus der Region für die Region.',
-            website: 'www.musterhof.de'
-          },
-          {
-            id: '2',
-            name: 'Anna Schmidt',
-            unternehmen: 'Schmidts Bauernhof',
-            profilBild: 'https://images.unsplash.com/photo-1572449043416-55f4685c9bb7?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=300&q=80',
-            telefon: '09876 / 54321',
-            email: 'anna@schmidts-bauernhof.de',
-            adresse: {
-              strasse: 'Dorfstraße',
-              hausnummer: '45',
-              plz: '96215',
-              ort: 'Lichtenfels'
-            },
-            koordinaten: { lat: 50.152395, lng: 11.065330 },
-            kategorien: ['Fleisch & Wurst', 'Eier', 'Milchprodukte'],
-            beschreibung: 'Unser Hof bietet eine große Auswahl an selbst angebauten Produkten. Wir legen großen Wert auf Qualität und Nachhaltigkeit.',
-            website: 'www.schmidts-bauernhof.de'
-          },
-          {
-            id: '3',
-            name: 'Peter Meyer',
-            unternehmen: 'Meyers Imkerei',
-            profilBild: 'https://images.unsplash.com/photo-1571506165871-ee72a35bc9d4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=300&q=80',
-            telefon: '01111 / 22222',
-            email: 'peter@meyers-imkerei.de',
-            adresse: {
-              strasse: 'Bienenweg',
-              hausnummer: '7',
-              plz: '96450',
-              ort: 'Coburg'
-            },
-            koordinaten: { lat: 50.271940, lng: 10.962679 },
-            kategorien: ['Honig', 'Marmeladen'],
-            beschreibung: 'Wir produzieren seit über 30 Jahren lokalen Honig und andere Bienenprodukte.',
-            website: 'www.meyers-imkerei.de'
-          },
-          {
-            id: '4',
-            name: 'Claudia Wagner',
-            unternehmen: 'Wagners Hofladen',
-            profilBild: 'https://images.unsplash.com/photo-1591088398332-8a7791972843?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=300&q=80',
-            telefon: '03333 / 44444',
-            email: 'claudia@wagners-hofladen.de',
-            adresse: {
-              strasse: 'Landstraße',
-              hausnummer: '15',
-              plz: '96049',
-              ort: 'Bamberg'
-            },
-            koordinaten: { lat: 49.901659, lng: 10.887770 },
-            kategorien: ['Obst & Gemüse', 'Backwaren', 'Säfte', 'Milchprodukte', 'Eier'],
-            beschreibung: 'Unser Hofladen bietet eine Vielfalt an Bio-Produkten direkt vom Bauernhof.',
-            website: 'www.wagners-hofladen.de'
-          },
-          {
-            id: '5',
-            name: 'Franz Huber',
-            unternehmen: 'Hubers Weingut',
-            profilBild: 'https://images.unsplash.com/photo-1559519529-0936e4058364?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=300&q=80',
-            telefon: '05555 / 66666',
-            email: 'franz@hubers-weingut.de',
-            adresse: {
-              strasse: 'Weinbergstraße',
-              hausnummer: '42',
-              plz: '97209',
-              ort: 'Veitshöchheim'
-            },
-            koordinaten: { lat: 49.839500, lng: 9.871740 },
-            kategorien: ['Wein & Spirituosen', 'Säfte'],
-            beschreibung: 'Feinste Weine aus Franken, mit Liebe und Leidenschaft hergestellt.',
-            website: 'www.hubers-weingut.de'
-          }
-        ];
-        
-        setDirektvermarkter(mockData);
-        setLoading(false);
+        if (data.success && data.vendors) {
+          // Transform API data to match component interface
+          const vendors = data.vendors.map((vendor: any) => ({
+            id: vendor.id,
+            name: vendor.name,
+            unternehmen: vendor.unternehmen,
+            profilBild: vendor.profilBild,
+            telefon: vendor.telefon,
+            email: vendor.email,
+            adresse: vendor.adresse,
+            koordinaten: vendor.adresse?.koordinaten || null, // Don't use fallback coords
+            kategorien: vendor.kategorien || [],
+            beschreibung: vendor.beschreibung,
+            website: vendor.website
+          }));
+          
+          setDirektvermarkter(vendors);
+          setLoading(false);
+          
+          // Start geocoding for vendors without coordinates
+          const geocodedVendors = await geocodeVendorsInBatches(vendors);
+          setDirektvermarkter(geocodedVendors);
+        } else {
+          setDirektvermarkter([]);
+          setLoading(false);
+        }
       } catch (err) {
         console.error('Fehler beim Laden der Direktvermarkter:', err);
         setError('Die Daten konnten nicht geladen werden.');
@@ -203,38 +200,70 @@ const DirektvermarkterMapPage: React.FC = () => {
     setSelectedVendor(vendor);
   };
   
-  // OpenStreetMap URL mit Markern für alle Direktvermarkter generieren
-  const generateOSMUrl = () => {
-    // Basis-URL für den iframe
-    let baseUrl = "https://www.openstreetmap.org/export/embed.html?bbox=";
-    
-    // Berechnung der Bounding Box für alle Direktvermarkter
-    if (filteredVendors.length > 0) {
-      let minLat = Math.min(...filteredVendors.map(v => v.koordinaten.lat));
-      let maxLat = Math.max(...filteredVendors.map(v => v.koordinaten.lat));
-      let minLng = Math.min(...filteredVendors.map(v => v.koordinaten.lng));
-      let maxLng = Math.max(...filteredVendors.map(v => v.koordinaten.lng));
-      
-      // Füge etwas Padding hinzu
-      const padding = 0.1;
-      minLat -= padding;
-      maxLat += padding;
-      minLng -= padding;
-      maxLng += padding;
-      
-      // Bounding Box
-      baseUrl += `${minLng}%2C${minLat}%2C${maxLng}%2C${maxLat}&layer=mapnik`;
-    } else {
-      // Fallback für ganz Deutschland
-      baseUrl += "5.866%2C47.270%2C15.042%2C55.099&layer=mapnik";
+  // Calculate map center based on all vendors or selected vendor
+  const getMapCenter = () => {
+    if (selectedVendor && selectedVendor.koordinaten) {
+      return {
+        lat: selectedVendor.koordinaten.lat,
+        lng: selectedVendor.koordinaten.lng
+      };
     }
     
-    // Wenn ein Direktvermarkter ausgewählt ist, auf diesen fokussieren
-    if (selectedVendor) {
-      baseUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${selectedVendor.koordinaten.lng - 0.01}%2C${selectedVendor.koordinaten.lat - 0.01}%2C${selectedVendor.koordinaten.lng + 0.01}%2C${selectedVendor.koordinaten.lat + 0.01}&layer=mapnik&marker=${selectedVendor.koordinaten.lat}%2C${selectedVendor.koordinaten.lng}`;
+    // Filter vendors that have valid coordinates for center calculation
+    const vendorsWithCoords = filteredVendors.filter(v => 
+      v.koordinaten && v.koordinaten.lat !== 0 && v.koordinaten.lng !== 0
+    );
+    
+    if (vendorsWithCoords.length > 0) {
+      const avgLat = vendorsWithCoords.reduce((sum, v) => sum + v.koordinaten!.lat, 0) / vendorsWithCoords.length;
+      const avgLng = vendorsWithCoords.reduce((sum, v) => sum + v.koordinaten!.lng, 0) / vendorsWithCoords.length;
+      return { lat: avgLat, lng: avgLng };
     }
     
-    return baseUrl;
+    // Default center for Germany
+    return { lat: 51.1657, lng: 10.4515 };
+  };
+
+  // Get zoom level based on selection
+  const getMapZoom = () => {
+    if (selectedVendor && selectedVendor.koordinaten) {
+      return 15; // Close zoom for selected vendor
+    }
+    
+    // Count vendors with valid coordinates
+    const vendorsWithCoords = filteredVendors.filter(v => 
+      v.koordinaten && v.koordinaten.lat !== 0 && v.koordinaten.lng !== 0
+    );
+    
+    if (vendorsWithCoords.length === 0) {
+      return 6; // Country-wide view
+    }
+    
+    if (vendorsWithCoords.length === 1) {
+      return 13; // Close view for single vendor
+    }
+    
+    return 10; // Regional view for multiple vendors
+  };
+
+  // Convert vendors to markers for the map (only those with valid coordinates)
+  const getVendorMarkers = () => {
+    return filteredVendors
+      .filter(vendor => vendor.koordinaten && vendor.koordinaten.lat !== 0 && vendor.koordinaten.lng !== 0)
+      .map(vendor => ({
+        id: vendor.id,
+        position: vendor.koordinaten!,
+        title: vendor.unternehmen,
+        description: `${vendor.adresse.ort} • ${vendor.kategorien.slice(0, 2).join(', ')}${vendor.kategorien.length > 2 ? '...' : ''}`
+      }));
+  };
+
+  // Handle marker click to select vendor
+  const handleMarkerClick = (marker: any) => {
+    const vendor = filteredVendors.find(v => v.id === marker.id);
+    if (vendor) {
+      setSelectedVendor(vendor);
+    }
   };
   
   // Link zur Detailseite generieren
@@ -285,8 +314,42 @@ const DirektvermarkterMapPage: React.FC = () => {
         </p>
       </div>
       
-      {/* Filter und Suchbereich */}
-      <div className="bg-white rounded-lg shadow-md p-4 mb-6">
+      {/* Show preview if no vendors available */}
+      {direktvermarkter.length === 0 && !loading && !error && (
+        <VendorListPreview 
+          title="Direktvermarkter-Karte in Vorbereitung"
+          description="Die interaktive Karte mit allen Direktvermarktern wird verfügbar sein, sobald sich die ersten Anbieter registriert haben."
+          className="mb-8"
+        />
+      )}
+
+      {/* Geocoding Progress */}
+      {geocodingProgress.total > 0 && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+          <div className="flex items-center">
+            <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mr-3"></div>
+            <div className="flex-grow">
+              <p className="text-blue-800 font-medium">Standorte werden ermittelt...</p>
+              <p className="text-blue-600 text-sm">
+                GPS-Koordinaten für {geocodingProgress.current} von {geocodingProgress.total} Direktvermarktern gefunden
+              </p>
+            </div>
+            <div className="ml-4 text-blue-600 text-sm font-medium">
+              {Math.round((geocodingProgress.current / geocodingProgress.total) * 100)}%
+            </div>
+          </div>
+          <div className="mt-3 w-full bg-blue-200 rounded-full h-2">
+            <div 
+              className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+              style={{ width: `${(geocodingProgress.current / geocodingProgress.total) * 100}%` }}
+            ></div>
+          </div>
+        </div>
+      )}
+      
+      {/* Filter und Suchbereich - only show if vendors are available */}
+      {direktvermarkter.length > 0 && (
+        <div className="bg-white rounded-lg shadow-md p-4 mb-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
           <div className="relative flex-grow">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -339,9 +402,12 @@ const DirektvermarkterMapPage: React.FC = () => {
             </div>
           </div>
         )}
-      </div>
+        </div>
+      )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* Map and vendor list - only show if vendors are available */}
+      {direktvermarkter.length > 0 && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Direktvermarkter-Liste */}
         <div className="lg:col-span-1 h-[600px] overflow-y-auto pr-2 bg-white rounded-lg shadow-md">
           <div className="p-4 border-b sticky top-0 bg-white z-10">
@@ -400,20 +466,34 @@ const DirektvermarkterMapPage: React.FC = () => {
         
         {/* Karte */}
         <div className="lg:col-span-2">
-          <div className="bg-white rounded-lg shadow-md overflow-hidden h-[600px]">
-            <iframe 
-              src={generateOSMUrl()}
-              style={{ width: '100%', height: '100%', border: 0 }}
-              allowFullScreen
-              aria-hidden="false"
-              title="Direktvermarkter Karte"
-            ></iframe>
+          <div className="bg-white rounded-lg shadow-md overflow-hidden h-[600px] relative">
+            <SimpleMapComponent
+              center={getMapCenter()}
+              zoom={getMapZoom()}
+              markers={getVendorMarkers()}
+              onMarkerClick={handleMarkerClick}
+              showPopups={true}
+              selectedMarkerId={selectedVendor?.id}
+              fitBounds={!selectedVendor && filteredVendors.length > 1}
+              className="h-full w-full"
+            />
+            
+            {/* Show All Vendors Button - only when a vendor is selected */}
+            {selectedVendor && filteredVendors.length > 1 && (
+              <button
+                onClick={() => setSelectedVendor(null)}
+                className="absolute top-4 left-4 bg-white shadow-md hover:shadow-lg px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-gray-900 transition-all z-10"
+              >
+                Alle anzeigen
+              </button>
+            )}
           </div>
         </div>
       </div>
-      
+      )}
+        
       {/* Direktvermarkter-Details */}
-      {selectedVendor && (
+      {selectedVendor && direktvermarkter.length > 0 && (
         <div className="mt-8 bg-white rounded-lg shadow-md p-6">
           <div className="flex items-start gap-4">
             {selectedVendor.profilBild && (

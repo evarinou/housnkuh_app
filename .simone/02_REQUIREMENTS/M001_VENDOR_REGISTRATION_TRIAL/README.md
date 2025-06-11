@@ -1,49 +1,58 @@
 # Milestone M001: Vendor Registration with Trial Period
 
+🚫 **NO COMING SOON / PRE-LAUNCH FUNCTIONALITY** 
+
 ## Overview
-Implementiere ein Registrierungssystem für Direktvermarkter mit kostenlosem Probemonat ab Ladeneröffnung und manueller Freischaltung für die öffentliche Anzeige.
+~~Implementiere ein Registrierungssystem für Direktvermarkter mit kostenlosem Probemonat ab Ladeneröffnung und manueller Freischaltung für die öffentliche Anzeige.~~
+
+**UPDATED**: Implementiere ein Registrierungssystem für Direktvermarkter mit sofortigem kostenlosem Probemonat und manueller Freischaltung für die öffentliche Anzeige.
 
 ## Objectives
-- Ermögliche Direktvermarktern die Selbstregistrierung vor Ladeneröffnung
-- Biete einen kostenlosen Probemonat ab Eröffnungsdatum
+- ~~Ermögliche Direktvermarktern die Selbstregistrierung vor Ladeneröffnung~~ **Ermögliche Direktvermarktern die sofortige Selbstregistrierung**
+- ~~Biete einen kostenlosen Probemonat ab Eröffnungsdatum~~ **Biete einen kostenlosen Probemonat ab Registrierung**
 - Implementiere sofortige Kündigungsmöglichkeit
 - Stelle manuelle Freischaltung für öffentliche Sichtbarkeit bereit
 
+⚠️ **WICHTIG**: KEINE Pre-Launch Phase, KEINE Coming Soon Seite, KEINE Store Opening Logik
+
 ## Requirements
 
-### R001: Pre-Launch Registration System
+### R001: ~~Pre-Launch~~ **Immediate** Registration System
 **Priority**: High  
-**Status**: Pending
+**Status**: ~~Pending~~ **UPDATED - NO PRE-LAUNCH**
 
-Implementiere Vorregistrierung vor Ladeneröffnung:
-- Vendors können sich registrieren und Profile anlegen
-- Keine sofortige Vertragserstellung
-- Status: "Vorregistriert" / "Wartet auf Eröffnung"
-- Sammlung von Interessenten vor Launch
-- Platzreservierung möglich
+~~Implementiere Vorregistrierung vor Ladeneröffnung:~~
+**Implementiere sofortige Registrierung mit Trial-Start:**
+- Vendors können sich sofort registrieren und Profile anlegen
+- ~~Keine sofortige Vertragserstellung~~ **Sofortige Trial-Aktivierung**
+- Status: ~~"Vorregistriert" / "Wartet auf Eröffnung"~~ **"Trial aktiv" ab Registrierung**
+- ~~Sammlung von Interessenten vor Launch~~ **Sofortige Funktionalität**
+- ~~Platzreservierung möglich~~ **Sofortige Nutzung**
 
 ### R002: Store Opening Configuration
+**Priority**: ~~High~~ **🚫 CANCELLED**  
+**Status**: ~~Completed~~ **🚫 REMOVED**
+
+~~Admin-Konfiguration für Ladeneröffnung:~~
+**🚫 ENTFERNT - Keine Store Opening Logik benötigt:**
+- ~~Globale Einstellung: `storeOpeningDate`~~ **🚫 ENTFERNT**
+- ~~Admin kann Eröffnungsdatum setzen/ändern~~ **🚫 ENTFERNT**
+- ~~Automatische Benachrichtigung bei Datumsänderung~~ **🚫 ENTFERNT**
+- ~~Countdown im Vendor Dashboard~~ **🚫 ENTFERNT**
+- ~~"Coming Soon" Status auf öffentlicher Seite~~ **🚫 ENTFERNT**
+
+### R003: ~~Trial Period Activation~~ **Immediate Trial Activation**
 **Priority**: High  
-**Status**: Completed (Implemented via T001)
+**Status**: ~~Pending~~ **UPDATED**
 
-Admin-Konfiguration für Ladeneröffnung:
-- Globale Einstellung: `storeOpeningDate` (kann geändert werden)
-- Admin kann Eröffnungsdatum setzen/ändern
-- Automatische Benachrichtigung bei Datumsänderung
-- Countdown im Vendor Dashboard
-- "Coming Soon" Status auf öffentlicher Seite
-
-### R003: Trial Period Activation
-**Priority**: High  
-**Status**: Pending
-
-Automatische Probemonat-Aktivierung bei Eröffnung:
-- Bei Erreichen des Eröffnungsdatums:
-  - Alle vorregistrierten Vendors erhalten Probemonat
-  - Startdatum = Eröffnungsdatum
-  - Enddatum = Eröffnungsdatum + 30 Tage
-- Email-Benachrichtigung über Start
-- Vertragserstellung erst bei Eröffnung
+~~Automatische Probemonat-Aktivierung bei Eröffnung:~~
+**Sofortige Probemonat-Aktivierung bei Registrierung:**
+- ~~Bei Erreichen des Eröffnungsdatums:~~ **Bei Registrierung:**
+  - ~~Alle vorregistrierten Vendors erhalten Probemonat~~ **Registrierte Vendors erhalten sofort Probemonat**
+  - Startdatum = ~~Eröffnungsdatum~~ **Registrierungsdatum**
+  - Enddatum = ~~Eröffnungsdatum~~ **Registrierungsdatum** + 30 Tage
+- Email-Benachrichtigung über ~~Start~~ **sofortigen Trial-Start**
+- ~~Vertragserstellung erst bei Eröffnung~~ **Sofortige Trial-Aktivierung**
 
 ### R004: Manual Vendor Activation
 **Priority**: High  

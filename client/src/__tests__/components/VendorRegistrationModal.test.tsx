@@ -10,21 +10,7 @@ import { BrowserRouter } from 'react-router-dom';
 jest.mock('axios');
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 
-// Mock StoreSettingsContext
-const mockStoreSettings = {
-  settings: {
-    enabled: true,
-    openingDate: new Date(Date.now() + 86400000), // Tomorrow - store closed
-    isStoreOpen: false
-  },
-  loading: false,
-  error: null,
-  refreshSettings: jest.fn()
-};
-
-jest.mock('../../contexts/StoreSettingsContext', () => ({
-  useStoreSettings: () => mockStoreSettings
-}));
+// StoreSettingsContext removed - no longer needed
 
 // Mock VendorAuthContext
 jest.mock('../../contexts/VendorAuthContext', () => ({
@@ -52,6 +38,15 @@ describe('VendorRegistrationModal', () => {
   const mockPackageData = {
     selectedProvisionType: 'standard',
     selectedPackages: ['basic'],
+    packageCounts: { basic: 1 },
+    packageOptions: [{
+      id: 'basic',
+      name: 'Basic Package',
+      price: 100,
+      description: 'Basic rental package',
+      image: '/placeholder.jpg',
+      detail: 'Basic details'
+    }],
     selectedAddons: [],
     rentalDuration: 12,
     totalCost: {
@@ -188,9 +183,7 @@ describe('VendorRegistrationModal', () => {
 
   describe('Regular Registration Flow (Store Open)', () => {
     beforeEach(() => {
-      // Mock store as open
-      mockStoreSettings.settings.openingDate = new Date(Date.now() - 86400000); // Yesterday
-      mockStoreSettings.settings.isStoreOpen = true;
+      // Store is always open - no pre-launch functionality
     });
 
     test('should show booking options when store is open', async () => {

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Image Access Test</title>
+</head>
+<body>
+    <h1>Image Access Test</h1>
+    
+    <h2>Direct Image Access:</h2>
+    <img src="http://localhost:4000/uploads/vendor-images/vendor-1749556590481-208756652.jpg" 
+         alt="Test Image" 
+         style="max-width: 300px; border: 1px solid #ccc;"
+         onload="console.log('Image loaded successfully')"
+         onerror="console.error('Image failed to load')" />
+    
+    <h2>Via JavaScript Fetch:</h2>
+    <div id="fetchResult"></div>
+    
+    <script>
+        // Test fetch access
+        fetch('http://localhost:4000/uploads/vendor-images/vendor-1749556590481-208756652.jpg')
+            .then(response => {
+                console.log('Fetch response:', response);
+                document.getElementById('fetchResult').innerHTML = 
+                    `<p>Fetch Status: ${response.status} ${response.statusText}</p>
+                     <p>Headers: ${JSON.stringify([...response.headers])}</p>`;
+            })
+            .catch(error => {
+                console.error('Fetch error:', error);
+                document.getElementById('fetchResult').innerHTML = 
+                    `<p style="color: red;">Fetch Error: ${error.message}</p>`;
+            });
+    </script>
+</body>
+</html>

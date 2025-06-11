@@ -1,7 +1,7 @@
 // client/src/components/vendor/VendorLayout.tsx
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { User, Package, Home, LogOut, Settings, CreditCard, FileText } from 'lucide-react';
+import { User, Package, Home, LogOut, Settings, FileText, ShoppingCart, BarChart3, Receipt } from 'lucide-react';
 import { useVendorAuth } from '../../contexts/VendorAuthContext';
 
 interface VendorLayoutProps {
@@ -99,19 +99,55 @@ const VendorLayout: React.FC<VendorLayoutProps> = ({ children }) => {
                   }`}
                 >
                   <FileText className="mr-3 h-5 w-5" />
-                  Meine Verträge
+                  Meine Buchungen
                 </Link>
                 
                 <Link
-                  to="/vendor/payments"
+                  to="/vendor/products"
                   className={`flex items-center px-3 py-2 rounded-md text-sm font-medium ${
-                    location.pathname === '/vendor/payments'
+                    location.pathname === '/vendor/products'
                       ? 'bg-primary/10 text-primary'
                       : 'text-gray-700 hover:bg-gray-100'
                   }`}
                 >
-                  <CreditCard className="mr-3 h-5 w-5" />
-                  Zahlungen
+                  <ShoppingCart className="mr-3 h-5 w-5" />
+                  Produkte verwalten
+                </Link>
+                
+                <Link
+                  to="/vendor/reports"
+                  className={`flex items-center px-3 py-2 rounded-md text-sm font-medium ${
+                    location.pathname === '/vendor/reports'
+                      ? 'bg-primary/10 text-primary'
+                      : 'text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  <BarChart3 className="mr-3 h-5 w-5" />
+                  Berichte einsehen
+                </Link>
+                
+                <Link
+                  to="/vendor/customer-invoices"
+                  className={`flex items-center px-3 py-2 rounded-md text-sm font-medium ${
+                    location.pathname === '/vendor/customer-invoices'
+                      ? 'bg-primary/10 text-primary'
+                      : 'text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  <FileText className="mr-3 h-5 w-5" />
+                  Ausgangsrechnungen
+                </Link>
+                
+                <Link
+                  to="/vendor/housnkuh-invoices"
+                  className={`flex items-center px-3 py-2 rounded-md text-sm font-medium ${
+                    location.pathname === '/vendor/housnkuh-invoices'
+                      ? 'bg-primary/10 text-primary'
+                      : 'text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  <Receipt className="mr-3 h-5 w-5" />
+                  Eingangsrechnungen
                 </Link>
                 
                 <Link

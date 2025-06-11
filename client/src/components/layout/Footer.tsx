@@ -48,6 +48,22 @@ const Footer: React.FC = () => {
                   Datenschutz
                 </Link>
               </p>
+              <p>
+                <Link 
+                  to="/agb" 
+                  className="hover:text-[var(--primary)] transition-colors duration-200"
+                >
+                  AGB
+                </Link>
+              </p>
+              <p>
+                <Link 
+                  to="/faq" 
+                  className="hover:text-[var(--primary)] transition-colors duration-200"
+                >
+                  FAQ
+                </Link>
+              </p>
             </nav>
           </div>
 

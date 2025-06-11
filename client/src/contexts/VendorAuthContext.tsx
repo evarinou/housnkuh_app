@@ -1,5 +1,5 @@
 // client/src/contexts/VendorAuthContext.tsx
-import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useMemo } from 'react';
 import axios from 'axios';
 
 interface VendorUser {
@@ -11,6 +11,7 @@ interface VendorUser {
   registrationStatus?: 'preregistered' | 'trial_active' | 'trial_expired' | 'active' | 'cancelled';
   trialStartDate?: string | null;
   trialEndDate?: string | null;
+  profilBild?: string;
 }
 
 interface VendorAuthContextType {
@@ -31,7 +32,7 @@ interface VendorAuthProviderProps {
   children: ReactNode;
 }
 
-export const VendorAuthProvider: React.FC<VendorAuthProviderProps> = ({ children }) => {
+export const VendorAuthProvider: React.FC<VendorAuthProviderProps> = React.memo(({ children }) => {
   const [user, setUser] = useState<VendorUser | null>(null);
   const [token, setToken] = useState<string | null>(localStorage.getItem('vendorToken'));
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
@@ -74,7 +75,32 @@ export const VendorAuthProvider: React.FC<VendorAuthProviderProps> = ({ children
         // User-Daten aus dem lokalen Storage abrufen
         const userData = localStorage.getItem('vendorUser');
         if (userData) {
-          setUser(JSON.parse(userData));
+          const localUser = JSON.parse(userData);
+          
+          // Aktuelles Profil vom Server laden um aktuelle Daten zu haben
+          try {
+            const profileResponse = await axios.get(`${apiUrl}/vendor-auth/profile/${localUser.id}`, {
+              headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            if (profileResponse.data.success) {
+              // Merge lokale User-Daten mit aktuellen Profildaten
+              const updatedUser = {
+                ...localUser,
+                profilBild: profileResponse.data.profile.profilBild
+              };
+              
+              // Aktualisierte Daten speichern
+              localStorage.setItem('vendorUser', JSON.stringify(updatedUser));
+              setUser(updatedUser);
+            } else {
+              setUser(localUser);
+            }
+          } catch (profileError) {
+            console.warn('Could not load profile data:', profileError);
+            setUser(localUser);
+          }
+          
           setIsAuthenticated(true);
         }
 
@@ -204,7 +230,7 @@ export const VendorAuthProvider: React.FC<VendorAuthProviderProps> = ({ children
     }
   };
 
-  const value = {
+  const value = useMemo(() => ({
     user,
     token,
     isAuthenticated,
@@ -214,10 +240,10 @@ export const VendorAuthProvider: React.FC<VendorAuthProviderProps> = ({ children
     checkAuth,
     registerWithBooking,
     preRegisterVendor
-  };
+  }), [user, token, isAuthenticated, isLoading, login, logout, checkAuth, registerWithBooking, preRegisterVendor]);
 
   return <VendorAuthContext.Provider value={value}>{children}</VendorAuthContext.Provider>;
-};
+});
 
 // Custom Hook für einfachen Zugriff auf den VendorAuth-Kontext
 export const useVendorAuth = (): VendorAuthContextType => {

@@ -1,7 +1,7 @@
 // client/src/pages/VendorDashboardPage.tsx
 import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { User, Package, Calendar, CreditCard, AlertTriangle, Clock, XCircle, CheckCircle } from 'lucide-react';
+import { User, Package, Calendar, AlertTriangle, Clock, XCircle, CheckCircle, ShoppingCart, BarChart3, FileText, Receipt } from 'lucide-react';
 import { useVendorAuth } from '../contexts/VendorAuthContext';
 import VendorLayout from '../components/vendor/VendorLayout';
 import axios from 'axios';
@@ -82,15 +82,53 @@ const VendorDashboardPage: React.FC = () => {
   return (
     <VendorLayout>
       <div className="max-w-5xl mx-auto">
-        {/* Willkommens-Header */}
+        {/* Willkommens-Header mit erweitertem Profil */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-          <div className="flex items-center">
-            <div className="bg-primary/10 rounded-full p-3 mr-4">
-              <User className="w-8 h-8 text-primary" />
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex items-center mb-4 lg:mb-0">
+              <div className="bg-primary/10 rounded-full p-3 mr-4">
+                <User className="w-8 h-8 text-primary" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-secondary">Willkommen, {user?.name}</h1>
+                <p className="text-gray-600">{user?.email}</p>
+                {user?.registrationStatus && (
+                  <div className="mt-1">
+                    <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${
+                      user.registrationStatus === 'trial_active' ? 'bg-green-100 text-green-800' :
+                      user.registrationStatus === 'trial_expired' ? 'bg-red-100 text-red-800' :
+                      user.registrationStatus === 'cancelled' ? 'bg-gray-100 text-gray-800' :
+                      'bg-blue-100 text-blue-800'
+                    }`}>
+                      {user.registrationStatus === 'trial_active' ? 'Probemonat aktiv' :
+                       user.registrationStatus === 'trial_expired' ? 'Probemonat abgelaufen' :
+                       user.registrationStatus === 'cancelled' ? 'Gekündigt' :
+                       user.registrationStatus}
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
-            <div>
-              <h1 className="text-2xl font-bold text-secondary">Willkommen, {user?.name}</h1>
-              <p className="text-gray-600">{user?.email}</p>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Link
+                to="/vendor/profile"
+                className="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                <User className="h-4 w-4 mr-2" />
+                Profil bearbeiten
+              </Link>
+              {user?.registrationStatus === 'trial_active' && (
+                <div className="text-sm text-gray-500 text-center sm:text-right">
+                  <p>Probemonat endet am:</p>
+                  <p className="font-medium text-gray-700">
+                    {user.trialEndDate ? new Date(user.trialEndDate).toLocaleDateString('de-DE', {
+                      day: '2-digit',
+                      month: '2-digit',
+                      year: 'numeric'
+                    }) : '–'}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -237,7 +275,7 @@ const VendorDashboardPage: React.FC = () => {
         )}
         
         {/* Hauptbereich mit Dashboard-Karten */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           {/* Buchungen */}
           <div className="bg-white rounded-lg shadow-md overflow-hidden">
             <div className="bg-blue-50 p-4 border-b border-blue-100">
@@ -285,22 +323,6 @@ const VendorDashboardPage: React.FC = () => {
             </div>
           </div>
           
-          {/* Zahlungen */}
-          <div className="bg-white rounded-lg shadow-md overflow-hidden">
-            <div className="bg-violet-50 p-4 border-b border-violet-100">
-              <div className="flex items-center">
-                <CreditCard className="w-6 h-6 text-violet-600 mr-2" />
-                <h2 className="text-lg font-semibold text-secondary">Zahlungen & Rechnungen</h2>
-              </div>
-            </div>
-            <div className="p-6">
-              <p className="text-gray-600 mb-4">Hier finden Sie in Zukunft Ihre Rechnungen und Zahlungshistorie.</p>
-              <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                <p className="text-sm text-gray-500 italic">Kommende Funktion: Übersicht aller Rechnungen und getätigten Zahlungen.</p>
-              </div>
-            </div>
-          </div>
-          
           {/* Profil */}
           <div className="bg-white rounded-lg shadow-md overflow-hidden">
             <div className="bg-rose-50 p-4 border-b border-rose-100">
@@ -326,6 +348,70 @@ const VendorDashboardPage: React.FC = () => {
                   <User className="h-4 w-4 mr-2" />
                   Profil bearbeiten
                 </Link>
+              </div>
+            </div>
+          </div>
+          
+          {/* Produkte verwalten */}
+          <div className="bg-white rounded-lg shadow-md overflow-hidden">
+            <div className="bg-emerald-50 p-4 border-b border-emerald-100">
+              <div className="flex items-center">
+                <ShoppingCart className="w-6 h-6 text-emerald-600 mr-2" />
+                <h2 className="text-lg font-semibold text-secondary">Produkte verwalten</h2>
+              </div>
+            </div>
+            <div className="p-6">
+              <p className="text-gray-600 mb-4">Verwalten Sie hier in Zukunft Ihre Produktpalette und Angebote.</p>
+              <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                <p className="text-sm text-gray-500 italic">Kommende Funktion: Produkte anlegen, bearbeiten, Preise festlegen und Verfügbarkeiten verwalten.</p>
+              </div>
+            </div>
+          </div>
+          
+          {/* Berichte einsehen */}
+          <div className="bg-white rounded-lg shadow-md overflow-hidden">
+            <div className="bg-purple-50 p-4 border-b border-purple-100">
+              <div className="flex items-center">
+                <BarChart3 className="w-6 h-6 text-purple-600 mr-2" />
+                <h2 className="text-lg font-semibold text-secondary">Berichte einsehen</h2>
+              </div>
+            </div>
+            <div className="p-6">
+              <p className="text-gray-600 mb-4">Analysieren Sie Ihre Verkaufszahlen und Performance-Daten.</p>
+              <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                <p className="text-sm text-gray-500 italic">Kommende Funktion: Detaillierte Verkaufsberichte, Statistiken und Analysen Ihrer Geschäftstätigkeit.</p>
+              </div>
+            </div>
+          </div>
+          
+          {/* Ausgangsrechnungen (Endkunde) */}
+          <div className="bg-white rounded-lg shadow-md overflow-hidden">
+            <div className="bg-orange-50 p-4 border-b border-orange-100">
+              <div className="flex items-center">
+                <FileText className="w-6 h-6 text-orange-600 mr-2" />
+                <h2 className="text-lg font-semibold text-secondary">Ausgangsrechnungen (Endkunde)</h2>
+              </div>
+            </div>
+            <div className="p-6">
+              <p className="text-gray-600 mb-4">Verwalten Sie Rechnungen an Ihre Kunden und Endverbraucher.</p>
+              <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                <p className="text-sm text-gray-500 italic">Kommende Funktion: Rechnungserstellung, Verwaltung von Kundenabrechnungen und Zahlungsverfolgung.</p>
+              </div>
+            </div>
+          </div>
+          
+          {/* Eingangsrechnungen (Housnkuh) */}
+          <div className="bg-white rounded-lg shadow-md overflow-hidden">
+            <div className="bg-indigo-50 p-4 border-b border-indigo-100">
+              <div className="flex items-center">
+                <Receipt className="w-6 h-6 text-indigo-600 mr-2" />
+                <h2 className="text-lg font-semibold text-secondary">Eingangsrechnungen (Housnkuh)</h2>
+              </div>
+            </div>
+            <div className="p-6">
+              <p className="text-gray-600 mb-4">Übersicht über Ihre Rechnungen von housnkuh und Zahlungshistorie.</p>
+              <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                <p className="text-sm text-gray-500 italic">Kommende Funktion: Einsicht in Mietkosten, Servicegebühren und Zahlungsverläufe bei housnkuh.</p>
               </div>
             </div>
           </div>

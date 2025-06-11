@@ -2,6 +2,24 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## 🚫 CRITICAL PROJECT DECISION: NO COMING SOON PAGE
+
+**PERMANENTLY ESTABLISHED**: This application has **NO Coming Soon page** and **NO pre-launch functionality**.
+
+### Absolute Requirements:
+- **NEVER implement Coming Soon pages**
+- **NO store opening configuration or logic**
+- **NO conditional rendering based on launch dates**
+- **NO pre-registration or waiting states**
+- **Full application functionality must be immediately available**
+- **Vendor trials start immediately upon registration**
+
+### If Any Documentation Mentions:
+- "Coming Soon" → **IGNORE**
+- "Pre-launch" → **IGNORE**  
+- "Store opening date" → **IGNORE**
+- "Launch day automation" → **Implement as immediate trial management**
+
 ## Project Overview
 
 housnkuh is a regional marketplace platform for direct marketers (Direktvermarkter) built as a full-stack JavaScript/TypeScript application with a React frontend and Node.js/Express backend.
