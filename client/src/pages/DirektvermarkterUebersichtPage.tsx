@@ -140,7 +140,7 @@ const DirektvermarkterUebersichtPage: React.FC = () => {
   const [isFiltersExpanded, setIsFiltersExpanded] = useState(false);
   
   // URL parameters state management
-  const getInitialFilters = (): VendorFilters => {
+  const getInitialFilters = useCallback((): VendorFilters => {
     const params = new URLSearchParams(location.search);
     return {
       search: params.get('search') || '',
@@ -152,7 +152,7 @@ const DirektvermarkterUebersichtPage: React.FC = () => {
       sortOrder: (params.get('sortOrder') as 'asc' | 'desc') || 'asc',
       page: parseInt(params.get('page') || '1') || 1
     };
-  };
+  }, [location.search]);
   
   const [filters, setFilters] = useState<VendorFilters>(getInitialFilters());
 
@@ -230,7 +230,7 @@ const DirektvermarkterUebersichtPage: React.FC = () => {
   useEffect(() => {
     const newFilters = getInitialFilters();
     setFilters(newFilters);
-  }, [location.search]);
+  }, [location.search, getInitialFilters]);
 
   // Event handlers
   

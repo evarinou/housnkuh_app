@@ -1,5 +1,5 @@
 // client/src/pages/DirektvermarkterMapPage.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, Phone, Mail, ExternalLink, ArrowLeft, ChevronDown, ChevronUp, Filter } from 'lucide-react';
 import VendorListPreview from '../components/VendorListPreview';
@@ -82,7 +82,7 @@ const DirektvermarkterMapPage: React.FC = () => {
   };
 
   // Batch-Geocoding für alle Vendors ohne Koordinaten
-  const geocodeVendorsInBatches = async (vendors: Direktvermarkter[]) => {
+  const geocodeVendorsInBatches = useCallback(async (vendors: Direktvermarkter[]) => {
     const vendorsNeedingGeocode = vendors.filter(vendor => 
       !vendor.koordinaten || 
       vendor.koordinaten.lat === 0 || 
@@ -122,7 +122,7 @@ const DirektvermarkterMapPage: React.FC = () => {
     setTimeout(() => setGeocodingProgress({current: 0, total: 0}), 1000);
     
     return updatedVendors;
-  };
+  }, []);
   
   // Laden der Direktvermarkter-Daten
   useEffect(() => {
@@ -166,7 +166,7 @@ const DirektvermarkterMapPage: React.FC = () => {
     };
     
     fetchDirektvermarkter();
-  }, []);
+  }, [geocodeVendorsInBatches]);
   
   // Filtern der Direktvermarkter basierend auf Suchbegriff und Kategorien
   const filteredVendors = direktvermarkter.filter(vendor => {
