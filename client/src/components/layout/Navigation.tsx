@@ -12,13 +12,13 @@ const Navigation: React.FC = () => {
   const [scrolled, setScrolled] = useState<boolean>(false);
   
   // Authentication contexts
-  const { isAuthenticated: isAdminAuth, user: adminUser } = useAuth();
+  const { isAuthenticated: isAdminAuth } = useAuth();
   const { isAuthenticated: isVendorAuth, user: vendorUser } = useVendorAuth();
   
   // Determine if any user is authenticated and their dashboard route
   const isAuthenticated = isAdminAuth || isVendorAuth;
   const dashboardRoute = isAdminAuth ? '/admin' : '/vendor/dashboard';
-  const userDisplayName = adminUser?.name || vendorUser?.name || 'User';
+  // const userDisplayName = adminUser?.name || vendorUser?.name || 'User';
   
   // Scroll-Handler für Hintergrundeffekt
   useEffect(() => {

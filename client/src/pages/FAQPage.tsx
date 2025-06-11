@@ -1,5 +1,5 @@
 // client/src/pages/FAQPage.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { HelpCircle, ChevronDown, ChevronUp, Search, Phone, Mail } from 'lucide-react';
 import axios from 'axios';
 
@@ -19,11 +19,7 @@ const FAQPage: React.FC = () => {
   const [faqItems, setFaqItems] = useState<FAQItem[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchFAQs();
-  }, []);
-
-  const fetchFAQs = async () => {
+  const fetchFAQs = useCallback(async () => {
     try {
       const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
       const response = await axios.get(`${apiUrl}/faqs/public`);
@@ -38,7 +34,11 @@ const FAQPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchFAQs();
+  }, [fetchFAQs]);
 
   // Fallback FAQs for when database is empty or API fails
   const getDefaultFAQs = (): FAQItem[] => [

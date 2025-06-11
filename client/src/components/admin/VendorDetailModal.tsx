@@ -1,6 +1,6 @@
 // client/src/components/admin/VendorDetailModal.tsx
-import React, { useState, useEffect } from 'react';
-import { X, User, Building, Mail, Phone, Calendar, Eye, EyeOff, Clock, MapPin, Globe, Facebook, Instagram, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { X, User, Building, Calendar, Eye, EyeOff, Clock, MapPin, Globe, Facebook, Instagram, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import axios from 'axios';
 
 interface VendorProfile {
@@ -69,13 +69,7 @@ const VendorDetailModal: React.FC<VendorDetailModalProps> = ({ vendorId, isOpen,
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState<'overview' | 'profile' | 'addresses' | 'trial'>('overview');
 
-  useEffect(() => {
-    if (isOpen && vendorId) {
-      fetchVendorDetails();
-    }
-  }, [isOpen, vendorId]);
-
-  const fetchVendorDetails = async () => {
+  const fetchVendorDetails = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
@@ -92,7 +86,13 @@ const VendorDetailModal: React.FC<VendorDetailModalProps> = ({ vendorId, isOpen,
     } finally {
       setLoading(false);
     }
-  };
+  }, [vendorId]);
+
+  useEffect(() => {
+    if (isOpen && vendorId) {
+      fetchVendorDetails();
+    }
+  }, [isOpen, vendorId, fetchVendorDetails]);
 
   const handleVerificationChange = async (newStatus: 'verified' | 'pending' | 'unverified') => {
     try {
@@ -155,10 +155,10 @@ const VendorDetailModal: React.FC<VendorDetailModalProps> = ({ vendorId, isOpen,
     );
   };
 
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return 'Nicht gesetzt';
-    return new Date(dateString).toLocaleDateString('de-DE');
-  };
+  // const formatDate = (dateString?: string) => {
+  //   if (!dateString) return 'Nicht gesetzt';
+  //   return new Date(dateString).toLocaleDateString('de-DE');
+  // };
 
   const formatDateTime = (dateString?: string) => {
     if (!dateString) return 'Nicht gesetzt';

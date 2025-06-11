@@ -97,7 +97,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = React.memo(({ children 
       setIsLoading(false);
       return false;
     }
-  }, []);
+  }, [logout]);
 
   // Beim Laden der Komponente nach Token suchen und Auth-Status prüfen
   useEffect(() => {

@@ -35,7 +35,7 @@ const UsersPage: React.FC = () => {
   // Vendor Detail Modal states
   const [showVendorDetailModal, setShowVendorDetailModal] = useState(false);
   const [selectedVendorId, setSelectedVendorId] = useState<string | null>(null);
-  const [verificationFilter, setVerificationFilter] = useState<'all' | 'verified' | 'pending' | 'unverified'>('all');
+  // const [verificationFilter, setVerificationFilter] = useState<'all' | 'verified' | 'pending' | 'unverified'>('all');
   
   // Notification helper
   const showNotification = (type: 'success' | 'error', message: string) => {

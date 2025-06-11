@@ -134,7 +134,7 @@ export const VendorAuthProvider: React.FC<VendorAuthProviderProps> = React.memo(
   }, [checkAuth, token]);
 
   // Login-Funktion
-  const login = async (email: string, password: string): Promise<boolean> => {
+  const login = useCallback(async (email: string, password: string): Promise<boolean> => {
     setIsLoading(true);
 
     try {
@@ -169,10 +169,10 @@ export const VendorAuthProvider: React.FC<VendorAuthProviderProps> = React.memo(
       setIsLoading(false);
       return false;
     }
-  };
+  }, []);
 
   // Registrierung mit Package-Buchung
-  const registerWithBooking = async (registrationData: any): Promise<{ success: boolean; message?: string; userId?: string }> => {
+  const registerWithBooking = useCallback(async (registrationData: any): Promise<{ success: boolean; message?: string; userId?: string }> => {
     try {
       const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
 
@@ -198,10 +198,10 @@ export const VendorAuthProvider: React.FC<VendorAuthProviderProps> = React.memo(
         message: 'Verbindungsfehler. Bitte versuchen Sie es später erneut.'
       };
     }
-  };
+  }, []);
 
   // Pre-Registrierung für Vendors vor Store-Eröffnung (M001 R001)
-  const preRegisterVendor = async (registrationData: any): Promise<{ success: boolean; message?: string; userId?: string; openingInfo?: any }> => {
+  const preRegisterVendor = useCallback(async (registrationData: any): Promise<{ success: boolean; message?: string; userId?: string; openingInfo?: any }> => {
     try {
       const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
 
@@ -228,7 +228,7 @@ export const VendorAuthProvider: React.FC<VendorAuthProviderProps> = React.memo(
         message: 'Verbindungsfehler. Bitte versuchen Sie es später erneut.'
       };
     }
-  };
+  }, []);
 
   const value = useMemo(() => ({
     user,

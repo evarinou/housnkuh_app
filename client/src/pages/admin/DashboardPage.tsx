@@ -1,5 +1,5 @@
 // client/src/pages/admin/DashboardPage.tsx
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Mail, Users, ShoppingBag, Package, Clock, ArrowRight, Trophy, Calendar } from 'lucide-react';
 import axios from 'axios';

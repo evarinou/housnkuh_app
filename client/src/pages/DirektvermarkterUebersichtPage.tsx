@@ -1,5 +1,5 @@
 // client/src/pages/DirektvermarkterUebersichtPage.tsx
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Phone, Mail, MapPin, ExternalLink, Search, Map, X, ChevronDown, ChevronUp, SlidersHorizontal } from 'lucide-react';
 import axios from 'axios';
@@ -291,14 +291,14 @@ const DirektvermarkterUebersichtPage: React.FC = () => {
     }
   };
   
-  const getRegistrationStatusLabel = (status: string) => {
-    switch (status) {
-      case 'trial_active': return 'Testphase aktiv';
-      case 'active': return 'Aktiv';
-      case 'preregistered': return 'Vorangemeldet';
-      default: return status;
-    }
-  };
+  // const getRegistrationStatusLabel = (status: string) => {
+  //   switch (status) {
+  //     case 'trial_active': return 'Testphase aktiv';
+  //     case 'active': return 'Aktiv';
+  //     case 'preregistered': return 'Vorangemeldet';
+  //     default: return status;
+  //   }
+  // };
   
   const hasActiveFilters = filters.search || filters.tags.length > 0 || filters.standorte.length > 0 || filters.verifyStatus || filters.registrationStatus;
   

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, Users, CheckCircle, AlertCircle, RefreshCw, Rocket, Calendar, Timer, Package } from 'lucide-react';
+import { Clock, Users, CheckCircle, AlertCircle, RefreshCw, Rocket, Timer, Package } from 'lucide-react';
 import axios from 'axios';
 
 interface LaunchDayMetrics {
