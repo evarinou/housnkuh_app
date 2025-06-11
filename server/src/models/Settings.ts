@@ -9,11 +9,40 @@ export interface ISettings extends Document {
     lastModified: Date;
     modifiedBy?: string;
   };
+  monitoring: {
+    enabled: boolean;
+    alerting: {
+      enabled: boolean;
+      adminEmails: string[];
+      cooldownMinutes: number;
+      thresholds: {
+        responseTime: number; // milliseconds
+        errorRate: number; // percentage
+        memoryUsage: number; // bytes
+        dbResponseTime: number; // milliseconds
+        errorFrequency: number; // errors per 5 minutes
+      };
+    };
+    healthChecks: {
+      enabled: boolean;
+      intervalMinutes: number;
+      components: string[]; // ['database', 'email', 'trialService', etc.]
+    };
+    metrics: {
+      enabled: boolean;
+      retentionHours: number;
+      performanceTracking: boolean;
+    };
+    lastModified: Date;
+    modifiedBy?: string;
+  };
   version: number;
   createdAt: Date;
   updatedAt: Date;
   updateStoreOpening(openingDate: Date | null, enabled: boolean, modifiedBy?: string, openingTime?: string): Promise<ISettings>;
+  updateMonitoringSettings(monitoringConfig: any, modifiedBy?: string): Promise<ISettings>;
   isStoreOpen(): boolean;
+  getMonitoringConfig(): any;
 }
 
 export interface ISettingsModel extends Model<ISettings> {
@@ -43,6 +72,83 @@ const SettingsSchema = new Schema<ISettings>({
     reminderDays: {
       type: [Number],
       default: [30, 14, 7, 1]
+    },
+    lastModified: {
+      type: Date,
+      default: Date.now
+    },
+    modifiedBy: {
+      type: String
+    }
+  },
+  monitoring: {
+    enabled: {
+      type: Boolean,
+      default: true
+    },
+    alerting: {
+      enabled: {
+        type: Boolean,
+        default: true
+      },
+      adminEmails: {
+        type: [String],
+        default: []
+      },
+      cooldownMinutes: {
+        type: Number,
+        default: 15
+      },
+      thresholds: {
+        responseTime: {
+          type: Number,
+          default: 2000 // 2 seconds
+        },
+        errorRate: {
+          type: Number,
+          default: 10 // 10%
+        },
+        memoryUsage: {
+          type: Number,
+          default: 536870912 // 512MB in bytes
+        },
+        dbResponseTime: {
+          type: Number,
+          default: 1000 // 1 second
+        },
+        errorFrequency: {
+          type: Number,
+          default: 10 // 10 errors per 5 minutes
+        }
+      }
+    },
+    healthChecks: {
+      enabled: {
+        type: Boolean,
+        default: true
+      },
+      intervalMinutes: {
+        type: Number,
+        default: 5
+      },
+      components: {
+        type: [String],
+        default: ['database', 'email', 'trialService', 'scheduledJobs', 'memory', 'disk']
+      }
+    },
+    metrics: {
+      enabled: {
+        type: Boolean,
+        default: true
+      },
+      retentionHours: {
+        type: Number,
+        default: 24
+      },
+      performanceTracking: {
+        type: Boolean,
+        default: true
+      }
     },
     lastModified: {
       type: Date,
@@ -87,6 +193,32 @@ SettingsSchema.methods.updateStoreOpening = async function(
     this.storeOpening.openingTime = openingTime;
   }
   return await this.save();
+};
+
+// Update monitoring settings with validation
+SettingsSchema.methods.updateMonitoringSettings = async function(
+  monitoringConfig: any,
+  modifiedBy?: string
+): Promise<ISettings> {
+  // Merge with existing monitoring settings
+  this.monitoring = {
+    ...this.monitoring,
+    ...monitoringConfig,
+    lastModified: new Date(),
+    modifiedBy: modifiedBy || this.monitoring.modifiedBy
+  };
+  
+  return await this.save();
+};
+
+// Get monitoring configuration for services
+SettingsSchema.methods.getMonitoringConfig = function(): any {
+  return {
+    enabled: this.monitoring.enabled,
+    alerting: this.monitoring.alerting,
+    healthChecks: this.monitoring.healthChecks,
+    metrics: this.monitoring.metrics
+  };
 };
 
 // Check if store is currently open

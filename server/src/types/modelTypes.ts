@@ -28,11 +28,39 @@ export interface IKontakt {
   telefon?: string;
 }
 
+// Business Details Interface für erweiterte Geschäftsinformationen
+export interface IBusinessDetails {
+  founded?: Date;
+  certifications?: string[]; // Tag IDs für Zertifizierungen
+  productionMethods?: string[]; // Tag IDs für Produktionsmethoden
+  farmSize?: string;
+  businessType?: 'farm' | 'cooperative' | 'processing' | 'retail';
+}
+
+// Location Interface für verbesserte Standortdaten
+export interface ILocation {
+  coordinates?: [number, number]; // [longitude, latitude]
+  address?: string;
+  deliveryRadius?: number; // in km
+  deliveryAreas?: string[]; // PLZ oder Ortsnamen
+}
+
+// Operational Info Interface für Betriebsinformationen
+export interface IOperationalInfo {
+  seasonal?: boolean;
+  yearRoundOperation?: boolean;
+  peakSeason?: {
+    start?: Date;
+    end?: Date;
+  };
+}
+
 // Vendor Profile Interface für erweiterte Direktvermarkter-Daten
 export interface IVendorProfile {
   unternehmen?: string;
   beschreibung?: string;
   profilBild?: string;
+  bannerBild?: string;
   oeffnungszeiten?: {
     montag?: string;
     dienstag?: string;
@@ -42,7 +70,16 @@ export interface IVendorProfile {
     samstag?: string;
     sonntag?: string;
   };
-  kategorien?: string[];
+  
+  // Tag-basiertes System
+  tags?: string[]; // Tag IDs für Produktkategorien
+  products?: string[]; // Product IDs
+  
+  // Erweiterte Geschäftsinformationen
+  businessDetails?: IBusinessDetails;
+  location?: ILocation;
+  operationalInfo?: IOperationalInfo;
+  
   slogan?: string;
   website?: string;
   socialMedia?: {
@@ -50,6 +87,10 @@ export interface IVendorProfile {
     instagram?: string;
   };
   verifyStatus?: 'unverified' | 'pending' | 'verified';
+  
+  // Sichtbarkeit und Features
+  isPubliclyVisible?: boolean;
+  featured?: boolean;
 }
 
 export interface IService {

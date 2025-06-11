@@ -2,6 +2,7 @@
 import { Request, Response } from 'express';
 import User from '../models/User';
 import Vertrag from '../models/Vertrag';
+import { Tag } from '../models/Tag';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
@@ -11,6 +12,7 @@ import multer from 'multer';
 import config from '../config/config';
 import { sendVendorWelcomeEmail, sendPreRegistrationConfirmation, sendTrialActivationEmail, sendCancellationConfirmationEmail, sendBookingConfirmation } from '../utils/emailService';
 import Settings from '../models/Settings';
+import mongoose from 'mongoose';
 
 // Pre-Registrierung für Direktvermarkter vor Store-Eröffnung (M001 R001)
 export const preRegisterVendor = async (req: Request, res: Response): Promise<void> => {
@@ -650,7 +652,11 @@ export const getVendorProfile = async (req: Request, res: Response): Promise<voi
       return;
     }
     
-    const user = await User.findById(userId);
+    const user = await User.findById(userId)
+      .populate('vendorProfile.tags', 'name slug description category color icon')
+      .populate('vendorProfile.businessDetails.certifications', 'name slug description category color icon')
+      .populate('vendorProfile.businessDetails.productionMethods', 'name slug description category color icon');
+      
     if (!user || !user.isVendor) {
       res.status(404).json({ 
         success: false, 
@@ -667,6 +673,7 @@ export const getVendorProfile = async (req: Request, res: Response): Promise<voi
       unternehmen: user.vendorProfile?.unternehmen || '',
       beschreibung: user.vendorProfile?.beschreibung || '',
       profilBild: user.vendorProfile?.profilBild || '',
+      bannerBild: user.vendorProfile?.bannerBild || '', // Banner-Bild hinzugefügt
       adresse: user.adressen.length > 0 ? {
         strasse: user.adressen[0].strasse,
         hausnummer: user.adressen[0].hausnummer,
@@ -687,7 +694,27 @@ export const getVendorProfile = async (req: Request, res: Response): Promise<voi
         samstag: '',
         sonntag: ''
       },
-      kategorien: user.vendorProfile?.kategorien || [],
+      // Tag-basiertes System
+      tags: (user.vendorProfile as any)?.tags || [],
+      businessDetails: {
+        certifications: (user.vendorProfile as any)?.businessDetails?.certifications || [],
+        productionMethods: (user.vendorProfile as any)?.businessDetails?.productionMethods || [],
+        businessType: (user.vendorProfile as any)?.businessDetails?.businessType || 'farm',
+        farmSize: (user.vendorProfile as any)?.businessDetails?.farmSize || '',
+        founded: (user.vendorProfile as any)?.businessDetails?.founded || null
+      },
+      location: {
+        coordinates: (user.vendorProfile as any)?.location?.coordinates || null,
+        address: (user.vendorProfile as any)?.location?.address || '',
+        deliveryRadius: (user.vendorProfile as any)?.location?.deliveryRadius || null,
+        deliveryAreas: (user.vendorProfile as any)?.location?.deliveryAreas || []
+      },
+      operationalInfo: {
+        seasonal: (user.vendorProfile as any)?.operationalInfo?.seasonal || false,
+        yearRoundOperation: (user.vendorProfile as any)?.operationalInfo?.yearRoundOperation || true,
+        peakSeason: (user.vendorProfile as any)?.operationalInfo?.peakSeason || null
+      },
+      
       slogan: user.vendorProfile?.slogan || '',
       website: user.vendorProfile?.website || '',
       socialMedia: user.vendorProfile?.socialMedia || {
@@ -731,9 +758,13 @@ export const updateVendorProfile = async (req: Request, res: Response): Promise<
       unternehmen,
       beschreibung,
       profilBild,
+      bannerBild,
       adresse,
       oeffnungszeiten,
-      kategorien,
+      tags, // Array von Tag IDs oder Namen
+      businessDetails,
+      location,
+      operationalInfo,
       slogan,
       website,
       socialMedia
@@ -784,8 +815,113 @@ export const updateVendorProfile = async (req: Request, res: Response): Promise<
     if (unternehmen !== undefined) vendorProfile.unternehmen = unternehmen;
     if (beschreibung !== undefined) vendorProfile.beschreibung = beschreibung;
     if (profilBild !== undefined) vendorProfile.profilBild = profilBild;
+    if (bannerBild !== undefined) vendorProfile.bannerBild = bannerBild;
     if (oeffnungszeiten) vendorProfile.oeffnungszeiten = oeffnungszeiten;
-    if (kategorien) vendorProfile.kategorien = kategorien;
+    
+    // Tag-System
+    if (tags !== undefined) {
+      const tagIds: mongoose.Types.ObjectId[] = [];
+      
+      for (const tagIdentifier of tags) {
+        if (typeof tagIdentifier === 'string') {
+          if (mongoose.Types.ObjectId.isValid(tagIdentifier)) {
+            // Direkte ObjectId
+            tagIds.push(new mongoose.Types.ObjectId(tagIdentifier));
+          } else {
+            // Tag-Name oder Slug - erstelle oder finde Tag
+            const tag = await Tag.findOrCreateTags([tagIdentifier], 'product');
+            if (tag && tag.length > 0) {
+              tagIds.push(tag[0]._id);
+            }
+          }
+        } else if (tagIdentifier && typeof tagIdentifier === 'object' && tagIdentifier._id) {
+          // Tag-Objekt mit _id - extrahiere die ID
+          const id = tagIdentifier._id || tagIdentifier.id;
+          if (mongoose.Types.ObjectId.isValid(id)) {
+            tagIds.push(new mongoose.Types.ObjectId(id));
+          }
+        }
+      }
+      
+      (vendorProfile as any).tags = tagIds;
+    }
+    
+    // Business Details aktualisieren
+    if (businessDetails) {
+      if (!(vendorProfile as any).businessDetails) {
+        (vendorProfile as any).businessDetails = {};
+      }
+      
+      const businessDetailsObj = (vendorProfile as any).businessDetails;
+      
+      if (businessDetails.founded !== undefined) {
+        businessDetailsObj.founded = businessDetails.founded;
+      }
+      if (businessDetails.farmSize !== undefined) {
+        businessDetailsObj.farmSize = businessDetails.farmSize;
+      }
+      if (businessDetails.businessType !== undefined) {
+        businessDetailsObj.businessType = businessDetails.businessType;
+      }
+      
+      // Zertifizierungen als Tags
+      if (businessDetails.certifications) {
+        const certificationIds: mongoose.Types.ObjectId[] = [];
+        const certificationTags = await Tag.findOrCreateTags(businessDetails.certifications, 'certification');
+        certificationTags.forEach(tag => certificationIds.push(tag._id));
+        businessDetailsObj.certifications = certificationIds;
+      }
+      
+      // Produktionsmethoden als Tags
+      if (businessDetails.productionMethods) {
+        const methodIds: mongoose.Types.ObjectId[] = [];
+        const methodTags = await Tag.findOrCreateTags(businessDetails.productionMethods, 'method');
+        methodTags.forEach(tag => methodIds.push(tag._id));
+        businessDetailsObj.productionMethods = methodIds;
+      }
+    }
+    
+    // Location Details aktualisieren
+    if (location) {
+      if (!(vendorProfile as any).location) {
+        (vendorProfile as any).location = {};
+      }
+      
+      const locationObj = (vendorProfile as any).location;
+      
+      if (location.coordinates !== undefined) {
+        locationObj.coordinates = location.coordinates;
+      }
+      if (location.address !== undefined) {
+        locationObj.address = location.address;
+      }
+      if (location.deliveryRadius !== undefined) {
+        locationObj.deliveryRadius = location.deliveryRadius;
+      }
+      if (location.deliveryAreas !== undefined) {
+        locationObj.deliveryAreas = location.deliveryAreas;
+      }
+    }
+    
+    // Operational Info aktualisieren
+    if (operationalInfo) {
+      if (!(vendorProfile as any).operationalInfo) {
+        (vendorProfile as any).operationalInfo = {};
+      }
+      
+      const operationalObj = (vendorProfile as any).operationalInfo;
+      
+      if (operationalInfo.seasonal !== undefined) {
+        operationalObj.seasonal = operationalInfo.seasonal;
+      }
+      if (operationalInfo.yearRoundOperation !== undefined) {
+        operationalObj.yearRoundOperation = operationalInfo.yearRoundOperation;
+      }
+      if (operationalInfo.peakSeason !== undefined) {
+        operationalObj.peakSeason = operationalInfo.peakSeason;
+      }
+    }
+    
     if (slogan !== undefined) vendorProfile.slogan = slogan;
     if (website !== undefined) vendorProfile.website = website;
     if (socialMedia) vendorProfile.socialMedia = socialMedia;
@@ -840,7 +976,7 @@ const upload = multer({
   }
 });
 
-// Bild-Upload für Vendor-Profile
+// Bild-Upload für Vendor-Profile (Profil- und Banner-Bilder)
 export const uploadVendorImage = async (req: Request, res: Response): Promise<void> => {
   try {
     // Multer-Middleware manuell aufrufen
@@ -893,7 +1029,7 @@ export const getAllVendorProfiles = async (req: Request, res: Response): Promise
   try {
     const {
       search,
-      kategorien,
+      tags, // Tag-basierte Filterung
       standorte,
       verifyStatus,
       registrationStatus,
@@ -912,24 +1048,57 @@ export const getAllVendorProfiles = async (req: Request, res: Response): Promise
       isPubliclyVisible: true
     };
 
-    // Search filter - sucht in Name, Unternehmen, Beschreibung und Kategorien
+    // Search filter - Tag-basiertes System
     if (search && typeof search === 'string' && search.trim()) {
       const searchRegex = new RegExp(search.trim(), 'i');
+      
+      // Finde Tags, die zum Suchbegriff passen
+      const matchingTags = await Tag.find({
+        $or: [
+          { name: searchRegex },
+          { description: searchRegex }
+        ],
+        isActive: true
+      }).select('_id');
+      
+      const tagIds = matchingTags.map(tag => tag._id);
+      
       baseQuery.$or = [
         { 'kontakt.name': searchRegex },
         { 'vendorProfile.unternehmen': searchRegex },
         { 'vendorProfile.beschreibung': searchRegex },
-        { 'vendorProfile.kategorien': { $in: [searchRegex] } }
+        { 'vendorProfile.tags': { $in: tagIds } } // Tag-basierte Suche
       ];
     }
 
-    // Kategorien filter
-    if (kategorien) {
-      const kategorienArray = Array.isArray(kategorien) ? kategorien : [kategorien];
-      const validKategorien = kategorienArray.filter(kat => typeof kat === 'string' && kat.trim());
+    // Tag-basierte Filterung
+    if (tags) {
+      const tagsArray = Array.isArray(tags) ? tags : [tags];
+      const validTagIds: mongoose.Types.ObjectId[] = [];
       
-      if (validKategorien.length > 0) {
-        baseQuery['vendorProfile.kategorien'] = { $in: validKategorien };
+      for (const tagIdentifier of tagsArray) {
+        if (typeof tagIdentifier === 'string' && tagIdentifier.trim()) {
+          // Versuche als ObjectId
+          if (mongoose.Types.ObjectId.isValid(tagIdentifier)) {
+            validTagIds.push(new mongoose.Types.ObjectId(tagIdentifier));
+          } else {
+            // Versuche als Tag-Name oder Slug
+            const tag = await Tag.findOne({
+              $or: [
+                { slug: tagIdentifier.trim() },
+                { name: tagIdentifier.trim() }
+              ],
+              isActive: true
+            });
+            if (tag) {
+              validTagIds.push(tag._id);
+            }
+          }
+        }
+      }
+      
+      if (validTagIds.length > 0) {
+        baseQuery['vendorProfile.tags'] = { $in: validTagIds };
       }
     }
 
@@ -980,10 +1149,13 @@ export const getAllVendorProfiles = async (req: Request, res: Response): Promise
       sortOptions['vendorProfile.verifyStatus'] = sortDirection;
     }
 
-    // Execute query with pagination
+    // Execute query with pagination and populate tags
     const [vendors, totalCount] = await Promise.all([
       User.find(baseQuery)
         .select('kontakt vendorProfile adressen createdAt isPubliclyVisible registrationStatus registrationDate')
+        .populate('vendorProfile.tags', 'name slug description category color icon')
+        .populate('vendorProfile.businessDetails.certifications', 'name slug description category color icon')
+        .populate('vendorProfile.businessDetails.productionMethods', 'name slug description category color icon')
         .sort(sortOptions)
         .skip(skip)
         .limit(limitNum)
@@ -992,16 +1164,46 @@ export const getAllVendorProfiles = async (req: Request, res: Response): Promise
     ]);
 
     // Verfügbare Filter-Optionen für Frontend ermitteln
-    const allVendors = await User.find({
-      isVendor: true,
-      isFullAccount: true,
-      'kontakt.status': 'aktiv',
-      'kontakt.newsletterConfirmed': true,
-      isPubliclyVisible: true
-    }).select('vendorProfile.kategorien adressen.ort vendorProfile.verifyStatus registrationStatus').lean();
+    const [allVendors, allTags] = await Promise.all([
+      User.find({
+        isVendor: true,
+        isFullAccount: true,
+        'kontakt.status': 'aktiv',
+        'kontakt.newsletterConfirmed': true,
+        isPubliclyVisible: true
+      }).select('vendorProfile.tags adressen.ort vendorProfile.verifyStatus registrationStatus')
+        .populate('vendorProfile.tags', 'name slug category')
+        .lean(),
+      Tag.find({ isActive: true, category: 'product' }).select('name slug category').lean()
+    ]);
+
+    // Sammle alle verwendeten Tags
+    const usedTags = new Set();
+    allVendors.forEach(vendor => {
+      if (vendor.vendorProfile?.tags) {
+        vendor.vendorProfile.tags.forEach((tag: any) => {
+          if (tag && tag.name) {
+            usedTags.add(JSON.stringify({
+              id: tag._id,
+              name: tag.name,
+              slug: tag.slug,
+              category: tag.category
+            }));
+          }
+        });
+      }
+    });
 
     const availableFilters = {
-      kategorien: [...new Set(allVendors.flatMap(v => v.vendorProfile?.kategorien || []))].sort(),
+      // Tag-basierte Filter
+      tags: Array.from(usedTags).map(tagStr => JSON.parse(tagStr as string)),
+      allTags: allTags.map(tag => ({
+        id: tag._id,
+        name: tag.name,
+        slug: tag.slug,
+        category: tag.category
+      })),
+      
       standorte: [...new Set(allVendors.flatMap(v => v.adressen?.map(a => a.ort) || []))].filter(Boolean).sort(),
       verifyStatuses: [...new Set(allVendors.map(v => v.vendorProfile?.verifyStatus || 'unverified'))].sort(),
       registrationStatuses: [...new Set(allVendors.map(v => v.registrationStatus))].filter(Boolean).sort()
@@ -1014,6 +1216,7 @@ export const getAllVendorProfiles = async (req: Request, res: Response): Promise
       unternehmen: vendor.vendorProfile?.unternehmen || '',
       beschreibung: vendor.vendorProfile?.beschreibung || '',
       profilBild: vendor.vendorProfile?.profilBild || '',
+      bannerBild: vendor.vendorProfile?.bannerBild || '',
       telefon: vendor.kontakt.telefon || '',
       email: vendor.kontakt.email,
       adresse: vendor.adressen && vendor.adressen.length > 0 ? {
@@ -1027,7 +1230,23 @@ export const getAllVendorProfiles = async (req: Request, res: Response): Promise
         plz: '',
         ort: ''
       },
-      kategorien: vendor.vendorProfile?.kategorien || [],
+      
+      // Tag-basiertes System
+      tags: vendor.vendorProfile?.tags || [],
+      businessDetails: {
+        certifications: vendor.vendorProfile?.businessDetails?.certifications || [],
+        productionMethods: vendor.vendorProfile?.businessDetails?.productionMethods || [],
+        businessType: vendor.vendorProfile?.businessDetails?.businessType || 'farm',
+        farmSize: vendor.vendorProfile?.businessDetails?.farmSize || '',
+        founded: vendor.vendorProfile?.businessDetails?.founded || null
+      },
+      location: {
+        coordinates: vendor.vendorProfile?.location?.coordinates || null,
+        address: vendor.vendorProfile?.location?.address || '',
+        deliveryRadius: vendor.vendorProfile?.location?.deliveryRadius || null,
+        deliveryAreas: vendor.vendorProfile?.location?.deliveryAreas || []
+      },
+      
       slogan: vendor.vendorProfile?.slogan || '',
       website: vendor.vendorProfile?.website || '',
       socialMedia: vendor.vendorProfile?.socialMedia || {
@@ -1085,7 +1304,8 @@ export const getPublicVendorProfile = async (req: Request, res: Response): Promi
       'kontakt.status': 'aktiv',
       'kontakt.newsletterConfirmed': true,
       isPubliclyVisible: true  // Filter für öffentliche Sichtbarkeit
-    }).select('kontakt vendorProfile adressen createdAt isPubliclyVisible');
+    }).select('kontakt vendorProfile adressen createdAt isPubliclyVisible')
+      .populate('vendorProfile.tags', 'name slug description category color icon');
     
     if (!vendor) {
       res.status(404).json({ 
@@ -1102,6 +1322,7 @@ export const getPublicVendorProfile = async (req: Request, res: Response): Promi
       unternehmen: vendor.vendorProfile?.unternehmen || '',
       beschreibung: vendor.vendorProfile?.beschreibung || '',
       profilBild: vendor.vendorProfile?.profilBild || '',
+      bannerBild: vendor.vendorProfile?.bannerBild || '', // Banner-Bild hinzugefügt
       telefon: vendor.kontakt.telefon || '',
       email: vendor.kontakt.email,
       adresse: vendor.adressen.length > 0 ? {
@@ -1124,7 +1345,8 @@ export const getPublicVendorProfile = async (req: Request, res: Response): Promi
         samstag: '',
         sonntag: ''
       },
-      kategorien: vendor.vendorProfile?.kategorien || [],
+      // Tag-basiertes System
+      tags: (vendor.vendorProfile as any)?.tags || [],
       slogan: vendor.vendorProfile?.slogan || '',
       website: vendor.vendorProfile?.website || '',
       socialMedia: vendor.vendorProfile?.socialMedia || {
@@ -1255,6 +1477,271 @@ export const cancelVendorSubscription = async (req: Request, res: Response): Pro
     res.status(500).json({ 
       success: false, 
       message: "Ein Serverfehler ist aufgetreten" 
+    });
+  }
+};
+
+// Tag erstellen (für Vendors)
+export const createVendorTag = async (req: Request, res: Response): Promise<void> => {
+  try {
+    console.log('=== CREATE VENDOR TAG REQUEST ===');
+    console.log('Request body:', req.body);
+    console.log('User from token:', (req as any).user);
+    
+    const { name, description, category = 'product', icon, color } = req.body;
+    const vendorId = (req as any).user?.id;
+    
+    console.log('Extracted data:', { name, description, category, icon, color, vendorId });
+    
+    if (!name || !name.trim()) {
+      console.log('Error: Tag name is missing');
+      res.status(400).json({
+        success: false,
+        message: 'Tag-Name ist erforderlich'
+      });
+      return;
+    }
+    
+    if (!vendorId) {
+      console.log('Error: Vendor ID is missing');
+      res.status(401).json({
+        success: false,
+        message: 'Vendor-Authentifizierung fehlgeschlagen'
+      });
+      return;
+    }
+    
+    // Vendor-Info für bessere Beschreibung
+    console.log('Finding vendor with ID:', vendorId);
+    const vendor = await User.findById(vendorId).select('kontakt.name');
+    const vendorName = vendor?.kontakt?.name || 'Unbekannter Vendor';
+    console.log('Found vendor:', vendorName);
+    
+    // Prüfen ob Tag bereits existiert
+    console.log('Checking for existing tag:', name.trim(), category);
+    const existingTag = await Tag.findOne({
+      name: name.trim(),
+      category: category
+    });
+    
+    if (existingTag) {
+      console.log('Tag already exists:', existingTag);
+      res.status(200).json({
+        success: true,
+        tag: existingTag,
+        message: `Tag "${name}" existiert bereits und wurde zu Ihrem Profil hinzugefügt`
+      });
+      return;
+    }
+    
+    // Neuen Tag erstellen
+    console.log('Creating new tag...');
+    
+    // Generate slug manually for safety
+    const slug = name.trim()
+      .toLowerCase()
+      .replace(/[äöüß]/g, (match: string) => {
+        const replacements: { [key: string]: string } = {
+          'ä': 'ae', 'ö': 'oe', 'ü': 'ue', 'ß': 'ss'
+        };
+        return replacements[match] || match;
+      })
+      .replace(/[^a-z0-9]/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '');
+    
+    const newTag = new Tag({
+      name: name.trim(),
+      slug: slug,
+      category: category,
+      description: description || `Von ${vendorName} erstellt`,
+      icon: icon || undefined,
+      color: color || '#6B7280',
+      isActive: true // Vendor-erstellte Tags sind sofort aktiv
+    });
+    
+    console.log('Saving new tag:', newTag);
+    await newTag.save();
+    
+    console.log(`New tag created successfully by vendor ${vendorName}: ${newTag.name}`);
+    
+    res.status(201).json({
+      success: true,
+      tag: newTag,
+      message: `Tag "${newTag.name}" wurde erfolgreich erstellt`
+    });
+    
+  } catch (err) {
+    console.error('Fehler beim Erstellen des Vendor-Tags:', err);
+    
+    // Spezifische MongoDB Fehler
+    if (err instanceof Error && err.message.includes('E11000')) {
+      res.status(400).json({
+        success: false,
+        message: 'Ein Tag mit diesem Namen existiert bereits'
+      });
+      return;
+    }
+    
+    res.status(500).json({
+      success: false,
+      message: `Serverfehler: ${err instanceof Error ? err.message : 'Unbekannter Fehler'}`
+    });
+  }
+};
+
+// Interface für AuthRequest
+interface AuthRequest extends Request {
+  user?: { id: string; isAdmin?: boolean; isVendor?: boolean; email?: string };
+}
+
+// Zusätzliche Buchung für authentifizierte Vendors
+export const additionalBooking = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { userId, packageData } = req.body;
+    
+    console.log('Additional booking request received:', { userId, packageData });
+    console.log('User from token:', req.user);
+    
+    // Verify user is authenticated and matches token
+    if (!req.user || req.user.id !== userId) {
+      console.error('Authorization failed:', { tokenUserId: req.user?.id, requestUserId: userId });
+      res.status(403).json({
+        success: false,
+        message: 'Unauthorized booking attempt'
+      });
+      return;
+    }
+
+    // Verify user exists and is a vendor
+    console.log('Looking up user with ID:', userId);
+    const user = await User.findById(userId);
+    console.log('User found:', user ? 'Yes' : 'No', user?.isVendor ? 'Is vendor' : 'Not vendor');
+    
+    if (!user || !user.isVendor) {
+      console.error('User validation failed:', { userExists: !!user, isVendor: user?.isVendor });
+      res.status(404).json({
+        success: false,
+        message: 'Vendor not found'
+      });
+      return;
+    }
+
+    // Extract booking information
+    const {
+      selectedProvisionType,
+      packageCounts,
+      selectedAddons,
+      rentalDuration,
+      totalCost
+    } = packageData;
+
+    // Create additional booking record
+    const additionalBookingData = {
+      userId: userId,
+      bookingType: 'additional',
+      provisionType: selectedProvisionType,
+      packages: Object.entries(packageCounts).map(([packageId, count]) => ({
+        packageId,
+        count: count as number,
+        packageType: packageId
+      })).filter(pkg => pkg.count > 0),
+      addons: selectedAddons,
+      rentalDuration,
+      monthlyCost: totalCost.monthly,
+      provision: totalCost.provision,
+      status: 'pending',
+      createdAt: new Date(),
+      notes: `Additional booking by authenticated vendor ${(user as any).name}`
+    };
+
+    // Store the booking data in user notes for now (admin can process manually)
+    console.log('Storing additional booking request for admin processing');
+    
+    const bookingNote = `ADDITIONAL BOOKING REQUEST - ${new Date().toISOString()}
+User: ${(user as any).name} (${(user as any).email})
+Provision: ${selectedProvisionType}
+Packages: ${JSON.stringify(packageCounts)}
+Addons: ${selectedAddons.join(', ')}
+Duration: ${rentalDuration} months
+Monthly Cost: €${totalCost.monthly}
+Status: Pending Admin Review`;
+
+    console.log('Booking note created:', bookingNote);
+
+    // Check if user already has a pending booking
+    const existingPendingBooking = (user as any).pendingBooking;
+    
+    // Update user to indicate pending additional booking (compatible with admin dashboard)
+    try {
+      const newPendingBooking = {
+        packageData: {
+          selectedProvisionType,
+          packageCounts,
+          selectedAddons,
+          rentalDuration,
+          totalCost,
+          bookingType: 'additional',
+          previousBooking: existingPendingBooking ? 'User had existing pending booking' : 'First booking'
+        },
+        createdAt: new Date(),
+        status: 'pending',
+        note: bookingNote
+      };
+
+      await User.findByIdAndUpdate(userId, {
+        hasPendingBooking: true,
+        lastBookingDate: new Date(),
+        pendingBooking: newPendingBooking
+      });
+      
+      console.log('User updated successfully with pending booking');
+      
+      if (existingPendingBooking) {
+        console.log('Note: User had existing pending booking, replaced with new additional booking');
+      }
+    } catch (userUpdateError) {
+      console.error('Error updating user:', userUpdateError);
+      // Continue even if this fails - we can still process the booking
+      console.log('Continuing despite user update error...');
+    }
+
+    // Send confirmation email
+    try {
+      const bookingConfirmationData = {
+        vendorName: (user as any).name,
+        email: (user as any).email,
+        packageData: {
+          selectedProvisionType,
+          packageCounts,
+          packageOptions: [], // We could add this if needed
+          selectedAddons,
+          rentalDuration,
+          totalCost: {
+            monthly: totalCost.monthly,
+            provision: totalCost.provision
+          }
+        }
+      };
+      
+      await sendBookingConfirmation(bookingConfirmationData);
+    } catch (emailError) {
+      console.warn('Could not send booking confirmation email:', emailError);
+      // Continue without failing the booking
+    }
+
+    res.json({
+      success: true,
+      message: 'Additional booking submitted successfully',
+      bookingId: new Date().getTime().toString(), // Temporary ID
+      bookingData: additionalBookingData
+    });
+
+  } catch (error) {
+    console.error('Additional booking error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to process additional booking'
     });
   }
 };

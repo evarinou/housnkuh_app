@@ -21,6 +21,9 @@ router.get('/profile/:userId', vendorAuth, vendorAuthController.getVendorProfile
 router.put('/profile/:userId', vendorAuth, vendorAuthController.updateVendorProfile);
 router.post('/upload-image', vendorAuth, vendorAuthController.uploadVendorImage);
 
+// Tag Management for Vendors
+router.post('/create-tag', vendorAuth, vendorAuthController.createVendorTag);
+
 // Auth-Check Route (optional)
 router.get('/check', vendorAuth, (_req, res) => {
   res.json({ success: true, message: 'Vendor-Authentifizierung erfolgreich' });
@@ -31,5 +34,8 @@ router.get('/contracts/:userId', vendorAuth, vendorAuthController.getVendorContr
 
 // Vendor Subscription Management
 router.post('/cancel/:userId', vendorAuth, vendorAuthController.cancelVendorSubscription);
+
+// Additional Booking for authenticated vendors
+router.post('/additional-booking', vendorAuth, vendorAuthController.additionalBooking);
 
 export default router;

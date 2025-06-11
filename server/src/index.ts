@@ -10,7 +10,14 @@ import dotenv from 'dotenv';
 import connectDB from './config/db';
 import routes from './routes';
 import ScheduledJobs from './services/scheduledJobs';
-import { apiPerformanceMiddleware, enableMongoosePerformanceMonitoring } from './utils/performanceMonitor';
+import { performanceMiddleware } from './utils/performanceMonitor';
+import { 
+  monitoringMiddleware, 
+  errorTrackingMiddleware, 
+  performanceCheckMiddleware,
+  rateLimitMonitoringMiddleware,
+  cleanupMonitoringMiddleware 
+} from './middleware/monitoring';
 
 // Konfigurationsdatei laden
 dotenv.config();
@@ -55,12 +62,35 @@ const apiLimiter = rateLimit({
 
 // Basic middleware
 app.use(express.json({ limit: '10mb' }));
-app.use(cors());
-app.use(helmet());
+app.use(cors({
+  origin: true, // Allow all origins in development
+  credentials: true
+}));
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https:"],
+      scriptSrc: ["'self'"],
+      imgSrc: ["'self'", "data:", "https:", "http:"], // Allow images from any source
+      connectSrc: ["'self'", "https:", "http:"],
+      fontSrc: ["'self'", "https:", "data:"],
+      objectSrc: ["'none'"],
+      mediaSrc: ["'self'"],
+      frameSrc: ["'self'"]
+    }
+  },
+  crossOriginEmbedderPolicy: false, // Disable COEP to allow images
+  crossOriginResourcePolicy: false // Disable CORP to allow cross-origin image loading
+}));
 app.use(morgan('combined'));
 
-// Performance monitoring middleware
-app.use(apiPerformanceMiddleware);
+// Monitoring middleware (order is important)
+app.use(performanceMiddleware); // Track all requests
+app.use(monitoringMiddleware); // General monitoring
+app.use(rateLimitMonitoringMiddleware); // Track request rates
+app.use(performanceCheckMiddleware); // Background performance checks
+app.use(cleanupMonitoringMiddleware); // Periodic cleanup
 
 // Apply rate limiting
 app.use('/api', apiLimiter);
@@ -70,13 +100,13 @@ app.use('/api/vendor-auth/pre-register', registrationLimiter);
 // MongoDB-Verbindung herstellen
 connectDB();
 
-// Enable performance monitoring for development
-if (process.env.NODE_ENV === 'development') {
-  enableMongoosePerformanceMonitoring();
-}
-
-// Cache headers for static assets
-app.use('/uploads', express.static(path.join(__dirname, '../uploads'), {
+// Cache headers for static assets with CORS
+app.use('/uploads', (req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  next();
+}, express.static(path.join(__dirname, '../uploads'), {
   maxAge: '1d', // Cache static uploads for 1 day
   etag: true,
   lastModified: true
@@ -95,19 +125,31 @@ app.use('/api/public', (_req, res, next) => {
 // API-Routen
 app.use('/api', routes);
 
+// Error tracking middleware (should be after routes)
+app.use(errorTrackingMiddleware);
+
 // Basis-Route zum Testen
 app.get('/', (_req, res) => {
   res.json({ message: 'Willkommen bei der housnkuh API!' });
 });
 
 // Initialize scheduled jobs after DB connection
-mongoose.connection.once('open', () => {
+mongoose.connection.once('open', async () => {
   console.log('✅ MongoDB connected');
   
-  // Initialize trial system scheduled jobs
+  // Seed tags (adds missing tags, skips existing ones)
   try {
-    ScheduledJobs.initialize();
-    console.log('✅ Trial system scheduled jobs initialized');
+    console.log('📌 Checking and seeding tags...');
+    const { seedTags } = await import('./utils/seedTags');
+    await seedTags();
+  } catch (error) {
+    console.error('❌ Failed to seed tags:', error);
+  }
+  
+  // Initialize all scheduled jobs (including monitoring)
+  try {
+    await ScheduledJobs.initialize();
+    console.log('✅ All scheduled jobs initialized (trials + monitoring)');
   } catch (error) {
     console.error('❌ Failed to initialize scheduled jobs:', error);
   }

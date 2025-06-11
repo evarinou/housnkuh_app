@@ -37,11 +37,46 @@ const KontaktSchema = new Schema({
   usrID: String
 });
 
+// Business Details Schema für erweiterte Geschäftsinformationen
+const BusinessDetailsSchema = new Schema({
+  founded: { type: Date },
+  certifications: [{ type: Schema.Types.ObjectId, ref: 'Tag' }], // Tag-Referenzen für Zertifizierungen
+  productionMethods: [{ type: Schema.Types.ObjectId, ref: 'Tag' }], // Tag-Referenzen für Produktionsmethoden
+  farmSize: { type: String },
+  businessType: {
+    type: String,
+    enum: ['farm', 'cooperative', 'processing', 'retail'],
+    default: 'farm'
+  }
+});
+
+// Location Schema für verbesserte Standortdaten
+const LocationSchema = new Schema({
+  coordinates: {
+    type: [Number], // [longitude, latitude]
+    index: '2dsphere'
+  },
+  address: { type: String },
+  deliveryRadius: { type: Number }, // in km
+  deliveryAreas: [{ type: String }] // PLZ oder Ortsnamen
+});
+
+// Operational Info Schema für Betriebsinformationen
+const OperationalInfoSchema = new Schema({
+  seasonal: { type: Boolean, default: false },
+  yearRoundOperation: { type: Boolean, default: true },
+  peakSeason: {
+    start: { type: Date },
+    end: { type: Date }
+  }
+});
+
 // Vendor Profile Schema für erweiterte Direktvermarkter-Daten
 const VendorProfileSchema = new Schema({
   unternehmen: { type: String },
   beschreibung: { type: String },
   profilBild: { type: String },
+  bannerBild: { type: String },
   oeffnungszeiten: {
     montag: { type: String },
     dienstag: { type: String },
@@ -51,7 +86,16 @@ const VendorProfileSchema = new Schema({
     samstag: { type: String },
     sonntag: { type: String }
   },
-  kategorien: [{ type: String }],
+  
+  // Tag-basiertes System
+  tags: [{ type: Schema.Types.ObjectId, ref: 'Tag' }], // Haupt-Tags für Produktkategorien
+  products: [{ type: Schema.Types.ObjectId, ref: 'Product' }], // Referenz zu Produkten
+  
+  // Erweiterte Geschäftsinformationen
+  businessDetails: BusinessDetailsSchema,
+  location: LocationSchema,
+  operationalInfo: OperationalInfoSchema,
+  
   slogan: { type: String },
   website: { type: String },
   socialMedia: {
@@ -62,7 +106,11 @@ const VendorProfileSchema = new Schema({
     type: String,
     enum: ['unverified', 'pending', 'verified'],
     default: 'unverified'
-  }
+  },
+  
+  // Sichtbarkeit und Features
+  isPubliclyVisible: { type: Boolean, default: false },
+  featured: { type: Boolean, default: false }
 });
 
 // Pending Booking Schema für ausstehende Buchungen

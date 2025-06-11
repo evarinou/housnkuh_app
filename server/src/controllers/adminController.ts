@@ -6,6 +6,9 @@ import Vertrag from '../models/Vertrag';
 import Settings from '../models/Settings';
 import ScheduledJobs from '../services/scheduledJobs';
 import TrialService from '../services/trialService';
+import HealthCheckService from '../services/healthCheckService';
+import AlertingService from '../services/alertingService';
+import { performanceMonitor } from '../utils/performanceMonitor';
 import { cache, CACHE_KEYS, CACHE_TTL } from '../utils/cache';
 
 // Alle Newsletter-Abonnenten abrufen
@@ -917,6 +920,366 @@ export const updateVendorVerification = async (req: Request, res: Response): Pro
     res.status(500).json({ 
       success: false, 
       message: 'Server error updating vendor verification' 
+    });
+  }
+};
+
+// Health Check Endpoints
+export const getSystemHealth = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const healthStatus = await HealthCheckService.performHealthCheck();
+    
+    res.json({
+      success: true,
+      health: healthStatus
+    });
+  } catch (err) {
+    console.error('Error getting system health:', err);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server error getting system health',
+      health: {
+        overall: 'unhealthy',
+        components: [],
+        timestamp: new Date(),
+        uptime: process.uptime()
+      }
+    });
+  }
+};
+
+export const getSimpleHealthCheck = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const simpleStatus = await HealthCheckService.getSimpleStatus();
+    
+    res.json({
+      success: true,
+      ...simpleStatus
+    });
+  } catch (err) {
+    console.error('Error in simple health check:', err);
+    res.status(500).json({ 
+      success: false,
+      status: 'error',
+      timestamp: new Date()
+    });
+  }
+};
+
+export const getComponentHealth = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { component } = req.params;
+    
+    if (!component) {
+      res.status(400).json({
+        success: false,
+        message: 'Component name is required'
+      });
+      return;
+    }
+    
+    const componentHealth = await HealthCheckService.checkComponent(component);
+    
+    if (!componentHealth) {
+      res.status(404).json({
+        success: false,
+        message: 'Component not found'
+      });
+      return;
+    }
+    
+    res.json({
+      success: true,
+      component: componentHealth
+    });
+  } catch (err) {
+    console.error('Error getting component health:', err);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server error getting component health' 
+    });
+  }
+};
+
+// Performance Monitoring Endpoints
+export const getPerformanceMetrics = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const summary = performanceMonitor.getPerformanceSummary();
+    const thresholds = performanceMonitor.checkPerformanceThresholds();
+    
+    res.json({
+      success: true,
+      performance: {
+        summary,
+        thresholds,
+        timestamp: new Date()
+      }
+    });
+  } catch (err) {
+    console.error('Error getting performance metrics:', err);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server error getting performance metrics' 
+    });
+  }
+};
+
+export const getDetailedMetrics = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { type, limit } = req.query;
+    const limitNum = parseInt(limit as string) || 100;
+    
+    let metrics;
+    if (type === 'requests') {
+      metrics = performanceMonitor.getRequestMetrics(limitNum);
+    } else if (type === 'database') {
+      metrics = performanceMonitor.getDatabaseMetrics(limitNum);
+    } else {
+      res.status(400).json({
+        success: false,
+        message: 'Invalid metrics type. Use "requests" or "database"'
+      });
+      return;
+    }
+    
+    res.json({
+      success: true,
+      type,
+      metrics,
+      count: metrics.length
+    });
+  } catch (err) {
+    console.error('Error getting detailed metrics:', err);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server error getting detailed metrics' 
+    });
+  }
+};
+
+export const getEndpointMetrics = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { path } = req.params;
+    
+    if (!path) {
+      res.status(400).json({
+        success: false,
+        message: 'Endpoint path is required'
+      });
+      return;
+    }
+    
+    const decodedPath = decodeURIComponent(path);
+    const metrics = performanceMonitor.getEndpointMetrics(decodedPath);
+    
+    res.json({
+      success: true,
+      path: decodedPath,
+      metrics
+    });
+  } catch (err) {
+    console.error('Error getting endpoint metrics:', err);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server error getting endpoint metrics' 
+    });
+  }
+};
+
+// Alerting System Endpoints
+export const getActiveAlerts = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const activeAlerts = AlertingService.getActiveAlerts();
+    const alertStats = AlertingService.getAlertStatistics();
+    
+    res.json({
+      success: true,
+      alerts: {
+        active: activeAlerts,
+        statistics: alertStats
+      }
+    });
+  } catch (err) {
+    console.error('Error getting active alerts:', err);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server error getting active alerts' 
+    });
+  }
+};
+
+export const getAlertHistory = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { limit, severity } = req.query;
+    const limitNum = parseInt(limit as string) || 50;
+    
+    let alerts;
+    if (severity && ['warning', 'critical', 'emergency'].includes(severity as string)) {
+      alerts = AlertingService.getAlertsBySeverity(severity as 'warning' | 'critical' | 'emergency');
+    } else {
+      alerts = AlertingService.getAlertHistory(limitNum);
+    }
+    
+    res.json({
+      success: true,
+      alerts,
+      count: alerts.length
+    });
+  } catch (err) {
+    console.error('Error getting alert history:', err);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server error getting alert history' 
+    });
+  }
+};
+
+export const resolveAlert = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { alertId } = req.params;
+    
+    if (!alertId) {
+      res.status(400).json({
+        success: false,
+        message: 'Alert ID is required'
+      });
+      return;
+    }
+    
+    const resolved = AlertingService.resolveAlert(alertId);
+    
+    if (!resolved) {
+      res.status(404).json({
+        success: false,
+        message: 'Alert not found'
+      });
+      return;
+    }
+    
+    res.json({
+      success: true,
+      message: 'Alert resolved successfully',
+      alertId
+    });
+  } catch (err) {
+    console.error('Error resolving alert:', err);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server error resolving alert' 
+    });
+  }
+};
+
+export const sendTestAlert = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const success = await AlertingService.sendTestAlert();
+    
+    res.json({
+      success,
+      message: success ? 'Test alert sent successfully' : 'Failed to send test alert'
+    });
+  } catch (err) {
+    console.error('Error sending test alert:', err);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server error sending test alert' 
+    });
+  }
+};
+
+// Monitoring Configuration Endpoints
+export const getMonitoringSettings = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const settings = await Settings.getSettings();
+    const monitoringConfig = settings.getMonitoringConfig();
+    
+    res.json({
+      success: true,
+      monitoring: monitoringConfig
+    });
+  } catch (err) {
+    console.error('Error getting monitoring settings:', err);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server error getting monitoring settings' 
+    });
+  }
+};
+
+export const updateMonitoringSettings = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { monitoring } = req.body;
+    const adminUser = (req as any).user;
+    
+    if (!monitoring) {
+      res.status(400).json({
+        success: false,
+        message: 'Monitoring configuration is required'
+      });
+      return;
+    }
+    
+    const settings = await Settings.getSettings();
+    await settings.updateMonitoringSettings(monitoring, adminUser?.kontakt?.email);
+    
+    res.json({
+      success: true,
+      message: 'Monitoring settings updated successfully',
+      monitoring: settings.getMonitoringConfig()
+    });
+  } catch (err) {
+    console.error('Error updating monitoring settings:', err);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server error updating monitoring settings' 
+    });
+  }
+};
+
+// Real-time Monitoring Dashboard Data
+export const getMonitoringDashboard = async (req: Request, res: Response): Promise<void> => {
+  try {
+    // Get all monitoring data in parallel
+    const [
+      healthStatus,
+      performanceSummary,
+      activeAlerts,
+      alertStats,
+      trialStats,
+      jobsStatus
+    ] = await Promise.all([
+      HealthCheckService.performHealthCheck(),
+      Promise.resolve(performanceMonitor.getPerformanceSummary()),
+      Promise.resolve(AlertingService.getActiveAlerts()),
+      Promise.resolve(AlertingService.getAlertStatistics()),
+      ScheduledJobs.getTrialStatistics(),
+      Promise.resolve(ScheduledJobs.getJobsStatus())
+    ]);
+    
+    const thresholds = performanceMonitor.checkPerformanceThresholds();
+    
+    res.json({
+      success: true,
+      dashboard: {
+        health: healthStatus,
+        performance: {
+          summary: performanceSummary,
+          thresholds
+        },
+        alerts: {
+          active: activeAlerts,
+          statistics: alertStats
+        },
+        trials: trialStats.success ? trialStats.statistics : null,
+        scheduledJobs: jobsStatus,
+        timestamp: new Date()
+      }
+    });
+  } catch (err) {
+    console.error('Error getting monitoring dashboard:', err);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server error getting monitoring dashboard' 
     });
   }
 };

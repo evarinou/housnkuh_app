@@ -1,6 +1,10 @@
 // server/src/services/scheduledJobs.ts
 import * as cron from 'node-cron';
 import TrialService from './trialService';
+import HealthCheckService from './healthCheckService';
+import AlertingService from './alertingService';
+import { performanceMonitor } from '../utils/performanceMonitor';
+import Settings from '../models/Settings';
 
 /**
  * Scheduled Jobs Service for automated trial management
@@ -12,14 +16,26 @@ export class ScheduledJobs {
   /**
    * Initialize all scheduled jobs
    */
-  static initialize(): void {
+  static async initialize(): Promise<void> {
     console.log('🕒 Initializing scheduled jobs...');
+    
+    // Initialize alerting service
+    await AlertingService.initialize();
     
     // Job 1: Check for trial activation (every hour)
     this.scheduleTrialActivationCheck();
     
     // Job 2: Update trial statuses (daily at 6 AM)
     this.scheduleTrialStatusUpdate();
+    
+    // Job 3: Monitoring health checks (every 5 minutes)
+    this.scheduleHealthChecks();
+    
+    // Job 4: Performance monitoring (every 10 minutes)
+    this.schedulePerformanceMonitoring();
+    
+    // Job 5: Alert cleanup (daily at 2 AM)
+    this.scheduleAlertCleanup();
     
     console.log('✅ Scheduled jobs initialized successfully');
   }
@@ -224,6 +240,181 @@ export class ScheduledJobs {
       };
     } catch (error) {
       console.error('❌ Failed to get trial statistics:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: new Date()
+      };
+    }
+  }
+
+  /**
+   * Schedule health checks - runs every 5 minutes
+   * Monitors system components and triggers alerts
+   */
+  private static scheduleHealthChecks(): void {
+    const task = cron.schedule('*/5 * * * *', async () => {
+      try {
+        console.log('🏥 Running scheduled health check...');
+        
+        // Get monitoring settings to check if health checks are enabled
+        const settings = await Settings.getSettings();
+        if (!settings.monitoring.healthChecks.enabled) {
+          console.log('ℹ️ Health checks are disabled in settings');
+          return;
+        }
+
+        const healthStatus = await HealthCheckService.performHealthCheck();
+        
+        // Check for alerts
+        await AlertingService.checkHealthAlerts(healthStatus);
+        
+        console.log(`✅ Health check completed - Overall status: ${healthStatus.overall}`);
+      } catch (error) {
+        console.error('❌ Scheduled health check failed:', error);
+      }
+    }, {
+      timezone: 'Europe/Berlin'
+    });
+
+    this.jobs.set('health-checks', task);
+    console.log('📅 Health checks scheduled (every 5 minutes)');
+  }
+
+  /**
+   * Schedule performance monitoring - runs every 10 minutes
+   * Monitors system performance and triggers alerts
+   */
+  private static schedulePerformanceMonitoring(): void {
+    const task = cron.schedule('*/10 * * * *', async () => {
+      try {
+        console.log('📊 Running scheduled performance monitoring...');
+        
+        // Get monitoring settings
+        const settings = await Settings.getSettings();
+        if (!settings.monitoring.metrics.enabled) {
+          console.log('ℹ️ Performance monitoring is disabled in settings');
+          return;
+        }
+
+        const performanceSummary = performanceMonitor.getPerformanceSummary();
+        const thresholds = performanceMonitor.checkPerformanceThresholds();
+        
+        // Check for performance alerts
+        await AlertingService.checkPerformanceAlerts(performanceSummary);
+        
+        console.log(`✅ Performance monitoring completed - System healthy: ${thresholds.healthy}`);
+        
+        if (!thresholds.healthy) {
+          console.warn('⚠️ Performance issues detected:', thresholds.issues);
+        }
+      } catch (error) {
+        console.error('❌ Scheduled performance monitoring failed:', error);
+      }
+    }, {
+      timezone: 'Europe/Berlin'
+    });
+
+    this.jobs.set('performance-monitoring', task);
+    console.log('📅 Performance monitoring scheduled (every 10 minutes)');
+  }
+
+  /**
+   * Schedule alert cleanup - runs daily at 2 AM
+   * Cleans up old resolved alerts to prevent memory bloat
+   */
+  private static scheduleAlertCleanup(): void {
+    const task = cron.schedule('0 2 * * *', async () => {
+      try {
+        console.log('🧹 Running scheduled alert cleanup...');
+        
+        AlertingService.cleanupOldAlerts();
+        
+        console.log('✅ Alert cleanup completed');
+      } catch (error) {
+        console.error('❌ Scheduled alert cleanup failed:', error);
+      }
+    }, {
+      timezone: 'Europe/Berlin'
+    });
+
+    this.jobs.set('alert-cleanup', task);
+    console.log('📅 Alert cleanup scheduled (daily at 2 AM)');
+  }
+
+  /**
+   * Manually trigger health check (for admin use)
+   */
+  static async triggerHealthCheck(): Promise<any> {
+    try {
+      console.log('🔧 Manual health check triggered');
+      const healthStatus = await HealthCheckService.performHealthCheck();
+      
+      return {
+        success: true,
+        healthStatus,
+        timestamp: new Date()
+      };
+    } catch (error) {
+      console.error('❌ Manual health check failed:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: new Date()
+      };
+    }
+  }
+
+  /**
+   * Manually trigger performance check (for admin use)
+   */
+  static async triggerPerformanceCheck(): Promise<any> {
+    try {
+      console.log('🔧 Manual performance check triggered');
+      const performanceSummary = performanceMonitor.getPerformanceSummary();
+      const thresholds = performanceMonitor.checkPerformanceThresholds();
+      
+      return {
+        success: true,
+        performance: {
+          summary: performanceSummary,
+          thresholds
+        },
+        timestamp: new Date()
+      };
+    } catch (error) {
+      console.error('❌ Manual performance check failed:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: new Date()
+      };
+    }
+  }
+
+  /**
+   * Get monitoring statistics (for admin dashboard)
+   */
+  static getMonitoringStatistics(): any {
+    try {
+      const performanceSummary = performanceMonitor.getPerformanceSummary();
+      const alertStats = AlertingService.getAlertStatistics();
+      const cachedHealth = HealthCheckService.getCachedHealth();
+      
+      return {
+        success: true,
+        monitoring: {
+          performance: performanceSummary,
+          alerts: alertStats,
+          healthComponents: cachedHealth.length,
+          lastHealthCheck: cachedHealth.length > 0 
+            ? Math.max(...cachedHealth.map(h => h.lastChecked.getTime()))
+            : null
+        },
+        timestamp: new Date()
+      };
+    } catch (error) {
+      console.error('❌ Failed to get monitoring statistics:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error',

@@ -4,6 +4,7 @@ import * as adminController from '../controllers/adminController';
 import * as vertragController from '../controllers/vertragController';
 import { adminAuth } from '../middleware/auth';
 import { cacheMiddleware, cacheInvalidationMiddleware } from '../middleware/cacheMiddleware';
+import ScheduledJobs from '../services/scheduledJobs';
 
 const router = Router();
 
@@ -60,18 +61,58 @@ router.post('/trials/update-status', adminController.triggerTrialStatusUpdate);
 router.post('/trials/activate/:vendorId', adminController.activateVendorTrial);
 router.get('/jobs/status', adminController.getScheduledJobsStatus);
 
+// Manual monitoring triggers
+router.post('/monitoring/health-check', async (_req, res) => {
+  try {
+    const result = await ScheduledJobs.triggerHealthCheck();
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ success: false, error: error instanceof Error ? error.message : 'Unknown error' });
+  }
+});
+
+router.post('/monitoring/performance-check', async (_req, res) => {
+  try {
+    const result = await ScheduledJobs.triggerPerformanceCheck();
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ success: false, error: error instanceof Error ? error.message : 'Unknown error' });
+  }
+});
+
+router.get('/monitoring/statistics', (_req, res) => {
+  try {
+    const stats = ScheduledJobs.getMonitoringStatistics();
+    res.json(stats);
+  } catch (error) {
+    res.status(500).json({ success: false, error: error instanceof Error ? error.message : 'Unknown error' });
+  }
+});
+
 // Launch Day Monitoring
 router.get('/launch-day/metrics', adminController.getLaunchDayMetrics);
 
-// Performance Monitoring
-router.get('/performance/metrics', (_req, res) => {
-  const { performanceMonitor } = require('../utils/performanceMonitor');
-  const metrics = performanceMonitor.getPerformanceSummary();
-  res.json({
-    success: true,
-    metrics,
-    timestamp: new Date()
-  });
-});
+// Health Check Routes
+router.get('/health', adminController.getSystemHealth);
+router.get('/health/simple', adminController.getSimpleHealthCheck);
+router.get('/health/component/:component', adminController.getComponentHealth);
+
+// Performance Monitoring Routes
+router.get('/performance/metrics', adminController.getPerformanceMetrics);
+router.get('/performance/detailed', adminController.getDetailedMetrics);
+router.get('/performance/endpoint/:path', adminController.getEndpointMetrics);
+
+// Alerting System Routes
+router.get('/alerts/active', adminController.getActiveAlerts);
+router.get('/alerts/history', adminController.getAlertHistory);
+router.post('/alerts/:alertId/resolve', adminController.resolveAlert);
+router.post('/alerts/test', adminController.sendTestAlert);
+
+// Monitoring Configuration Routes
+router.get('/monitoring/settings', adminController.getMonitoringSettings);
+router.put('/monitoring/settings', adminController.updateMonitoringSettings);
+
+// Real-time Monitoring Dashboard
+router.get('/monitoring/dashboard', adminController.getMonitoringDashboard);
 
 export default router;
