@@ -121,6 +121,7 @@ export interface IUser extends Document {
   // Buchungsspezifische Felder
   pendingBooking?: {
     packageData: any; // Package-Konfiguration
+    comments?: string; // Optional booking comments
     createdAt: Date;
     status: 'pending' | 'completed' | 'cancelled';
   };
@@ -130,7 +131,7 @@ export interface IUser extends Document {
 
 export interface IMietfach extends Document {
   bezeichnung: string;
-  typ: string;
+  typ: 'regal' | 'regal-b' | 'kuehlregal' | 'gefrierregal' | 'verkaufstisch' | 'sonstiges' | 'schaufenster';
   beschreibung?: string;
   groesse?: {
     flaeche: number;

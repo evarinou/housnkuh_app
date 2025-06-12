@@ -22,6 +22,28 @@ const Hero: React.FC = () => {
 ></div>
       </div>
 
+      {/* "Was ist housnkuh?" Overlay - zentriert dann nach rechts versetzt */}
+      <div className="absolute top-20 left-1/2 transform -translate-x-1/2 translate-x-32 -rotate-6 z-20 hidden lg:block">
+        <Link
+          to="/faq"
+          className="group backdrop-blur-lg bg-white/25 border-2 border-white/40 rounded-2xl p-6 shadow-2xl 
+                     transform transition-all duration-500 hover:bg-white/35 hover:scale-105 hover:-rotate-3
+                     hover:shadow-3xl block max-w-sm"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-bold text-secondary mb-2 drop-shadow-md">
+                Was ist housnkuh?
+              </h2>
+              <p className="text-secondary/90 font-medium text-sm drop-shadow-sm">
+                Klick hier um mehr zu erfahren
+              </p>
+            </div>
+            <ArrowRight className="w-6 h-6 text-primary ml-4 transform transition-transform duration-300 group-hover:translate-x-1" />
+          </div>
+        </Link>
+      </div>
+
       {/* Hauptinhalt mit Glaseffekt - noch weiter nach unten verschoben */}
       <div className="max-w-7xl mx-auto px-6 w-full pb-32 pt-20 z-10">
         <div className="grid lg:grid-cols-2 gap-12">
@@ -59,7 +81,7 @@ const Hero: React.FC = () => {
                 Direktvermarkter entdecken
               </Link>
               <Link
-                to="/mieten"
+                to="/pricing"
                 className="border border-secondary text-secondary px-5 py-2 rounded-lg 
                          hover:bg-secondary hover:text-white transition-all duration-300 
                          flex items-center justify-center gap-1 font-medium transform hover:translate-y-[-2px] text-sm"

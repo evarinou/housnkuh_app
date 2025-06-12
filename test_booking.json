@@ -1,0 +1,18 @@
+{
+  "name": "Test Vendor",
+  "email": "testvendor@test.com",
+  "password": "Test123!",
+  "telefon": "+49123456789",
+  "strasse": "Teststrasse",
+  "hausnummer": "1",
+  "plz": "12345",
+  "ort": "Teststadt",
+  "packageData": {
+    "selectedProvisionType": "standard",
+    "packageCounts": {"kuehlregal": 1, "gefrierregal": 1},
+    "packageOptions": [],
+    "rentalDuration": 12,
+    "totalCost": {"monthly": 100, "oneTime": 50, "provision": 4}
+  },
+  "comments": "Test booking with new Mietfaecher types including gefrierregal"
+}

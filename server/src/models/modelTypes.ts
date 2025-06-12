@@ -42,6 +42,16 @@ export interface IUser extends Document {
 export interface IMietfach extends Document {
   bezeichnung: string;
   typ: string;
+  beschreibung?: string;
+  groesse?: {
+    flaeche: number;
+    einheit: string;
+  };
+  verfuegbar: boolean;
+  aktuellerVertrag?: string;
+  zugewiesenAn?: string;
+  standort?: string;
+  features?: string[];
   createdAt: Date;
   updatedAt: Date;
 }

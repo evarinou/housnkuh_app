@@ -231,14 +231,17 @@ export const addServiceToVertrag = async (req: Request, res: Response): Promise<
 
 // Mapping von packageBuilder IDs zu Mietfach-Typen
 const packageTypeMapping: Record<string, string> = {
-  'block-a': 'regal',         // Regal Typ A
-  'block-b': 'regal-b',       // Regal Typ B
-  'block-cold': 'kuehlregal', // Kühlregal
-  'block-table': 'vitrine'    // Verkaufstisch/Vitrine
+  'block-a': 'regal',           // Regal Typ A
+  'block-b': 'regal-b',         // Regal Typ B
+  'block-cold': 'kuehlregal',   // Kühlregal
+  'block-frozen': 'gefrierregal', // Gefrierregal
+  'block-table': 'verkaufstisch', // Verkaufstisch
+  'block-other': 'sonstiges',   // Sonstiges
+  'block-display': 'schaufenster' // Schaufenster
 };
 
 // Vertrag aus pendingBooking erstellen mit spezifischen Mietfächern
-export const createVertragFromPendingBooking = async (userId: string, packageData: any, assignedMietfaecher: string[]): Promise<{ success: boolean; message?: string; vertragId?: string; vertrag?: any }> => {
+export const createVertragFromPendingBooking = async (userId: string, packageData: any, assignedMietfaecher: string[], priceAdjustments?: Record<string, number>): Promise<{ success: boolean; message?: string; vertragId?: string; vertrag?: any }> => {
   try {
     console.log('createVertragFromPendingBooking called with:', { userId, assignedMietfaecher, packageDataKeys: Object.keys(packageData || {}) });
     const Mietfach = require('../models/Mietfach').default;
@@ -289,7 +292,10 @@ export const createVertragFromPendingBooking = async (userId: string, packageDat
             'block-a': ['regal', 'regal-a'],
             'block-b': ['regal-b'],
             'block-cold': ['kuehlregal', 'gekuehlt'],
-            'block-table': ['vitrine', 'tisch']
+            'block-frozen': ['gefrierregal'],
+            'block-table': ['verkaufstisch', 'vitrine', 'tisch'],
+            'block-other': ['sonstiges'],
+            'block-display': ['schaufenster']
           };
           
           // Prüfe ob der Mietfach-Typ zu diesem Package-Option passt
@@ -297,6 +303,18 @@ export const createVertragFromPendingBooking = async (userId: string, packageDat
             monatspreis = packageOption.price || mietfach.preis || 0;
             break;
           }
+        }
+      }
+      
+      // Preis-Anpassungen durch Admin anwenden
+      const mietfachId = mietfach._id.toString();
+      if (priceAdjustments && priceAdjustments[mietfachId]) {
+        const adjustedPrice = priceAdjustments[mietfachId];
+        if (adjustedPrice > 0 && adjustedPrice <= 1000) { // Validierung: Preis zwischen 0 und 1000 Euro
+          monatspreis = adjustedPrice;
+          console.log(`Price adjustment applied for Mietfach ${mietfachId}: ${monatspreis}`);
+        } else {
+          console.warn(`Invalid price adjustment for Mietfach ${mietfachId}: ${adjustedPrice}`);
         }
       }
       

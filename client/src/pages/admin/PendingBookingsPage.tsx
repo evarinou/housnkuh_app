@@ -2,6 +2,12 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import MietfachAssignmentModal from './MietfachAssignmentModal';
 
+interface MietfachAssignment {
+  mietfachId: string;
+  adjustedPrice: number;
+  priceChangeReason?: string;
+}
+
 interface User {
   _id: string;
   kontakt: {
@@ -12,6 +18,7 @@ interface User {
     packageData: any;
     createdAt: string;
     status: string;
+    comments?: string;
   };
   createdAt: string;
 }
@@ -53,15 +60,24 @@ const PendingBookingsPage: React.FC = () => {
     setShowAssignmentModal(true);
   };
 
-  const handleMietfachAssignment = async (assignedMietfaecher: string[]) => {
+  const handleMietfachAssignment = async (assignments: MietfachAssignment[]) => {
     if (!selectedUser) return;
 
     try {
       const token = localStorage.getItem('adminToken');
       const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
       
+      // For now, send only the mietfach IDs to maintain backward compatibility
+      // TODO: Update backend to handle price adjustments
+      const assignedMietfaecher = assignments.map(a => a.mietfachId);
+      
       const response = await axios.post(`${apiUrl}/admin/pending-bookings/confirm/${selectedUser._id}`, {
-        assignedMietfaecher
+        assignedMietfaecher,
+        priceAdjustments: assignments.reduce((acc, assignment) => {
+          // Backend expects simple number values
+          acc[assignment.mietfachId] = assignment.adjustedPrice;
+          return acc;
+        }, {} as Record<string, number>)
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -201,6 +217,19 @@ const PendingBookingsPage: React.FC = () => {
                         </div>
                       )}
                     </div>
+                    
+                    {/* Vendor Comments Section */}
+                    {user.pendingBooking.comments && (
+                      <div className="mt-4 p-4 bg-blue-50 border-l-4 border-blue-400 rounded-r-lg">
+                        <h4 className="font-semibold text-blue-900 mb-2 flex items-center">
+                          <span className="inline-block w-2 h-2 bg-blue-600 rounded-full mr-2"></span>
+                          Anmerkungen des Direktvermarkters:
+                        </h4>
+                        <div className="text-sm text-blue-800 whitespace-pre-wrap">
+                          {user.pendingBooking.comments}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

@@ -116,6 +116,7 @@ const VendorProfileSchema = new Schema({
 // Pending Booking Schema für ausstehende Buchungen
 const PendingBookingSchema = new Schema({
   packageData: { type: Schema.Types.Mixed, required: true },
+  comments: { type: String, trim: true, maxlength: 500 },
   createdAt: { type: Date, default: Date.now },
   status: {
     type: String,

@@ -184,10 +184,14 @@ export const registerVendorWithBooking = async (req: Request, res: Response): Pr
       
       // Package-Daten
       packageData,
+      comments,
       
       // Unternehmensdaten (optional)
       unternehmen
     } = req.body;
+    
+    // Import validation utilities
+    const { validateEmail, validatePackageData, validateComment } = require('../utils/validation');
     
     // Validierung
     if (!email || !password || !name || !strasse || !hausnummer || !plz || !ort || !packageData) {
@@ -198,15 +202,37 @@ export const registerVendorWithBooking = async (req: Request, res: Response): Pr
       return;
     }
     
-    // E-Mail-Format validieren
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
+    // E-Mail validation
+    if (!validateEmail(email)) {
       res.status(400).json({ 
         success: false, 
         message: 'Bitte geben Sie eine gültige E-Mail-Adresse ein' 
       });
       return;
     }
+    
+    // Package data validation
+    const packageValidation = validatePackageData(packageData);
+    if (!packageValidation.isValid) {
+      res.status(400).json({ 
+        success: false, 
+        message: packageValidation.message 
+      });
+      return;
+    }
+    
+    // Comments validation
+    const commentValidation = validateComment(comments);
+    if (!commentValidation.isValid) {
+      res.status(400).json({ 
+        success: false, 
+        message: commentValidation.message 
+      });
+      return;
+    }
+    
+    // Use sanitized comments
+    const sanitizedComments = commentValidation.sanitizedComment;
     
     // Prüfen, ob E-Mail bereits existiert
     const existingUser = await User.findOne({ 'kontakt.email': email });
@@ -300,6 +326,7 @@ export const registerVendorWithBooking = async (req: Request, res: Response): Pr
       console.log('Adding pendingBooking to existing user');
       user.pendingBooking = {
         packageData,
+        comments: sanitizedComments,
         createdAt: new Date(),
         status: 'pending'
       };
@@ -350,6 +377,7 @@ export const registerVendorWithBooking = async (req: Request, res: Response): Pr
         },
         pendingBooking: {
           packageData,
+          comments: sanitizedComments,
           createdAt: new Date(),
           status: 'pending'
         }

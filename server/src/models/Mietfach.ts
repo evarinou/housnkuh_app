@@ -10,7 +10,8 @@ const MietfachSchema = new Schema({
   },
   typ: {
     type: String,
-    required: true
+    required: true,
+    enum: ['regal', 'regal-b', 'kuehlregal', 'gefrierregal', 'verkaufstisch', 'sonstiges', 'schaufenster']
   },
   beschreibung: {
     type: String,

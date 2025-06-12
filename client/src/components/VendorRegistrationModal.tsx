@@ -41,6 +41,9 @@ interface FormData {
   plz: string;
   ort: string;
   
+  // Kommentare
+  comments?: string;
+  
   // Zustimmungen
   agreeToTerms: boolean;
   agreeToPrivacy: boolean;
@@ -63,6 +66,7 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = React.me
     hausnummer: '',
     plz: '',
     ort: '',
+    comments: '',
     agreeToTerms: false,
     agreeToPrivacy: false
   });
@@ -78,8 +82,10 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = React.me
   
   const { login, registerWithBooking } = useVendorAuth();
 
-  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target;
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    const type = 'type' in e.target ? e.target.type : '';
+    const checked = 'checked' in e.target ? e.target.checked : false;
     setFormData(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value
@@ -117,13 +123,19 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = React.me
       case 2:
         return formData.name.trim() !== '';
       case 3:
-        return (
+        // Validate address fields
+        const addressValid = (
           formData.strasse.trim() !== '' &&
           formData.hausnummer.trim() !== '' &&
           formData.plz.trim() !== '' &&
           validatePLZ(formData.plz) &&
           formData.ort.trim() !== ''
         );
+        
+        // Validate comments - if provided, must not be empty after trimming
+        const commentsValid = !formData.comments || formData.comments.trim().length > 0;
+        
+        return addressValid && commentsValid;
       case 4:
         return formData.agreeToTerms && formData.agreeToPrivacy;
       default:
@@ -152,6 +164,8 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = React.me
       } else if (step === 3) {
         if (!validatePLZ(formData.plz)) {
           setError('Bitte geben Sie eine gültige Postleitzahl ein (5 Ziffern)');
+        } else if (formData.comments && formData.comments.trim().length === 0) {
+          setError('Wenn Sie Anmerkungen eingeben, dürfen diese nicht leer sein');
         } else {
           setError('Bitte füllen Sie alle Adressfelder aus');
         }
@@ -200,6 +214,7 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = React.me
           rentalDuration: packageData.rentalDuration,
           totalCost: {
             monthly: packageData.totalCost.monthly,
+            oneTime: packageData.totalCost.oneTime || 0,
             provision: packageData.totalCost.provision || 
                      (packageData.selectedProvisionType === 'premium' ? 7 : 4)
           }
@@ -207,7 +222,8 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = React.me
         
         const registrationData = {
           ...formData,
-          packageData: formattedPackageData
+          packageData: formattedPackageData,
+          comments: formData.comments?.trim() || undefined
         };
         
         const result = await registerWithBooking(registrationData);
@@ -529,6 +545,28 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = React.me
                 />
               </div>
             </div>
+
+            {/* Comments Field */}
+            <div className="mt-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="comments">
+                Besondere Wünsche oder Anmerkungen (optional)
+              </label>
+              <textarea
+                id="comments"
+                name="comments"
+                value={formData.comments || ''}
+                onChange={handleInputChange}
+                placeholder="Teilen Sie uns besondere Wünsche oder Anforderungen mit..."
+                maxLength={500}
+                rows={4}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
+              />
+              <div className="flex justify-end mt-1">
+                <span className="text-sm text-gray-500">
+                  {(formData.comments || '').length}/500 Zeichen
+                </span>
+              </div>
+            </div>
           </div>
         );
 
@@ -575,6 +613,14 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = React.me
                 </div>
               </div>
             </div>
+
+            {/* Comments Display */}
+            {formData.comments && formData.comments.trim() && (
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <h4 className="font-semibold text-blue-800 mb-2">Ihre Anmerkungen:</h4>
+                <p className="text-sm text-blue-700 whitespace-pre-wrap">{formData.comments.trim()}</p>
+              </div>
+            )}
 
             {/* Zustimmungen */}
             <div className="space-y-3">

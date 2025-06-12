@@ -2,6 +2,8 @@
 import React from 'react';
 import Navigation from './Navigation';
 import Footer from './Footer';
+import ContestBanner from '../ContestBanner';
+import CookieBanner from '../CookieBanner';
 
 interface PublicLayoutProps {
   children: React.ReactNode;
@@ -15,6 +17,8 @@ const PublicLayout: React.FC<PublicLayoutProps> = ({ children }) => {
         {children}
       </main>
       <Footer />
+      <ContestBanner />
+      <CookieBanner />
     </div>
   );
 };

@@ -1,135 +1,207 @@
 // client/src/pages/DirektvermarkterPage.tsx
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, ShoppingBag, Users, Map, Search } from 'lucide-react';
+import { ArrowRight, List, MapPin, Users, ShoppingBag, Star } from 'lucide-react';
+import { motion, useAnimation } from 'framer-motion';
+import { useInView } from 'react-intersection-observer';
+
+// Feature Card Component
+interface FeatureCardProps {
+  icon: React.ComponentType<any>;
+  title: string;
+  description: string;
+  delay: number;
+}
+
+const FeatureCard: React.FC<FeatureCardProps> = ({ icon: Icon, title, description, delay }) => {
+  const controls = useAnimation();
+  const [ref, inView] = useInView({ threshold: 0.2, triggerOnce: true });
+
+  useEffect(() => {
+    if (inView) {
+      controls.start({
+        y: 0,
+        opacity: 1,
+        transition: { duration: 0.6, delay: delay * 0.2 }
+      });
+    }
+  }, [controls, inView, delay]);
+
+  return (
+    <motion.div 
+      ref={ref}
+      initial={{ y: 50, opacity: 0 }}
+      animate={controls}
+      className="bg-gray-50 rounded-2xl p-8 hover:bg-gray-100 transition-all duration-300 text-center"
+    >
+      <div className="bg-primary/10 p-4 rounded-full w-fit mx-auto mb-6">
+        <Icon className="w-8 h-8 text-primary" />
+      </div>
+      <h3 className="text-xl font-bold text-secondary mb-4">{title}</h3>
+      <p className="text-gray-600 leading-relaxed">{description}</p>
+    </motion.div>
+  );
+};
 
 const DirektvermarkterPage: React.FC = () => {
   return (
-    <div className="container mx-auto p-4 py-12">
-      <div className="max-w-5xl mx-auto">
-        {/* Hauptüberschrift */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-6">Direktvermarkter bei housnkuh</h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Entdecken Sie lokale Anbieter hochwertiger Produkte aus der Region und erleben Sie Frische und Qualität direkt vom Erzeuger.
-          </p>
+    <div className="min-h-screen bg-gray-50">
+      {/* Hero Section */}
+      <section className="relative bg-gradient-to-br from-primary/95 to-primary/95 text-white overflow-hidden">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 opacity-10">
+          <svg className="w-full h-full" viewBox="0 0 100 100">
+            <pattern id="hero-pattern" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+              <circle cx="10" cy="10" r="2" fill="currentColor" />
+            </pattern>
+            <rect width="100" height="100" fill="url(#hero-pattern)" />
+          </svg>
         </div>
         
-        {/* Hero-Bereich */}
-        <div className="bg-gradient-to-r from-primary to-primary-600 rounded-2xl overflow-hidden shadow-xl mb-16">
-          <div className="md:flex">
-            <div className="md:w-1/2 p-8 md:p-12 text-white">
-              <h2 className="text-3xl font-bold mb-4">Alle Direktvermarkter auf einen Blick</h2>
-              <p className="mb-6 text-white/90">
-                Durchsuchen Sie unsere umfangreiche Liste von Direktvermarktern, filtern Sie nach Produktkategorien oder Standorten und finden Sie genau das, wonach Sie suchen.
-              </p>
+        <div className="relative max-w-7xl mx-auto px-6 py-20">
+          <div className="text-center mb-16">
+            <motion.h1 
+              initial={{ y: 30, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.8 }}
+              className="text-4xl md:text-5xl font-bold mb-6"
+            >
+              Entdecken Sie unsere<br />
+              <span className="text-primary-200">Direktvermarkter</span>
+            </motion.h1>
+            <motion.p 
+              initial={{ y: 30, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              className="text-xl text-white/90 max-w-3xl mx-auto"
+            >
+              Regionale Qualität, persönlicher Kontakt und frische Produkte direkt vom Erzeuger
+            </motion.p>
+          </div>
+
+          {/* Action Cards */}
+          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            <motion.div
+              initial={{ x: -50, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ duration: 0.8, delay: 0.4 }}
+            >
               <Link 
-                to="/direktvermarkter/uebersicht" 
-                className="inline-flex items-center px-6 py-3 bg-white text-primary font-semibold rounded-lg hover:bg-gray-100 transition-colors"
+                to="/direktvermarkter/uebersicht"
+                className="group block bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-8 hover:bg-white/20 transition-all duration-300 transform hover:scale-105"
               >
-                Zur Übersicht
-                <ArrowRight className="ml-2 h-5 w-5" />
+                <div className="flex items-center mb-4">
+                  <div className="bg-white/20 p-3 rounded-full mr-4 group-hover:bg-white/30 transition-all duration-300">
+                    <List className="w-8 h-8" />
+                  </div>
+                  <h3 className="text-2xl font-bold">Übersicht aller Direktvermarkter</h3>
+                </div>
+                <p className="text-white/90 mb-6 leading-relaxed">
+                  Durchsuchen Sie alle registrierten Direktvermarkter, filtern Sie nach Produkten und finden Sie genau das, was Sie suchen.
+                </p>
+                <div className="flex items-center text-white group-hover:translate-x-2 transition-transform duration-300">
+                  <span className="font-semibold mr-2">Zur Übersicht</span>
+                  <ArrowRight className="w-5 h-5" />
+                </div>
               </Link>
-            </div>
-            <div className="md:w-1/2 bg-gray-200">
-              <img
-                src="https://images.unsplash.com/photo-1488459716781-31db52582fe9?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&q=80"
-                alt="Frische Produkte vom Direktvermarkter"
-                className="w-full h-full object-cover"
-              />
-            </div>
+            </motion.div>
+
+            <motion.div
+              initial={{ x: 50, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ duration: 0.8, delay: 0.6 }}
+            >
+              <Link 
+                to="/direktvermarkter/karte"
+                className="group block bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl p-8 hover:bg-white/20 transition-all duration-300 transform hover:scale-105"
+              >
+                <div className="flex items-center mb-4">
+                  <div className="bg-white/20 p-3 rounded-full mr-4 group-hover:bg-white/30 transition-all duration-300">
+                    <MapPin className="w-8 h-8" />
+                  </div>
+                  <h3 className="text-2xl font-bold">Standorte auf der Karte</h3>
+                </div>
+                <p className="text-white/90 mb-6 leading-relaxed">
+                  Entdecken Sie alle Direktvermarkter-Standorte auf einer interaktiven Karte und finden Sie die nächstgelegenen Anbieter.
+                </p>
+                <div className="flex items-center text-white group-hover:translate-x-2 transition-transform duration-300">
+                  <span className="font-semibold mr-2">Zur Karte</span>
+                  <ArrowRight className="w-5 h-5" />
+                </div>
+              </Link>
+            </motion.div>
           </div>
         </div>
-        
-        {/* Features Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
-          <div className="bg-white p-8 rounded-xl shadow-md hover:shadow-lg transition-shadow">
-            <div className="p-3 bg-primary/10 rounded-full w-fit mb-4">
-              <ShoppingBag className="h-7 w-7 text-primary" />
-            </div>
-            <h3 className="text-xl font-semibold mb-3">Regionale Produkte</h3>
-            <p className="text-gray-600 mb-4">
-              Entdecken Sie frische und hochwertige Produkte direkt vom Erzeuger. Unterstützen Sie lokale Landwirte und genießen Sie den authentischen Geschmack regionaler Spezialitäten.
+      </section>
+      
+      {/* Features Section */}
+      <section className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold text-secondary mb-4">
+              Warum housnkuh Direktvermarkter?
+            </h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Erleben Sie die Vorteile regionaler Direktvermarktung und unterstützen Sie lokale Erzeuger
             </p>
-            <Link to="/direktvermarkter/uebersicht" className="text-primary font-medium hover:underline inline-flex items-center">
-              Produkte entdecken
-              <ArrowRight className="ml-1 h-4 w-4" />
-            </Link>
           </div>
-          
-          <div className="bg-white p-8 rounded-xl shadow-md hover:shadow-lg transition-shadow">
-            <div className="p-3 bg-primary/10 rounded-full w-fit mb-4">
-              <Users className="h-7 w-7 text-primary" />
-            </div>
-            <h3 className="text-xl font-semibold mb-3">Unsere Direktvermarkter</h3>
-            <p className="text-gray-600 mb-4">
-              Lernen Sie die Menschen hinter den Produkten kennen. Wir stellen Ihnen engagierte Direktvermarkter vor, die mit Leidenschaft und Expertise ihre Produkte anbieten.
-            </p>
-            <Link to="/direktvermarkter/uebersicht" className="text-primary font-medium hover:underline inline-flex items-center">
-              Direktvermarkter kennenlernen
-              <ArrowRight className="ml-1 h-4 w-4" />
-            </Link>
-          </div>
-          
-          <div className="bg-white p-8 rounded-xl shadow-md hover:shadow-lg transition-shadow">
-            <div className="p-3 bg-primary/10 rounded-full w-fit mb-4">
-              <Map className="h-7 w-7 text-primary" />
-            </div>
-            <h3 className="text-xl font-semibold mb-3">Auf der Karte finden</h3>
-            <p className="text-gray-600 mb-4">
-              Finden Sie Direktvermarkter in Ihrer Nähe auf einer interaktiven Karte oder informieren Sie sich über unseren housnkuh-Standort in Kronach.
-            </p>
-            <div className="space-y-2">
-              <Link to="/direktvermarkter/karte" className="text-primary font-medium hover:underline inline-flex items-center">
-                Direktvermarkter auf Karte anzeigen
-                <ArrowRight className="ml-1 h-4 w-4" />
-              </Link>
-              <div>
-                <Link to="/standort" className="text-primary font-medium hover:underline inline-flex items-center">
-                  housnkuh-Standort anzeigen
-                  <ArrowRight className="ml-1 h-4 w-4" />
-                </Link>
-              </div>
-            </div>
-          </div>
-          
-          <div className="bg-white p-8 rounded-xl shadow-md hover:shadow-lg transition-shadow">
-            <div className="p-3 bg-primary/10 rounded-full w-fit mb-4">
-              <Search className="h-7 w-7 text-primary" />
-            </div>
-            <h3 className="text-xl font-semibold mb-3">Gezielt suchen</h3>
-            <p className="text-gray-600 mb-4">
-              Sie suchen etwas Bestimmtes? Nutzen Sie unsere Filter-Funktion, um nach Produktkategorien, Standorten oder anderen Kriterien zu suchen und genau das zu finden, was Sie brauchen.
-            </p>
-            <Link to="/direktvermarkter/uebersicht" className="text-primary font-medium hover:underline inline-flex items-center">
-              Jetzt suchen
-              <ArrowRight className="ml-1 h-4 w-4" />
-            </Link>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <FeatureCard 
+              icon={ShoppingBag}
+              title="Frische Qualität"
+              description="Produkte direkt vom Erzeuger ohne lange Transportwege für maximale Frische und Qualität."
+              delay={0}
+            />
+            <FeatureCard 
+              icon={Users}
+              title="Persönlicher Kontakt"
+              description="Lernen Sie die Menschen hinter den Produkten kennen und erfahren Sie mehr über Herkunft und Herstellung."
+              delay={1}
+            />
+            <FeatureCard 
+              icon={Star}
+              title="Regionale Vielfalt"
+              description="Entdecken Sie die kulinarische Vielfalt Ihrer Region und unterstützen Sie lokale Betriebe."
+              delay={2}
+            />
           </div>
         </div>
-        
-        {/* Call-to-Action */}
-        <div className="bg-gray-50 border border-gray-200 rounded-xl p-8 text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-3">Sind Sie Direktvermarkter?</h2>
-          <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
-            Möchten Sie Ihre Produkte bei housnkuh anbieten? Registrieren Sie sich als Direktvermarkter und profitieren Sie von unserer Plattform.
+      </section>
+      
+      {/* Call-to-Action Section */}
+      <section className="py-20 bg-gradient-to-r from-secondary/10 to-primary/10">
+        <div className="max-w-4xl mx-auto px-6 text-center">
+          <h2 className="text-3xl md:text-4xl font-bold text-secondary mb-6">
+            Sind Sie Direktvermarkter?
+          </h2>
+          <p className="text-xl text-gray-600 mb-10 max-w-3xl mx-auto leading-relaxed">
+            Möchten Sie Ihre Produkte bei housnkuh anbieten? Registrieren Sie sich als Direktvermarkter 
+            und profitieren Sie von unserer innovativen Plattform für regionale Vermarktung.
           </p>
-          <div className="flex flex-col sm:flex-row justify-center gap-4">
+          
+          <div className="flex flex-col sm:flex-row justify-center gap-6">
             <Link 
               to="/vendor/login" 
-              className="px-6 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary-600 transition-colors"
+              className="group px-8 py-4 bg-primary text-white font-semibold rounded-xl hover:bg-primary/90 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
             >
-              Als Direktvermarkter anmelden
+              <span className="flex items-center justify-center">
+                Als Direktvermarkter anmelden
+                <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
+              </span>
             </Link>
             <Link 
-              to="/mieten" 
-              className="px-6 py-3 bg-white border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-colors"
+              to="/pricing" 
+              className="group px-8 py-4 bg-white border-2 border-secondary text-secondary font-semibold rounded-xl hover:bg-secondary hover:text-white transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
             >
-              Mehr über Mietfächer erfahren
+              <span className="flex items-center justify-center">
+                Mehr über Mietfächer erfahren
+                <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
+              </span>
             </Link>
           </div>
         </div>
-      </div>
+      </section>
     </div>
   );
 };

@@ -20,6 +20,8 @@ interface PackageOption {
   description: string;
   image: string;
   detail: string;
+  category: 'standard' | 'cooled' | 'premium';
+  priceDisplay?: string; // Optional custom price display (e.g., "auf Anfrage")
 }
 
 interface AddonOption {
@@ -95,7 +97,8 @@ const PackageBuilder: React.FC = () => {
       price: 35,
       description: 'Regal auf Augenhöhe, 80x39x67cm (2 Ebenen)',
       image: '/api/placeholder/200/150',
-      detail: 'Optimale Sichtbarkeit, beste Platzierung'
+      detail: 'Optimale Sichtbarkeit, beste Platzierung',
+      category: 'standard'
     },
     {
       id: 'block-b',
@@ -103,7 +106,8 @@ const PackageBuilder: React.FC = () => {
       price: 15,
       description: 'Standard Regalfläche, 80x39x33,5cm (1 Ebene)',
       image: '/api/placeholder/200/150',
-      detail: 'Kostengünstige Option für Einsteiger'
+      detail: 'Kostengünstige Option für Einsteiger',
+      category: 'standard'
     },
     {
       id: 'block-cold',
@@ -111,16 +115,37 @@ const PackageBuilder: React.FC = () => {
       price: 50,
       description: 'Gekühlter Bereich für temperaturempfindliche Produkte',
       image: '/api/placeholder/200/150',
-      detail: 'Für Frischeprodukte, konstante Kühlung'
+      detail: 'Für Frischeprodukte, konstante Kühlung',
+      category: 'cooled'
+    },
+    {
+      id: 'block-frozen',
+      name: 'Verkaufsblock gefroren',
+      price: 60,
+      description: 'Gefrierbereich für Tiefkühlprodukte',
+      image: '/api/placeholder/200/150',
+      detail: 'Perfekt für Fleisch, Fisch und Tiefkühlprodukte',
+      category: 'cooled'
     },
     {
       id: 'block-table',
-      name: 'Verkaufsblock Tisch',
+      name: 'Verkaufstisch',
       price: 40,
       description: 'Präsentationstisch für besondere Produkte',
       image: '/api/placeholder/200/150',
-      detail: 'Ideale Präsentationsfläche für Spezialprodukte'
-    }
+      detail: 'Ideale Präsentationsfläche für Spezialprodukte',
+      category: 'premium'
+    },
+    {
+      id: 'block-other',
+      name: 'Flexibler Bereich',
+      price: 0, // Special handling for "auf Anfrage"
+      description: 'Anpassbarer Bereich für spezielle Anforderungen',
+      image: '/api/placeholder/200/150',
+      detail: 'Flexible Nutzung je nach Produktart',
+      category: 'standard',
+      priceDisplay: 'auf Anfrage'
+    },
   ], []);
 
   const addonOptions: AddonOption[] = useMemo(() => [
@@ -170,6 +195,8 @@ const PackageBuilder: React.FC = () => {
     const packageCosts = Object.entries(packageCounts).reduce((sum, [pkgId, count]) => {
       if (count <= 0) return sum;
       const option = packageOptions.find(p => p.id === pkgId);
+      // Skip packages with priceDisplay (like "auf Anfrage")
+      if (option && option.priceDisplay) return sum;
       return sum + (option ? option.price * count : 0);
     }, 0);
 
@@ -374,8 +401,29 @@ const PackageBuilder: React.FC = () => {
             <span className="bg-[#e17564] text-white rounded-full w-8 h-8 inline-flex items-center justify-center mr-2">2</span>
             Verkaufsflächen auswählen
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {packageOptions.map((pkg) => (
+          
+          {/* Package Categories */}
+          {['standard', 'cooled', 'premium'].map((category) => {
+            const categoryPackages = packageOptions.filter(pkg => pkg.category === category);
+            const categoryTitles = {
+              standard: 'Standard Regale',
+              cooled: 'Kühl- & Gefrierflächen',
+              premium: 'Premium Bereiche'
+            };
+            const categoryIcons = {
+              standard: '📦',
+              cooled: '❄️', 
+              premium: '⭐'
+            };
+            
+            return (
+              <div key={category} className="mb-6">
+                <h4 className="text-lg font-medium mb-3 flex items-center text-[#09122c]">
+                  <span className="mr-2 text-xl">{categoryIcons[category as keyof typeof categoryIcons]}</span>
+                  {categoryTitles[category as keyof typeof categoryTitles]}
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {categoryPackages.map((pkg) => (
               <div
                 key={pkg.id}
                 className={`border-2 rounded-lg p-4 transition-all duration-200 ${
@@ -386,7 +434,9 @@ const PackageBuilder: React.FC = () => {
               >
                 <div className="flex justify-between items-start mb-2">
                   <h4 className="text-lg font-medium text-[#09122c]">{pkg.name}</h4>
-                  <span className="text-[#e17564] font-bold">{pkg.price}€/Monat</span>
+                  <span className="text-[#e17564] font-bold">
+                    {pkg.priceDisplay || `${pkg.price}€/Monat`}
+                  </span>
                 </div>
                 <p className="text-gray-600 mb-2">{pkg.description}</p>
                 <p className="text-sm text-gray-500 italic">{pkg.detail}</p>
@@ -427,8 +477,11 @@ const PackageBuilder: React.FC = () => {
                   </div>
                 </div>
               </div>
-            ))}
-          </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
         </div>
 
         {/* Schritt 3: Zusatzoptionen wählen */}
@@ -574,7 +627,9 @@ const PackageBuilder: React.FC = () => {
                   return pkg ? (
                     <div key={id} className="flex justify-between">
                       <span>{count}x {pkg.name}</span>
-                      <span className="font-medium">{(pkg.price * count).toFixed(2)}€</span>
+                      <span className="font-medium">
+                        {pkg.priceDisplay ? pkg.priceDisplay : `${(pkg.price * count).toFixed(2)}€`}
+                      </span>
                     </div>
                   ) : null;
                 }).filter(Boolean)}

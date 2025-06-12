@@ -11,15 +11,20 @@ interface Mietfach {
     flaeche: number;
     einheit: string;
   };
-  preis: number;
   standort?: string;
   features?: string[];
+}
+
+interface MietfachAssignment {
+  mietfachId: string;
+  adjustedPrice: number;
+  priceChangeReason?: string;
 }
 
 interface MietfachAssignmentModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (selectedMietfaecher: string[]) => void;
+  onConfirm: (assignments: MietfachAssignment[]) => void;
   user: {
     _id: string;
     kontakt: {
@@ -28,6 +33,7 @@ interface MietfachAssignmentModalProps {
     };
     pendingBooking?: {
       packageData: any;
+      comments?: string;
     };
   };
 }
@@ -40,6 +46,7 @@ const MietfachAssignmentModal: React.FC<MietfachAssignmentModalProps> = ({
 }) => {
   const [availableMietfaecher, setAvailableMietfaecher] = useState<Mietfach[]>([]);
   const [selectedMietfaecher, setSelectedMietfaecher] = useState<string[]>([]);
+  const [priceAdjustments, setPriceAdjustments] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState('');
@@ -49,6 +56,7 @@ const MietfachAssignmentModal: React.FC<MietfachAssignmentModalProps> = ({
       setLoading(true);
       setError('');
       setSelectedMietfaecher([]);
+      setPriceAdjustments({});
       setConfirming(false);
       fetchAvailableMietfaecher();
     }
@@ -76,11 +84,28 @@ const MietfachAssignmentModal: React.FC<MietfachAssignmentModalProps> = ({
   };
 
   const toggleMietfach = (mietfachId: string) => {
-    setSelectedMietfaecher(prev => 
-      prev.includes(mietfachId)
-        ? prev.filter(id => id !== mietfachId)
-        : [...prev, mietfachId]
-    );
+    setSelectedMietfaecher(prev => {
+      const isCurrentlySelected = prev.includes(mietfachId);
+      if (isCurrentlySelected) {
+        // Remove from selection and clear price adjustment
+        setPriceAdjustments(prevPrices => {
+          const newPrices = { ...prevPrices };
+          delete newPrices[mietfachId];
+          return newPrices;
+        });
+        return prev.filter(id => id !== mietfachId);
+      } else {
+        // Add to selection - price will be set manually by admin
+        return [...prev, mietfachId];
+      }
+    });
+  };
+
+  const handlePriceChange = (mietfachId: string, newPrice: number) => {
+    setPriceAdjustments(prev => ({
+      ...prev,
+      [mietfachId]: newPrice
+    }));
   };
 
   const handleConfirm = async () => {
@@ -88,12 +113,39 @@ const MietfachAssignmentModal: React.FC<MietfachAssignmentModalProps> = ({
       setError('Bitte wählen Sie mindestens ein Mietfach aus');
       return;
     }
+
+    // Validate all prices are set and valid
+    for (const mietfachId of selectedMietfaecher) {
+      const adjustedPrice = priceAdjustments[mietfachId];
+      if (adjustedPrice === undefined || adjustedPrice === null) {
+        setError('Bitte setzen Sie für alle ausgewählten Mietfächer einen Preis');
+        return;
+      }
+      if (adjustedPrice < 0) {
+        setError('Preise müssen positive Werte sein');
+        return;
+      }
+      if (adjustedPrice > 1000) {
+        setError('Preise dürfen nicht über 1000€ liegen');
+        return;
+      }
+    }
     
     setConfirming(true);
     setError('');
     
     try {
-      await onConfirm(selectedMietfaecher);
+      // Create assignment objects with price adjustments
+      const assignments: MietfachAssignment[] = selectedMietfaecher.map(mietfachId => {
+        const adjustedPrice = priceAdjustments[mietfachId];
+        
+        return {
+          mietfachId,
+          adjustedPrice: adjustedPrice || 0
+        };
+      });
+
+      await onConfirm(assignments);
     } catch (error) {
       console.error('Error in modal confirmation:', error);
       setError('Fehler beim Bestätigen der Buchung. Bitte versuchen Sie es erneut.');
@@ -121,6 +173,21 @@ const MietfachAssignmentModal: React.FC<MietfachAssignmentModalProps> = ({
             <X className="w-6 h-6" />
           </button>
         </div>
+
+        {/* Vendor Comments - Show prominently at top */}
+        {user.pendingBooking?.comments && (
+          <div className="p-6 bg-amber-50 border-b border-amber-200">
+            <h3 className="text-lg font-semibold text-amber-900 mb-3 flex items-center">
+              <span className="inline-block w-3 h-3 bg-amber-600 rounded-full mr-2"></span>
+              Wichtige Anmerkungen des Direktvermarkters
+            </h3>
+            <div className="bg-white p-4 rounded-lg border border-amber-200">
+              <p className="text-amber-800 whitespace-pre-wrap font-medium">
+                {user.pendingBooking.comments}
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Package Details */}
         {user.pendingBooking?.packageData && (
@@ -277,9 +344,28 @@ const MietfachAssignmentModal: React.FC<MietfachAssignmentModalProps> = ({
                           </div>
                         )}
                         
-                        <div className="font-semibold text-green-600">
-                          {mietfach.preis}€/Monat
-                        </div>
+                        {/* Price Setting for Selected Mietfach */}
+                        {selectedMietfaecher.includes(mietfach._id) && (
+                          <div className="price-adjustment">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Monatspreis festlegen:
+                            </label>
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="number"
+                                value={priceAdjustments[mietfach._id] || ''}
+                                onChange={(e) => handlePriceChange(mietfach._id, parseFloat(e.target.value) || 0)}
+                                min="0"
+                                max="1000"
+                                step="0.01"
+                                placeholder="0.00"
+                                className="w-24 px-2 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                onClick={(e) => e.stopPropagation()}
+                              />
+                              <span className="text-sm text-gray-600">€/Monat</span>
+                            </div>
+                          </div>
+                        )}
                         
                         {mietfach.beschreibung && (
                           <p className="text-gray-500 text-xs mt-2">{mietfach.beschreibung}</p>
@@ -308,6 +394,38 @@ const MietfachAssignmentModal: React.FC<MietfachAssignmentModalProps> = ({
 
         {/* Footer */}
         <div className="flex flex-col gap-4 p-6 border-t bg-gray-50">
+          {/* Price Summary */}
+          {selectedMietfaecher.length > 0 && (
+            <div className="bg-white p-4 rounded-lg border">
+              <h4 className="font-semibold text-gray-800 mb-3">Preisübersicht:</h4>
+              <div className="space-y-2">
+                {selectedMietfaecher.map(mietfachId => {
+                  const mietfach = availableMietfaecher.find(m => m._id === mietfachId);
+                  const price = priceAdjustments[mietfachId] || 0;
+                  
+                  return (
+                    <div key={mietfachId} className="flex justify-between items-center text-sm">
+                      <span className="text-gray-700">{mietfach?.bezeichnung}</span>
+                      <span className="font-medium text-blue-600">
+                        {price.toFixed(2)}€/Monat
+                      </span>
+                    </div>
+                  );
+                })}
+                <div className="border-t pt-2 mt-2">
+                  <div className="flex justify-between items-center font-semibold">
+                    <span>Gesamt:</span>
+                    <span className="text-lg">
+                      {selectedMietfaecher.reduce((total, mietfachId) => {
+                        return total + (priceAdjustments[mietfachId] || 0);
+                      }, 0).toFixed(2)}€/Monat
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Error Display */}
           {error && !loading && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-3">

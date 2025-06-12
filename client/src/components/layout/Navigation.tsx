@@ -1,7 +1,7 @@
 // client/src/components/layout/Navigation.tsx oder Navbar.tsx
 import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
-import { Menu, X, User, LogIn, LayoutDashboard } from 'lucide-react';
+import { Menu, X, User, LogIn } from 'lucide-react';
 import logo from '../../assets/images/logo.svg';
 import { useAuth } from '../../contexts/AuthContext';
 import { useVendorAuth } from '../../contexts/VendorAuthContext';
@@ -58,15 +58,6 @@ const Navigation: React.FC = () => {
               Direktvermarkter
             </NavLink>
             <NavLink 
-              to="/vendors" 
-              className={({ isActive }) => isActive 
-                ? "text-primary border-b-2 border-primary font-medium" 
-                : "hover:text-primary text-secondary border-transparent border-b-2 font-medium"
-              }
-            >
-              Wettbewerb
-            </NavLink>
-            <NavLink 
               to="/standort" 
               className={({ isActive }) => isActive 
                 ? "text-primary border-b-2 border-primary font-medium" 
@@ -116,7 +107,6 @@ const Navigation: React.FC = () => {
                 {isVendorAuth && !vendorUser?.profilBild ? (
                   <User className="w-8 h-8 mr-2 p-1 rounded-full bg-gray-100 text-gray-600" />
                 ) : null}
-                <LayoutDashboard className="w-4 h-4 mr-1" />
                 <span>Dashboard</span>
               </NavLink>
             ) : (
@@ -157,15 +147,6 @@ const Navigation: React.FC = () => {
             onClick={() => setIsOpen(false)}
           >
             Direktvermarkter
-          </NavLink>
-          <NavLink
-            to="/vendors"
-            className={({ isActive }) => `block px-3 py-2 rounded-md font-medium hover:bg-gray-100 ${
-              isActive ? 'text-primary' : 'text-secondary'
-            }`}
-            onClick={() => setIsOpen(false)}
-          >
-            Wettbewerb
           </NavLink>
           <NavLink
             to="/standort"
@@ -218,7 +199,6 @@ const Navigation: React.FC = () => {
               {isVendorAuth && !vendorUser?.profilBild ? (
                 <User className="w-6 h-6 mr-2 p-1 rounded-full bg-gray-100 text-gray-600" />
               ) : null}
-              <LayoutDashboard className="w-4 h-4 mr-2" />
               Dashboard
             </NavLink>
           ) : (

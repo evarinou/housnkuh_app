@@ -7,6 +7,11 @@ import '@testing-library/jest-dom';
 // Mock CSS imports
 jest.mock('leaflet/dist/leaflet.css', () => ({}));
 
+// Mock Leaflet image assets
+jest.mock('leaflet/dist/images/marker-icon-2x.png', () => 'marker-icon-2x.png');
+jest.mock('leaflet/dist/images/marker-icon.png', () => 'marker-icon.png');
+jest.mock('leaflet/dist/images/marker-shadow.png', () => 'marker-shadow.png');
+
 // Mock IntersectionObserver for react-intersection-observer
 (global as any).IntersectionObserver = class IntersectionObserver {
   root = null;

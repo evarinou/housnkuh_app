@@ -1,6 +1,7 @@
 // client/src/pages/FAQPage.tsx
 import React, { useState, useEffect, useCallback } from 'react';
-import { HelpCircle, ChevronDown, ChevronUp, Search, Phone, Mail } from 'lucide-react';
+import { HelpCircle, ChevronDown, Search, Phone, Mail, MessageCircle, Sparkles } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 
 interface FAQItem {
@@ -225,189 +226,276 @@ const FAQPage: React.FC = () => {
   }
 
   return (
-      <div className="max-w-6xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="text-center mb-12">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+      <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+        {/* Animated Header */}
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-12"
+        >
           <div className="flex items-center justify-center mb-6">
-            <HelpCircle className="w-12 h-12 text-primary mr-4" />
-            <h1 className="text-4xl font-bold text-secondary">Häufig gestellte Fragen</h1>
+            <div className="relative">
+              <div className="absolute inset-0 bg-primary/20 rounded-full blur-2xl"></div>
+              <HelpCircle className="w-16 h-16 text-primary relative z-10" />
+            </div>
           </div>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Hier finden Sie Antworten auf die wichtigsten Fragen rund um housnkuh
+          <h1 className="text-4xl md:text-5xl font-bold text-secondary mb-4">
+            Häufig gestellte Fragen
+          </h1>
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            Finden Sie schnell Antworten auf Ihre Fragen oder kontaktieren Sie uns persönlich
           </p>
-        </div>
+        </motion.div>
 
         {/* Search and Filter */}
-        <div className="mb-8 bg-white rounded-lg shadow-md p-6">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="mb-10 bg-white rounded-2xl shadow-lg p-8 border border-gray-100"
+        >
           <div className="flex flex-col md:flex-row gap-4">
             {/* Search */}
-            <div className="flex-1 relative">
-              <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
+            <div className="flex-1 relative group">
+              <Search className="w-5 h-5 text-gray-400 absolute left-4 top-1/2 transform -translate-y-1/2 group-focus-within:text-primary transition-colors" />
               <input
                 type="text"
-                placeholder="Frage oder Stichwort eingeben..."
+                placeholder="Suchen Sie nach Stichworten..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent focus:bg-white transition-all duration-300"
               />
             </div>
             
             {/* Category Filter */}
-            <div className="md:w-64">
+            <div className="md:w-72">
               <select
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                className="w-full px-6 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent focus:bg-white transition-all duration-300 cursor-pointer"
               >
-                <option value="all">Alle Kategorien</option>
+                <option value="all">🔍 Alle Kategorien</option>
                 {categories.slice(1).map(category => (
-                  <option key={category} value={category}>{category}</option>
+                  <option key={category} value={category}>
+                    {category === 'Allgemein' && '📌 '}
+                    {category === 'Registrierung' && '👤 '}
+                    {category === 'Buchungen' && '📅 '}
+                    {category === 'Zahlungen' && '💳 '}
+                    {category === 'Produkte' && '🛍️ '}
+                    {category === 'Support' && '💬 '}
+                    {category}
+                  </option>
                 ))}
               </select>
             </div>
           </div>
           
           {searchTerm && (
-            <div className="mt-4 text-sm text-gray-600">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="mt-4 text-sm text-gray-600 flex items-center"
+            >
+              <Sparkles className="w-4 h-4 text-primary mr-2" />
               {filteredItems.length} Ergebnis{filteredItems.length !== 1 ? 'se' : ''} für "{searchTerm}"
-            </div>
+            </motion.div>
           )}
-        </div>
+        </motion.div>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Category Sidebar */}
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg shadow-md p-6 sticky top-6">
-              <h3 className="text-lg font-semibold text-secondary mb-4">Kategorien</h3>
+          <motion.div 
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+            className="lg:col-span-1"
+          >
+            <div className="bg-white rounded-2xl shadow-lg p-6 sticky top-6 border border-gray-100">
+              <h3 className="text-xl font-bold text-secondary mb-6 flex items-center">
+                <MessageCircle className="w-5 h-5 mr-2 text-primary" />
+                Kategorien
+              </h3>
               <nav className="space-y-2">
                 {categories.map(category => {
                   const count = category === 'all' ? faqItems.length : faqItems.filter(item => item.category === category).length;
                   return (
-                    <button
+                    <motion.button
                       key={category}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
                       onClick={() => setSelectedCategory(category)}
-                      className={`w-full text-left px-3 py-2 rounded-md transition-colors ${
+                      className={`w-full text-left px-4 py-3 rounded-xl transition-all duration-300 ${
                         selectedCategory === category
-                          ? 'bg-primary text-white'
-                          : 'text-gray-700 hover:bg-gray-100'
+                          ? 'bg-gradient-to-r from-primary to-primary/80 text-white shadow-md'
+                          : 'text-gray-700 hover:bg-gray-50 hover:shadow-sm'
                       }`}
                     >
                       <span className="flex justify-between items-center">
-                        <span>{category === 'all' ? 'Alle Fragen' : category}</span>
-                        <span className="text-sm opacity-75">({count})</span>
+                        <span className="font-medium">{category === 'all' ? 'Alle Fragen' : category}</span>
+                        <span className={`text-sm ${selectedCategory === category ? 'bg-white/20' : 'bg-gray-100'} px-2 py-1 rounded-full`}>
+                          {count}
+                        </span>
                       </span>
-                    </button>
+                    </motion.button>
                   );
                 })}
               </nav>
               
               {/* Quick Contact */}
-              <div className="mt-8 p-4 bg-primary/10 rounded-lg">
-                <h4 className="font-semibold text-secondary mb-3">Noch Fragen?</h4>
-                <div className="space-y-2 text-sm">
-                  <div className="flex items-center">
-                    <Phone className="w-4 h-4 text-primary mr-2" />
-                    <a href="tel:+4915735711257" className="text-primary hover:underline">
-                      0157 35711257
-                    </a>
-                  </div>
-                  <div className="flex items-center">
-                    <Mail className="w-4 h-4 text-primary mr-2" />
-                    <a href="mailto:info@housnkuh.de" className="text-primary hover:underline">
-                      info@housnkuh.de
-                    </a>
-                  </div>
+              <div className="mt-8 p-6 bg-gradient-to-br from-primary/10 to-primary/5 rounded-xl">
+                <h4 className="font-bold text-secondary mb-4">Persönliche Hilfe</h4>
+                <div className="space-y-3">
+                  <a href="tel:+4915735711257" className="flex items-center text-sm group">
+                    <div className="bg-white p-2 rounded-lg mr-3 group-hover:shadow-md transition-all duration-300">
+                      <Phone className="w-4 h-4 text-primary" />
+                    </div>
+                    <span className="text-gray-700 group-hover:text-primary transition-colors">0157 35711257</span>
+                  </a>
+                  <a href="mailto:info@housnkuh.de" className="flex items-center text-sm group">
+                    <div className="bg-white p-2 rounded-lg mr-3 group-hover:shadow-md transition-all duration-300">
+                      <Mail className="w-4 h-4 text-primary" />
+                    </div>
+                    <span className="text-gray-700 group-hover:text-primary transition-colors">info@housnkuh.de</span>
+                  </a>
                 </div>
               </div>
             </div>
-          </div>
+          </motion.div>
 
           {/* FAQ Items */}
-          <div className="lg:col-span-3">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+            className="lg:col-span-3"
+          >
             <div className="space-y-4">
-              {filteredItems.map((item) => (
-                <div key={item._id} className="bg-white rounded-lg shadow-md overflow-hidden">
+              {filteredItems.map((item, index) => (
+                <motion.div 
+                  key={item._id} 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: index * 0.05 }}
+                  className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 border border-gray-100"
+                >
                   <button
                     onClick={() => toggleExpanded(item._id)}
-                    className="w-full px-6 py-4 text-left flex justify-between items-center hover:bg-gray-50 transition-colors"
+                    className="w-full px-8 py-6 text-left flex justify-between items-center hover:bg-gray-50 transition-all duration-300 group"
                   >
-                    <div className="flex-1">
-                      <div className="flex items-center mb-1">
-                        <span className="inline-block px-2 py-1 text-xs font-medium bg-primary/10 text-primary rounded mr-3">
+                    <div className="flex-1 pr-4">
+                      <div className="flex items-center mb-2">
+                        <span className="inline-block px-3 py-1 text-xs font-bold bg-gradient-to-r from-primary/20 to-primary/10 text-primary rounded-full">
                           {item.category}
                         </span>
                       </div>
-                      <h3 className="text-lg font-semibold text-secondary">
+                      <h3 className="text-lg font-bold text-secondary group-hover:text-primary transition-colors duration-300">
                         {item.question}
                       </h3>
                     </div>
-                    {expandedItems.includes(item._id) ? (
-                      <ChevronUp className="w-5 h-5 text-gray-400 flex-shrink-0 ml-4" />
-                    ) : (
-                      <ChevronDown className="w-5 h-5 text-gray-400 flex-shrink-0 ml-4" />
-                    )}
+                    <motion.div
+                      animate={{ rotate: expandedItems.includes(item._id) ? 180 : 0 }}
+                      transition={{ duration: 0.3 }}
+                      className="flex-shrink-0"
+                    >
+                      <ChevronDown className="w-6 h-6 text-primary" />
+                    </motion.div>
                   </button>
                   
-                  {expandedItems.includes(item._id) && (
-                    <div className="px-6 pb-6">
-                      <div className="pt-4 border-t border-gray-100">
-                        <p className="text-gray-700 leading-relaxed">
-                          {item.answer}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                </div>
+                  <AnimatePresence>
+                    {expandedItems.includes(item._id) && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="px-8 pb-6">
+                          <div className="pt-4 border-t border-gray-100">
+                            <p className="text-gray-700 leading-relaxed">
+                              {item.answer}
+                            </p>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
               ))}
               
               {filteredItems.length === 0 && (
-                <div className="text-center py-12 bg-white rounded-lg shadow-md">
-                  <HelpCircle className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-600 mb-2">
+                <motion.div 
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="text-center py-16 bg-white rounded-2xl shadow-lg border border-gray-100"
+                >
+                  <HelpCircle className="w-20 h-20 text-gray-300 mx-auto mb-6" />
+                  <h3 className="text-xl font-bold text-gray-600 mb-3">
                     Keine Ergebnisse gefunden
                   </h3>
-                  <p className="text-gray-500 mb-4">
+                  <p className="text-gray-500 mb-6 max-w-md mx-auto">
                     Versuchen Sie es mit anderen Suchbegriffen oder wählen Sie eine andere Kategorie.
                   </p>
-                  <button
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
                     onClick={() => {
                       setSearchTerm('');
                       setSelectedCategory('all');
                     }}
-                    className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+                    className="px-6 py-3 bg-gradient-to-r from-primary to-primary/80 text-white rounded-xl hover:shadow-lg transition-all duration-300 font-medium"
                   >
                     Alle FAQs anzeigen
-                  </button>
-                </div>
+                  </motion.button>
+                </motion.div>
               )}
             </div>
-          </div>
+          </motion.div>
         </div>
 
         {/* Bottom Contact Section */}
-        <div className="mt-16 bg-gradient-to-r from-primary to-orange-500 rounded-lg p-8 text-white text-center">
-          <h2 className="text-2xl font-bold mb-4">Ihre Frage war nicht dabei?</h2>
-          <p className="text-lg mb-6 opacity-90">
-            Unser Support-Team hilft Ihnen gerne persönlich weiter.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <a
-              href="tel:+4915735711257"
-              className="inline-flex items-center px-6 py-3 bg-white text-primary rounded-lg hover:bg-gray-100 transition-colors font-medium"
-            >
-              <Phone className="w-5 h-5 mr-2" />
-              Jetzt anrufen
-            </a>
-            <a
-              href="mailto:info@housnkuh.de"
-              className="inline-flex items-center px-6 py-3 bg-white/10 text-white border border-white/20 rounded-lg hover:bg-white/20 transition-colors font-medium"
-            >
-              <Mail className="w-5 h-5 mr-2" />
-              E-Mail schreiben
-            </a>
+        <motion.div 
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.6 }}
+          className="mt-20 bg-gradient-to-r from-primary to-primary/80 rounded-3xl p-12 text-white text-center shadow-2xl relative overflow-hidden"
+        >
+          {/* Decorative elements */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+          <div className="absolute bottom-0 left-0 w-64 h-64 bg-white/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2"></div>
+          
+          <div className="relative z-10">
+            <Sparkles className="w-12 h-12 mx-auto mb-4 text-white/80" />
+            <h2 className="text-3xl font-bold mb-4">Ihre Frage war nicht dabei?</h2>
+            <p className="text-xl mb-8 opacity-90 max-w-2xl mx-auto">
+              Unser Support-Team hilft Ihnen gerne persönlich weiter und beantwortet alle Ihre Fragen.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <motion.a
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                href="tel:+4915735711257"
+                className="inline-flex items-center px-8 py-4 bg-white text-primary rounded-xl hover:shadow-lg transition-all duration-300 font-bold"
+              >
+                <Phone className="w-5 h-5 mr-3" />
+                Jetzt anrufen
+              </motion.a>
+              <motion.a
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                href="mailto:info@housnkuh.de"
+                className="inline-flex items-center px-8 py-4 bg-white/20 text-white border-2 border-white/30 rounded-xl hover:bg-white/30 transition-all duration-300 font-bold backdrop-blur-sm"
+              >
+                <Mail className="w-5 h-5 mr-3" />
+                E-Mail schreiben
+              </motion.a>
+            </div>
           </div>
-        </div>
+        </motion.div>
       </div>
+    </div>
   );
 };
 

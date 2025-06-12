@@ -345,7 +345,7 @@ describe('VendorRegistrationModal', () => {
       expect(screen.getByText(/Schritt 1 von 4/i)).toBeInTheDocument();
       
       // Fill step 1 and go to step 2
-      await userEvent.type(screen.getByLabelText(/Name \*/i), 'Test');
+      await userEvent.type(screen.getByLabelText(/Vollständiger Name \*/i), 'Test');
       await userEvent.type(screen.getByLabelText(/E-Mail \*/i), 'test@vendor.com');
       await userEvent.type(screen.getByLabelText(/Passwort \*/i), 'Pass123!');
       await userEvent.type(screen.getByLabelText(/Passwort bestätigen \*/i), 'Pass123!');

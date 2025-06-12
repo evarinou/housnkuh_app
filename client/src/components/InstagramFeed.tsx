@@ -20,7 +20,7 @@ const InstagramFeed: React.FC = () => {
   }, []);
 
   return (
-    <section className="py-12 bg-gray-50">
+    <section className="py-8">
       <div className="max-w-6xl mx-auto px-4">
         <div className="mb-8 flex items-center justify-center gap-3">
           <Instagram className="w-6 h-6 text-primary" />

@@ -251,15 +251,28 @@ export const getAvailableMietfaecher = async (req: Request, res: Response): Prom
 export const confirmPendingBooking = async (req: Request, res: Response): Promise<void> => {
   try {
     const { userId } = req.params;
-    const { assignedMietfaecher } = req.body; // Array von Mietfach-IDs
+    const { assignedMietfaecher, priceAdjustments } = req.body; // Array von Mietfach-IDs und optionale Preisanpassungen
     
-    console.log('confirmPendingBooking called with:', { userId, assignedMietfaecher });
+    console.log('confirmPendingBooking called with:', { userId, assignedMietfaecher, priceAdjustments });
+    
+    // Import validation utilities
+    const { validatePriceAdjustments } = require('../utils/validation');
     
     if (!assignedMietfaecher || !Array.isArray(assignedMietfaecher) || assignedMietfaecher.length === 0) {
       console.log('Validation failed: assignedMietfaecher invalid', assignedMietfaecher);
       res.status(400).json({ 
         success: false, 
         message: 'Mindestens ein Mietfach muss zugeordnet werden' 
+      });
+      return;
+    }
+    
+    // Validate price adjustments
+    const priceValidation = validatePriceAdjustments(priceAdjustments, assignedMietfaecher);
+    if (!priceValidation.isValid) {
+      res.status(400).json({ 
+        success: false, 
+        message: priceValidation.message 
       });
       return;
     }
@@ -317,7 +330,7 @@ export const confirmPendingBooking = async (req: Request, res: Response): Promis
     // Vertrag aus pendingBooking-Daten erstellen
     const { createVertragFromPendingBooking } = require('./vertragController');
     
-    const vertragData = await createVertragFromPendingBooking(userId, user.pendingBooking.packageData, assignedMietfaecher);
+    const vertragData = await createVertragFromPendingBooking(userId, user.pendingBooking.packageData, assignedMietfaecher, priceValidation.validAdjustments);
     
     if (!vertragData.success) {
       res.status(500).json({ 
