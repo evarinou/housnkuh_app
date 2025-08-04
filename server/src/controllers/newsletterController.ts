@@ -1,4 +1,9 @@
-// server/src/controllers/newsletterController.ts
+/**
+ * @file Newsletter controller for the housnkuh marketplace application
+ * @description Newsletter subscription management controller with email confirmation
+ * Handles newsletter subscriptions, confirmations, and unsubscriptions
+ */
+
 import { Request, Response } from 'express';
 import User from '../models/User';
 import crypto from 'crypto';
@@ -40,7 +45,7 @@ export const subscribeNewsletter = async (req: Request, res: Response): Promise<
         console.log('User already subscribed and confirmed');
         res.status(200).json({ 
           success: true, 
-          message: 'Sie sind bereits für den Newsletter angemeldet' 
+          message: 'Du bist bereits für den Newsletter angemeldet' 
         });
         return;
       }
@@ -88,7 +93,7 @@ export const subscribeNewsletter = async (req: Request, res: Response): Promise<
       console.log('Confirmation email sent successfully');
       res.status(200).json({ 
         success: true, 
-        message: 'Bitte bestätigen Sie Ihre E-Mail-Adresse' 
+        message: 'Bitte bestätige deine E-Mail-Adresse' 
       });
       return;
     }
@@ -146,7 +151,7 @@ export const subscribeNewsletter = async (req: Request, res: Response): Promise<
     console.log('Confirmation email sent successfully to new user');
     res.status(201).json({ 
       success: true, 
-      message: 'Bitte bestätigen Sie Ihre E-Mail-Adresse' 
+      message: 'Bitte bestätige deine E-Mail-Adresse' 
     });
   } catch (err) {
     console.error('Unexpected error in newsletter subscription:', err);
@@ -259,7 +264,7 @@ export const unsubscribeNewsletter = async (req: Request, res: Response): Promis
     
     res.status(200).json({ 
       success: true, 
-      message: 'Sie wurden erfolgreich vom Newsletter abgemeldet' 
+      message: 'Du wurdest erfolgreich vom Newsletter abgemeldet' 
     });
   } catch (err) {
     console.error('Fehler bei der Newsletter-Abmeldung:', err);

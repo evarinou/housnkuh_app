@@ -1,4 +1,9 @@
-// server/src/controllers/vendorAuthController.ts
+/**
+ * @file Vendor Authentication controller for the housnkuh marketplace application
+ * @description Comprehensive vendor authentication and registration management
+ * Handles pre-registration, trial activation, booking management, and vendor profile operations
+ */
+
 import { Request, Response } from 'express';
 import User from '../models/User';
 import Vertrag from '../models/Vertrag';
@@ -10,11 +15,20 @@ import fs from 'fs';
 import path from 'path';
 import multer from 'multer';
 import config from '../config/config';
-import { sendVendorWelcomeEmail, sendPreRegistrationConfirmation, sendTrialActivationEmail, sendCancellationConfirmationEmail, sendBookingConfirmation } from '../utils/emailService';
+import { sendPreRegistrationConfirmation, sendTrialActivationEmail, sendCancellationConfirmationEmail, sendBookingConfirmation } from '../utils/emailService';
 import Settings from '../models/Settings';
 import mongoose from 'mongoose';
+import { BookingStatus } from '../types/modelTypes';
+import logger from '../utils/logger';
 
-// Pre-Registrierung für Direktvermarkter vor Store-Eröffnung (M001 R001)
+/**
+ * Pre-registration for vendors before store opening
+ * @description Handles vendor pre-registration with complete profile data validation and email confirmation
+ * @param req - Express request object with vendor registration data
+ * @param res - Express response object with registration confirmation
+ * @returns Promise<void> - Resolves with success status or error message
+ * @complexity O(1) - Single database operation with email sending
+ */
 export const preRegisterVendor = async (req: Request, res: Response): Promise<void> => {
   try {
     const {
@@ -35,7 +49,7 @@ export const preRegisterVendor = async (req: Request, res: Response): Promise<vo
       beschreibung
     } = req.body;
     
-    console.log('Pre-Registration Anfrage erhalten:', { email, name, unternehmen });
+    logger.info('Pre-Registration Anfrage erhalten:', { email, name, unternehmen });
     
     // Validierung der Pflichtfelder
     if (!email || !password || !name || !strasse || !hausnummer || !plz || !ort) {
@@ -51,7 +65,7 @@ export const preRegisterVendor = async (req: Request, res: Response): Promise<vo
     if (settings.isStoreOpen()) {
       res.status(400).json({ 
         success: false, 
-        message: 'Der Store ist bereits eröffnet. Bitte nutzen Sie die reguläre Registrierung.' 
+        message: 'Der Store ist bereits eröffnet. Bitte nutze die reguläre Registrierung.' 
       });
       return;
     }
@@ -61,7 +75,7 @@ export const preRegisterVendor = async (req: Request, res: Response): Promise<vo
     if (!emailRegex.test(email)) {
       res.status(400).json({ 
         success: false, 
-        message: 'Bitte geben Sie eine gültige E-Mail-Adresse ein' 
+        message: 'Bitte gib eine gültige E-Mail-Adresse ein' 
       });
       return;
     }
@@ -92,6 +106,8 @@ export const preRegisterVendor = async (req: Request, res: Response): Promise<vo
       registrationStatus: 'preregistered', // Explizit als pre-registered markieren
       registrationDate: new Date(),
       isPubliclyVisible: false, // Nicht öffentlich sichtbar bis manuell freigeschaltet
+      provisionssatz: 7, // Default to Premium model (7%) for new vendors
+      modelltyp: 'Premium',
       
       kontakt: {
         name,
@@ -119,7 +135,7 @@ export const preRegisterVendor = async (req: Request, res: Response): Promise<vo
     });
     
     const savedUser = await newUser.save();
-    console.log('Pre-Registration erfolgreich:', savedUser._id);
+    logger.info('Pre-Registration erfolgreich:', { userId: savedUser._id });
     
     // Eröffnungsdatum für Response vorbereiten
     const openingInfo = settings.storeOpening.enabled && settings.storeOpening.openingDate 
@@ -135,22 +151,22 @@ export const preRegisterVendor = async (req: Request, res: Response): Promise<vo
         name,
         openingDate: settings.storeOpening.openingDate
       });
-      console.log('Pre-registration confirmation email sent successfully');
+      logger.info('Pre-registration confirmation email sent successfully');
     } catch (emailError) {
-      console.error('Failed to send pre-registration confirmation email:', emailError);
+      logger.error('Failed to send pre-registration confirmation email:', emailError);
       // Continue with registration even if email fails
     }
     
     res.status(201).json({ 
       success: true, 
-      message: 'Pre-Registrierung erfolgreich! Ihr kostenloser Probemonat startet automatisch mit der Store-Eröffnung.',
+      message: 'Pre-Registrierung erfolgreich! Dein kostenloser Probemonat startet automatisch mit der Store-Eröffnung.',
       userId: savedUser._id,
       status: 'preregistered',
       openingInfo
     });
     
   } catch (err) {
-    console.error('Fehler bei der Pre-Registrierung:', err);
+    logger.error('Fehler bei der Pre-Registrierung:', err);
     res.status(500).json({ 
       success: false, 
       message: 'Ein Serverfehler ist aufgetreten' 
@@ -161,12 +177,14 @@ export const preRegisterVendor = async (req: Request, res: Response): Promise<vo
 // Registrierung für Direktvermarkter mit Package-Buchung
 export const registerVendorWithBooking = async (req: Request, res: Response): Promise<void> => {
   try {
-    console.log('=== VENDOR REGISTRATION WITH BOOKING START ===');
-    console.log('Request body keys:', Object.keys(req.body));
-    console.log('Package data present:', !!req.body.packageData);
+    logger.info('=== VENDOR REGISTRATION WITH BOOKING START ===');
+    logger.debug('Request body keys:', { keys: Object.keys(req.body) });
+    logger.debug('Package data present:', { present: !!req.body.packageData });
     if (req.body.packageData) {
-      console.log('Package data keys:', Object.keys(req.body.packageData));
-      console.log('Full package data:', JSON.stringify(req.body.packageData, null, 2));
+      logger.debug('Package data keys:', { keys: Object.keys(req.body.packageData) });
+      logger.debug('Full package data:', { packageData: req.body.packageData });
+      logger.debug('Discount value in packageData:', { discount: req.body.packageData?.discount });
+      logger.debug('Rental duration:', { duration: req.body.packageData?.rentalDuration });
     }
     
     const {
@@ -206,7 +224,7 @@ export const registerVendorWithBooking = async (req: Request, res: Response): Pr
     if (!validateEmail(email)) {
       res.status(400).json({ 
         success: false, 
-        message: 'Bitte geben Sie eine gültige E-Mail-Adresse ein' 
+        message: 'Bitte gib eine gültige E-Mail-Adresse ein' 
       });
       return;
     }
@@ -239,7 +257,7 @@ export const registerVendorWithBooking = async (req: Request, res: Response): Pr
     if (existingUser && existingUser.isFullAccount) {
       res.status(400).json({ 
         success: false, 
-        message: 'Ein vollständiger Account mit dieser E-Mail existiert bereits. Bitte melden Sie sich an.' 
+        message: 'Ein vollständiger Account mit dieser E-Mail existiert bereits. Bitte melde dich an.' 
       });
       return;
     }
@@ -264,13 +282,14 @@ export const registerVendorWithBooking = async (req: Request, res: Response): Pr
     let user;
     if (existingUser && !existingUser.isFullAccount) {
       // Existierenden Newsletter-Account zu vollständigem Account erweitern
-      console.log(`Erweiterung eines bestehenden Newsletter-Accounts (${existingUser._id}) zu einem Vendor-Account`);
+      logger.info('Erweiterung eines bestehenden Newsletter-Accounts zu einem Vendor-Account:', { userId: existingUser._id });
       
       user = existingUser;
       user.username = username;
       user.password = hashedPassword;
       user.isFullAccount = true;
       user.isVendor = true;
+      user.email = email;
       
       // Set registration status based on store status
       if (isStoreOpen) {
@@ -290,11 +309,12 @@ export const registerVendorWithBooking = async (req: Request, res: Response): Pr
       user.kontakt = {
         ...user.kontakt,
         name,
+        email,
         telefon,
         newslettertype: 'vendor',
         confirmationToken: emailConfirmationToken,
         tokenExpires,
-        status: 'pending',
+        status: BookingStatus.PENDING,
         // Newsletter-Status beibehalten, falls bereits bestätigt
         newsletterConfirmed: existingNewsletterConfirmed
       };
@@ -323,20 +343,22 @@ export const registerVendorWithBooking = async (req: Request, res: Response): Pr
       }
       
       // Buchung hinzufügen
-      console.log('Adding pendingBooking to existing user');
+      logger.info('Adding pendingBooking to existing user');
       user.pendingBooking = {
         packageData,
         comments: sanitizedComments,
         createdAt: new Date(),
-        status: 'pending'
+        requestedAt: new Date(),
+        status: BookingStatus.PENDING
       };
     } else {
       // Neuen Account erstellen
-      console.log('Erstellen eines neuen Vendor-Accounts');
+      logger.info('Erstellen eines neuen Vendor-Accounts');
       
       user = new User({
         username,
         password: hashedPassword,
+        email,
         isFullAccount: true,
         isVendor: true,
         registrationStatus: isStoreOpen ? 'trial_active' : 'preregistered',
@@ -386,40 +408,48 @@ export const registerVendorWithBooking = async (req: Request, res: Response): Pr
     
     const savedUser = await user.save();
     
-    console.log('User saved successfully with ID:', savedUser._id);
-    console.log('User pendingBooking status:', savedUser.pendingBooking?.status);
-    console.log('User isVendor:', savedUser.isVendor);
+    logger.info('User saved successfully:', { userId: savedUser._id });
+    logger.info('User pendingBooking status:', { status: savedUser.pendingBooking?.status });
+    logger.info('User isVendor:', { isVendor: savedUser.isVendor });
     
     // Buchungsbestätigungs-E-Mail senden (mit Package-Details und Bestätigungslink)
-    console.log('Sending booking confirmation email with package details to:', email);
-    console.log('Email token:', emailConfirmationToken);
-    console.log('Package data for email:', JSON.stringify(packageData, null, 2));
+    logger.info('Sending booking confirmation email with package details to:', { email });
+    logger.debug('Email token:', { token: emailConfirmationToken });
+    logger.debug('Package data for email:', { packageData });
     
     const bookingEmailSent = await sendBookingConfirmation({
       vendorName: name,
       email: email,
       confirmationToken: emailConfirmationToken,
-      packageData: packageData
+      packageData: packageData,
+      zusatzleistungen: packageData.zusatzleistungen ? {
+        lagerservice: packageData.zusatzleistungen.lagerservice || false,
+        versandservice: packageData.zusatzleistungen.versandservice || false,
+        lagerservice_kosten: packageData.zusatzleistungen.lagerservice ? 20 : 0,
+        versandservice_kosten: packageData.zusatzleistungen.versandservice ? 5 : 0
+      } : undefined
     });
     
     if (!bookingEmailSent) {
-      console.error('Failed to send booking confirmation email');
-      res.status(500).json({ 
-        success: false, 
-        message: 'Account erstellt, aber E-Mail konnte nicht gesendet werden' 
+      logger.error('Failed to send booking confirmation email');
+      res.status(201).json({ 
+        success: true, 
+        message: 'Account erstellt, aber E-Mail konnte nicht gesendet werden. Bitte kontaktiere den Support.',
+        userId: user._id,
+        emailWarning: true
       });
       return;
     }
     
-    console.log('Booking confirmation email sent successfully');
+    logger.info('Booking confirmation email sent successfully');
     
     res.status(201).json({ 
       success: true, 
-      message: 'Account erstellt. Bitte bestätigen Sie Ihre E-Mail-Adresse.',
+      message: 'Account erstellt. Bitte bestätige deine E-Mail-Adresse.',
       userId: user._id 
     });
   } catch (err) {
-    console.error('Fehler bei der Vendor-Registrierung:', err);
+    logger.error('Fehler bei der Vendor-Registrierung:', err);
     res.status(500).json({ 
       success: false, 
       message: 'Ein Serverfehler ist aufgetreten' 
@@ -451,6 +481,15 @@ export const loginVendor = async (req: Request, res: Response): Promise<void> =>
       res.status(401).json({ 
         success: false, 
         message: 'Ungültige Anmeldedaten' 
+      });
+      return;
+    }
+    
+    // Check if email is confirmed
+    if (!user.kontakt.newsletterConfirmed || user.kontakt.status !== 'aktiv') {
+      res.status(401).json({ 
+        success: false, 
+        message: 'Bitte bestätige zuerst deine E-Mail-Adresse, bevor du dich anmeldest' 
       });
       return;
     }
@@ -491,7 +530,7 @@ export const loginVendor = async (req: Request, res: Response): Promise<void> =>
       }
     });
   } catch (err) {
-    console.error('Login-Fehler:', err);
+    logger.error('Login-Fehler:', err);
     res.status(500).json({ 
       success: false, 
       message: 'Serverfehler bei der Anmeldung' 
@@ -501,20 +540,24 @@ export const loginVendor = async (req: Request, res: Response): Promise<void> =>
 
 // E-Mail-Bestätigung für Direktvermarkter
 export const confirmVendorEmail = async (req: Request, res: Response): Promise<void> => {
+  const securityLogger = require('../utils/securityLogger').default;
+  
   try {
     const { token } = req.params;
     
-    console.log('Confirming vendor email with token:', token);
-    
-    // Debug: Versuchen alle User mit Confirmation Tokens zu finden
-    if (process.env.NODE_ENV === 'development') {
-      const allUsersWithTokens = await User.find({
-        'kontakt.confirmationToken': { $ne: null }
-      }).select('_id kontakt.email kontakt.confirmationToken kontakt.tokenExpires isVendor');
-      
-      console.log('All users with tokens:', JSON.stringify(allUsersWithTokens, null, 2));
+    // Input validation - token should be validated by middleware
+    if (!token || typeof token !== 'string') {
+      securityLogger.logInvalidToken(req, 'email_confirmation', token || 'empty');
+      res.status(400).json({ 
+        success: false, 
+        message: 'Ungültiger Bestätigungs-Link' 
+      });
+      return;
     }
     
+    logger.info('Confirming vendor email with token:', { tokenPrefix: token.substring(0, 8) + '...' });
+    
+    // Find user with valid token - no fallback logic for security
     const user = await User.findOne({ 
       'kontakt.confirmationToken': token,
       'kontakt.tokenExpires': { $gt: new Date() },
@@ -522,45 +565,66 @@ export const confirmVendorEmail = async (req: Request, res: Response): Promise<v
     });
     
     if (!user) {
-      // Im Entwicklungsmodus einen Test-Vendor finden oder einen fallback anwenden
-      if (process.env.NODE_ENV === 'development') {
-        console.log('Development mode: Token not found or expired. Using development fallback.');
-        console.log('Provided token:', token);
-        
-        // Versuche einen Testbenutzer zu finden
-        const testUser = await User.findOne({ 
-          isVendor: true, 
-          'kontakt.email': { $regex: /test|example/i } 
+      // Check if token exists but is expired
+      const expiredTokenUser = await User.findOne({
+        'kontakt.confirmationToken': token,
+        isVendor: true
+      });
+      
+      if (expiredTokenUser) {
+        securityLogger.logTokenExpired(req, 'email_confirmation', String(expiredTokenUser._id));
+        res.status(400).json({ 
+          success: false, 
+          message: 'Bestätigungs-Link ist abgelaufen. Bitte registrieren Sie sich erneut.' 
         });
-        
-        if (testUser) {
-          console.log('Development mode: Using test vendor for confirmation:', testUser._id);
-          testUser.kontakt.newsletterConfirmed = true;
-          testUser.kontakt.status = 'aktiv';
-          testUser.kontakt.confirmationToken = null;
-          testUser.kontakt.tokenExpires = null;
-          
-          await testUser.save();
-          
-          res.status(200).json({ 
-            success: true, 
-            message: '[DEV] Vendor-E-Mail erfolgreich bestätigt (Test-Modus)',
-            userId: testUser._id
-          });
-          return;
-        } else {
-          console.log('Development mode: No test vendor found, simulating success');
-          res.status(200).json({
-            success: true,
-            message: '[DEV] Bestätigung simuliert (im Entwicklungsmodus)'
-          });
-          return;
-        }
+        return;
       }
       
+      // Token doesn't exist - could be already used or invalid
+      // Check if there are any confirmed users (since tokens are cleared after use)
+      const anyConfirmedUser = await User.findOne({
+        'kontakt.newsletterConfirmed': true,
+        'kontakt.status': 'aktiv',
+        isVendor: true
+      });
+      
+      if (anyConfirmedUser) {
+        // If there are confirmed users, this token was likely already used
+        securityLogger.logEmailConfirmation(req, token, true, 'unknown', { 
+          reason: 'token_already_used',
+          message: 'Token not found - likely already used'
+        });
+        res.status(200).json({ 
+          success: true, 
+          message: 'E-Mail-Adresse bereits bestätigt',
+          alreadyConfirmed: true
+        });
+        return;
+      }
+      
+      // No confirmed users exist, so this is truly an invalid token
+      securityLogger.logInvalidToken(req, 'email_confirmation', token);
       res.status(400).json({ 
         success: false, 
         message: 'Ungültiger oder abgelaufener Bestätigungs-Link' 
+      });
+      return;
+    }
+    
+    // Check if user is already confirmed
+    if (user.kontakt.newsletterConfirmed && user.kontakt.status === 'aktiv') {
+      securityLogger.logEmailConfirmation(req, token, true, String(user._id), { 
+        reason: 'already_confirmed',
+        email: user.kontakt.email 
+      });
+      res.status(200).json({ 
+        success: true, 
+        message: 'E-Mail-Adresse bereits bestätigt',
+        alreadyConfirmed: true,
+        userId: user._id,
+        vendor: {
+          packageData: user.pendingBooking?.packageData || null
+        }
       });
       return;
     }
@@ -573,10 +637,16 @@ export const confirmVendorEmail = async (req: Request, res: Response): Promise<v
     
     await user.save();
     
+    // Log successful email confirmation
+    securityLogger.logEmailConfirmation(req, token, true, String(user._id), { 
+      email: user.kontakt.email,
+      previousStatus: user.kontakt.status 
+    });
+    
     // Do NOT create contract here - wait for admin to assign Mietfächer
     // This ensures the booking appears in admin dashboard as "Ausstehende Buchungen"
     if (user.pendingBooking && user.pendingBooking.packageData) {
-      console.log('User has pending booking - waiting for admin to assign Mietfächer');
+      logger.info('User has pending booking - waiting for admin to assign Mietfächer');
     }
     
     // If user is in trial status and store is open, send trial activation email
@@ -589,13 +659,75 @@ export const confirmVendorEmail = async (req: Request, res: Response): Promise<v
       );
     }
     
+    // Calculate correct pricing using the universal PriceCalculationService
+    let correctedPackageData = null;
+    if (user.pendingBooking?.packageData) {
+      try {
+        const { PriceCalculationService } = require('../services/priceCalculationService');
+        const packageData = user.pendingBooking.packageData;
+        
+        // Prepare package options for price calculation
+        const packageOptions: any[] = [];
+        if (packageData.packageCounts && packageData.packageOptions) {
+          Object.entries(packageData.packageCounts).forEach(([packageId, count]: [string, any]) => {
+            const numCount = Number(count);
+            if (numCount > 0) {
+              const option = packageData.packageOptions.find((p: any) => p.id === packageId);
+              if (option) {
+                packageOptions.push({
+                  id: option.id,
+                  name: option.name,
+                  price: option.price,
+                  count: numCount
+                });
+              }
+            }
+          });
+        }
+        
+        // Calculate price using the service
+        const priceBreakdown = PriceCalculationService.calculatePrice({
+          packageOptions,
+          zusatzleistungen: packageData.zusatzleistungen,
+          rentalDuration: packageData.rentalDuration || 3,
+          provisionRate: packageData.selectedProvisionType === 'premium' ? 7 : 4,
+          discount: packageData.discount
+        });
+        
+        // Update packageData with corrected pricing
+        correctedPackageData = {
+          ...packageData,
+          totalCost: {
+            ...packageData.totalCost,
+            monthly: priceBreakdown.monthlyTotal,
+            packageCosts: priceBreakdown.packageCosts,
+            zusatzleistungenCosts: priceBreakdown.zusatzleistungenCosts,
+            subtotal: priceBreakdown.subtotal,
+            discountAmount: priceBreakdown.discountAmount,
+            discount: priceBreakdown.discount / 100, // Convert back to decimal for frontend
+            provision: packageData.selectedProvisionType === 'premium' ? 7 : 4
+          }
+        };
+      } catch (calculationError) {
+        logger.error('Error calculating price for vendor confirmation:', calculationError);
+        // Use original data if calculation fails
+        correctedPackageData = user.pendingBooking.packageData;
+      }
+    }
+
     res.json({ 
       success: true, 
-      message: 'E-Mail-Adresse erfolgreich bestätigt. Sie können sich jetzt anmelden.',
-      userId: user._id
+      message: 'E-Mail-Adresse erfolgreich bestätigt. Du kannst dich jetzt anmelden.',
+      userId: user._id,
+      vendor: {
+        packageData: correctedPackageData
+      }
     });
   } catch (err) {
-    console.error('Fehler bei der E-Mail-Bestätigung:', err);
+    logger.error('Fehler bei der E-Mail-Bestätigung:', err);
+    securityLogger.logEmailConfirmation(req, req.params.token || 'unknown', false, undefined, { 
+      error: err instanceof Error ? err.message : 'Unknown error' 
+    });
     res.status(500).json({ 
       success: false, 
       message: 'Ein Serverfehler ist aufgetreten' 
@@ -657,7 +789,7 @@ export const completeBooking = async (req: Request, res: Response): Promise<void
       message: 'Buchung erfolgreich abgeschlossen' 
     });
   } catch (err) {
-    console.error('Fehler beim Abschließen der Buchung:', err);
+    logger.error('Fehler beim Abschließen der Buchung:', err);
     res.status(500).json({ 
       success: false, 
       message: 'Ein Serverfehler ist aufgetreten' 
@@ -757,7 +889,7 @@ export const getVendorProfile = async (req: Request, res: Response): Promise<voi
       profile: profileData 
     });
   } catch (err) {
-    console.error('Fehler beim Abrufen des Vendor-Profils:', err);
+    logger.error('Fehler beim Abrufen des Vendor-Profils:', err);
     res.status(500).json({ 
       success: false, 
       message: 'Ein Serverfehler ist aufgetreten' 
@@ -961,7 +1093,7 @@ export const updateVendorProfile = async (req: Request, res: Response): Promise<
       message: 'Profil erfolgreich aktualisiert' 
     });
   } catch (err) {
-    console.error('Fehler beim Aktualisieren des Vendor-Profils:', err);
+    logger.error('Fehler beim Aktualisieren des Vendor-Profils:', err);
     res.status(500).json({ 
       success: false, 
       message: 'Ein Serverfehler ist aufgetreten' 
@@ -1044,7 +1176,7 @@ export const uploadVendorImage = async (req: Request, res: Response): Promise<vo
       });
     });
   } catch (err) {
-    console.error('Fehler beim Bild-Upload:', err);
+    logger.error('Fehler beim Bild-Upload:', err);
     res.status(500).json({ 
       success: false, 
       message: 'Ein Serverfehler ist aufgetreten' 
@@ -1303,7 +1435,7 @@ export const getAllVendorProfiles = async (req: Request, res: Response): Promise
       availableFilters
     });
   } catch (err) {
-    console.error('Fehler beim Abrufen der Vendor-Profile:', err);
+    logger.error('Fehler beim Abrufen der Vendor-Profile:', err);
     res.status(500).json({ 
       success: false, 
       message: 'Ein Serverfehler ist aufgetreten' 
@@ -1391,7 +1523,7 @@ export const getPublicVendorProfile = async (req: Request, res: Response): Promi
       vendor: publicVendorData 
     });
   } catch (err) {
-    console.error('Fehler beim Abrufen des Vendor-Profils:', err);
+    logger.error('Fehler beim Abrufen des Vendor-Profils:', err);
     res.status(500).json({ 
       success: false, 
       message: 'Ein Serverfehler ist aufgetreten' 
@@ -1401,41 +1533,43 @@ export const getPublicVendorProfile = async (req: Request, res: Response): Promi
 
 // Vendor Verträge abrufen
 export const getVendorContracts = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { userId } = req.params;
-    
-    // Überprüfen, ob der anfragende Benutzer seine eigenen Verträge abfragt
-    if ((req as any).user?.id !== userId) {
-      res.status(403).json({ error: "Keine Berechtigung" });
-      return;
-    }
-    
-    // Verträge mit Mietfach-Details abrufen
-    const vertraege = await Vertrag.find({ user: userId })
-      .populate("services.mietfach")
-      .sort({ datum: -1 });
-    
-    // Verträge formatieren
-    const formattedVertraege = vertraege.map((vertrag: any) => ({
-      id: vertrag._id,
-      datum: vertrag.datum,
-      status: "aktiv", // Status basierend auf Enddatum berechnen
-      services: vertrag.services.map((service: any) => ({
-        mietfach: service.mietfach,
-        mietbeginn: service.mietbeginn,
-        mietende: service.mietende,
-        monatspreis: service.monatspreis,
-        status: new Date(service.mietende) > new Date() ? "aktiv" : "beendet"
-      })),
-      gesamtpreis: vertrag.services.reduce((sum: number, service: any) => sum + service.monatspreis, 0)
-    }));
-    
-    res.json({ vertraege: formattedVertraege });
-  } catch (error) {
-    console.error("Fehler beim Abrufen der Vendor-Verträge:", error);
-    res.status(500).json({ error: "Fehler beim Abrufen der Verträge" });
-  }
-};
+               try {
+                 const { userId } = req.params;
+                 
+                 // Überprüfen, ob der anfragende Benutzer seine eigenen Verträge abfragt
+                 if ((req as any).user?.id !== userId) {
+                   res.status(403).json({ error: "Keine Berechtigung" });
+                   return;
+                 }
+                 
+                 // Use simple find with populate to ensure Mietfach details are properly loaded
+                 const vertraege = await Vertrag.find({ user: userId })
+                   .populate('services.mietfach')
+                   .sort({ datum: -1 })
+                   .lean();
+                 
+                 // Verträge formatieren
+                 const formattedVertraege = vertraege.map((vertrag: any) => ({
+                   id: vertrag._id,
+                   datum: vertrag.datum,
+                   status: "aktiv", // Status basierend auf Enddatum berechnen
+                   services: vertrag.services.map((service: any) => ({
+                     mietfach: service.mietfach,
+                     mietbeginn: service.mietbeginn,
+                     mietende: service.mietende,
+                     monatspreis: service.monatspreis,
+                     status: new Date(service.mietende) > new Date() ? "aktiv" : "beendet"
+                   })),
+                   gesamtpreis: vertrag.totalMonthlyPrice || vertrag.services.reduce((sum: number, service: any) => sum + service.monatspreis, 0)
+                 }));
+                 
+                 res.json({ vertraege: formattedVertraege });
+               } catch (error) {
+                 logger.error("Fehler beim Abrufen der Vendor-Verträge:", error);
+                 res.status(500).json({ error: "Fehler beim Abrufen der Verträge" });
+               }
+             };
+;
 
 // Cancel vendor trial/subscription
 export const cancelVendorSubscription = async (req: Request, res: Response): Promise<void> => {
@@ -1477,7 +1611,7 @@ export const cancelVendorSubscription = async (req: Request, res: Response): Pro
     
     // Log cancellation reason if provided
     if (reason) {
-      console.log(`Vendor ${user.kontakt.email} cancelled subscription. Reason: ${reason}`);
+      logger.info('Vendor cancelled subscription:', { email: user.kontakt.email, reason });
     }
     
     await user.save();
@@ -1491,17 +1625,17 @@ export const cancelVendorSubscription = async (req: Request, res: Response): Pro
         user.trialEndDate
       );
     } catch (emailError) {
-      console.error('Failed to send cancellation confirmation email:', emailError);
+      logger.error('Failed to send cancellation confirmation email:', emailError);
       // Continue even if email fails
     }
     
     res.json({ 
       success: true, 
-      message: "Ihre Registrierung wurde erfolgreich gekündigt. Sie können sich jederzeit wieder anmelden."
+      message: "Deine Registrierung wurde erfolgreich gekündigt. Du kannst dich jederzeit wieder anmelden."
     });
     
   } catch (error) {
-    console.error("Fehler beim Kündigen der Vendor-Registrierung:", error);
+    logger.error("Fehler beim Kündigen der Vendor-Registrierung:", error);
     res.status(500).json({ 
       success: false, 
       message: "Ein Serverfehler ist aufgetreten" 
@@ -1512,17 +1646,17 @@ export const cancelVendorSubscription = async (req: Request, res: Response): Pro
 // Tag erstellen (für Vendors)
 export const createVendorTag = async (req: Request, res: Response): Promise<void> => {
   try {
-    console.log('=== CREATE VENDOR TAG REQUEST ===');
-    console.log('Request body:', req.body);
-    console.log('User from token:', (req as any).user);
+    logger.info('=== CREATE VENDOR TAG REQUEST ===');
+    logger.debug('Request body:', { body: req.body });
+    logger.debug('User from token:', { user: (req as any).user });
     
     const { name, description, category = 'product', icon, color } = req.body;
     const vendorId = (req as any).user?.id;
     
-    console.log('Extracted data:', { name, description, category, icon, color, vendorId });
+    logger.debug('Extracted data:', { name, description, category, icon, color, vendorId });
     
     if (!name || !name.trim()) {
-      console.log('Error: Tag name is missing');
+      logger.error('Error: Tag name is missing');
       res.status(400).json({
         success: false,
         message: 'Tag-Name ist erforderlich'
@@ -1531,7 +1665,7 @@ export const createVendorTag = async (req: Request, res: Response): Promise<void
     }
     
     if (!vendorId) {
-      console.log('Error: Vendor ID is missing');
+      logger.error('Error: Vendor ID is missing');
       res.status(401).json({
         success: false,
         message: 'Vendor-Authentifizierung fehlgeschlagen'
@@ -1540,20 +1674,20 @@ export const createVendorTag = async (req: Request, res: Response): Promise<void
     }
     
     // Vendor-Info für bessere Beschreibung
-    console.log('Finding vendor with ID:', vendorId);
+    logger.debug('Finding vendor with ID:', { vendorId });
     const vendor = await User.findById(vendorId).select('kontakt.name');
     const vendorName = vendor?.kontakt?.name || 'Unbekannter Vendor';
-    console.log('Found vendor:', vendorName);
+    logger.debug('Found vendor:', { vendorName });
     
     // Prüfen ob Tag bereits existiert
-    console.log('Checking for existing tag:', name.trim(), category);
+    logger.debug('Checking for existing tag:', { name: name.trim(), category });
     const existingTag = await Tag.findOne({
       name: name.trim(),
       category: category
     });
     
     if (existingTag) {
-      console.log('Tag already exists:', existingTag);
+      logger.warn('Tag already exists:', { existingTag });
       res.status(200).json({
         success: true,
         tag: existingTag,
@@ -1563,7 +1697,7 @@ export const createVendorTag = async (req: Request, res: Response): Promise<void
     }
     
     // Neuen Tag erstellen
-    console.log('Creating new tag...');
+    logger.info('Creating new tag...');
     
     // Generate slug manually for safety
     const slug = name.trim()
@@ -1588,10 +1722,10 @@ export const createVendorTag = async (req: Request, res: Response): Promise<void
       isActive: true // Vendor-erstellte Tags sind sofort aktiv
     });
     
-    console.log('Saving new tag:', newTag);
+    logger.debug('Saving new tag:', { newTag });
     await newTag.save();
     
-    console.log(`New tag created successfully by vendor ${vendorName}: ${newTag.name}`);
+    logger.info('New tag created successfully by vendor:', { vendorName, tagName: newTag.name });
     
     res.status(201).json({
       success: true,
@@ -1600,7 +1734,7 @@ export const createVendorTag = async (req: Request, res: Response): Promise<void
     });
     
   } catch (err) {
-    console.error('Fehler beim Erstellen des Vendor-Tags:', err);
+    logger.error('Fehler beim Erstellen des Vendor-Tags:', err);
     
     // Spezifische MongoDB Fehler
     if (err instanceof Error && err.message.includes('E11000')) {
@@ -1628,12 +1762,12 @@ export const additionalBooking = async (req: AuthRequest, res: Response): Promis
   try {
     const { userId, packageData } = req.body;
     
-    console.log('Additional booking request received:', { userId, packageData });
-    console.log('User from token:', req.user);
+    logger.info('Additional booking request received:', { userId, packageData });
+    logger.debug('User from token:', { user: req.user });
     
     // Verify user is authenticated and matches token
     if (!req.user || req.user.id !== userId) {
-      console.error('Authorization failed:', { tokenUserId: req.user?.id, requestUserId: userId });
+      logger.error('Authorization failed:', { tokenUserId: req.user?.id, requestUserId: userId });
       res.status(403).json({
         success: false,
         message: 'Unauthorized booking attempt'
@@ -1642,12 +1776,12 @@ export const additionalBooking = async (req: AuthRequest, res: Response): Promis
     }
 
     // Verify user exists and is a vendor
-    console.log('Looking up user with ID:', userId);
+    logger.debug('Looking up user with ID:', { userId });
     const user = await User.findById(userId);
-    console.log('User found:', user ? 'Yes' : 'No', user?.isVendor ? 'Is vendor' : 'Not vendor');
+    logger.debug('User found:', { found: user ? 'Yes' : 'No', isVendor: user?.isVendor ? 'Is vendor' : 'Not vendor' });
     
     if (!user || !user.isVendor) {
-      console.error('User validation failed:', { userExists: !!user, isVendor: user?.isVendor });
+      logger.error('User validation failed:', { userExists: !!user, isVendor: user?.isVendor });
       res.status(404).json({
         success: false,
         message: 'Vendor not found'
@@ -1659,9 +1793,11 @@ export const additionalBooking = async (req: AuthRequest, res: Response): Promis
     const {
       selectedProvisionType,
       packageCounts,
-      selectedAddons,
+      zusatzleistungen,
       rentalDuration,
-      totalCost
+      totalCost,
+      discount,
+      packageOptions
     } = packageData;
 
     // Create additional booking record
@@ -1674,7 +1810,7 @@ export const additionalBooking = async (req: AuthRequest, res: Response): Promis
         count: count as number,
         packageType: packageId
       })).filter(pkg => pkg.count > 0),
-      addons: selectedAddons,
+      zusatzleistungen: zusatzleistungen,
       rentalDuration,
       monthlyCost: totalCost.monthly,
       provision: totalCost.provision,
@@ -1684,18 +1820,18 @@ export const additionalBooking = async (req: AuthRequest, res: Response): Promis
     };
 
     // Store the booking data in user notes for now (admin can process manually)
-    console.log('Storing additional booking request for admin processing');
+    logger.info('Storing additional booking request for admin processing');
     
     const bookingNote = `ADDITIONAL BOOKING REQUEST - ${new Date().toISOString()}
 User: ${(user as any).name} (${(user as any).email})
 Provision: ${selectedProvisionType}
 Packages: ${JSON.stringify(packageCounts)}
-Addons: ${selectedAddons.join(', ')}
+Zusatzleistungen: ${zusatzleistungen ? Object.entries(zusatzleistungen).filter(([key, value]) => value).map(([key]) => key).join(', ') : 'Keine'}
 Duration: ${rentalDuration} months
 Monthly Cost: €${totalCost.monthly}
 Status: Pending Admin Review`;
 
-    console.log('Booking note created:', bookingNote);
+    logger.debug('Booking note created:', { bookingNote });
 
     // Check if user already has a pending booking
     const existingPendingBooking = (user as any).pendingBooking;
@@ -1706,14 +1842,16 @@ Status: Pending Admin Review`;
         packageData: {
           selectedProvisionType,
           packageCounts,
-          selectedAddons,
+          zusatzleistungen,
           rentalDuration,
           totalCost,
+          discount: discount || 0,  // Explicitly include discount
+          packageOptions: packageOptions,  // Include package options for reference
           bookingType: 'additional',
           previousBooking: existingPendingBooking ? 'User had existing pending booking' : 'First booking'
         },
         createdAt: new Date(),
-        status: 'pending',
+        status: BookingStatus.PENDING,
         note: bookingNote
       };
 
@@ -1723,27 +1861,53 @@ Status: Pending Admin Review`;
         pendingBooking: newPendingBooking
       });
       
-      console.log('User updated successfully with pending booking');
+      logger.info('User updated successfully with pending booking');
       
       if (existingPendingBooking) {
-        console.log('Note: User had existing pending booking, replaced with new additional booking');
+        logger.info('Note: User had existing pending booking, replaced with new additional booking');
       }
     } catch (userUpdateError) {
-      console.error('Error updating user:', userUpdateError);
+      logger.error('Error updating user:', userUpdateError);
       // Continue even if this fails - we can still process the booking
-      console.log('Continuing despite user update error...');
+      logger.warn('Continuing despite user update error...');
     }
 
     // Send confirmation email
     try {
+      // Create package options based on packageCounts
+      const packageOptions = Object.entries(packageCounts)
+        .filter(([_, count]) => (count as number) > 0)
+        .map(([packageId, count]) => {
+          // Map package IDs to their details
+          const packageMap: { [key: string]: { name: string; price: number } } = {
+            'verkaufsblock-a': { name: 'Verkaufsblock Lage A', price: 35 },
+            'verkaufsblock-b': { name: 'Verkaufsblock Lage B', price: 15 },
+            'verkaufsblock-gekuehlt': { name: 'Verkaufsblock gekühlt', price: 50 },
+            'verkaufsblock-gefroren': { name: 'Verkaufsblock gefroren', price: 60 },
+            'verkaufstisch': { name: 'Verkaufstisch', price: 40 },
+            'schaufenster-klein': { name: 'Schaufenster klein', price: 30 },
+            'schaufenster-gross': { name: 'Schaufenster groß', price: 60 },
+            'flexibler-bereich': { name: 'Flexibler Bereich', price: 0 }
+          };
+          
+          const packageInfo = packageMap[packageId] || { name: packageId, price: 0 };
+          return {
+            id: packageId,
+            name: packageInfo.name,
+            price: packageInfo.price,
+            count: count
+          };
+        });
+
       const bookingConfirmationData = {
         vendorName: (user as any).name,
         email: (user as any).email,
+        confirmationToken: '', // Additional bookings don't need email confirmation
         packageData: {
           selectedProvisionType,
           packageCounts,
-          packageOptions: [], // We could add this if needed
-          selectedAddons,
+          packageOptions,
+          zusatzleistungen,
           rentalDuration,
           totalCost: {
             monthly: totalCost.monthly,
@@ -1754,7 +1918,7 @@ Status: Pending Admin Review`;
       
       await sendBookingConfirmation(bookingConfirmationData);
     } catch (emailError) {
-      console.warn('Could not send booking confirmation email:', emailError);
+      logger.warn('Could not send booking confirmation email:', emailError);
       // Continue without failing the booking
     }
 
@@ -1766,10 +1930,615 @@ Status: Pending Admin Review`;
     });
 
   } catch (error) {
-    console.error('Additional booking error:', error);
+    logger.error('Additional booking error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to process additional booking'
+    });
+  }
+};
+
+// M005 Implementation: Get vendor bookings with status
+export const getVendorBookings = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { userId } = req.params;
+    const { status, page = 1, limit = 10 } = req.query;
+    
+    // Verify user authorization
+    if (!req.user || req.user.id !== userId) {
+      res.status(403).json({
+        success: false,
+        message: 'Keine Berechtigung'
+      });
+      return;
+    }
+    
+    // Find user with bookings
+    const user = await User.findById(userId).select('pendingBooking registrationStatus isVendor');
+    if (!user || !user.isVendor) {
+      res.status(404).json({
+        success: false,
+        message: 'Vendor nicht gefunden'
+      });
+      return;
+    }
+    
+    // Get contracts for this user
+    const contracts = await Vertrag.find({ user: userId })
+      .populate('services.mietfach')
+      .sort({ createdAt: -1 });
+    
+    const bookings = [];
+    
+    // Add pending booking if exists and no contracts exist (to avoid duplicates)
+    if (user.pendingBooking && contracts.length === 0) {
+      const pendingBooking = {
+        id: `pending_${userId}`,
+        status: user.pendingBooking.status || BookingStatus.PENDING,
+        requestedAt: user.pendingBooking.createdAt || user.createdAt,
+        confirmedAt: null,
+        scheduledStartDate: null,
+        mietfach: null,
+        packageDetails: {
+          totalCost: user.pendingBooking.packageData?.totalCost || { monthly: 0 },
+          duration: user.pendingBooking.packageData?.rentalDuration || 12,
+          packages: user.pendingBooking.packageData?.packageCounts || {},
+          zusatzleistungen: user.pendingBooking.packageData?.zusatzleistungen || {}
+        }
+      };
+      
+      if (!status || status === 'pending') {
+        bookings.push(pendingBooking);
+      }
+    }
+    
+    // Add confirmed bookings from contracts
+    contracts.forEach(contract => {
+      // Calculate price breakdown
+      const mietfachBase = contract.services.reduce((sum: number, service: any) => sum + (service.monatspreis || 0), 0);
+      const lagerserviceKosten = contract.zusatzleistungen?.lagerservice ? 
+        (contract.zusatzleistungen_kosten?.lagerservice_monatlich || 20) : 0;
+      const versandserviceKosten = contract.zusatzleistungen?.versandservice ? 
+        (contract.zusatzleistungen_kosten?.versandservice_monatlich || 5) : 0;
+      const zusatzleistungenTotal = lagerserviceKosten + versandserviceKosten;
+      const subtotal = mietfachBase + zusatzleistungenTotal;
+      const discountAmount = subtotal * (contract.discount || 0);
+      
+      const contractBooking = {
+        id: (contract._id as any).toString(),
+        status: contract.status === 'scheduled' ? 'confirmed' : contract.status,
+        requestedAt: contract.createdAt,
+        confirmedAt: contract.createdAt,
+        scheduledStartDate: contract.scheduledStartDate,
+        actualStartDate: contract.actualStartDate,
+        // Trial information
+        istProbemonatBuchung: contract.istProbemonatBuchung || false,
+        zahlungspflichtigAb: contract.zahlungspflichtigAb,
+        mietfach: contract.services.map((service: any) => ({
+          id: service.mietfach?._id?.toString(),
+          bezeichnung: service.mietfach?.bezeichnung,
+          typ: service.mietfach?.typ
+        })),
+        packageDetails: {
+          totalCost: { 
+            monthly: contract.totalMonthlyPrice
+          },
+          duration: contract.endDate && contract.startDate ? 
+            Math.round((new Date(contract.endDate).getTime() - new Date(contract.startDate).getTime()) / (1000 * 60 * 60 * 24 * 30)) :
+            contract.contractDuration || 12,
+          services: contract.services,
+          zusatzleistungen: contract.zusatzleistungen,
+          priceBreakdown: {
+            mietfachBase,
+            zusatzleistungen: {
+              lagerservice: lagerserviceKosten,
+              versandservice: versandserviceKosten
+            },
+            discount: contract.discount || 0,
+            discountAmount,
+            subtotal
+          }
+        }
+      };
+      
+      if (!status || status === contractBooking.status) {
+        bookings.push(contractBooking);
+      }
+    });
+    
+    // Pagination
+    const pageNum = Math.max(1, parseInt(page as string) || 1);
+    const limitNum = Math.min(50, Math.max(1, parseInt(limit as string) || 10));
+    const skip = (pageNum - 1) * limitNum;
+    const paginatedBookings = bookings.slice(skip, skip + limitNum);
+    
+    res.json({
+      success: true,
+      bookings: paginatedBookings,
+      pagination: {
+        total: bookings.length,
+        page: pageNum,
+        limit: limitNum,
+        totalPages: Math.ceil(bookings.length / limitNum)
+      }
+    });
+    
+  } catch (error) {
+    logger.error('Error getting vendor bookings:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Fehler beim Abrufen der Buchungen'
+    });
+  }
+};
+
+// M005 Implementation: Get specific vendor booking by ID
+export const getVendorBookingById = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { userId, bookingId } = req.params;
+    
+    // Verify user authorization
+    if (!req.user || req.user.id !== userId) {
+      res.status(403).json({
+        success: false,
+        message: 'Keine Berechtigung'
+      });
+      return;
+    }
+    
+    // Handle pending booking
+    if (bookingId.startsWith('pending_')) {
+      const user = await User.findById(userId).select('pendingBooking registrationStatus isVendor');
+      if (!user || !user.isVendor || !user.pendingBooking) {
+        res.status(404).json({
+          success: false,
+          message: 'Buchung nicht gefunden'
+        });
+        return;
+      }
+      
+      const booking = {
+        id: bookingId,
+        status: user.pendingBooking.status || BookingStatus.PENDING,
+        requestedAt: user.pendingBooking.createdAt || user.createdAt,
+        confirmedAt: null,
+        scheduledStartDate: null,
+        mietfach: null,
+        packageDetails: {
+          totalCost: user.pendingBooking.packageData?.totalCost || { monthly: 0 },
+          duration: user.pendingBooking.packageData?.rentalDuration || 12,
+          packages: user.pendingBooking.packageData?.packageCounts || {},
+          zusatzleistungen: user.pendingBooking.packageData?.zusatzleistungen || {}
+        }
+      };
+      
+      res.json({
+        success: true,
+        booking
+      });
+      return;
+    }
+    
+    // Handle contract booking
+    const contract = await Vertrag.findOne({ _id: bookingId, user: userId })
+      .populate('services.mietfach');
+    
+    if (!contract) {
+      res.status(404).json({
+        success: false,
+        message: 'Buchung nicht gefunden'
+      });
+      return;
+    }
+    
+    const booking = {
+      id: (contract._id as any).toString(),
+      status: contract.status === 'active' ? 'confirmed' : contract.status,
+      requestedAt: contract.createdAt,
+      confirmedAt: contract.createdAt,
+      scheduledStartDate: contract.scheduledStartDate,
+      actualStartDate: contract.actualStartDate,
+      mietfach: contract.services.map((service: any) => ({
+        id: service.mietfach?._id?.toString(),
+        bezeichnung: service.mietfach?.bezeichnung,
+        typ: service.mietfach?.typ
+      })),
+      packageDetails: {
+        totalCost: { 
+          monthly: contract.services.reduce((sum: number, service: any) => sum + (service.monatspreis || 0), 0)
+        },
+        duration: contract.endDate && contract.startDate ? 
+          Math.round((new Date(contract.endDate).getTime() - new Date(contract.startDate).getTime()) / (1000 * 60 * 60 * 24 * 30)) :
+          contract.contractDuration || 12,
+        services: contract.services
+      }
+    };
+    
+    res.json({
+      success: true,
+      booking
+    });
+    
+  } catch (error) {
+    logger.error('Error getting vendor booking by ID:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Fehler beim Abrufen der Buchung'
+    });
+  }
+};
+
+// M005 Implementation: Get dashboard messages for vendor
+export const getDashboardMessages = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { userId } = req.params;
+    
+    // Verify user authorization
+    if (!req.user || req.user.id !== userId) {
+      res.status(403).json({
+        success: false,
+        message: 'Keine Berechtigung'
+      });
+      return;
+    }
+    
+    const user = await User.findById(userId).select('pendingBooking registrationStatus isVendor');
+    if (!user || !user.isVendor) {
+      res.status(404).json({
+        success: false,
+        message: 'Vendor nicht gefunden'
+      });
+      return;
+    }
+    
+    const messages = [];
+    
+    // Check for pending bookings
+    if (user.pendingBooking && user.pendingBooking.status === BookingStatus.PENDING) {
+      messages.push({
+        id: 'pending_booking',
+        type: 'info',
+        title: 'Buchungsanfrage in Bearbeitung',
+        message: 'Deine Buchungsanfrage wird bearbeitet. Wir werden dich per E-Mail informieren, sobald deine Mietfächer zugewiesen wurden.',
+        dismissible: false,
+        priority: 1,
+        createdAt: user.pendingBooking.createdAt || user.createdAt
+      });
+    }
+    
+    // Check trial status
+    if (user.registrationStatus === 'trial_active') {
+      messages.push({
+        id: 'trial_active',
+        type: 'success',
+        title: 'Testphase aktiv',
+        message: 'Deine Testphase ist aktiv. Nutze diese Zeit, um alle Funktionen zu erkunden.',
+        dismissible: true,
+        priority: 2,
+        createdAt: user.createdAt
+      });
+    } else if (user.registrationStatus === 'trial_expired') {
+      messages.push({
+        id: 'trial_expired',
+        type: 'warning',
+        title: 'Testphase abgelaufen',
+        message: 'Deine Testphase ist abgelaufen. Aktiviere dein Abonnement, um weiterhin alle Funktionen nutzen zu können.',
+        dismissible: false,
+        priority: 1,
+        createdAt: user.createdAt
+      });
+    }
+    
+    // Sort messages by priority and creation date
+    messages.sort((a, b) => {
+      if (a.priority !== b.priority) {
+        return a.priority - b.priority;
+      }
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+    
+    res.json({
+      success: true,
+      messages
+    });
+    
+  } catch (error) {
+    logger.error('Error getting dashboard messages:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Fehler beim Abrufen der Dashboard-Nachrichten'
+    });
+  }
+};
+
+// M005 Implementation: Dismiss dashboard message
+export const dismissDashboardMessage = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { messageId } = req.params;
+    
+    if (!req.user) {
+      res.status(403).json({
+        success: false,
+        message: 'Keine Berechtigung'
+      });
+      return;
+    }
+    
+    // For now, just acknowledge the dismissal
+    // In a full implementation, we might store dismissed message IDs per user
+    logger.info('User dismissed message:', { userId: req.user.id, messageId });
+    
+    res.json({
+      success: true,
+      message: 'Nachricht ausgeblendet'
+    });
+    
+  } catch (error) {
+    logger.error('Error dismissing dashboard message:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Fehler beim Ausblenden der Nachricht'
+    });
+  }
+};
+
+// M006 S004 Implementation: Get trial status and trial bookings
+export const getTrialStatus = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(403).json({
+        success: false,
+        message: 'Keine Berechtigung'
+      });
+      return;
+    }
+
+    const user = await User.findById(req.user.id).select('registrationStatus trialStartDate trialEndDate isVendor');
+    if (!user || !user.isVendor) {
+      res.status(404).json({
+        success: false,
+        message: 'Vendor nicht gefunden'
+      });
+      return;
+    }
+
+    const isInTrial = user.registrationStatus === 'trial_active';
+    let daysRemaining = 0;
+    
+    if (isInTrial && user.trialEndDate) {
+      const now = new Date();
+      const endDate = new Date(user.trialEndDate);
+      const diff = endDate.getTime() - now.getTime();
+      daysRemaining = Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+    }
+
+    // Get trial bookings (contracts with trial flag)
+    const trialContracts = await Vertrag.find({ 
+      user: req.user.id, 
+      istProbemonatBuchung: true 
+    }).populate('services.mietfach');
+
+    const trialBookings = trialContracts.map(contract => ({
+      id: (contract._id as mongoose.Types.ObjectId).toString(),
+      mietfachNummer: contract.services.map((s: any) => s.mietfach?.bezeichnung || 'N/A').join(', '),
+      startDate: contract.startDate || contract.createdAt,
+      trialEndDate: user.trialEndDate,
+      willBeChargedOn: user.trialEndDate,
+      regularPrice: contract.services.reduce((sum: number, service: any) => sum + (service.monatspreis || 0), 0),
+      isCancellable: contract.status !== 'cancelled' && isInTrial,
+      isCancelled: contract.status === 'cancelled',
+      status: contract.status
+    }));
+
+    const trialData = {
+      isInTrial,
+      trialBookings,
+      daysRemaining,
+      canBookMore: isInTrial && trialBookings.filter(b => !b.isCancelled).length === 0 // Can book more if no active trial bookings
+    };
+
+    res.json({
+      success: true,
+      data: trialData
+    });
+
+  } catch (error) {
+    logger.error('Error getting trial status:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Fehler beim Abrufen des Probemonat-Status'
+    });
+  }
+};
+
+// M006 S004 Implementation: Cancel trial booking
+export const cancelTrialBooking = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { bookingId } = req.params;
+    const { reason } = req.body;
+
+    if (!req.user) {
+      res.status(403).json({
+        success: false,
+        message: 'Keine Berechtigung'
+      });
+      return;
+    }
+
+    const user = await User.findById(req.user.id);
+    if (!user || !user.isVendor) {
+      res.status(404).json({
+        success: false,
+        message: 'Vendor nicht gefunden'
+      });
+      return;
+    }
+
+    // Find the trial contract
+    const contract = await Vertrag.findOne({ 
+      _id: bookingId, 
+      user: req.user.id, 
+      istProbemonatBuchung: true 
+    });
+
+    if (!contract) {
+      res.status(404).json({
+        success: false,
+        message: 'Trial-Buchung nicht gefunden'
+      });
+      return;
+    }
+
+    // Check if cancellation is allowed
+    if (user.registrationStatus !== 'trial_active') {
+      res.status(400).json({
+        success: false,
+        message: 'Stornierung nur während des Probemonats möglich'
+      });
+      return;
+    }
+
+    if (contract.status === 'cancelled') {
+      res.status(400).json({
+        success: false,
+        message: 'Buchung bereits storniert'
+      });
+      return;
+    }
+
+    // Cancel the contract
+    contract.status = 'cancelled';
+    contract.cancellationDate = new Date();
+    contract.cancellationReason = reason || 'Trial cancellation';
+    await contract.save();
+
+    // Log the cancellation
+    logger.info('Trial booking cancelled by user:', { bookingId, userId: req.user.id, reason: reason || 'No reason provided' });
+
+    // Send cancellation confirmation email
+    try {
+      await sendCancellationConfirmationEmail(user.kontakt.email, user.kontakt.name, user.trialEndDate || null);
+    } catch (emailError) {
+      logger.error('Error sending cancellation email:', emailError);
+      // Don't fail the cancellation if email fails
+    }
+
+    res.json({
+      success: true,
+      message: 'Trial-Buchung erfolgreich storniert'
+    });
+
+  } catch (error) {
+    logger.error('Error cancelling trial booking:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Fehler beim Stornieren der Trial-Buchung'
+    });
+  }
+};
+
+// M006 S004 Implementation: Confirm trial booking
+export const confirmTrialBooking = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { mietfachId, startdatum, istProbemonatBuchung } = req.body;
+
+    if (!req.user) {
+      res.status(403).json({
+        success: false,
+        message: 'Keine Berechtigung'
+      });
+      return;
+    }
+
+    const user = await User.findById(req.user.id);
+    if (!user || !user.isVendor) {
+      res.status(404).json({
+        success: false,
+        message: 'Vendor nicht gefunden'
+      });
+      return;
+    }
+
+    // Verify trial status
+    if (user.registrationStatus !== 'trial_active') {
+      res.status(400).json({
+        success: false,
+        message: 'Probemonat-Buchung nur für aktive Trial-Nutzer möglich'
+      });
+      return;
+    }
+
+    // Check if user already has a trial booking
+    const existingTrialBooking = await Vertrag.findOne({ 
+      user: req.user.id, 
+      istProbemonatBuchung: true,
+      status: { $ne: 'cancelled' }
+    });
+
+    if (existingTrialBooking) {
+      res.status(400).json({
+        success: false,
+        message: 'Du hast bereits eine aktive Probemonat-Buchung'
+      });
+      return;
+    }
+
+    // Create trial contract
+    const trialContract = new Vertrag({
+      user: req.user.id,
+      istProbemonatBuchung: true,
+      probemonatUserId: req.user.id,
+      scheduledStartDate: new Date(startdatum),
+      zahlungspflichtigAb: user.trialEndDate,
+      status: 'active',
+      totalMonthlyPrice: 0,
+      contractDuration: 1,
+      discount: 0,
+      provisionssatz: user.provisionssatz || 7, // Use user's provision rate
+      services: [{
+        mietfach: mietfachId,
+        mietbeginn: new Date(startdatum),
+        mietende: user.trialEndDate,
+        monatspreis: 0 // Free during trial
+      }]
+    });
+
+    await trialContract.save();
+
+    // Send booking confirmation
+    try {
+      const bookingData = {
+        vendorName: user.kontakt.name,
+        email: user.kontakt.email,
+        packageData: {
+          selectedProvisionType: 'trial',
+          packageCounts: { 'trial_mietfach': 1 },
+          packageOptions: [{ id: 'trial', name: 'Probemonat Mietfach', price: 0 }],
+          zusatzleistungen: { lagerservice: false, versandservice: false },
+          rentalDuration: 1,
+          totalCost: {
+            monthly: 0,
+            provision: 0
+          }
+        }
+      };
+      await sendBookingConfirmation(bookingData);
+    } catch (emailError) {
+      logger.error('Error sending booking confirmation email:', emailError);
+      // Don't fail the booking if email fails
+    }
+
+    res.json({
+      success: true,
+      message: 'Probemonat-Buchung erfolgreich bestätigt',
+      bookingId: (trialContract._id as mongoose.Types.ObjectId).toString()
+    });
+
+  } catch (error) {
+    logger.error('Error confirming trial booking:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Fehler bei der Buchungsbestätigung'
     });
   }
 };

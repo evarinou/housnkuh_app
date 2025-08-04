@@ -17,6 +17,9 @@ interface Mietfach {
   standort: string;     // Optional im Backend, aber für Frontend-Konsistenz als required
   features: string[];   // Optional im Backend, aber für Frontend-Konsistenz als required
   createdAt: string;
+  // Sprint S12_M11_Mietfaecher_Seeding_Cleanup - Manual creation tracking
+  creationSource?: 'manual' | 'import' | 'seed';
+  createdBy?: string;
   belegungen?: Belegung[]; // Vertragsinformationen
   istBelegt?: boolean;     // Aktueller Belegungsstatus
 }
@@ -63,7 +66,7 @@ const MietfaecherPage: React.FC = () => {
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState<'all' | 'available' | 'unavailable'>('all');
-  const [typeFilter, setTypeFilter] = useState<'all' | 'regal' | 'kuehlregal' | 'vitrine'>('all');
+  const [typeFilter, setTypeFilter] = useState<'all' | 'regal' | 'kuehl' | 'gefrier' | 'schaufenster' | 'sonstiges'>('all');
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [currentMietfach, setCurrentMietfach] = useState<Mietfach | null>(null);
@@ -89,7 +92,7 @@ const MietfaecherPage: React.FC = () => {
       _id: '2',
       name: 'Kühlung B3',
       beschreibung: 'Kühlregal für verderbliche Waren',
-      typ: 'kuehlregal',
+      typ: 'kuehl',
       groesse: {
         flaeche: 1.5,
         einheit: 'm²'
@@ -159,7 +162,10 @@ const MietfaecherPage: React.FC = () => {
             verfuegbar: m.verfuegbar !== undefined ? m.verfuegbar : true,
             standort: m.standort || '',
             features: m.features || [],
-            createdAt: m.createdAt || new Date().toISOString()
+            createdAt: m.createdAt || new Date().toISOString(),
+            // Sprint S12_M11_Mietfaecher_Seeding_Cleanup - Manual creation tracking
+            creationSource: (m as any).creationSource || 'manual',
+            createdBy: (m as any).createdBy
           }));
           
           setMietfaecher(convertedMietfaecher);
@@ -219,7 +225,7 @@ const MietfaecherPage: React.FC = () => {
   
   // Mietfach löschen
   const handleDeleteMietfach = async (id: string) => {
-    if (!window.confirm('Möchten Sie dieses Mietfach wirklich löschen?')) {
+    if (!window.confirm('Möchtest du dieses Mietfach wirklich löschen?')) {
       return;
     }
     
@@ -617,10 +623,14 @@ const MietfaecherPage: React.FC = () => {
     switch (type) {
       case 'regal':
         return 'Regal';
-      case 'kuehlregal':
+      case 'kuehl':
         return 'Kühlregal';
-      case 'vitrine':
-        return 'Vitrine';
+      case 'gefrier':
+        return 'Gefrierregal';
+      case 'schaufenster':
+        return 'Schaufenster';
+      case 'sonstiges':
+        return 'Sonstiges';
       default:
         return type;
     }
@@ -631,12 +641,43 @@ const MietfaecherPage: React.FC = () => {
     switch (type) {
       case 'regal':
         return 'bg-blue-100 text-blue-800';
-      case 'kuehlregal':
+      case 'kuehl':
         return 'bg-cyan-100 text-cyan-800';
-      case 'vitrine':
+      case 'gefrier':
         return 'bg-purple-100 text-purple-800';
+      case 'schaufenster':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'sonstiges':
+        return 'bg-gray-100 text-gray-800';
       default:
         return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  // Sprint S12_M11_Mietfaecher_Seeding_Cleanup - Helper functions for creation source
+  const formatCreationSource = (source?: string) => {
+    switch (source) {
+      case 'manual':
+        return 'Manuell';
+      case 'import':
+        return 'Import';
+      case 'seed':
+        return 'Automatisch';
+      default:
+        return 'Manuell';
+    }
+  };
+
+  const getCreationSourceStyle = (source?: string) => {
+    switch (source) {
+      case 'manual':
+        return 'bg-green-100 text-green-800';
+      case 'import':
+        return 'bg-blue-100 text-blue-800';
+      case 'seed':
+        return 'bg-orange-100 text-orange-800';
+      default:
+        return 'bg-green-100 text-green-800';
     }
   };
   
@@ -765,9 +806,9 @@ const MietfaecherPage: React.FC = () => {
                 Regale
               </button>
               <button
-                onClick={() => setTypeFilter('kuehlregal')}
+                onClick={() => setTypeFilter('kuehl')}
                 className={`px-3 py-1 rounded-md ${
-                  typeFilter === 'kuehlregal' 
+                  typeFilter === 'kuehl' 
                     ? 'bg-cyan-600 text-white' 
                     : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
                 }`}
@@ -775,14 +816,34 @@ const MietfaecherPage: React.FC = () => {
                 Kühlregale
               </button>
               <button
-                onClick={() => setTypeFilter('vitrine')}
+                onClick={() => setTypeFilter('gefrier')}
                 className={`px-3 py-1 rounded-md ${
-                  typeFilter === 'vitrine' 
+                  typeFilter === 'gefrier' 
                     ? 'bg-purple-600 text-white' 
                     : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
                 }`}
               >
-                Vitrinen
+                Gefrierregale
+              </button>
+              <button
+                onClick={() => setTypeFilter('schaufenster')}
+                className={`px-3 py-1 rounded-md ${
+                  typeFilter === 'schaufenster' 
+                    ? 'bg-yellow-600 text-white' 
+                    : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                }`}
+              >
+                Schaufenster
+              </button>
+              <button
+                onClick={() => setTypeFilter('sonstiges')}
+                className={`px-3 py-1 rounded-md ${
+                  typeFilter === 'sonstiges' 
+                    ? 'bg-gray-600 text-white' 
+                    : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                }`}
+              >
+                Sonstiges
               </button>
             </div>
           </div>
@@ -910,6 +971,21 @@ const MietfaecherPage: React.FC = () => {
                     ))}
                   </div>
                 </div>
+
+                {/* Sprint S12_M11_Mietfaecher_Seeding_Cleanup - Creation source tracking */}
+                <div className="mt-3 pt-3 border-t border-gray-100">
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-gray-500">Erstellt:</span>
+                    <div className="flex items-center space-x-2">
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getCreationSourceStyle(mietfach.creationSource)}`}>
+                        {formatCreationSource(mietfach.creationSource)}
+                      </span>
+                      <span className="text-gray-400">
+                        {new Date(mietfach.createdAt).toLocaleDateString('de-DE')}
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           ))
@@ -918,7 +994,7 @@ const MietfaecherPage: React.FC = () => {
             <Package className="mx-auto h-12 w-12 text-gray-400" />
             <h3 className="mt-2 text-lg font-medium text-gray-900">Keine Mietfächer gefunden</h3>
             <p className="mt-1 text-sm text-gray-500">
-              Passen Sie Ihre Filtereinstellungen an oder fügen Sie neue Mietfächer hinzu.
+              Passe deine Filtereinstellungen an oder füge neue Mietfächer hinzu.
             </p>
           </div>
         )}
@@ -978,8 +1054,10 @@ const MietfaecherPage: React.FC = () => {
                     required
                   >
                     <option value="regal">Regal</option>
-                    <option value="kuehlregal">Kühlregal</option>
-                    <option value="vitrine">Vitrine</option>
+                    <option value="kuehl">Kühlregal</option>
+                    <option value="gefrier">Gefrierregal</option>
+                    <option value="schaufenster">Schaufenster</option>
+                    <option value="sonstiges">Sonstiges</option>
                   </select>
                 </div>
                 
@@ -1080,7 +1158,7 @@ const MietfaecherPage: React.FC = () => {
                     className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary"
                     placeholder="z.B. Beleuchtet, Abschließbar, Klimatisiert"
                   />
-                  <p className="mt-1 text-xs text-gray-500">Geben Sie die Merkmale durch Kommas getrennt ein.</p>
+                  <p className="mt-1 text-xs text-gray-500">Gib die Merkmale durch Kommas getrennt ein.</p>
                 </div>
               </div>
               
@@ -1164,8 +1242,10 @@ const MietfaecherPage: React.FC = () => {
                     required
                   >
                     <option value="regal">Regal</option>
-                    <option value="kuehlregal">Kühlregal</option>
-                    <option value="vitrine">Vitrine</option>
+                    <option value="kuehl">Kühlregal</option>
+                    <option value="gefrier">Gefrierregal</option>
+                    <option value="schaufenster">Schaufenster</option>
+                    <option value="sonstiges">Sonstiges</option>
                   </select>
                 </div>
                 
@@ -1266,7 +1346,7 @@ const MietfaecherPage: React.FC = () => {
                     className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary"
                     placeholder="z.B. Beleuchtet, Abschließbar, Klimatisiert"
                   />
-                  <p className="mt-1 text-xs text-gray-500">Geben Sie die Merkmale durch Kommas getrennt ein.</p>
+                  <p className="mt-1 text-xs text-gray-500">Gib die Merkmale durch Kommas getrennt ein.</p>
                 </div>
               </div>
               

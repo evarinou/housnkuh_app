@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { HelpCircle, Plus, Edit2, Trash2, Eye, EyeOff, Search } from 'lucide-react';
 import axios from 'axios';
+import { tokenStorage, apiUtils } from '../../utils/auth';
 
 interface FAQ {
   _id: string;
@@ -39,8 +40,8 @@ const FAQManagementPage: React.FC = () => {
 
   const fetchFAQs = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+      const token = tokenStorage.getToken('ADMIN');
+      const apiUrl = apiUtils.getApiUrl();
       const response = await axios.get(`${apiUrl}/faqs/admin`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -73,8 +74,8 @@ const FAQManagementPage: React.FC = () => {
     }
 
     try {
-      const token = localStorage.getItem('token');
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+      const token = tokenStorage.getToken('ADMIN');
+      const apiUrl = apiUtils.getApiUrl();
       
       const data = {
         ...formData,
@@ -120,8 +121,8 @@ const FAQManagementPage: React.FC = () => {
     }
 
     try {
-      const token = localStorage.getItem('token');
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+      const token = tokenStorage.getToken('ADMIN');
+      const apiUrl = apiUtils.getApiUrl();
       
       const response = await axios.delete(`${apiUrl}/faqs/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -139,8 +140,8 @@ const FAQManagementPage: React.FC = () => {
 
   const toggleActive = async (id: string) => {
     try {
-      const token = localStorage.getItem('token');
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+      const token = tokenStorage.getToken('ADMIN');
+      const apiUrl = apiUtils.getApiUrl();
       
       const response = await axios.patch(
         `${apiUrl}/faqs/${id}/toggle`,

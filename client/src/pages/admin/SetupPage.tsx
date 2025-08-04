@@ -70,7 +70,7 @@ const checkAdminSetup = async () => {
     
     // Formularvalidierung
     if (!username || !password || !confirmPassword || !name || !email || !setupKey) {
-      setError('Bitte füllen Sie alle Felder aus');
+      setError('Bitte fülle alle Felder aus');
       return;
     }
     
@@ -84,17 +84,22 @@ const checkAdminSetup = async () => {
     
     try {
       const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
-      const response = await axios.post(`${apiUrl}/auth/setup`, {
+      
+      // Debug log to see what we're sending
+      const requestData = {
         username,
         password,
         name,
         email,
         setupKey
-      });
+      };
+      console.log('Sending setup request:', requestData);
+      
+      const response = await axios.post(`${apiUrl}/auth/setup`, requestData);
       
       if (response.data.success) {
         // Setup erfolgreich, zur Login-Seite weiterleiten
-        alert('Admin-Account erfolgreich erstellt. Sie können sich jetzt anmelden.');
+        alert('Admin-Account erfolgreich erstellt. Du kannst dich jetzt anmelden.');
         navigate('/admin/login');
       } else {
         setError(response.data.message || 'Ein Fehler ist aufgetreten');
@@ -103,7 +108,7 @@ const checkAdminSetup = async () => {
       if (axios.isAxiosError(err) && err.response) {
         setError(err.response.data.message || 'Ein Fehler ist aufgetreten');
       } else {
-        setError('Ein unbekannter Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.');
+        setError('Ein unbekannter Fehler ist aufgetreten. Bitte versuche es später erneut.');
       }
       console.error('Setup error:', err);
     } finally {
@@ -129,7 +134,7 @@ const checkAdminSetup = async () => {
             Admin-Konto einrichten
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            Erstellen Sie das erste Administrator-Konto für den housnkuh Admin-Bereich
+            Erstelle das erste Administrator-Konto für den housnkuh Admin-Bereich
           </p>
         </div>
         

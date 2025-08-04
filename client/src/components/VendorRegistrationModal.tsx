@@ -1,19 +1,44 @@
 // client/src/components/VendorRegistrationModal.tsx
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { X, User, Mail, Phone, Lock, Package, Eye, EyeOff, AlertCircle, CheckCircle, Clock } from 'lucide-react';
 import { useVendorAuth } from '../contexts/VendorAuthContext';
+import { useVendorRegistration } from '../hooks/useVendorRegistration';
+
+// Safe hook wrapper that handles missing context
+const useSafeVendorAuth = () => {
+  try {
+    return useVendorAuth();
+  } catch {
+    return { 
+      isAuthenticated: false, 
+      user: null,
+      login: () => Promise.resolve({ success: false, message: 'Context not available' }),
+      logout: () => {},
+      registerWithBooking: () => Promise.resolve({ success: false, message: 'Context not available' }),
+      preRegisterVendor: () => Promise.resolve({ success: false, message: 'Context not available' }),
+      getTrialStatus: () => Promise.resolve({ success: false, message: 'Context not available' }),
+      cancelTrialBooking: () => Promise.resolve({ success: false, message: 'Context not available' }),
+      checkAuth: () => Promise.resolve(),
+      isLoading: false
+    };
+  }
+};
 
 interface PackageData {
   selectedProvisionType: string;
   selectedPackages: string[];
   packageCounts: Record<string, number>;
   packageOptions: Array<{id: string, name: string, price: number, description?: string, image?: string, detail?: string}>;
-  selectedAddons: string[];
   rentalDuration: number;
   totalCost: {
     monthly: number;
     oneTime: number;
     provision: number;
+  };
+  discount: number;
+  zusatzleistungen?: {
+    lagerservice: boolean;
+    versandservice: boolean;
   };
 }
 
@@ -23,6 +48,69 @@ interface VendorRegistrationModalProps {
   packageData: PackageData;
   onSuccess: () => void;
 }
+
+// Memoized form input component to prevent unnecessary re-renders
+interface MemoizedFormInputProps {
+  type: string;
+  name: string;
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  placeholder: string;
+  className: string;
+  icon?: React.ReactNode;
+  required?: boolean;
+  autoComplete?: string;
+  id?: string;
+}
+
+const MemoizedFormInput = React.memo<MemoizedFormInputProps>(({ 
+  type, name, value, onChange, placeholder, className, icon, required, autoComplete, id 
+}) => (
+  <div className="relative">
+    {icon && (
+      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+        {icon}
+      </div>
+    )}
+    <input
+      type={type}
+      id={id}
+      name={name}
+      value={value}
+      onChange={onChange}
+      placeholder={placeholder}
+      className={className}
+      required={required}
+      autoComplete={autoComplete}
+    />
+  </div>
+));
+
+// Memoized checkbox component
+interface MemoizedCheckboxProps {
+  name: string;
+  checked: boolean;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  className: string;
+  children: React.ReactNode;
+  required?: boolean;
+}
+
+const MemoizedCheckbox = React.memo<MemoizedCheckboxProps>(({ 
+  name, checked, onChange, className, children, required 
+}) => (
+  <label className="flex items-start">
+    <input
+      type="checkbox"
+      name={name}
+      checked={checked}
+      onChange={onChange}
+      className={className}
+      required={required}
+    />
+    <span className="ml-2 text-sm text-gray-700">{children}</span>
+  </label>
+));
 
 interface FormData {
   // Login-Daten
@@ -80,7 +168,8 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = React.me
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   
-  const { login, registerWithBooking } = useVendorAuth();
+  const { login } = useSafeVendorAuth();
+  const { registerWithBooking, isRegistering } = useVendorRegistration();
 
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -103,7 +192,7 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = React.me
     return plzRegex.test(plz);
   }, []);
 
-  const validateStep = (stepNumber: number): boolean => {
+  const validateStep = useCallback((stepNumber: number): boolean => {
     switch (stepNumber) {
       case 1:
         if (isLogin) {
@@ -141,48 +230,109 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = React.me
       default:
         return false;
     }
-  };
+  }, [formData, isLogin, validateEmail, validatePLZ]);
 
-  const handleNextStep = () => {
-    if (validateStep(step)) {
+  // Memoized validation states to prevent unnecessary re-computations
+  const isEmailValid = useMemo(() => 
+    validateEmail(formData.email), 
+    [formData.email, validateEmail]
+  );
+
+  const isPasswordValid = useMemo(() => 
+    !isLogin ? formData.password.length >= 6 : formData.password !== '', 
+    [formData.password, isLogin]
+  );
+
+  const doPasswordsMatch = useMemo(() => 
+    formData.password === formData.confirmPassword, 
+    [formData.password, formData.confirmPassword]
+  );
+
+  const isPLZValid = useMemo(() => 
+    validatePLZ(formData.plz), 
+    [formData.plz, validatePLZ]
+  );
+
+  // Memoized step validation
+  const isStepValid = useMemo(() => validateStep(step), [step, validateStep]);
+
+  // Memoized CSS classes for form inputs to prevent unnecessary re-renders
+  const emailInputClasses = useMemo(() => 
+    `pl-10 w-full p-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent ${
+      formData.email && !isEmailValid 
+        ? 'border-red-300 bg-red-50' 
+        : 'border-gray-300'
+    }`, 
+    [formData.email, isEmailValid]
+  );
+
+  const passwordInputClasses = useMemo(() => 
+    `pl-10 pr-10 w-full p-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent ${
+      !isLogin && formData.password && !isPasswordValid
+        ? 'border-red-300 bg-red-50'
+        : 'border-gray-300'
+    }`, 
+    [isLogin, formData.password, isPasswordValid]
+  );
+
+  const confirmPasswordInputClasses = useMemo(() => 
+    `pl-10 w-full p-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent ${
+      formData.password && formData.confirmPassword && !doPasswordsMatch
+        ? 'border-red-300 bg-red-50'
+        : 'border-gray-300'
+    }`, 
+    [formData.password, formData.confirmPassword, doPasswordsMatch]
+  );
+
+  const handleNextStep = useCallback(() => {
+    if (isStepValid) {
       setError('');
       setStep(step + 1);
     } else {
       // Detailliertere Fehlermeldungen je nach Schritt
       if (step === 1) {
-        if (!formData.email.trim() || !validateEmail(formData.email)) {
-          setError('Bitte geben Sie eine gültige E-Mail-Adresse ein');
-        } else if (!isLogin && formData.password.length < 6) {
+        if (!formData.email.trim() || !isEmailValid) {
+          setError('Bitte gib eine gültige E-Mail-Adresse ein');
+        } else if (!isLogin && !isPasswordValid) {
           setError('Das Passwort muss mindestens 6 Zeichen lang sein');
-        } else if (!isLogin && formData.password !== formData.confirmPassword) {
+        } else if (!isLogin && !doPasswordsMatch) {
           setError('Die Passwörter stimmen nicht überein');
         } else {
-          setError('Bitte füllen Sie alle Pflichtfelder korrekt aus');
+          setError('Bitte fülle alle Pflichtfelder korrekt aus');
         }
       } else if (step === 2) {
-        setError('Bitte geben Sie Ihren vollständigen Namen ein');
+        setError('Bitte gib deinen vollständigen Namen ein');
       } else if (step === 3) {
-        if (!validatePLZ(formData.plz)) {
-          setError('Bitte geben Sie eine gültige Postleitzahl ein (5 Ziffern)');
+        if (!isPLZValid) {
+          setError('Bitte gib eine gültige Postleitzahl ein (5 Ziffern)');
         } else if (formData.comments && formData.comments.trim().length === 0) {
-          setError('Wenn Sie Anmerkungen eingeben, dürfen diese nicht leer sein');
+          setError('Wenn du Anmerkungen eingibst, dürfen diese nicht leer sein');
         } else {
-          setError('Bitte füllen Sie alle Adressfelder aus');
+          setError('Bitte fülle alle Adressfelder aus');
         }
       } else {
-        setError('Bitte füllen Sie alle Pflichtfelder aus');
+        setError('Bitte fülle alle Pflichtfelder aus');
       }
     }
-  };
+  }, [step, isStepValid, formData, isLogin, isEmailValid, isPasswordValid, doPasswordsMatch, isPLZValid]);
 
-  const handlePreviousStep = () => {
+  const handlePreviousStep = useCallback(() => {
     setStep(step - 1);
     setError('');
-  };
+  }, [step]);
 
-  const handleSubmit = async () => {
-    if (!validateStep(4)) {
-      setError('Bitte stimmen Sie den Nutzungsbedingungen und der Datenschutzerklärung zu');
+  const togglePassword = useCallback(() => {
+    setShowPassword(!showPassword);
+  }, [showPassword]);
+
+  const toggleLoginMode = useCallback(() => {
+    setIsLogin(!isLogin);
+    setError('');
+  }, [isLogin]);
+
+  const handleSubmit = useCallback(async () => {
+    if (!formData.agreeToTerms || !formData.agreeToPrivacy) {
+      setError('Bitte stimme den Nutzungsbedingungen und der Datenschutzerklärung zu');
       return;
     }
 
@@ -210,14 +360,16 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = React.me
             name: opt.name,
             price: opt.price
           })) : [],
-          selectedAddons: packageData.selectedAddons || [],
+          // selectedAddons removed - all handled as packages now
           rentalDuration: packageData.rentalDuration,
           totalCost: {
             monthly: packageData.totalCost.monthly,
             oneTime: packageData.totalCost.oneTime || 0,
             provision: packageData.totalCost.provision || 
                      (packageData.selectedProvisionType === 'premium' ? 7 : 4)
-          }
+          },
+          discount: packageData.discount || 0,
+          zusatzleistungen: packageData.zusatzleistungen || { lagerservice: false, versandservice: false }
         };
         
         const registrationData = {
@@ -232,12 +384,10 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = React.me
           // Erfolgreiche Registrierung - zeige Bestätigungsseite
           setShowSuccess(true);
           
-          // Probemonat startet sofort
-          const trialEndDate = new Date();
-          trialEndDate.setDate(trialEndDate.getDate() + 30);
-          const trialStartMessage = `Ihr 30-tägiger kostenloser Probemonat hat begonnen und läuft bis zum ${trialEndDate.toLocaleDateString('de-DE')}.`;
+          // Probemonat startet nach Eröffnung
+          const trialStartMessage = `Dein 30-tägiger kostenloser Probemonat beginnt nach der Ladeneröffnung und läuft dann 30 Tage.`;
           
-          setSuccessMessage(`Herzlich willkommen bei housnkuh! Ihre Package-Buchung war erfolgreich. ${trialStartMessage} Sie erhalten eine Bestätigungs-E-Mail an ${formData.email} mit allen Details zu Ihrem gebuchten Paket.`);
+          setSuccessMessage(`Herzlich willkommen bei housnkuh! Deine Package-Buchung war erfolgreich. ${trialStartMessage} Du erhältst eine Bestätigungs-E-Mail an ${formData.email} mit allen Details zu deinem gebuchten Paket.`);
         } else {
           setError(result.message || 'Ein Fehler ist aufgetreten');
         }
@@ -248,7 +398,7 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = React.me
     } finally {
       setIsSubmitting(false);
     }
-  };
+  }, [formData, packageData, isLogin, login, registerWithBooking, onSuccess, onClose]);
 
   if (!isOpen) return null;
 
@@ -263,8 +413,8 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = React.me
               </h3>
               <p className="text-gray-600">
                 {isLogin 
-                  ? 'Melden Sie sich mit Ihren Zugangsdaten an' 
-                  : 'Erstellen Sie einen Account, um Ihre Buchung abzuschließen'
+                  ? 'Melde dich mit deinen Zugangsdaten an' 
+                  : 'Erstelle einen Account, um deine Buchung abzuschließen'
                 }
               </p>
               
@@ -278,7 +428,7 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = React.me
                         30 Tage kostenlos testen!
                       </p>
                       <p className="text-xs text-green-700 mt-1">
-                        Ihr Probemonat startet sofort nach der Registrierung. Sie können jederzeit kündigen.
+                        Der Probemonat startet nach Ladeneröffnung. Innerhalb des Probemonats kannst du jederzeit kündigen.
                       </p>
                       <ul className="text-xs text-green-600 mt-2 space-y-1">
                         <li>✓ Keine Kreditkarte erforderlich</li>
@@ -304,22 +454,19 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = React.me
                   name="email"
                   value={formData.email}
                   onChange={handleInputChange}
-                  className={`pl-10 w-full p-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent
-                    ${formData.email && !validateEmail(formData.email) 
-                      ? 'border-red-300 bg-red-50' 
-                      : 'border-gray-300'}`}
-                  placeholder="ihre.email@example.com"
+                  className={emailInputClasses}
+                  placeholder="deine.email@example.com"
                   required
                   autoComplete="email"
                 />
               </div>
-              {formData.email && !validateEmail(formData.email) && (
+              {formData.email && !isEmailValid && (
                 <p className="mt-1 text-sm text-red-600">
-                  Bitte geben Sie eine gültige E-Mail-Adresse ein
+                  Bitte gib eine gültige E-Mail-Adresse ein
                 </p>
               )}
               <p className="mt-1 text-xs text-gray-500">
-                Wenn Sie bereits im Newsletter angemeldet sind, können Sie dieselbe E-Mail-Adresse verwenden.
+                Wenn du bereits im Newsletter angemeldet bist, kannst du dieselbe E-Mail-Adresse verwenden.
               </p>
             </div>
 
@@ -335,23 +482,20 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = React.me
                   name="password"
                   value={formData.password}
                   onChange={handleInputChange}
-                  className={`pl-10 pr-10 w-full p-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent
-                    ${!isLogin && formData.password && formData.password.length < 6
-                      ? 'border-red-300 bg-red-50'
-                      : 'border-gray-300'}`}
-                  placeholder={isLogin ? "Ihr Passwort" : "Mind. 6 Zeichen"}
+                  className={passwordInputClasses}
+                  placeholder={isLogin ? "Dein Passwort" : "Mind. 6 Zeichen"}
                   required
                   autoComplete={isLogin ? "current-password" : "new-password"}
                 />
                 <button
                   type="button"
-                  onClick={() => setShowPassword(!showPassword)}
+                  onClick={togglePassword}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
-              {!isLogin && formData.password && formData.password.length < 6 && (
+              {!isLogin && formData.password && !isPasswordValid && (
                 <p className="mt-1 text-sm text-red-600">
                   Das Passwort muss mindestens 6 Zeichen lang sein
                 </p>
@@ -371,16 +515,13 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = React.me
                     name="confirmPassword"
                     value={formData.confirmPassword}
                     onChange={handleInputChange}
-                    className={`pl-10 w-full p-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent
-                      ${formData.password && formData.confirmPassword && formData.password !== formData.confirmPassword
-                        ? 'border-red-300 bg-red-50'
-                        : 'border-gray-300'}`}
+                    className={confirmPasswordInputClasses}
                     placeholder="Passwort wiederholen"
                     required
                     autoComplete="new-password"
                   />
                 </div>
-                {formData.password && formData.confirmPassword && formData.password !== formData.confirmPassword && (
+                {formData.password && formData.confirmPassword && !doPasswordsMatch && (
                   <p className="text-red-500 text-sm mt-1">Die Passwörter stimmen nicht überein</p>
                 )}
               </div>
@@ -389,7 +530,7 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = React.me
             <div className="flex items-center justify-center pt-4">
               <button
                 type="button"
-                onClick={() => setIsLogin(!isLogin)}
+                onClick={toggleLoginMode}
                 className="text-primary hover:text-primary/80 font-medium"
               >
                 {isLogin 
@@ -422,7 +563,7 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = React.me
                   value={formData.name}
                   onChange={handleInputChange}
                   className="pl-10 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="Ihr vollständiger Name"
+                  placeholder="Dein vollständiger Name"
                   required
                 />
               </div>
@@ -441,7 +582,7 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = React.me
                   value={formData.telefon}
                   onChange={handleInputChange}
                   className="pl-10 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="Ihre Telefonnummer"
+                  placeholder="Deine Telefonnummer"
                 />
               </div>
             </div>
@@ -457,7 +598,7 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = React.me
                 value={formData.unternehmen}
                 onChange={handleInputChange}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                placeholder="Name Ihres Unternehmens (optional)"
+                placeholder="Name deines Unternehmens (optional)"
               />
             </div>
           </div>
@@ -468,7 +609,7 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = React.me
           <div className="space-y-4">
             <div className="text-center mb-6">
               <h3 className="text-xl font-semibold text-secondary mb-2">Adressdaten</h3>
-              <p className="text-gray-600">Für die Rechnungsstellung benötigen wir Ihre Adresse</p>
+              <p className="text-gray-600">Für die Rechnungsstellung benötigen wir deine Adresse</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -525,7 +666,7 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = React.me
                 />
                 {formData.plz && !validatePLZ(formData.plz) && (
                   <p className="mt-1 text-sm text-red-600">
-                    Bitte geben Sie eine gültige Postleitzahl ein (5 Ziffern)
+                    Bitte gib eine gültige Postleitzahl ein (5 Ziffern)
                   </p>
                 )}
               </div>
@@ -540,7 +681,7 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = React.me
                   value={formData.ort}
                   onChange={handleInputChange}
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="Ihre Stadt"
+                  placeholder="Deine Stadt"
                   required
                 />
               </div>
@@ -556,7 +697,7 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = React.me
                 name="comments"
                 value={formData.comments || ''}
                 onChange={handleInputChange}
-                placeholder="Teilen Sie uns besondere Wünsche oder Anforderungen mit..."
+                placeholder="Teile uns besondere Wünsche oder Anforderungen mit..."
                 maxLength={500}
                 rows={4}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
@@ -575,7 +716,7 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = React.me
           <div className="space-y-6">
             <div className="text-center mb-6">
               <h3 className="text-xl font-semibold text-secondary mb-2">Buchung bestätigen</h3>
-              <p className="text-gray-600">Prüfen Sie Ihre Daten und bestätigen Sie die Buchung</p>
+              <p className="text-gray-600">Prüfe deine Daten und bestätige die Buchung</p>
             </div>
 
             {/* Trial Info */}
@@ -585,7 +726,7 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = React.me
                 30 Tage kostenloses Probeabo
               </h4>
               <div className="text-sm text-green-700 space-y-1">
-                <p>✓ Ihr Probemonat beginnt sofort nach der Registrierung</p>
+                <p>✓ Der Probemonat beginnt sofort nach Eröffnung</p>
                 <p>✓ Keine Zahlungsinformationen erforderlich</p>
                 <p>✓ Sie können jederzeit kündigen</p>
                 <p>✓ Nach 30 Tagen wird Ihr gewähltes Paket automatisch aktiviert</p>
@@ -596,9 +737,21 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = React.me
             <div className="bg-gray-50 p-4 rounded-lg">
               <h4 className="font-semibold text-secondary mb-3 flex items-center">
                 <Package className="w-5 h-5 mr-2" />
-                Ihr gewähltes Paket (nach Probemonat)
+                Dein gewähltes Paket (nach Probemonat)
               </h4>
               <div className="space-y-2 text-sm">
+                {packageData.selectedPackages.length > 0 && (
+                  <div className="flex justify-between">
+                    <span>Gewählte Pakete:</span>
+                    <span className="font-semibold">
+                      {packageData.selectedPackages.map(pkg => {
+                        const count = packageData.packageCounts[pkg] || 1;
+                        const packageOption = packageData.packageOptions.find(opt => opt.id === pkg);
+                        return `${count}x ${packageOption?.name || pkg}`;
+                      }).join(', ')}
+                    </span>
+                  </div>
+                )}
                 <div className="flex justify-between">
                   <span>Monatliche Kosten:</span>
                   <span className="font-semibold">{packageData.totalCost.monthly.toFixed(2)}€</span>
@@ -611,13 +764,38 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = React.me
                   <span>Laufzeit:</span>
                   <span className="font-semibold">{packageData.rentalDuration} Monate</span>
                 </div>
+                {packageData.selectedProvisionType === 'premium' && packageData.zusatzleistungen && (packageData.zusatzleistungen.lagerservice || packageData.zusatzleistungen.versandservice) && (
+                  <div className="border-t border-gray-200 pt-2 mt-2">
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="font-medium text-blue-800">Zusatzleistungen:</span>
+                    </div>
+                    {packageData.zusatzleistungen.lagerservice && (
+                      <div className="flex justify-between text-sm pl-4">
+                        <span>• Lagerservice</span>
+                        <span className="font-semibold">+20€/Monat</span>
+                      </div>
+                    )}
+                    {packageData.zusatzleistungen.versandservice && (
+                      <div className="flex justify-between text-sm pl-4">
+                        <span>• Versandservice</span>
+                        <span className="font-semibold">+5€/Monat</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+                {packageData.discount > 0 && (
+                  <div className="flex justify-between text-green-600">
+                    <span>Laufzeitrabatt:</span>
+                    <span className="font-semibold">-{(packageData.discount * 100).toFixed(0)}%</span>
+                  </div>
+                )}
               </div>
             </div>
 
             {/* Comments Display */}
             {formData.comments && formData.comments.trim() && (
               <div className="bg-blue-50 p-4 rounded-lg">
-                <h4 className="font-semibold text-blue-800 mb-2">Ihre Anmerkungen:</h4>
+                <h4 className="font-semibold text-blue-800 mb-2">Deine Anmerkungen:</h4>
                 <p className="text-sm text-blue-700 whitespace-pre-wrap">{formData.comments.trim()}</p>
               </div>
             )}
@@ -667,10 +845,9 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = React.me
                 <div className="text-sm text-blue-800">
                   <strong>Was passiert nach der Bestätigung?</strong>
                   <ul className="mt-2 space-y-1 list-disc list-inside">
-                    <li>Sie erhalten eine Bestätigungs-E-Mail</li>
-                    <li>Wir nehmen in 2 Werktagen Kontakt mit Ihnen auf</li>
+                    <li>Du erhältst eine Bestätigungs-E-Mail</li>
+                    <li>Wir nehmen in 2 Werktagen Kontakt mit dir auf</li>
                     <li>Gemeinsam besprechen wir die finalen Details</li>
-                    <li>Der Vertrag wird erstellt und Sie können starten</li>
                   </ul>
                 </div>
               </div>
@@ -838,12 +1015,12 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = React.me
 
           <button
             onClick={step < 4 ? handleNextStep : handleSubmit}
-            disabled={!validateStep(step) || isSubmitting}
+            disabled={!validateStep(step) || isSubmitting || isRegistering}
             className="px-6 py-2 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 
                      disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200
                      flex items-center gap-2"
           >
-            {isSubmitting && (
+            {(isSubmitting || isRegistering) && (
               <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
             )}
             {step < 4 ? 'Weiter' : (isLogin ? 'Anmelden' : 'Buchung bestätigen')}

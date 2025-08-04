@@ -21,6 +21,10 @@ import DatenschutzPage from '../pages/DatenschutzPage';
 import AGBPage from '../pages/AGBPage';
 import FAQPage from '../pages/FAQPage';
 
+// Provider wrapper components
+import AdminProviderWrapper from './providers/AdminProviderWrapper';
+import VendorProviderWrapper from './providers/VendorProviderWrapper';
+
 // Admin-Komponenten - Core imports
 import ProtectedRoute from './admin/ProtectedRoute';
 import VendorProtectedRoute from './vendor/VendorProtectedRoute';
@@ -28,7 +32,7 @@ import VendorProtectedRoute from './vendor/VendorProtectedRoute';
 // Lazy load heavy admin and vendor components for better performance
 const VendorDashboardPage = React.lazy(() => import('../pages/VendorDashboardPage'));
 const VendorProfilePage = React.lazy(() => import('../pages/vendor/VendorProfilePage'));
-const VendorContractsPage = React.lazy(() => import('../pages/vendor/VendorContractsPage'));
+const MeineBuchungenPage = React.lazy(() => import('../pages/vendor/MeineBuchungenPage'));
 const VendorProductsPage = React.lazy(() => import('../pages/vendor/VendorProductsPage'));
 const VendorReportsPage = React.lazy(() => import('../pages/vendor/VendorReportsPage'));
 const VendorCustomerInvoicesPage = React.lazy(() => import('../pages/vendor/VendorCustomerInvoicesPage'));
@@ -49,6 +53,9 @@ const UnauthorizedPage = React.lazy(() => import('../pages/admin/UnauthorizedPag
 const SettingsPage = React.lazy(() => import('../pages/admin/SettingsPage'));
 const TagsPage = React.lazy(() => import('../pages/admin/TagsPage'));
 const FAQManagementPage = React.lazy(() => import('../pages/admin/FAQManagementPage'));
+const RevenueOverviewPage = React.lazy(() => import('../pages/admin/RevenueOverviewPage'));
+const ZusatzleistungenPage = React.lazy(() => import('../pages/admin/ZusatzleistungenPage'));
+const EmailTemplatesPage = React.lazy(() => import('../pages/admin/EmailTemplatesPage'));
 
 // Loading component for lazy-loaded components
 const LoadingSpinner: React.FC = () => (
@@ -73,14 +80,18 @@ const AppContent: React.FC = () => {
     <Routes>
       {/* Admin-Routen */}
       <Route path="/admin/login" element={
-        <Suspense fallback={<LoadingSpinner />}>
-          <LoginPage />
-        </Suspense>
+        <AdminProviderWrapper>
+          <Suspense fallback={<LoadingSpinner />}>
+            <LoginPage />
+          </Suspense>
+        </AdminProviderWrapper>
       } />
       <Route path="/admin/setup" element={
-        <Suspense fallback={<LoadingSpinner />}>
-          <SetupPage />
-        </Suspense>
+        <AdminProviderWrapper>
+          <Suspense fallback={<LoadingSpinner />}>
+            <SetupPage />
+          </Suspense>
+        </AdminProviderWrapper>
       } />
       <Route path="/admin/unauthorized" element={
         <Suspense fallback={<LoadingSpinner />}>
@@ -89,7 +100,11 @@ const AppContent: React.FC = () => {
       } />
       
       {/* Geschützte Admin-Routen */}
-      <Route path="/admin" element={<ProtectedRoute />}>
+      <Route path="/admin/*" element={
+        <AdminProviderWrapper>
+          <ProtectedRoute />
+        </AdminProviderWrapper>
+      }>
         <Route index element={
           <Suspense fallback={<LoadingSpinner />}>
             <DashboardPage />
@@ -98,6 +113,11 @@ const AppContent: React.FC = () => {
         <Route path="newsletter" element={
           <Suspense fallback={<LoadingSpinner />}>
             <NewsletterPage />
+          </Suspense>
+        } />
+        <Route path="email-templates" element={
+          <Suspense fallback={<LoadingSpinner />}>
+            <EmailTemplatesPage />
           </Suspense>
         } />
         <Route path="users" element={
@@ -118,6 +138,11 @@ const AppContent: React.FC = () => {
         <Route path="vertraege" element={
           <Suspense fallback={<LoadingSpinner />}>
             <VertraegeePage />
+          </Suspense>
+        } />
+        <Route path="zusatzleistungen" element={
+          <Suspense fallback={<LoadingSpinner />}>
+            <ZusatzleistungenPage />
           </Suspense>
         } />
         <Route path="contacts" element={
@@ -145,14 +170,27 @@ const AppContent: React.FC = () => {
             <FAQManagementPage />
           </Suspense>
         } />
+        <Route path="revenue" element={
+          <Suspense fallback={<LoadingSpinner />}>
+            <RevenueOverviewPage />
+          </Suspense>
+        } />
       </Route>
       
       {/* Vendor-Routen */}
-      <Route path="/vendor/login" element={<VendorLoginPage />} />
+      <Route path="/vendor/login" element={
+        <VendorProviderWrapper>
+          <VendorLoginPage />
+        </VendorProviderWrapper>
+      } />
       <Route path="/vendor/confirm" element={<VendorConfirmPage />} />
       
       {/* Geschützte Vendor-Routen */}
-      <Route path="/vendor" element={<VendorProtectedRoute />}>
+      <Route path="/vendor/*" element={
+        <VendorProviderWrapper>
+          <VendorProtectedRoute />
+        </VendorProviderWrapper>
+      }>
         <Route path="dashboard" element={
           <Suspense fallback={<LoadingSpinner />}>
             <VendorDashboardPage />
@@ -163,9 +201,9 @@ const AppContent: React.FC = () => {
             <VendorProfilePage />
           </Suspense>
         } />
-        <Route path="contracts" element={
+        <Route path="meine-buchungen" element={
           <Suspense fallback={<LoadingSpinner />}>
-            <VendorContractsPage />
+            <MeineBuchungenPage />
           </Suspense>
         } />
         <Route path="products" element={

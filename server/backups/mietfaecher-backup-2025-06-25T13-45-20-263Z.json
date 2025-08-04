@@ -1,0 +1,18 @@
+[
+  {
+    "_id": "685bfd64578d24896ccdd5e6",
+    "bezeichnung": "DEV Mietfach A1",
+    "typ": "Standard",
+    "createdAt": "2025-06-25T13:45:08.415Z",
+    "updatedAt": "2025-06-25T13:45:08.415Z",
+    "__v": 0
+  },
+  {
+    "_id": "685bfd64578d24896ccdd5e7",
+    "bezeichnung": "DEV Mietfach B2",
+    "typ": "Premium",
+    "createdAt": "2025-06-25T13:45:08.421Z",
+    "updatedAt": "2025-06-25T13:45:08.421Z",
+    "__v": 0
+  }
+]

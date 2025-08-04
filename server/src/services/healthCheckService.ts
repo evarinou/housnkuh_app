@@ -1,38 +1,71 @@
+/**
+ * @file Health Check Service for comprehensive system monitoring
+ * @description Service for monitoring system health including database, email, jobs, and core services
+ * @author System
+ * @version 1.0.0
+ * @since 2024-01-01
+ */
+
 // server/src/services/healthCheckService.ts
 import mongoose from 'mongoose';
 import { testEmailConnection } from '../utils/emailService';
 import ScheduledJobs from './scheduledJobs';
 import TrialService from './trialService';
+import logger from '../utils/logger';
 
+/**
+ * @interface ComponentHealth
+ * @description Health status for individual system components
+ */
 export interface ComponentHealth {
+  /** @description Component name */
   name: string;
+  /** @description Health status */
   status: 'healthy' | 'degraded' | 'unhealthy';
+  /** @description Status message */
   message: string;
+  /** @description Response time in milliseconds */
   responseTime?: number;
+  /** @description Last check timestamp */
   lastChecked: Date;
+  /** @description Additional details */
   details?: any;
 }
 
+/**
+ * @interface SystemHealth
+ * @description Overall system health status
+ */
 export interface SystemHealth {
+  /** @description Overall system health */
   overall: 'healthy' | 'degraded' | 'unhealthy';
+  /** @description Array of component health statuses */
   components: ComponentHealth[];
+  /** @description Health check timestamp */
   timestamp: Date;
+  /** @description System uptime in seconds */
   uptime: number;
 }
 
 /**
- * Health Check Service for comprehensive system monitoring
- * Monitors database, email service, scheduled jobs, and core business logic
+ * @class HealthCheckService
+ * @description Health Check Service for comprehensive system monitoring
+ * @monitors Database, email service, scheduled jobs, and core business logic
+ * @security Provides system health information without exposing sensitive data
+ * @complexity High - Comprehensive system monitoring with parallel checks
  */
 export class HealthCheckService {
   private static lastChecks: Map<string, ComponentHealth> = new Map();
   private static readonly CHECK_TIMEOUT = 10000; // 10 seconds
 
   /**
-   * Perform comprehensive health check of all system components
+   * @description Perform comprehensive health check of all system components
+   * @security Monitors system health without exposing sensitive information
+   * @complexity High - Parallel health checks with overall status determination
+   * @returns {Promise<SystemHealth>} Comprehensive system health report
    */
   static async performHealthCheck(): Promise<SystemHealth> {
-    console.log('🏥 Performing comprehensive health check...');
+    logger.info('🏥 Performing comprehensive health check...');
     
     const startTime = Date.now();
     const components: ComponentHealth[] = [];
@@ -93,13 +126,16 @@ export class HealthCheckService {
     };
 
     const totalTime = Date.now() - startTime;
-    console.log(`✅ Health check completed in ${totalTime}ms - Overall status: ${overall}`);
+    logger.info(`✅ Health check completed in ${totalTime}ms - Overall status: ${overall}`);
     
     return healthReport;
   }
 
   /**
-   * Check database connectivity and performance
+   * @description Check database connectivity and performance
+   * @security Tests database connection and query performance
+   * @complexity Medium - Database connectivity test with performance monitoring
+   * @returns {Promise<ComponentHealth>} Database health status
    */
   private static async checkDatabase(): Promise<ComponentHealth> {
     const startTime = Date.now();
@@ -149,7 +185,10 @@ export class HealthCheckService {
   }
 
   /**
-   * Check email service connectivity
+   * @description Check email service connectivity
+   * @security Tests email service connection with timeout
+   * @complexity Medium - Email service test with timeout handling
+   * @returns {Promise<ComponentHealth>} Email service health status
    */
   private static async checkEmailService(): Promise<ComponentHealth> {
     const startTime = Date.now();
@@ -188,7 +227,10 @@ export class HealthCheckService {
   }
 
   /**
-   * Check scheduled jobs status
+   * @description Check scheduled jobs status
+   * @security Monitors scheduled jobs without exposing sensitive data
+   * @complexity Low - Simple job status check
+   * @returns {Promise<ComponentHealth>} Scheduled jobs health status
    */
   private static async checkScheduledJobs(): Promise<ComponentHealth> {
     try {
@@ -213,7 +255,10 @@ export class HealthCheckService {
   }
 
   /**
-   * Check trial service functionality
+   * @description Check trial service functionality
+   * @security Tests trial service with performance monitoring
+   * @complexity Medium - Trial service test with statistics
+   * @returns {Promise<ComponentHealth>} Trial service health status
    */
   private static async checkTrialService(): Promise<ComponentHealth> {
     const startTime = Date.now();
@@ -242,7 +287,10 @@ export class HealthCheckService {
   }
 
   /**
-   * Check memory usage
+   * @description Check memory usage
+   * @security Monitors system memory usage with thresholds
+   * @complexity Low - Memory usage monitoring
+   * @returns {Promise<ComponentHealth>} Memory usage health status
    */
   private static async checkMemoryUsage(): Promise<ComponentHealth> {
     try {
@@ -279,7 +327,10 @@ export class HealthCheckService {
   }
 
   /**
-   * Check disk space (basic check)
+   * @description Check disk space (basic check)
+   * @security Basic disk accessibility verification
+   * @complexity Low - Simple disk space check
+   * @returns {Promise<ComponentHealth>} Disk space health status
    */
   private static async checkDiskSpace(): Promise<ComponentHealth> {
     try {
@@ -307,7 +358,11 @@ export class HealthCheckService {
   }
 
   /**
-   * Determine overall system health based on component health
+   * @description Determine overall system health based on component health
+   * @param {ComponentHealth[]} components - Array of component health statuses
+   * @security Evaluates system health based on component criticality
+   * @complexity Medium - Health determination with component priority
+   * @returns {'healthy' | 'degraded' | 'unhealthy'} Overall system health status
    */
   private static determineOverallHealth(components: ComponentHealth[]): 'healthy' | 'degraded' | 'unhealthy' {
     const unhealthy = components.filter(c => c.status === 'unhealthy');
@@ -335,14 +390,21 @@ export class HealthCheckService {
   }
 
   /**
-   * Get cached health status (for quick endpoints)
+   * @description Get cached health status (for quick endpoints)
+   * @security Provides cached health data for performance
+   * @complexity Low - Simple cache retrieval
+   * @returns {ComponentHealth[]} Array of cached component health statuses
    */
   static getCachedHealth(): ComponentHealth[] {
     return Array.from(this.lastChecks.values());
   }
 
   /**
-   * Check specific component health
+   * @description Check specific component health
+   * @param {string} componentName - Name of component to check
+   * @security Allows targeted health checks for specific components
+   * @complexity Medium - Component-specific health check routing
+   * @returns {Promise<ComponentHealth | null>} Component health status or null if not found
    */
   static async checkComponent(componentName: string): Promise<ComponentHealth | null> {
     switch (componentName) {
@@ -364,7 +426,10 @@ export class HealthCheckService {
   }
 
   /**
-   * Get simple status for lightweight health checks
+   * @description Get simple status for lightweight health checks
+   * @security Provides minimal health status for load balancers
+   * @complexity Low - Simple status check for critical components
+   * @returns {Promise<object>} Simple status object
    */
   static async getSimpleStatus(): Promise<{ status: string; timestamp: Date }> {
     try {

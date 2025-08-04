@@ -57,8 +57,7 @@ const VendorContractsPage: React.FC = () => {
     if (user?.id) {
       fetchContracts();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+  }, [user?.id]);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);

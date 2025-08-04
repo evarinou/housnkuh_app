@@ -60,6 +60,34 @@ export interface IVertrag extends Document {
   user: string; // ObjectId als String
   datum: Date;
   services: IService[];
+  status: string;
+  scheduledStartDate: Date;
+  availabilityImpact?: {
+    from: Date;
+    to: Date;
+  };
+  totalMonthlyPrice?: number;
+  discount?: number;
+  istProbemonatBuchung: boolean;
+  zahlungspflichtigAb?: Date;
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface IMonthlyRevenue extends Document {
+  monat: Date;
+  gesamteinnahmen: number;
+  anzahlAktiveVertraege: number;
+  anzahlProbemonatVertraege: number;
+  einnahmenProMietfach: IMietfachRevenue[];
+  isProjection?: boolean;
+  aktualisiertAm?: Date;
+}
+
+export interface IMietfachRevenue {
+  mietfachId: any; // ObjectId
+  mietfachNummer: string;
+  einnahmen: number;
+  anzahlVertraege: number;
+  anzahlProbemonatVertraege: number;
 }

@@ -62,7 +62,7 @@ const FAQPage: React.FC = () => {
       _id: 'general-3',
       category: 'Allgemein',
       question: 'In welchen Regionen ist housnkuh verfügbar?',
-      answer: 'housnkuh startet zunächst in ausgewählten Regionen Deutschlands und wird sukzessive auf weitere Gebiete ausgedehnt. Aktuelle Verfügbarkeit und geplante Erweiterungen finden Sie auf unserer Standorte-Seite oder kontaktieren Sie uns direkt.',
+      answer: 'housnkuh startet zunächst in ausgewählten Regionen Deutschlands und wird sukzessive auf weitere Gebiete ausgedehnt. Aktuelle Verfügbarkeit und geplante Erweiterungen findest du auf der Standorte-Seite oder kontaktiere Eva-Maria Schaller direkt.',
       keywords: ['regionen', 'verfügbarkeit', 'deutschland', 'standorte']
     },
 
@@ -71,7 +71,7 @@ const FAQPage: React.FC = () => {
       _id: 'account-1',
       category: 'Registrierung',
       question: 'Wie kann ich mich als Direktvermarkter registrieren?',
-      answer: 'Klicken Sie auf "Jetzt registrieren" und wählen Sie "Als Direktvermarkter". Füllen Sie das Formular mit Ihren Betriebsdaten aus. Nach der E-Mail-Bestätigung können Sie sofort mit dem kostenlosen Probemonat beginnen und Ihr Profil vervollständigen.',
+      answer: 'Klicke auf "Jetzt registrieren" und wähle "Als Direktvermarkter". Fülle das Formular mit deinen Betriebsdaten aus. Nach der E-Mail-Bestätigung kannst du sofort mit dem kostenlosen Probemonat beginnen und dein Profil vervollständigen.',
       keywords: ['registrierung', 'anmeldung', 'direktvermarkter', 'probemonat']
     },
     {
@@ -85,14 +85,14 @@ const FAQPage: React.FC = () => {
       _id: 'account-3',
       category: 'Registrierung',
       question: 'Kann ich den Probemonat jederzeit kündigen?',
-      answer: 'Ja, Sie können Ihr Konto während des kostenlosen Probemonats jederzeit ohne Angabe von Gründen kündigen. Nutzen Sie dafür die Kündigungsfunktion in Ihrem Dashboard oder kontaktieren Sie unseren Support.',
+      answer: 'Ja, du kannst dein Konto während des kostenlosen Probemonats jederzeit ohne Angabe von Gründen kündigen. Nutze dafür die Kündigungsfunktion in deinem Dashboard oder kontaktiere housnkuh direkt.',
       keywords: ['kündigung', 'probemonat', 'kostenlos', 'dashboard']
     },
     {
       _id: 'account-4',
       category: 'Registrierung',
       question: 'Welche Daten muss ich bei der Registrierung angeben?',
-      answer: 'Für die Registrierung benötigen wir Ihre Kontaktdaten (Name, E-Mail, Telefon), Informationen zu Ihrem Betrieb (Firmenname, Adresse, Betriebsart) und eine Beschreibung Ihrer Produkte. Optional können Sie ein Profilbild und weitere Details hinzufügen.',
+      answer: 'Für die Registrierung benötigen wir deine Kontaktdaten (Name, E-Mail, Telefon), Informationen zu deinem Betrieb (Firmenname, Adresse, Betriebsart) und eine Beschreibung deiner Produkte. Optional kannst du ein Profilbild und weitere Details hinzufügen.',
       keywords: ['daten', 'registrierung', 'betrieb', 'kontakt', 'profil']
     },
 
@@ -101,7 +101,7 @@ const FAQPage: React.FC = () => {
       _id: 'booking-1',
       category: 'Buchungen',
       question: 'Wie funktioniert die Buchung von Verkaufsflächen?',
-      answer: 'Auf der Preise-Seite wählen Sie Ihren gewünschten Standort und die Flächengröße. Sie sehen sofort die monatlichen Kosten und können direkt buchen. Nach der Buchung erhalten Sie alle Details zum Standort und den nächsten Schritten.',
+      answer: 'Auf der Preise-Seite wählst du deinen gewünschten Standort und die Flächengröße. Du siehst sofort die monatlichen Kosten und kannst direkt buchen. Nach der Buchung erhältst du alle Details zum Standort und den nächsten Schritten.',
       keywords: ['buchung', 'verkaufsflächen', 'standort', 'preise', 'fläche']
     },
     {
@@ -115,14 +115,14 @@ const FAQPage: React.FC = () => {
       _id: 'booking-3',
       category: 'Buchungen',
       question: 'Kann ich mehrere Standorte gleichzeitig buchen?',
-      answer: 'Ja, Sie können Flächen an verschiedenen Standorten buchen. Jede Buchung wird separat verwaltet und abgerechnet. In Ihrem Dashboard haben Sie eine Übersicht über alle Ihre aktiven Buchungen.',
+      answer: 'Ja, du kannst Flächen an verschiedenen Standorten buchen. Jede Buchung wird separat verwaltet und abgerechnet. In deinem Dashboard hast du eine Übersicht über alle deine aktiven Buchungen.',
       keywords: ['mehrere', 'standorte', 'buchungen', 'dashboard', 'übersicht']
     },
     {
       _id: 'booking-4',
       category: 'Buchungen',
       question: 'Wie lange im Voraus muss ich buchen?',
-      answer: 'Grundsätzlich können Sie jederzeit buchen, solange Flächen verfügbar sind. Für beliebte Standorte und Zeiten empfehlen wir eine Buchung mindestens 2-3 Wochen im Voraus. Kurzfristige Buchungen sind je nach Verfügbarkeit möglich.',
+      answer: 'Grundsätzlich kannst du jederzeit buchen, solange Flächen verfügbar sind. Für beliebte Standorte und Zeiten empfehlen wir eine Buchung mindestens 2-3 Wochen im Voraus. Kurzfristige Buchungen sind je nach Verfügbarkeit möglich.',
       keywords: ['voraus', 'buchen', 'zeitraum', 'verfügbar', 'kurzfristig']
     },
 
@@ -131,14 +131,14 @@ const FAQPage: React.FC = () => {
       _id: 'payment-1',
       category: 'Zahlungen',
       question: 'Wie wird abgerechnet und wann muss ich bezahlen?',
-      answer: 'Die Abrechnung erfolgt monatlich im Voraus. Sie erhalten jeweils zum Monatsende eine Rechnung für den folgenden Monat. Zahlung ist per SEPA-Lastschrift oder Überweisung möglich. Der Probemonat ist kostenfrei.',
+      answer: 'Die Abrechnung erfolgt monatlich im Voraus. Du erhältst jeweils zum Monatsende eine Rechnung für den folgenden Monat. Zahlung ist per SEPA-Lastschrift oder Überweisung möglich. Der Probemonat ist kostenfrei.',
       keywords: ['abrechnung', 'zahlung', 'monatlich', 'rechnung', 'sepa', 'überweisung']
     },
     {
       _id: 'payment-2',
       category: 'Zahlungen',
       question: 'Welche Zahlungsmethoden werden akzeptiert?',
-      answer: 'Wir akzeptieren SEPA-Lastschrift (empfohlen) und Überweisung. Die Lastschrift wird automatisch zum Fälligkeitstermin eingezogen. Bei Überweisung erhalten Sie rechtzeitig eine Rechnung mit allen nötigen Daten.',
+      answer: 'Wir akzeptieren SEPA-Lastschrift (empfohlen) und Überweisung. Die Lastschrift wird automatisch zum Fälligkeitstermin eingezogen. Bei Überweisung erhältst du rechtzeitig eine Rechnung mit allen nötigen Daten.',
       keywords: ['zahlungsmethoden', 'sepa', 'lastschrift', 'überweisung', 'automatisch']
     },
     {
@@ -154,21 +154,21 @@ const FAQPage: React.FC = () => {
       _id: 'products-1',
       category: 'Produkte',
       question: 'Welche Produkte kann ich über housnkuh anbieten?',
-      answer: 'Sie können alle regionalen, selbst erzeugten oder verarbeiteten Produkte anbieten: Obst, Gemüse, Fleisch, Milchprodukte, Honig, Wein, Backwaren und vieles mehr. Die Produkte müssen den gesetzlichen Bestimmungen entsprechen.',
+      answer: 'Du kannst alle regionalen, selbst erzeugten oder verarbeiteten Produkte anbieten: Obst, Gemüse, Fleisch, Milchprodukte, Honig, Wein, Backwaren und vieles mehr. Die Produkte müssen den gesetzlichen Bestimmungen entsprechen.',
       keywords: ['produkte', 'regional', 'obst', 'gemüse', 'fleisch', 'milch', 'honig', 'wein']
     },
     {
       _id: 'products-2',
       category: 'Produkte',
       question: 'Wie erstelle ich ein ansprechendes Profil?',
-      answer: 'Ein gutes Profil enthält aussagekräftige Fotos, eine detaillierte Beschreibung Ihres Betriebs, Ihre Produktpalette und Ihre Geschichte. Nutzen Sie die Kategorien und Tags, damit Kunden Sie leicht finden. Halten Sie alle Informationen aktuell.',
+      answer: 'Ein gutes Profil enthält aussagekräftige Fotos, eine detaillierte Beschreibung deines Betriebs, deine Produktpalette und deine Geschichte. Nutze die Kategorien und Tags, damit Kunden dich leicht finden. Halte alle Informationen aktuell.',
       keywords: ['profil', 'fotos', 'beschreibung', 'betrieb', 'kategorien', 'tags', 'aktuell']
     },
     {
       _id: 'products-3',
       category: 'Produkte',
       question: 'Kann ich Preise für meine Produkte angeben?',
-      answer: 'Ja, Sie können Preise für Ihre Produkte hinterlegen. Diese dienen Kunden als Orientierung. Der tatsächliche Verkauf und die Preisgestaltung liegen in Ihrer Verantwortung - housnkuh ist keine Verkaufsplattform, sondern vermittelt den Kontakt.',
+      answer: 'Ja, du kannst Preise für deine Produkte hinterlegen. Diese dienen Kunden als Orientierung. Der tatsächliche Verkauf und die Preisgestaltung liegen in deiner Verantwortung - housnkuh ist keine Verkaufsplattform, sondern vermittelt den Kontakt.',
       keywords: ['preise', 'produktpreise', 'orientierung', 'verkauf', 'kontakt', 'vermittlung']
     },
 
@@ -177,21 +177,21 @@ const FAQPage: React.FC = () => {
       _id: 'support-1',
       category: 'Support',
       question: 'Wie erreiche ich den housnkuh-Support?',
-      answer: 'Unser Support-Team ist per E-Mail unter info@housnkuh.de oder telefonisch unter 0157 35711257 erreichbar. Wir antworten in der Regel innerhalb von 24 Stunden. Für dringende Fälle nutzen Sie bitte das Telefon.',
+      answer: 'housnkuh ist per E-Mail unter info@housnkuh.de oder telefonisch unter 0157 35711257 erreichbar. Du erhältst in der Regel innerhalb von 24 Stunden eine Antwort. Für dringende Fälle nutze bitte das Telefon.',
       keywords: ['support', 'hilfe', 'kontakt', 'email', 'telefon', 'dringend']
     },
     {
       _id: 'support-2',
       category: 'Support',
       question: 'Gibt es Schulungen oder Hilfen für Einsteiger?',
-      answer: 'Ja, wir bieten Ihnen gerne eine persönliche Einführung in die Plattform. Außerdem finden Sie in Ihrem Dashboard hilfreiche Tipps und Anleitungen. Bei Fragen steht unser Support-Team zur Verfügung.',
+      answer: 'Ja, housnkuh bietet dir gerne eine persönliche Einführung in die Plattform. Außerdem findest du in deinem Dashboard hilfreiche Tipps und Anleitungen. Bei Fragen hilft dir Eva-Maria Schaller gerne weiter.',
       keywords: ['schulung', 'einführung', 'tipps', 'anleitung', 'einsteiger', 'hilfe']
     },
     {
       _id: 'support-3',
       category: 'Support',
       question: 'Was mache ich bei technischen Problemen?',
-      answer: 'Bei technischen Problemen kontaktieren Sie unseren Support mit einer detaillierten Beschreibung des Problems. Geben Sie dabei Ihren Browser, das Betriebssystem und die genauen Fehlermeldungen an. Wir helfen schnellstmöglich.',
+      answer: 'Bei technischen Problemen kontaktiere housnkuh mit einer detaillierten Beschreibung des Problems. Gib dabei deinen Browser, das Betriebssystem und die genauen Fehlermeldungen an. Du erhältst schnellstmöglich Hilfe.',
       keywords: ['technische probleme', 'fehler', 'browser', 'betriebssystem', 'fehlermeldung']
     }
   ];
@@ -245,7 +245,7 @@ const FAQPage: React.FC = () => {
             Häufig gestellte Fragen
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Finden Sie schnell Antworten auf Ihre Fragen oder kontaktieren Sie uns persönlich
+            Finde schnell Antworten auf deine Fragen oder kontaktiere Eva-Maria Schaller persönlich
           </p>
         </motion.div>
 
@@ -262,7 +262,7 @@ const FAQPage: React.FC = () => {
               <Search className="w-5 h-5 text-gray-400 absolute left-4 top-1/2 transform -translate-y-1/2 group-focus-within:text-primary transition-colors" />
               <input
                 type="text"
-                placeholder="Suchen Sie nach Stichworten..."
+                placeholder="Suche nach Stichworten..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent focus:bg-white transition-all duration-300"
@@ -436,7 +436,7 @@ const FAQPage: React.FC = () => {
                     Keine Ergebnisse gefunden
                   </h3>
                   <p className="text-gray-500 mb-6 max-w-md mx-auto">
-                    Versuchen Sie es mit anderen Suchbegriffen oder wählen Sie eine andere Kategorie.
+                    Versuche es mit anderen Suchbegriffen oder wähle eine andere Kategorie.
                   </p>
                   <motion.button
                     whileHover={{ scale: 1.05 }}
@@ -468,9 +468,9 @@ const FAQPage: React.FC = () => {
           
           <div className="relative z-10">
             <Sparkles className="w-12 h-12 mx-auto mb-4 text-white/80" />
-            <h2 className="text-3xl font-bold mb-4">Ihre Frage war nicht dabei?</h2>
+            <h2 className="text-3xl font-bold mb-4">Deine Frage war nicht dabei?</h2>
             <p className="text-xl mb-8 opacity-90 max-w-2xl mx-auto">
-              Unser Support-Team hilft Ihnen gerne persönlich weiter und beantwortet alle Ihre Fragen.
+              housnkuh hilft dir gerne persönlich weiter und beantwortet alle deine Fragen.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <motion.a

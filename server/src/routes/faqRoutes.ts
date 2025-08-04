@@ -1,4 +1,17 @@
-// server/src/routes/faqRoutes.ts
+/**
+ * @file FAQ Routes - Express router for frequently asked questions endpoints
+ * @description Provides REST API routes for FAQ management including public access
+ * to active FAQs and administrative routes for full CRUD operations. Public routes
+ * serve published FAQs to website visitors, while admin routes allow creating,
+ * updating, deleting, reordering, and toggling FAQ visibility.
+ * @module FaqRoutes
+ * @requires express
+ * @requires ../controllers/faqController
+ * @requires ../middleware/auth
+ * @author housnkuh Development Team
+ * @since 1.0.0
+ */
+
 import express from 'express';
 import { faqController } from '../controllers/faqController';
 import { adminAuth } from '../middleware/auth';

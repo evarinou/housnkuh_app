@@ -1,4 +1,9 @@
-// server/src/controllers/contactController.ts
+/**
+ * @file Contact controller for the housnkuh marketplace application
+ * @description Contact form management controller with validation and email processing
+ * Handles contact form submissions, validation, and admin management
+ */
+
 import { Request, Response } from 'express';
 import { ContactFormData, sendContactFormEmail } from '../utils/emailService';
 import Contact from '../models/Contact';
@@ -93,13 +98,13 @@ export const submitContactForm = async (req: Request, res: Response): Promise<vo
     if (emailSent) {
       res.status(200).json({ 
         success: true, 
-        message: 'Ihre Anfrage wurde erfolgreich gesendet. Wir werden uns in Kürze bei Ihnen melden.'
+        message: 'Deine Anfrage wurde erfolgreich gesendet. Wir werden uns in Kürze bei dir melden.'
       });
     } else {
       // Auch wenn die E-Mail nicht gesendet wurde, haben wir die Nachricht in der Datenbank gespeichert
       res.status(200).json({
         success: true,
-        message: 'Ihre Anfrage wurde erfolgreich gespeichert. Wir werden uns in Kürze bei Ihnen melden.'
+        message: 'Deine Anfrage wurde erfolgreich gespeichert. Wir werden uns in Kürze bei dir melden.'
       });
     }
     
@@ -107,7 +112,7 @@ export const submitContactForm = async (req: Request, res: Response): Promise<vo
     console.error('Fehler bei der Verarbeitung des Kontaktformulars:', error);
     res.status(500).json({ 
       success: false, 
-      message: 'Es ist ein Fehler aufgetreten. Bitte versuchen Sie es später noch einmal oder kontaktieren Sie uns direkt telefonisch.'
+      message: 'Es ist ein Fehler aufgetreten. Bitte versuche es später noch einmal oder kontaktiere uns direkt telefonisch.'
     });
   }
 };
@@ -250,7 +255,7 @@ export const submitVendorContest = async (req: Request, res: Response): Promise<
     console.error('Fehler bei der Verarbeitung des Vendor-Contest-Formulars:', error);
     res.status(500).json({
       success: false,
-      message: 'Es ist ein Fehler aufgetreten. Bitte versuchen Sie es später noch einmal.'
+      message: 'Es ist ein Fehler aufgetreten. Bitte versuche es später noch einmal.'
     });
   }
 };

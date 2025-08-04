@@ -1,19 +1,27 @@
-// client/src/App.tsx
+/**
+ * @file Main application component - Clean router-only structure
+ * @description Root component that provides routing for the housnkuh marketplace.
+ * Authentication providers are now mounted at the route level for better performance.
+ */
+
 import React from 'react';
 import { BrowserRouter as Router } from 'react-router-dom';
-import { AuthProvider } from './contexts/AuthContext';
-import { VendorAuthProvider } from './contexts/VendorAuthContext';
 import AppContent from './components/AppContent';
 
-function App() {
+/**
+ * Root application component with clean router-only structure
+ * @description Sets up the foundational routing structure for the housnkuh marketplace.
+ * Authentication providers are now mounted at the route level instead of globally,
+ * providing better performance and cleaner separation of concerns.
+ * 
+ * @returns {JSX.Element} Clean router structure with route-based providers
+ * @complexity O(1) - Simple component composition
+ */
+function App(): JSX.Element {
   return (
-    <AuthProvider>
-      <VendorAuthProvider>
-        <Router>
-          <AppContent />
-        </Router>
-      </VendorAuthProvider>
-    </AuthProvider>
+    <Router>
+      <AppContent />
+    </Router>
   );
 }
 

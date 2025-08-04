@@ -1,0 +1,36 @@
+const mongoose = require('mongoose');
+
+async function clearAllData() {
+  try {
+    await mongoose.connect('mongodb://192.168.178.99:27017/housnkuh');
+    console.log('✅ Verbindung zur Datenbank hergestellt');
+    
+    const User = require('../dist/models/User.js').default;
+    const Mietfach = require('../dist/models/Mietfach.js').default;
+    const Vertrag = require('../dist/models/Vertrag.js').default;
+    const MonthlyRevenue = require('../dist/models/MonthlyRevenue.js').default;
+    
+    console.log('🗑️ Lösche alle Daten...');
+    
+    // Lösche alle Collections
+    const userResult = await User.deleteMany({});
+    const mietfachResult = await Mietfach.deleteMany({});
+    const vertragResult = await Vertrag.deleteMany({});
+    const revenueResult = await MonthlyRevenue.deleteMany({});
+    
+    console.log(`✅ ${userResult.deletedCount} Benutzer gelöscht`);
+    console.log(`✅ ${mietfachResult.deletedCount} Mietfächer gelöscht`);
+    console.log(`✅ ${vertragResult.deletedCount} Verträge gelöscht`);
+    console.log(`✅ ${revenueResult.deletedCount} Umsatzdatensätze gelöscht`);
+    
+    console.log('\n🎉 Alle Daten erfolgreich gelöscht!');
+    console.log('📝 Sie können jetzt Ihre eigenen Testdaten hinzufügen.');
+    
+  } catch (error) {
+    console.error('❌ Fehler beim Löschen der Daten:', error);
+  } finally {
+    mongoose.disconnect();
+  }
+}
+
+clearAllData();

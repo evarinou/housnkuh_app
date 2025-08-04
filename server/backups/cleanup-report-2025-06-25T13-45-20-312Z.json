@@ -1,0 +1,38 @@
+{
+  "timestamp": "2025-06-25T13:45:20.312Z",
+  "operation": "DRY_RUN",
+  "backup": "/home/evms/housnkuh_app/server/backups/mietfaecher-backup-2025-06-25T13-45-20-263Z.json",
+  "summary": {
+    "totalCandidates": 2,
+    "safeToDelete": 2,
+    "unsafeToDelete": 0,
+    "actuallyDeleted": 0
+  },
+  "candidates": [
+    {
+      "id": "685bfd64578d24896ccdd5e6",
+      "bezeichnung": "DEV Mietfach A1",
+      "typ": "Standard",
+      "createdAt": "2025-06-25T13:45:08.415Z"
+    },
+    {
+      "id": "685bfd64578d24896ccdd5e7",
+      "bezeichnung": "DEV Mietfach B2",
+      "typ": "Premium",
+      "createdAt": "2025-06-25T13:45:08.421Z"
+    }
+  ],
+  "unsafe": [],
+  "deleted": [
+    {
+      "id": "685bfd64578d24896ccdd5e6",
+      "bezeichnung": "DEV Mietfach A1",
+      "typ": "Standard"
+    },
+    {
+      "id": "685bfd64578d24896ccdd5e7",
+      "bezeichnung": "DEV Mietfach B2",
+      "typ": "Premium"
+    }
+  ]
+}

@@ -1,6 +1,15 @@
+/**
+ * @file Tag seeding utility for initializing default tags in the database
+ * @description Provides functionality to seed the database with default product tags, 
+ * certifications, production methods, and special features for the marketplace
+ * @author Development Team
+ * @version 1.0.0
+ * @since 2024-01-01
+ */
+
 import { Tag } from '../models/Tag';
 
-// Default tag data for the application
+/** Default tag data for the application */
 const defaultTags = [
   // Product Categories
   {
@@ -200,6 +209,14 @@ const defaultTags = [
   }
 ];
 
+/**
+ * Seeds the database with default tags for the application
+ * @description Inserts predefined tags for products, certifications, methods, and features
+ * Skips existing tags to prevent duplicates and provides detailed logging
+ * @returns {Promise<void>} Promise that resolves when seeding is complete
+ * @complexity O(n) where n is the number of default tags
+ * @throws {Error} If database operations fail
+ */
 export const seedTags = async (): Promise<void> => {
   try {
     console.log('🏷️  Seeding tags...');

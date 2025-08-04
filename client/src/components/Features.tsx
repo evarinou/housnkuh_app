@@ -33,7 +33,7 @@ const Features: React.FC = () => {
     {
       icon: Clock,
       title: "24/7 Einkaufen",
-      description: "Dank moderner Zutrittskontrolle und Selbstbedienungskassen können Sie rund um die Uhr einkaufen."
+      description: "Dank moderner Zutrittskontrolle und Selbstbedienungskassen kannst du rund um die Uhr einkaufen."
     },
     {
       icon: MapPin,
@@ -43,7 +43,7 @@ const Features: React.FC = () => {
     {
       icon: Heart,
       title: "Direkt vom Erzeuger",
-      description: "Unterstützen Sie lokale Produzenten ohne Zwischenhändler und genießen Sie höchste Qualität."
+      description: "Unterstütze lokale Produzenten ohne Zwischenhändler und genieße höchste Qualität."
     },
     {
       icon: Store,
@@ -53,7 +53,7 @@ const Features: React.FC = () => {
     {
       icon: ShoppingBag,
       title: "Vielfältiges Sortiment",
-      description: "Von Lebensmitteln bis zu Handwerksprodukten – entdecken Sie die Vielfalt unserer Region."
+      description: "Von Lebensmitteln bis zu Handwerksprodukten – entdecke die Vielfalt unserer Region."
     },
     {
       icon: Users,
@@ -68,7 +68,7 @@ const Features: React.FC = () => {
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold text-[var(--secondary)] mb-4">Was housnkuh einzigartig macht</h2>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Entdecken Sie die Vorteile unseres innovativen Marktplatzkonzepts für regionale Produkte
+            Entdecke die Vorteile unseres innovativen Marktplatzkonzepts für regionale Produkte
           </p>
         </div>
         

@@ -21,7 +21,6 @@ const testVendor = {
     setupFee: 99,
     selectedOptions: {
       logoEintrag: true,
-      socialMediaPaket: false,
       seoOptimierung: false,
       premiumPlatzierung: false
     },
@@ -33,7 +32,7 @@ const testVendor = {
 
 async function connectDB() {
   try {
-    await mongoose.connect('mongodb://localhost:27017/housnkuh', {
+    await mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/housnkuh', {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });

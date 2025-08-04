@@ -1,9 +1,26 @@
-// server/src/controllers/faqController.ts
+/**
+ * @file FAQ controller for the housnkuh marketplace application
+ * @description FAQ management controller with public and admin endpoints
+ * Handles FAQ creation, retrieval, updates, deletion, and ordering with category support
+ */
+
 import { Request, Response } from 'express';
 import FAQ, { IFAQ } from '../models/FAQ';
 
+/**
+ * FAQ controller object with all FAQ management methods
+ * @description Comprehensive FAQ management with public/admin separation and full CRUD operations
+ */
 export const faqController = {
-  // Get all FAQs (public endpoint - only active ones)
+  /**
+   * Retrieves all active FAQs for public display
+   * @description Fetches only active FAQs sorted by category and order for public consumption
+   * @param req - Express request object
+   * @param res - Express response object with active FAQ data
+   * @returns Promise<void> - Resolves with active FAQ list or error message
+   * @complexity O(n log n) where n is number of active FAQs (due to sorting)
+   * @security Public endpoint - only returns active FAQs
+   */
   getAllPublic: async (req: Request, res: Response) => {
     try {
       const faqs = await FAQ.find({ isActive: true })
@@ -23,7 +40,15 @@ export const faqController = {
     }
   },
 
-  // Get all FAQs (admin endpoint - all FAQs)
+  /**
+   * Retrieves all FAQs for admin interface
+   * @description Fetches all FAQs (active and inactive) for administrative management
+   * @param req - Express request object
+   * @param res - Express response object with complete FAQ data
+   * @returns Promise<void> - Resolves with complete FAQ list or error message
+   * @complexity O(n log n) where n is total number of FAQs (due to sorting)
+   * @security Admin endpoint - requires authentication
+   */
   getAllAdmin: async (req: Request, res: Response) => {
     try {
       const faqs = await FAQ.find()
@@ -43,7 +68,15 @@ export const faqController = {
     }
   },
 
-  // Get single FAQ by ID
+  /**
+   * Retrieves a specific FAQ by ID
+   * @description Fetches single FAQ by ID for detailed view or editing
+   * @param req - Express request object with FAQ ID parameter
+   * @param res - Express response object with FAQ data
+   * @returns Promise<void> - Resolves with FAQ data or error message
+   * @complexity O(1) - Single database lookup by ID
+   * @security Returns FAQ regardless of active status
+   */
   getById: async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
@@ -69,7 +102,15 @@ export const faqController = {
     }
   },
 
-  // Create new FAQ
+  /**
+   * Creates a new FAQ entry
+   * @description Creates new FAQ with validation and error handling
+   * @param req - Express request object with FAQ data (category, question, answer, keywords, order, isActive)
+   * @param res - Express response object with created FAQ data
+   * @returns Promise<void> - Resolves with created FAQ or error message
+   * @complexity O(1) - Single database insertion
+   * @security Validates required fields and handles validation errors
+   */
   create: async (req: Request, res: Response) => {
     try {
       const { category, question, answer, keywords, order, isActive } = req.body;
@@ -118,7 +159,15 @@ export const faqController = {
     }
   },
 
-  // Update FAQ
+  /**
+   * Updates an existing FAQ entry
+   * @description Updates FAQ with validation and error handling
+   * @param req - Express request object with FAQ ID parameter and update data
+   * @param res - Express response object with updated FAQ data
+   * @returns Promise<void> - Resolves with updated FAQ or error message
+   * @complexity O(1) - Single database update by ID
+   * @security Validates existence and runs model validators
+   */
   update: async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
@@ -161,7 +210,15 @@ export const faqController = {
     }
   },
 
-  // Delete FAQ
+  /**
+   * Deletes an FAQ entry permanently
+   * @description Permanently removes FAQ from database
+   * @param req - Express request object with FAQ ID parameter
+   * @param res - Express response object with deletion confirmation
+   * @returns Promise<void> - Resolves with deletion confirmation or error message
+   * @complexity O(1) - Single database deletion by ID
+   * @security Validates existence before deletion
+   */
   delete: async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
@@ -188,7 +245,15 @@ export const faqController = {
     }
   },
 
-  // Toggle FAQ active status
+  /**
+   * Toggles the active status of an FAQ
+   * @description Switches FAQ between active and inactive states
+   * @param req - Express request object with FAQ ID parameter
+   * @param res - Express response object with updated FAQ data
+   * @returns Promise<void> - Resolves with updated FAQ or error message
+   * @complexity O(1) - Single database lookup and update
+   * @security Validates existence and provides status feedback
+   */
   toggleActive: async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
@@ -219,7 +284,15 @@ export const faqController = {
     }
   },
 
-  // Reorder FAQs
+  /**
+   * Reorders multiple FAQs by updating their order values
+   * @description Updates order field for multiple FAQs in batch operation
+   * @param req - Express request object with FAQs array containing id and order pairs
+   * @param res - Express response object with reorder confirmation
+   * @returns Promise<void> - Resolves with reorder confirmation or error message
+   * @complexity O(n) where n is number of FAQs to reorder
+   * @security Validates array format and uses Promise.all for batch updates
+   */
   reorder: async (req: Request, res: Response) => {
     try {
       const { faqs } = req.body; // Array of { id, order }

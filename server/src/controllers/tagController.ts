@@ -1,8 +1,22 @@
+/**
+ * @file Tag controller for the housnkuh marketplace application
+ * @description Tag management controller with CRUD operations, categorization, and search functionality
+ * Handles tag creation, retrieval, updates, deletion, and bulk operations with product integration
+ */
+
 import { Request, Response } from 'express';
 import { Tag, ITag } from '../models/Tag';
 import { Product } from '../models/Product';
 
-// Get all tags with optional filtering
+/**
+ * Retrieves all tags with optional filtering
+ * @description Fetches tags with optional category and active status filtering
+ * @param req - Express request object with optional query parameters (category, active)
+ * @param res - Express response object with filtered tag data
+ * @returns Promise<void> - Resolves with filtered tag list or error message
+ * @complexity O(n log n) where n is number of matching tags (due to sorting)
+ * @security Public endpoint with optional filtering
+ */
 export const getAllTags = async (req: Request, res: Response): Promise<void> => {
   try {
     const { category, active } = req.query;
@@ -27,7 +41,15 @@ export const getAllTags = async (req: Request, res: Response): Promise<void> => 
   }
 };
 
-// Get tags grouped by category
+/**
+ * Retrieves active tags grouped by category
+ * @description Fetches active tags and groups them by category for organizational display
+ * @param req - Express request object
+ * @param res - Express response object with categorized tag data
+ * @returns Promise<void> - Resolves with categorized tag groups or error message
+ * @complexity O(n) where n is number of active tags
+ * @security Public endpoint - only returns active tags
+ */
 export const getTagsByCategory = async (req: Request, res: Response): Promise<void> => {
   try {
     const tags = await Tag.find({ isActive: true }).sort({ category: 1, name: 1 });
@@ -53,7 +75,15 @@ export const getTagsByCategory = async (req: Request, res: Response): Promise<vo
   }
 };
 
-// Get single tag by ID or slug
+/**
+ * Retrieves a specific tag by ID or slug with product count
+ * @description Fetches single tag by ID or slug and includes associated product count
+ * @param req - Express request object with identifier parameter (ID or slug)
+ * @param res - Express response object with tag data and product count
+ * @returns Promise<void> - Resolves with tag data or error message
+ * @complexity O(1) for tag lookup + O(n) for product count
+ * @security Public endpoint with product count aggregation
+ */
 export const getTag = async (req: Request, res: Response): Promise<void> => {
   try {
     const { identifier } = req.params;
@@ -94,7 +124,15 @@ export const getTag = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
-// Create new tag (admin only)
+/**
+ * Creates a new tag with duplicate validation
+ * @description Creates new tag with validation for duplicate names within category
+ * @param req - Express request object with tag data (name, description, category, color, icon)
+ * @param res - Express response object with created tag data
+ * @returns Promise<void> - Resolves with created tag or error message
+ * @complexity O(1) - Single database insertion with duplicate check
+ * @security Admin only endpoint with duplicate validation
+ */
 export const createTag = async (req: Request, res: Response): Promise<void> => {
   try {
     const { name, description, category, color, icon } = req.body;
@@ -138,7 +176,15 @@ export const createTag = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
-// Update tag (admin only)
+/**
+ * Updates an existing tag with duplicate validation
+ * @description Updates tag with validation for duplicate names within category
+ * @param req - Express request object with tag ID parameter and update data
+ * @param res - Express response object with updated tag data
+ * @returns Promise<void> - Resolves with updated tag or error message
+ * @complexity O(1) - Single database update with duplicate check
+ * @security Admin only endpoint with existence and duplicate validation
+ */
 export const updateTag = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
@@ -194,7 +240,15 @@ export const updateTag = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
-// Delete tag (admin only)
+/**
+ * Deletes a tag with product usage validation
+ * @description Deletes tag only if not used by any products
+ * @param req - Express request object with tag ID parameter
+ * @param res - Express response object with deletion confirmation
+ * @returns Promise<void> - Resolves with deletion confirmation or error message
+ * @complexity O(1) for tag lookup + O(n) for product usage check
+ * @security Admin only endpoint with product usage validation
+ */
 export const deleteTag = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
@@ -233,7 +287,15 @@ export const deleteTag = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
-// Search tags
+/**
+ * Searches tags using text search with optional category filtering
+ * @description Performs full-text search on tags with optional category filtering and result limiting
+ * @param req - Express request object with search query parameters (q, category, limit)
+ * @param res - Express response object with matching tag data
+ * @returns Promise<void> - Resolves with matching tags or error message
+ * @complexity O(n log n) where n is number of matching tags (due to text search scoring)
+ * @security Public endpoint with search term validation
+ */
 export const searchTags = async (req: Request, res: Response): Promise<void> => {
   try {
     const { q, category, limit = 20 } = req.query;
@@ -271,7 +333,15 @@ export const searchTags = async (req: Request, res: Response): Promise<void> => 
   }
 };
 
-// Bulk create or find tags
+/**
+ * Bulk creates or finds existing tags
+ * @description Creates multiple tags or finds existing ones using findOrCreateTags method
+ * @param req - Express request object with tagNames array and category
+ * @param res - Express response object with processed tag data
+ * @returns Promise<void> - Resolves with processed tags or error message
+ * @complexity O(n) where n is number of tag names to process
+ * @security Admin endpoint with array validation
+ */
 export const bulkCreateTags = async (req: Request, res: Response): Promise<void> => {
   try {
     const { tagNames, category = 'product' } = req.body;

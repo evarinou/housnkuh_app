@@ -60,24 +60,31 @@ const PendingBookingsPage: React.FC = () => {
     setShowAssignmentModal(true);
   };
 
-  const handleMietfachAssignment = async (assignments: MietfachAssignment[]) => {
+  const handleMietfachAssignment = async (
+    assignments: MietfachAssignment[], 
+    scheduledStartDate: Date, 
+    additionalData?: {
+      zusatzleistungen?: any;
+      totalPrice?: number;
+    }
+  ) => {
     if (!selectedUser) return;
 
     try {
       const token = localStorage.getItem('adminToken');
       const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
       
-      // For now, send only the mietfach IDs to maintain backward compatibility
-      // TODO: Update backend to handle price adjustments
       const assignedMietfaecher = assignments.map(a => a.mietfachId);
       
       const response = await axios.post(`${apiUrl}/admin/pending-bookings/confirm/${selectedUser._id}`, {
         assignedMietfaecher,
+        scheduledStartDate: scheduledStartDate.toISOString(),
         priceAdjustments: assignments.reduce((acc, assignment) => {
-          // Backend expects simple number values
           acc[assignment.mietfachId] = assignment.adjustedPrice;
           return acc;
-        }, {} as Record<string, number>)
+        }, {} as Record<string, number>),
+        // Include Zusatzleistungen data for backend processing
+        zusatzleistungenData: additionalData
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -184,8 +191,25 @@ const PendingBookingsPage: React.FC = () => {
                       <div>
                         <strong>Mietdauer:</strong> {user.pendingBooking.packageData.rentalDuration} Monate
                       </div>
-                      <div>
-                        <strong>Monatliche Kosten:</strong> {user.pendingBooking.packageData.totalCost?.monthly?.toFixed(2) || 'N/A'}€
+                      <div className="md:col-span-2">
+                        <strong>Preisaufschlüsselung:</strong>
+                        <div className="text-sm text-gray-600 mt-1">
+                          {user.pendingBooking.packageData.totalCost?.packageCosts && (
+                            <div>Grundpreis: {user.pendingBooking.packageData.totalCost.packageCosts.toFixed(2)}€/Monat</div>
+                          )}
+                          {user.pendingBooking.packageData.totalCost?.zusatzleistungenCosts > 0 && (
+                            <div>Zusatzleistungen: +{user.pendingBooking.packageData.totalCost.zusatzleistungenCosts.toFixed(2)}€/Monat</div>
+                          )}
+                          {user.pendingBooking.packageData.totalCost?.discountAmount > 0 && (
+                            <div className="text-green-600">
+                              Rabatt ({(user.pendingBooking.packageData.totalCost.discount * 100).toFixed(0)}%): 
+                              -{user.pendingBooking.packageData.totalCost.discountAmount.toFixed(2)}€/Monat
+                            </div>
+                          )}
+                          <div className="font-semibold border-t pt-1 mt-1">
+                            Gesamt: {user.pendingBooking.packageData.totalCost?.monthly?.toFixed(2) || 'N/A'}€/Monat
+                          </div>
+                        </div>
                       </div>
                       <div>
                         <strong>Provision:</strong> {user.pendingBooking.packageData.totalCost?.provision || 'N/A'}%
@@ -214,6 +238,28 @@ const PendingBookingsPage: React.FC = () => {
                       {user.pendingBooking.packageData.selectedAddons && user.pendingBooking.packageData.selectedAddons.length > 0 && (
                         <div className="md:col-span-2">
                           <strong>Zusatzoptionen:</strong> {user.pendingBooking.packageData.selectedAddons.join(', ')}
+                        </div>
+                      )}
+                      
+                      {user.pendingBooking.packageData.zusatzleistungen && (
+                        user.pendingBooking.packageData.zusatzleistungen.lagerservice || 
+                        user.pendingBooking.packageData.zusatzleistungen.versandservice
+                      ) && (
+                        <div className="md:col-span-2">
+                          <strong>Zusatzleistungen:</strong>
+                          <div className="text-sm text-gray-600 mt-1">
+                            {user.pendingBooking.packageData.zusatzleistungen.lagerservice && (
+                              <div>✓ Lagerservice (+20€/Monat)</div>
+                            )}
+                            {user.pendingBooking.packageData.zusatzleistungen.versandservice && (
+                              <div>✓ Versandservice (+5€/Monat)</div>
+                            )}
+                            {user.pendingBooking.packageData.selectedProvisionType !== 'premium' && (
+                              <div className="text-red-600 text-xs mt-1">
+                                ⚠️ Zusatzleistungen nur mit Premium-Modell verfügbar
+                              </div>
+                            )}
+                          </div>
                         </div>
                       )}
                     </div>

@@ -1,17 +1,35 @@
+/**
+ * @file Product model for the housnkuh marketplace application
+ * @description Comprehensive product model with seasonal availability, pricing, and vendor management
+ * Supports bulk pricing, seasonal products, and SEO optimization
+ */
+
 import mongoose, { Schema, Document, Model } from 'mongoose';
 
+/**
+ * Interface for bulk pricing tiers
+ * @description Defines structure for quantity-based pricing
+ */
 export interface IBulkPrice {
   minQuantity: number;
   price: number;
   unit: string;
 }
 
+/**
+ * Interface for seasonal product information
+ * @description Defines seasonal availability periods
+ */
 export interface ISeasonalInfo {
   seasonStart: Date;
   seasonEnd: Date;
   description?: string;
 }
 
+/**
+ * Interface for Product document
+ * @description Comprehensive product structure with vendor, pricing, and availability management
+ */
 export interface IProduct extends Document {
   _id: mongoose.Types.ObjectId;
   vendorId: mongoose.Types.ObjectId;
@@ -53,6 +71,10 @@ export interface IProduct extends Document {
   updatedAt: Date;
 }
 
+/**
+ * Schema for bulk pricing tiers
+ * @description Defines quantity-based pricing with validation for minimum quantities and units
+ */
 const BulkPriceSchema = new Schema({
   minQuantity: {
     type: Number,
@@ -71,6 +93,10 @@ const BulkPriceSchema = new Schema({
   }
 });
 
+/**
+ * Schema for seasonal product information
+ * @description Defines seasonal availability periods with start/end dates and optional description
+ */
 const SeasonalInfoSchema = new Schema({
   seasonStart: {
     type: Date,
@@ -86,6 +112,10 @@ const SeasonalInfoSchema = new Schema({
   }
 });
 
+/**
+ * Main product schema with comprehensive fields for marketplace products
+ * @description Full product schema with vendor association, pricing, availability, and SEO features
+ */
 const ProductSchema: Schema<IProduct> = new Schema({
   vendorId: {
     type: Schema.Types.ObjectId,
@@ -198,7 +228,11 @@ const ProductSchema: Schema<IProduct> = new Schema({
   timestamps: true
 });
 
-// Indexes for performance
+/**
+ * Database indexes for query optimization
+ * @description Performance-optimized indexes for product queries including vendor lookups,
+ * search functionality, and featured product sorting
+ */
 ProductSchema.index({ vendorId: 1, isActive: 1 });
 ProductSchema.index({ tags: 1, availability: 1 });
 ProductSchema.index({ category: 1, subcategory: 1 });
@@ -206,7 +240,11 @@ ProductSchema.index({ slug: 1, vendorId: 1 }, { unique: true });
 ProductSchema.index({ name: 'text', description: 'text', keywords: 'text' });
 ProductSchema.index({ featured: 1, sortOrder: 1 });
 
-// Pre-save middleware to generate slug
+/**
+ * Pre-save middleware to generate slug and validate image index
+ * @description Automatically generates SEO-friendly slug from product name and validates image index
+ * @complexity O(n) where n is the length of the product name
+ */
 ProductSchema.pre('save', function(next) {
   if (this.isModified('name') || this.isNew) {
     const baseSlug = this.name
@@ -236,7 +274,12 @@ ProductSchema.pre('save', function(next) {
   next();
 });
 
-// Virtual for primary image
+/**
+ * Virtual field for primary image URL
+ * @description Returns the primary image URL based on primaryImageIndex
+ * @returns string|null - Primary image URL or null if no images
+ * @complexity O(1) - Simple array access
+ */
 ProductSchema.virtual('primaryImage').get(function() {
   if (this.images && this.images.length > 0) {
     return this.images[this.primaryImageIndex] || this.images[0];
@@ -244,7 +287,12 @@ ProductSchema.virtual('primaryImage').get(function() {
   return null;
 });
 
-// Method to check if product is currently in season
+/**
+ * Instance method to check if product is currently in season
+ * @description Determines if seasonal product is available based on current date
+ * @returns boolean - True if product is in season or non-seasonal and available
+ * @complexity O(1) - Simple date comparisons
+ */
 ProductSchema.methods.isInSeason = function(): boolean {
   if (this.availability !== 'seasonal' || !this.seasonalInfo) {
     return this.availability === 'available';
@@ -263,7 +311,14 @@ ProductSchema.methods.isInSeason = function(): boolean {
   return now >= seasonStart && now <= seasonEnd;
 };
 
-// Static method to find products by vendor with filters
+/**
+ * Static method to find products by vendor with optional filters
+ * @description Retrieves active products for a specific vendor with tag population and sorting
+ * @param vendorId - Vendor ID to filter by
+ * @param filters - Optional additional filters (availability, category, etc.)
+ * @returns Query - Mongoose query with populated tags and sorting
+ * @complexity O(n log n) where n is number of vendor products (due to sorting)
+ */
 ProductSchema.statics.findByVendor = function(vendorId: string, filters: any = {}) {
   const query = { vendorId, isActive: true, ...filters };
   return this.find(query)
@@ -271,8 +326,16 @@ ProductSchema.statics.findByVendor = function(vendorId: string, filters: any = {
     .sort({ featured: -1, sortOrder: 1, createdAt: -1 });
 };
 
+/**
+ * Interface for Product model with static methods
+ * @description Extends Model interface with product-specific static methods
+ */
 export interface IProductModel extends Model<IProduct> {
   findByVendor(vendorId: string, filters?: any): any;
 }
 
+/**
+ * Product model export
+ * @description Exports the Product model with comprehensive marketplace functionality
+ */
 export const Product = mongoose.model<IProduct, IProductModel>('Product', ProductSchema);

@@ -27,3 +27,6 @@ npm-debug.log*
 !.vscode/extensions.json
 !.vscode/launch.json
 !.vscode/settings.json
+
+# Task System - completed tasks are archived
+.task/completed/

@@ -1,5 +1,5 @@
 // server/src/types/modelTypes.ts - Erweiterte User-Types
-import { Document } from 'mongoose';
+import mongoose, { Document } from 'mongoose';
 
 // Basis-Interface für Subdokumente
 export interface IAdresse {
@@ -91,6 +91,48 @@ export interface IVendorProfile {
   // Sichtbarkeit und Features
   isPubliclyVisible?: boolean;
   featured?: boolean;
+  
+  // Provisionssatz für Vendor-Modell
+  provisionssatz?: number; // 4% Basic, 7% Premium
+  modelltyp?: 'Basic' | 'Premium';
+}
+
+// Booking Status Enum für detailliertes Status-Tracking
+export enum BookingStatus {
+  PENDING = 'pending',
+  CONFIRMED = 'confirmed',
+  ACTIVE = 'active',
+  COMPLETED = 'completed'
+}
+
+// Booking Dates Interface für Zeitstempel
+export interface IBookingDates {
+  requestedAt: Date;
+  confirmedAt?: Date;
+  scheduledStartDate?: Date;
+  actualStartDate?: Date;
+}
+
+// Package Data Interface für die Buchungsdaten
+export interface IPackageData {
+  packageType?: string;
+  duration?: number;
+  selectedItems?: any[];
+  totalPrice?: number;
+  [key: string]: any;
+}
+
+// Erweiterte User Booking Interface
+export interface IUserBooking extends IBookingDates {
+  packageData: IPackageData;
+  status: BookingStatus;
+  mietfachId?: string; // ObjectId als String
+  contractId?: string; // ObjectId als String
+  comments?: string;
+  createdAt: Date;
+  // M005 Extensions
+  assignedMietfachId?: string; // ObjectId als String for admin assignment
+  priceAdjustments?: { [mietfachId: string]: number }; // Price adjustments per Mietfach
 }
 
 export interface IService {
@@ -100,10 +142,25 @@ export interface IService {
   monatspreis: number;
 }
 
+// Trial automation tracking interface
+export interface ITrialAutomation {
+  emailsAutomated: boolean;
+  remindersSent: {
+    sevenDayReminder: boolean;
+    threeDayReminder: boolean;
+    oneDayReminder: boolean;
+    expirationNotification: boolean;
+  };
+  lastReminderSent?: Date;
+  trialConversionDate?: Date;
+  automationNotes: string;
+}
+
 // Erweiterte User-Interface für vollständige Direktvermarkter-Accounts
 export interface IUser extends Document {
   username?: string;
   password?: string;
+  email?: string; // Top-level email field for index compatibility
   isFullAccount: boolean;
   isAdmin?: boolean;
   isVendor?: boolean; // Neu: Flag für Direktvermarkter
@@ -118,20 +175,30 @@ export interface IUser extends Document {
   trialEndDate?: Date; // Enddatum des Probemonats (= storeOpeningDate + 30 Tage)
   isPubliclyVisible?: boolean; // Manuelle Freischaltung für öffentliche Sichtbarkeit
   
+  // Enhanced trial automation fields (M015)
+  trialAutomation?: ITrialAutomation;
+  
+  // Provisionssatz für Vendor-Modell
+  provisionssatz?: number; // 4% Basic, 7% Premium
+  modelltyp?: 'Basic' | 'Premium';
+  
   // Buchungsspezifische Felder
-  pendingBooking?: {
-    packageData: any; // Package-Konfiguration
-    comments?: string; // Optional booking comments
-    createdAt: Date;
-    status: 'pending' | 'completed' | 'cancelled';
-  };
+  pendingBooking?: IUserBooking;
   createdAt: Date;
   updatedAt: Date;
 }
 
+export enum MietfachTyp {
+  SCHAUFENSTER = 'schaufenster',
+  KUEHL = 'kuehl', 
+  GEFRIER = 'gefrier',
+  REGAL = 'regal',
+  SONSTIGES = 'sonstiges'
+}
+
 export interface IMietfach extends Document {
   bezeichnung: string;
-  typ: 'regal' | 'regal-b' | 'kuehlregal' | 'gefrierregal' | 'verkaufstisch' | 'sonstiges' | 'schaufenster';
+  typ: MietfachTyp;
   beschreibung?: string;
   groesse?: {
     flaeche: number;
@@ -142,11 +209,30 @@ export interface IMietfach extends Document {
   zugewiesenAn?: string; // ObjectId des Direktvermarkters
   standort?: string;
   features?: string[];
+  // Sprint S12_M11_Mietfaecher_Seeding_Cleanup - Manual creation tracking
+  creationSource?: 'manual' | 'import' | 'seed';
+  createdBy?: string; // ObjectId des Admin-Users
   createdAt: Date;
   updatedAt: Date;
+  // Methods for availability checking
+  isAvailableForPeriod(startDate: Date, endDate?: Date): Promise<boolean>;
 }
 
-export interface IVertrag extends Document {
+// Mietfach Model Interface with static methods
+export interface IMietfachModel extends mongoose.Model<IMietfach> {
+  findAvailableForPeriod(startDate: Date, endDate?: Date): Promise<IMietfach[]>;
+}
+
+// Trial Fields Interface for IVertrag
+export interface IVertragTrialFields {
+  istProbemonatBuchung: boolean;
+  probemonatUserId?: mongoose.Types.ObjectId;
+  zahlungspflichtigAb: Date;
+  gekuendigtInProbemonat: boolean;
+  probemonatKuendigungsdatum?: Date;
+}
+
+export interface IVertrag extends Document, IVertragTrialFields {
   user: string; // ObjectId als String
   datum: Date;
   services: IService[];
@@ -154,7 +240,75 @@ export interface IVertrag extends Document {
   totalMonthlyPrice: number;
   contractDuration: number; // in Monaten
   discount: number; // Rabatt als Dezimalwert (0.1 = 10%)
-  status: 'active' | 'pending' | 'cancelled' | 'expired';
+  provisionssatz: number; // Provision für Verkäufe (4% oder 7%)
+  status: 'active' | 'pending' | 'cancelled' | 'expired' | 'scheduled' | 'confirmed';
+  // Zusatzleistungen for premium services
+  zusatzleistungen?: {
+    lagerservice: boolean;
+    versandservice: boolean;
+    lagerservice_bestätigt?: Date;
+    versandservice_aktiv: boolean;
+  };
+  // Zusatzleistungen pricing
+  zusatzleistungen_kosten?: {
+    lagerservice_monatlich: number;
+    versandservice_monatlich: number;
+  };
+  // Virtual field for total price calculation
+  gesamtpreis?: number;
+  // Method for validating zusatzleistungen
+  validateZusatzleistungen?(): void;
+  // Scheduling fields for flexible start dates
+  scheduledStartDate: Date;
+  actualStartDate?: Date;
+  startDate?: Date; // Alternative field name
+  endDate?: Date; // Contract end date
+  availabilityImpact?: {
+    from: Date;
+    to: Date;
+  };
+  // Cancellation fields
+  cancellationDate?: Date;
+  cancellationReason?: string;
   createdAt: Date;
   updatedAt: Date;
+}
+
+// Mietfach Revenue Interface for MonthlyRevenue subdocuments
+export interface IMietfachRevenue {
+  mietfachId: mongoose.Types.ObjectId;
+  mietfachNummer: string;
+  einnahmen: number;
+  anzahlVertraege: number;
+  anzahlProbemonatVertraege: number;
+}
+
+// Monthly Revenue Interface for revenue tracking
+export interface IMonthlyRevenue extends Document {
+  monat: Date;
+  gesamteinnahmen: number;
+  anzahlAktiveVertraege: number;
+  anzahlProbemonatVertraege: number;
+  einnahmenProMietfach: IMietfachRevenue[];
+  erstelltAm: Date;
+  aktualisiertAm: Date;
+  isProjection?: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Package Tracking Interface for Zusatzleistungen
+export interface IPackageTracking extends Document {
+  vertrag_id: mongoose.Types.ObjectId;
+  package_typ: 'lagerservice' | 'versandservice';
+  status: 'erwartet' | 'angekommen' | 'eingelagert' | 'versandt' | 'zugestellt';
+  ankunft_datum?: Date;
+  einlagerung_datum?: Date;
+  versand_datum?: Date;
+  zustellung_datum?: Date;
+  bestätigt_von?: mongoose.Types.ObjectId;
+  notizen?: string;
+  tracking_nummer?: string;
+  created_at: Date;
+  updated_at: Date;
 }

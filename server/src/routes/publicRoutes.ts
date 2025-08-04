@@ -1,4 +1,19 @@
-// server/src/routes/publicRoutes.ts
+/**
+ * @file Public Routes - Express router for public API endpoints accessible without authentication
+ * @description Provides REST API routes for public access to vendor listings and statistics.
+ * Includes optimized endpoints for vendor search, filtering, and detail retrieval with
+ * caching middleware to improve performance. All routes serve public-safe data without
+ * exposing sensitive vendor information.
+ * @module PublicRoutes
+ * @requires express
+ * @requires ../services/vendorService
+ * @requires express.Request
+ * @requires express.Response
+ * @requires ../middleware/cacheMiddleware
+ * @author housnkuh Development Team
+ * @since 1.0.0
+ */
+
 import express from 'express';
 import VendorService from '../services/vendorService';
 import { Request, Response } from 'express';

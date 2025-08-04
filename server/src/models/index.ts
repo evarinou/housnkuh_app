@@ -6,6 +6,7 @@ import Contact from './Contact';
 import Settings from './Settings';
 import { Tag } from './Tag';
 import { Product } from './Product';
+import EmailTemplate from './EmailTemplate';
 
 export {
   User,
@@ -15,5 +16,6 @@ export {
   Contact,
   Settings,
   Tag,
-  Product
+  Product,
+  EmailTemplate
 };

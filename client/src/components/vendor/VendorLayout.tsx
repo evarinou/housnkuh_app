@@ -1,7 +1,7 @@
 // client/src/components/vendor/VendorLayout.tsx
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { User, Package, Home, LogOut, Settings, FileText, ShoppingCart, BarChart3, Receipt } from 'lucide-react';
+import { User, Package, Home, LogOut, Settings, FileText, ShoppingCart, BarChart3, Receipt, Star } from 'lucide-react';
 import { useVendorAuth } from '../../contexts/VendorAuthContext';
 
 interface VendorLayoutProps {
@@ -12,11 +12,51 @@ const VendorLayout: React.FC<VendorLayoutProps> = ({ children }) => {
   const { user, logout } = useVendorAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  const [pendingCount, setPendingCount] = useState(0);
   
   const handleLogout = () => {
     logout();
     navigate('/vendor/login');
   };
+
+  // Calculate trial days remaining
+  const calculateDaysRemaining = (trialEndDate?: string | null): number => {
+    if (!trialEndDate) return 0;
+    const end = new Date(trialEndDate);
+    const now = new Date();
+    const diff = end.getTime() - now.getTime();
+    return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+  };
+
+  const isInTrial = user?.registrationStatus === 'trial_active';
+  const trialDaysRemaining = calculateDaysRemaining(user?.trialEndDate);
+
+  // Fetch pending bookings count for notification badge
+  useEffect(() => {
+    const fetchPendingCount = async () => {
+      if (!user?.id) return;
+      
+      try {
+        const token = localStorage.getItem('vendorToken');
+        const response = await fetch(`http://localhost:4000/api/vendor-auth/bookings/${user.id}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const pendingBookings = data.bookings?.filter((booking: any) => booking.status === 'pending') || [];
+          setPendingCount(pendingBookings.length);
+        }
+      } catch (error) {
+        console.error('Error fetching pending bookings count:', error);
+      }
+    };
+
+    fetchPendingCount();
+  }, [user?.id]);
   
   return (
     <div className="min-h-screen bg-gray-50">
@@ -32,6 +72,12 @@ const VendorLayout: React.FC<VendorLayoutProps> = ({ children }) => {
                 <span className="ml-2 text-sm px-2 py-1 rounded bg-primary/10 text-primary font-medium">
                   Direktvermarkter
                 </span>
+                {isInTrial && (
+                  <div className="ml-3 flex items-center bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm font-medium">
+                    <Star className="w-4 h-4 mr-1" />
+                    <span>Probemonat - {trialDaysRemaining} Tag{trialDaysRemaining !== 1 ? 'e' : ''}</span>
+                  </div>
+                )}
               </div>
             </div>
             
@@ -91,16 +137,22 @@ const VendorLayout: React.FC<VendorLayoutProps> = ({ children }) => {
                 </Link>
                 
                 <Link
-                  to="/vendor/contracts"
-                  className={`flex items-center px-3 py-2 rounded-md text-sm font-medium ${
-                    location.pathname === '/vendor/contracts'
+                  to="/vendor/meine-buchungen"
+                  className={`flex items-center px-3 py-2 rounded-md text-sm font-medium relative ${
+                    location.pathname === '/vendor/meine-buchungen'
                       ? 'bg-primary/10 text-primary'
                       : 'text-gray-700 hover:bg-gray-100'
                   }`}
                 >
-                  <FileText className="mr-3 h-5 w-5" />
+                  <Package className="mr-3 h-5 w-5" />
                   Meine Buchungen
+                  {pendingCount > 0 && (
+                    <span className="ml-auto bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                      {pendingCount}
+                    </span>
+                  )}
                 </Link>
+                
                 
                 <Link
                   to="/vendor/products"

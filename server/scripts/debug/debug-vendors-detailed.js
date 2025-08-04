@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 async function debugVendors() {
   try {
     // Verbinde mit MongoDB auf Windows Host
-    await mongoose.connect('mongodb://172.23.192.1:27017/housnkuh', {
+    await mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/housnkuh', {
       serverSelectionTimeoutMS: 5000
     });
     console.log('✅ MongoDB verbunden');

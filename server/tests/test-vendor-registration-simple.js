@@ -19,7 +19,6 @@ const testVendor = {
     setupFee: 199,
     selectedOptions: {
       logoEintrag: true,
-      socialMediaPaket: true,
       seoOptimierung: true,
       premiumPlatzierung: false
     },

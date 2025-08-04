@@ -1,0 +1,864 @@
+openapi: 3.0.0
+info:
+  title: Revenue Management API
+  version: 1.0.0
+  description: API for managing rental revenue and trial bookings in the housnkuh marketplace platform
+  contact:
+    name: API Support
+    email: support@housnkuh.com
+
+servers:
+  - url: http://localhost:4000/api
+    description: Development server
+  - url: https://api.housnkuh.com/api
+    description: Production server
+
+security:
+  - BearerAuth: []
+
+paths:
+  /admin/revenue/overview:
+    get:
+      summary: Get revenue overview
+      description: Retrieve comprehensive revenue overview including current month data, trends, and statistics
+      tags:
+        - Admin Revenue
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: months
+          in: query
+          description: Number of months to include in trends (default 12)
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 24
+            default: 12
+      responses:
+        200:
+          description: Revenue overview data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RevenueOverviewResponse'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        500:
+          $ref: '#/components/responses/InternalServerError'
+
+  /admin/revenue/details/{year}/{month}:
+    get:
+      summary: Get monthly revenue details
+      description: Get detailed revenue information for a specific month and year
+      tags:
+        - Admin Revenue
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: year
+          in: path
+          required: true
+          description: Year (e.g., 2024)
+          schema:
+            type: integer
+            minimum: 2020
+            maximum: 2030
+        - name: month
+          in: path
+          required: true
+          description: Month (1-12)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 12
+      responses:
+        200:
+          description: Monthly revenue details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MonthlyRevenueResponse'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        404:
+          $ref: '#/components/responses/NotFound'
+
+  /admin/revenue/trends:
+    get:
+      summary: Get revenue trends
+      description: Retrieve revenue trend analysis over time
+      tags:
+        - Admin Revenue
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: months
+          in: query
+          description: Number of months to analyze (default 12)
+          required: false
+          schema:
+            type: integer
+            minimum: 3
+            maximum: 24
+            default: 12
+      responses:
+        200:
+          description: Revenue trend data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RevenueTrendsResponse'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        403:
+          $ref: '#/components/responses/Forbidden'
+
+  /admin/revenue/export:
+    get:
+      summary: Export revenue data
+      description: Export revenue data in CSV format
+      tags:
+        - Admin Revenue
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: type
+          in: query
+          required: true
+          description: Type of export (summary or detailed)
+          schema:
+            type: string
+            enum: [summary, detailed]
+        - name: startYear
+          in: query
+          description: Start year for summary export
+          schema:
+            type: integer
+            minimum: 2020
+        - name: startMonth
+          in: query
+          description: Start month for summary export
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 12
+        - name: endYear
+          in: query
+          description: End year for summary export
+          schema:
+            type: integer
+            minimum: 2020
+        - name: endMonth
+          in: query
+          description: End month for summary export
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 12
+        - name: detailYear
+          in: query
+          description: Year for detailed export
+          schema:
+            type: integer
+            minimum: 2020
+        - name: detailMonth
+          in: query
+          description: Month for detailed export
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 12
+      responses:
+        200:
+          description: CSV file download
+          content:
+            text/csv:
+              schema:
+                type: string
+                format: binary
+          headers:
+            Content-Disposition:
+              description: Attachment filename
+              schema:
+                type: string
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        403:
+          $ref: '#/components/responses/Forbidden'
+
+  /admin/revenue/mietfach-analysis:
+    get:
+      summary: Get Mietfach analysis
+      description: Analyze revenue and occupancy by Mietfach
+      tags:
+        - Admin Revenue
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: year
+          in: query
+          description: Year for analysis (default current year)
+          schema:
+            type: integer
+            minimum: 2020
+        - name: month
+          in: query
+          description: Month for analysis (default current month)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 12
+      responses:
+        200:
+          description: Mietfach analysis data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MietfachAnalysisResponse'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        403:
+          $ref: '#/components/responses/Forbidden'
+
+  /admin/revenue/refresh:
+    post:
+      summary: Refresh revenue data
+      description: Trigger refresh of revenue cache and calculations
+      tags:
+        - Admin Revenue
+      security:
+        - BearerAuth: []
+      responses:
+        200:
+          description: Data refreshed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        500:
+          $ref: '#/components/responses/InternalServerError'
+
+  /admin/revenue/calculate:
+    post:
+      summary: Calculate revenue
+      description: Trigger revenue calculation for specific or current month
+      tags:
+        - Admin Revenue
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CalculateRevenueRequest'
+      responses:
+        200:
+          description: Revenue calculation triggered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CalculateRevenueResponse'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        403:
+          $ref: '#/components/responses/Forbidden'
+
+  /vendor/contracts:
+    post:
+      summary: Create contract booking
+      description: Create a new contract booking (may be trial booking for trial users)
+      tags:
+        - Vendor Contracts
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateContractRequest'
+      responses:
+        201:
+          description: Contract created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateContractResponse'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        409:
+          $ref: '#/components/responses/Conflict'
+
+  /vendor/contracts/trial-status:
+    get:
+      summary: Get trial status
+      description: Get vendor's trial status and trial contracts information
+      tags:
+        - Vendor Contracts
+      security:
+        - BearerAuth: []
+      responses:
+        200:
+          description: Trial status information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrialStatusResponse'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+
+  /vendor/contracts/trial-cancel/{contractId}:
+    post:
+      summary: Cancel trial booking
+      description: Cancel a trial booking during the trial period
+      tags:
+        - Vendor Contracts
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: contractId
+          in: path
+          required: true
+          description: Contract ID to cancel
+          schema:
+            type: string
+            format: objectid
+      responses:
+        200:
+          description: Trial booking cancelled successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        403:
+          $ref: '#/components/responses/Forbidden'
+        404:
+          $ref: '#/components/responses/NotFound'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    RevenueOverviewResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/RevenueOverview'
+
+    RevenueOverview:
+      type: object
+      properties:
+        currentMonth:
+          $ref: '#/components/schemas/CurrentMonthData'
+        trends:
+          type: array
+          items:
+            $ref: '#/components/schemas/MonthlyTrend'
+        statistics:
+          $ref: '#/components/schemas/RevenueStatistics'
+        yearComparison:
+          $ref: '#/components/schemas/YearComparison'
+
+    CurrentMonthData:
+      type: object
+      properties:
+        totalRevenue:
+          type: number
+          description: Total revenue for current month
+          example: 15420.50
+        activeContracts:
+          type: integer
+          description: Number of active contracts
+          example: 125
+        trialContracts:
+          type: integer
+          description: Number of trial contracts
+          example: 23
+        occupancyRate:
+          type: number
+          description: Occupancy rate percentage
+          example: 78.5
+
+    MonthlyTrend:
+      type: object
+      properties:
+        month:
+          type: string
+          format: date
+          description: Month date
+          example: "2024-05-01"
+        revenue:
+          type: number
+          description: Revenue for the month
+          example: 12340.75
+        activeContracts:
+          type: integer
+          description: Active contracts count
+          example: 98
+        trialContracts:
+          type: integer
+          description: Trial contracts count
+          example: 15
+
+    RevenueStatistics:
+      type: object
+      properties:
+        occupancyRate:
+          type: number
+          description: Overall occupancy rate
+          example: 82.3
+        averageRevenuePerMietfach:
+          type: number
+          description: Average revenue per Mietfach
+          example: 156.78
+        totalMietfaecher:
+          type: integer
+          description: Total number of Mietfächer
+          example: 150
+        occupiedMietfaecher:
+          type: integer
+          description: Number of occupied Mietfächer
+          example: 123
+
+    YearComparison:
+      type: object
+      properties:
+        currentYear:
+          type: number
+          description: Current year total revenue
+          example: 185420.30
+        previousYear:
+          type: number
+          description: Previous year total revenue
+          example: 156780.50
+        growthRate:
+          type: number
+          description: Year-over-year growth rate percentage
+          example: 18.2
+
+    MonthlyRevenueResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/MonthlyRevenueDetails'
+
+    MonthlyRevenueDetails:
+      type: object
+      properties:
+        monthlyRevenue:
+          $ref: '#/components/schemas/MonthlyRevenue'
+        mietfachAnalysis:
+          type: array
+          items:
+            $ref: '#/components/schemas/MietfachRevenueAnalysis'
+
+    MonthlyRevenue:
+      type: object
+      properties:
+        monat:
+          type: string
+          format: date
+          description: Month date
+          example: "2024-05-01"
+        gesamteinnahmen:
+          type: number
+          description: Total revenue for the month
+          example: 12450.75
+        anzahlAktiveVertraege:
+          type: integer
+          description: Number of active contracts
+          example: 98
+        anzahlProbemonatVertraege:
+          type: integer
+          description: Number of trial contracts
+          example: 15
+        einnahmenProMietfach:
+          type: array
+          items:
+            $ref: '#/components/schemas/MietfachRevenue'
+
+    MietfachRevenue:
+      type: object
+      properties:
+        mietfachNummer:
+          type: string
+          description: Mietfach number
+          example: "M001"
+        mietfachId:
+          type: string
+          format: objectid
+          description: Mietfach ID
+          example: "507f1f77bcf86cd799439011"
+        einnahmen:
+          type: number
+          description: Revenue from this Mietfach
+          example: 300.00
+        anzahlVertraege:
+          type: integer
+          description: Number of contracts for this Mietfach
+          example: 2
+        anzahlProbemonatVertraege:
+          type: integer
+          description: Number of trial contracts for this Mietfach
+          example: 0
+
+    MietfachRevenueAnalysis:
+      type: object
+      properties:
+        mietfachNummer:
+          type: string
+          example: "M001"
+        totalRevenue:
+          type: number
+          example: 1200.50
+        averageRevenue:
+          type: number
+          example: 150.06
+        occupancyDays:
+          type: integer
+          example: 28
+        occupancyRate:
+          type: number
+          example: 93.3
+
+    RevenueTrendsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/RevenueTrends'
+
+    RevenueTrends:
+      type: object
+      properties:
+        monthlyTrends:
+          type: array
+          items:
+            $ref: '#/components/schemas/MonthlyTrend'
+        growthRate:
+          type: number
+          description: Overall growth rate percentage
+          example: 15.7
+        bestMonth:
+          $ref: '#/components/schemas/MonthlyTrend'
+        worstMonth:
+          $ref: '#/components/schemas/MonthlyTrend'
+
+    MietfachAnalysisResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/MietfachAnalysis'
+
+    MietfachAnalysis:
+      type: object
+      properties:
+        totalMietfaecher:
+          type: integer
+          description: Total number of Mietfächer
+          example: 150
+        occupiedMietfaecher:
+          type: integer
+          description: Number of occupied Mietfächer
+          example: 123
+        occupancyRate:
+          type: number
+          description: Occupancy rate percentage
+          example: 82.0
+        averageRevenue:
+          type: number
+          description: Average revenue per Mietfach
+          example: 156.78
+        mietfachDetails:
+          type: array
+          items:
+            $ref: '#/components/schemas/MietfachRevenueAnalysis'
+
+    CreateContractRequest:
+      type: object
+      required:
+        - mietfachId
+        - startdatum
+        - preis
+      properties:
+        mietfachId:
+          type: string
+          format: objectid
+          description: ID of the Mietfach to book
+        startdatum:
+          type: string
+          format: date-time
+          description: Contract start date
+        preis:
+          type: number
+          minimum: 0
+          description: Monthly price
+
+    CreateContractResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            contract:
+              $ref: '#/components/schemas/Contract'
+            message:
+              type: string
+              example: "Contract created successfully"
+
+    Contract:
+      type: object
+      properties:
+        _id:
+          type: string
+          format: objectid
+        userId:
+          type: string
+          format: objectid
+        mietfachId:
+          type: string
+          format: objectid
+        startdatum:
+          type: string
+          format: date-time
+        preis:
+          type: number
+        status:
+          type: string
+          enum: [active, cancelled, pending]
+        istProbemonatBuchung:
+          type: boolean
+          description: Whether this is a trial booking
+        probemonatUserId:
+          type: string
+          format: objectid
+          description: User ID for trial booking
+        zahlungspflichtigAb:
+          type: string
+          format: date-time
+          description: Date when payment becomes due
+        gekuendigtInProbemonat:
+          type: boolean
+          description: Whether cancelled during trial period
+
+    TrialStatusResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/TrialStatus'
+
+    TrialStatus:
+      type: object
+      properties:
+        isTrialActive:
+          type: boolean
+          description: Whether user has active trial
+          example: true
+        trialEndDate:
+          type: string
+          format: date-time
+          description: Trial end date
+          example: "2024-06-15T00:00:00.000Z"
+        hasTrialExpired:
+          type: boolean
+          description: Whether trial has expired
+          example: false
+        daysRemaining:
+          type: integer
+          description: Days remaining in trial
+          example: 15
+        trialContracts:
+          type: array
+          items:
+            $ref: '#/components/schemas/TrialContract'
+
+    TrialContract:
+      type: object
+      properties:
+        id:
+          type: string
+          format: objectid
+        mietfachNummer:
+          type: string
+          example: "M001"
+        preis:
+          type: number
+          example: 150.00
+        startdatum:
+          type: string
+          format: date-time
+        canCancel:
+          type: boolean
+          description: Whether the contract can be cancelled
+
+    CalculateRevenueRequest:
+      type: object
+      properties:
+        year:
+          type: integer
+          minimum: 2020
+          description: Year to calculate (optional, defaults to current)
+        month:
+          type: integer
+          minimum: 1
+          maximum: 12
+          description: Month to calculate (optional, defaults to current)
+
+    CalculateRevenueResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Revenue calculation triggered successfully for 5/2024"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2024-05-15T10:30:00.000Z"
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Operation completed successfully"
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: string
+          example: "Error message"
+        code:
+          type: string
+          example: "VALIDATION_ERROR"
+
+  responses:
+    BadRequest:
+      description: Bad request - Invalid parameters or request body
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error: "Invalid date format"
+            code: "VALIDATION_ERROR"
+
+    Unauthorized:
+      description: Unauthorized - Missing or invalid authentication token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error: "Access token required"
+            code: "UNAUTHORIZED"
+
+    Forbidden:
+      description: Forbidden - Insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error: "Admin access required"
+            code: "FORBIDDEN"
+
+    NotFound:
+      description: Not found - Resource does not exist
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error: "Contract not found"
+            code: "NOT_FOUND"
+
+    Conflict:
+      description: Conflict - Resource already exists or constraint violation
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error: "Mietfach is already booked"
+            code: "CONFLICT"
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error: "Internal server error"
+            code: "INTERNAL_ERROR"
+
+tags:
+  - name: Admin Revenue
+    description: Administrative revenue management endpoints
+  - name: Vendor Contracts
+    description: Vendor contract and trial booking endpoints

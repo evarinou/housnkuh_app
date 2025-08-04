@@ -1,7 +1,7 @@
 // client/src/components/admin/AdminLayout.tsx
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, X, Home, Users, Mail, Package, FileText, LogOut, MessageSquare, Calendar, Trophy, Settings, Tag, HelpCircle } from 'lucide-react';
+import { Menu, X, Home, Users, Mail, Package, FileText, LogOut, MessageSquare, Calendar, Trophy, Settings, Tag, HelpCircle, DollarSign, Boxes } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import logo from '../../assets/images/logo.svg';
 
@@ -70,6 +70,15 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
               </Link>
               
               <Link
+                to="/admin/email-templates"
+                className="group flex items-center px-2 py-2 text-base font-medium rounded-md text-white hover:bg-primary"
+                onClick={() => setSidebarOpen(false)}
+              >
+                <Mail className="mr-4 h-6 w-6" />
+                Email Templates
+              </Link>
+              
+              <Link
                 to="/admin/users"
                 className="group flex items-center px-2 py-2 text-base font-medium rounded-md text-white hover:bg-primary"
                 onClick={() => setSidebarOpen(false)}
@@ -103,6 +112,24 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
               >
                 <FileText className="mr-4 h-6 w-6" />
                 Verträge
+              </Link>
+              
+              <Link
+                to="/admin/zusatzleistungen"
+                className="group flex items-center px-2 py-2 text-base font-medium rounded-md text-white hover:bg-primary"
+                onClick={() => setSidebarOpen(false)}
+              >
+                <Boxes className="mr-4 h-6 w-6" />
+                Zusatzleistungen
+              </Link>
+              
+              <Link
+                to="/admin/revenue"
+                className="group flex items-center px-2 py-2 text-base font-medium rounded-md text-white hover:bg-primary"
+                onClick={() => setSidebarOpen(false)}
+              >
+                <DollarSign className="mr-4 h-6 w-6" />
+                Umsätze
               </Link>
               
               <Link
@@ -182,6 +209,14 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                 </Link>
                 
                 <Link
+                  to="/admin/email-templates"
+                  className="group flex items-center px-2 py-2 text-base font-medium rounded-md text-white hover:bg-primary"
+                >
+                  <Mail className="mr-3 h-6 w-6" />
+                  Email Templates
+                </Link>
+                
+                <Link
                   to="/admin/users"
                   className="group flex items-center px-2 py-2 text-base font-medium rounded-md text-white hover:bg-primary"
                 >
@@ -211,6 +246,22 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                 >
                   <FileText className="mr-3 h-6 w-6" />
                   Verträge
+                </Link>
+                
+                <Link
+                  to="/admin/zusatzleistungen"
+                  className="group flex items-center px-2 py-2 text-base font-medium rounded-md text-white hover:bg-primary"
+                >
+                  <Boxes className="mr-3 h-6 w-6" />
+                  Zusatzleistungen
+                </Link>
+                
+                <Link
+                  to="/admin/revenue"
+                  className="group flex items-center px-2 py-2 text-base font-medium rounded-md text-white hover:bg-primary"
+                >
+                  <DollarSign className="mr-3 h-6 w-6" />
+                  Umsätze
                 </Link>
                 
                 <Link

@@ -1,0 +1,163 @@
+.date-range-picker {
+  position: relative;
+  display: inline-block;
+}
+
+.date-range-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: all 0.2s ease-in-out;
+  min-width: 200px;
+}
+
+.date-range-button:hover {
+  border-color: #9ca3af;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.date-range-button:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.date-range-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 1000;
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  padding: 1rem;
+  margin-top: 0.25rem;
+  min-width: 320px;
+}
+
+.date-range-presets,
+.date-range-inputs {
+  margin-bottom: 1rem;
+}
+
+.date-range-presets h4,
+.date-range-inputs h4 {
+  margin: 0 0 0.75rem 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.date-range-presets {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.date-range-presets button {
+  padding: 0.5rem 0.75rem;
+  background: transparent;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  text-align: left;
+  transition: all 0.2s ease-in-out;
+}
+
+.date-range-presets button:hover {
+  background: #f9fafb;
+  border-color: #d1d5db;
+}
+
+.date-range-inputs {
+  border-top: 1px solid #e5e7eb;
+  padding-top: 1rem;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 0.75rem;
+}
+
+.input-group label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+}
+
+.input-group input {
+  padding: 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 0.875rem;
+}
+
+.input-group input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.date-range-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.cancel-button,
+.apply-button {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.cancel-button {
+  background: transparent;
+  border: 1px solid #d1d5db;
+  color: #374151;
+}
+
+.cancel-button:hover {
+  background: #f9fafb;
+}
+
+.apply-button {
+  background: #3b82f6;
+  border: 1px solid #3b82f6;
+  color: white;
+}
+
+.apply-button:hover {
+  background: #2563eb;
+  border-color: #2563eb;
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .date-range-dropdown {
+    left: -100px;
+    right: -100px;
+    min-width: auto;
+    width: calc(100vw - 2rem);
+    max-width: 400px;
+  }
+
+  .date-range-button {
+    width: 100%;
+    min-width: auto;
+  }
+}

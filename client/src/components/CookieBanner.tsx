@@ -113,8 +113,8 @@ const CookieBanner: React.FC = () => {
         <AlertDialogHeader>
           <AlertDialogTitle className="text-secondary">Cookie-Einstellungen</AlertDialogTitle>
           <AlertDialogDescription className="text-gray-600">
-            Wir verwenden Cookies, um Ihnen die bestmögliche Erfahrung auf unserer Website zu bieten. 
-            Diese helfen uns zu verstehen, wie Sie unsere Website nutzen und ermöglichen grundlegende Funktionen.
+            Wir verwenden Cookies, um dir die bestmögliche Erfahrung auf unserer Website zu bieten. 
+            Diese helfen uns zu verstehen, wie du unsere Website nutzt und ermöglichen grundlegende Funktionen.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter className="sm:justify-start">

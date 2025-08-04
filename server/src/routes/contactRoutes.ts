@@ -1,4 +1,19 @@
-// server/src/routes/contactRoutes.ts
+/**
+ * @file Contact Routes - Express router for contact form and vendor contest endpoints
+ * @description Provides REST API routes for contact form submissions and administrative
+ * management of contact entries. Includes public routes for form submissions and
+ * vendor contest entries, plus protected admin routes for CRUD operations on contacts.
+ * All public routes include rate limiting and validation middleware.
+ * @module ContactRoutes
+ * @requires express.Router
+ * @requires ../controllers/contactController
+ * @requires ../middleware/auth
+ * @requires ../middleware/validation
+ * @requires ../middleware/rateLimiting
+ * @author housnkuh Development Team
+ * @since 1.0.0
+ */
+
 import { Router } from 'express';
 import { 
   submitContactForm, 
@@ -9,6 +24,8 @@ import {
   submitVendorContest 
 } from '../controllers/contactController';
 import { adminAuth } from '../middleware/auth';
+import { validateContactForm } from '../middleware/validation';
+import { contactFormRateLimit } from '../middleware/rateLimiting';
 
 const router = Router();
 
@@ -30,14 +47,14 @@ router.get('/test', (req, res) => {
  * @desc    Kontaktformular absenden
  * @access  Public
  */
-router.post('/', submitContactForm);
+router.post('/', contactFormRateLimit, validateContactForm, submitContactForm);
 
 /**
  * @route   POST /api/contact/vendor-contest
  * @desc    Direktvermarkter-Wettbewerb-Formular absenden
  * @access  Public
  */
-router.post('/vendor-contest', submitVendorContest);
+router.post('/vendor-contest', contactFormRateLimit, validateContactForm, submitVendorContest);
 
 /**
  * Admin-Routen (geschützt)

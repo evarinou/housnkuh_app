@@ -3,11 +3,17 @@
   "version": "1.0.0",
   "description": "Regionaler Marktplatz für Direktvermarkter",
   "scripts": {
-    "client": "cd client && npm start",
-    "server": "cd server && npm run dev",
+    "client": "npm --prefix client start",
+    "server": "npm --prefix server run dev",
     "dev": "concurrently \"npm run server\" \"npm run client\"",
-    "install-all": "npm install && cd client && npm install && cd ../server && npm install",
-    "build-all": "cd client && npm run build && cd ../server && npm run build"
+    "install-all": "npm install && npm --prefix client install && npm --prefix server install",
+    "build-all": "npm --prefix client run build && npm --prefix server run build",
+    "test:e2e": "playwright test",
+    "test:booking-flow": "playwright test tests/booking-flow.spec.ts",
+    "test:booking-flow:headed": "playwright test tests/booking-flow.spec.ts --headed",
+    "test:booking-flow:debug": "playwright test tests/booking-flow.spec.ts --debug",
+    "test:setup": "./run-booking-tests.sh",
+    "update:architecture": "./scripts/update-architecture.sh"
   },
   "keywords": [
     "direktvermarkter",
@@ -17,6 +23,13 @@
   "author": "Eva-Maria Schaller",
   "license": "ISC",
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "@types/node": "^24.0.12",
+    "concurrently": "^8.2.2",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "@playwright/test": "^1.53.2",
+    "cheerio": "^1.1.0",
+    "node-fetch": "^2.7.0"
   }
 }

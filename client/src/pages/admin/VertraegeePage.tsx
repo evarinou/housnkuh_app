@@ -20,6 +20,23 @@ interface Vertrag {
   startdatum: string;
   enddatum: string;
   gesamtpreis: number;
+  monthlyBreakdown?: {
+    mietfaecherCosts: number;
+    zusatzleistungenCosts: number;
+    subtotal: number;
+    discount: number;
+    discountAmount: number;
+    total: number;
+  };
+  zusatzleistungen?: {
+    lagerservice: boolean;
+    versandservice: boolean;
+  };
+  zusatzleistungen_kosten?: {
+    lagerservice_monatlich: number;
+    versandservice_monatlich: number;
+  };
+  discount?: number;
   provision: number;
   status: 'aktiv' | 'ausstehend' | 'beendet' | 'gekuendigt';
   zahlungsart: string;
@@ -575,9 +592,42 @@ const VertraegeePage: React.FC = () => {
                         <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{(mietfach?.preis || 0).toFixed(2)}€</td>
                       </tr>
                     )) || []}
-                    <tr className="bg-gray-50">
-                      <td colSpan={2} className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900 text-right">Gesamtpreis/Monat:</td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm font-bold text-gray-900">{(currentVertrag.mietfaecher?.reduce((sum, item) => sum + (item?.preis || 0), 0) || 0).toFixed(2)}€</td>
+                    
+                    {/* Zusatzleistungen Rows */}
+                    {currentVertrag.zusatzleistungen?.lagerservice && (
+                      <tr>
+                        <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">📦 Lagerservice</td>
+                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">zusatzleistung</td>
+                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{(currentVertrag.zusatzleistungen_kosten?.lagerservice_monatlich || 20).toFixed(2)}€</td>
+                      </tr>
+                    )}
+                    {currentVertrag.zusatzleistungen?.versandservice && (
+                      <tr>
+                        <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">🚚 Versandservice</td>
+                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">zusatzleistung</td>
+                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{(currentVertrag.zusatzleistungen_kosten?.versandservice_monatlich || 5).toFixed(2)}€</td>
+                      </tr>
+                    )}
+                    
+                    {/* Subtotal if discount exists */}
+                    {(currentVertrag.discount || 0) > 0 && (
+                      <>
+                        <tr className="bg-gray-50">
+                          <td colSpan={2} className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900 text-right">Zwischensumme:</td>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{(currentVertrag.monthlyBreakdown?.subtotal || 0).toFixed(2)}€</td>
+                        </tr>
+                        <tr className="bg-green-50">
+                          <td colSpan={2} className="px-4 py-3 whitespace-nowrap text-sm font-medium text-green-700 text-right">
+                            Rabatt ({((currentVertrag.discount || 0) * 100).toFixed(0)}%):
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm text-green-700">-{(currentVertrag.monthlyBreakdown?.discountAmount || 0).toFixed(2)}€</td>
+                        </tr>
+                      </>
+                    )}
+                    
+                    <tr className="bg-gray-100 border-t">
+                      <td colSpan={2} className="px-4 py-3 whitespace-nowrap text-sm font-bold text-gray-900 text-right">Gesamtpreis/Monat:</td>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm font-bold text-gray-900">{(currentVertrag.monthlyBreakdown?.total || 0).toFixed(2)}€</td>
                     </tr>
                   </tbody>
                 </table>

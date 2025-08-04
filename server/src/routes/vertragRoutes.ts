@@ -1,3 +1,17 @@
+/**
+ * @file Vertrag Routes - Express router for contract management endpoints
+ * @description Provides REST API routes for managing contracts (Verträge) in the marketplace.
+ * Includes authenticated routes for CRUD operations on contracts, user-specific contract
+ * retrieval, and service management within contracts. All routes require authentication
+ * and support the complete contract lifecycle management.
+ * @module VertragRoutes
+ * @requires express.Router
+ * @requires ../controllers/vertragController
+ * @requires ../middleware/auth
+ * @author housnkuh Development Team
+ * @since 1.0.0
+ */
+
 import { Router } from 'express';
 import * as vertragController from '../controllers/vertragController';
 import { auth } from '../middleware/auth';

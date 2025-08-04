@@ -1,6 +1,15 @@
-// server/src/models/VendorContest.ts
+/**
+ * @file Vendor Contest model for the housnkuh marketplace application
+ * @description Model for managing vendor guessing contest entries where users guess vendor names
+ * for promotional/engagement purposes
+ */
+
 import mongoose, { Document, Schema } from 'mongoose';
 
+/**
+ * Interface for VendorContest document
+ * @description Defines structure for vendor contest entries with participant information
+ */
 export interface IVendorContest extends Document {
   name: string;
   email: string;
@@ -11,6 +20,10 @@ export interface IVendorContest extends Document {
   updatedAt: Date;
 }
 
+/**
+ * Vendor contest schema for promotional contests
+ * @description Stores contest entries where users guess vendor names for engagement campaigns
+ */
 const VendorContestSchema: Schema = new Schema(
   {
     name: {
@@ -42,4 +55,8 @@ const VendorContestSchema: Schema = new Schema(
   }
 );
 
+/**
+ * VendorContest model export
+ * @description Exports the VendorContest model for promotional contest management
+ */
 export default mongoose.model<IVendorContest>('VendorContest', VendorContestSchema);

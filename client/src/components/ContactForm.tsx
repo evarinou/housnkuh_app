@@ -39,29 +39,29 @@ const ContactForm: React.FC<ContactFormProps> = ({ className }) => {
     
     // Name validieren
     if (!formData.name.trim()) {
-      newErrors.name = 'Bitte geben Sie Ihren Namen ein';
+      newErrors.name = 'Bitte gib deinen Namen ein';
     }
     
     // Email validieren
     if (!formData.email.trim()) {
-      newErrors.email = 'Bitte geben Sie Ihre E-Mail-Adresse ein';
+      newErrors.email = 'Bitte gib deine E-Mail-Adresse ein';
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Bitte geben Sie eine gültige E-Mail-Adresse ein';
+      newErrors.email = 'Bitte gib eine gültige E-Mail-Adresse ein';
     }
     
     // Telefon validieren (optional)
     if (formData.phone && !/^[0-9\s\-+()]{6,20}$/.test(formData.phone)) {
-      newErrors.phone = 'Bitte geben Sie eine gültige Telefonnummer ein';
+      newErrors.phone = 'Bitte gib eine gültige Telefonnummer ein';
     }
     
     // Betreff validieren
     if (!formData.subject.trim()) {
-      newErrors.subject = 'Bitte geben Sie einen Betreff ein';
+      newErrors.subject = 'Bitte gib einen Betreff ein';
     }
     
     // Nachricht validieren
     if (!formData.message.trim()) {
-      newErrors.message = 'Bitte geben Sie Ihre Nachricht ein';
+      newErrors.message = 'Bitte gib deine Nachricht ein';
     }
     
     setErrors(newErrors);
@@ -92,7 +92,7 @@ const ContactForm: React.FC<ContactFormProps> = ({ className }) => {
       setFormStatus({
         submitted: true,
         success: true,
-        message: response.data.message || 'Vielen Dank für Ihre Nachricht! Wir werden uns in Kürze bei Ihnen melden.'
+        message: response.data.message || 'Vielen Dank für deine Nachricht! Eva-Maria Schaller meldet sich in Kürze bei dir.'
       });
       
       // Formular zurücksetzen
@@ -106,7 +106,7 @@ const ContactForm: React.FC<ContactFormProps> = ({ className }) => {
     } catch (error) {
       console.error('Fehler beim Senden des Kontaktformulars:', error);
       
-      let errorMessage = 'Beim Senden Ihrer Nachricht ist ein Fehler aufgetreten. Bitte versuchen Sie es später erneut.';
+      let errorMessage = 'Beim Senden deiner Nachricht ist ein Fehler aufgetreten. Bitte versuche es später erneut.';
       
       if (axios.isAxiosError(error) && error.response) {
         // Server-Fehler verwenden, falls vorhanden
@@ -130,7 +130,7 @@ const ContactForm: React.FC<ContactFormProps> = ({ className }) => {
   
   return (
     <div className={`${className} bg-white p-6 rounded-lg shadow-md`}>
-      <h2 className="text-2xl font-bold text-primary-900 mb-4">Kontaktieren Sie uns</h2>
+      <h2 className="text-2xl font-bold text-primary-900 mb-4">Kontaktiere Eva-Maria Schaller</h2>
       
       {formStatus.submitted && formStatus.success === true && (
         <div className="bg-green-50 border-l-4 border-green-500 p-4 mb-4">
@@ -174,7 +174,7 @@ const ContactForm: React.FC<ContactFormProps> = ({ className }) => {
             value={formData.name}
             onChange={handleChange}
             className={`w-full p-2 border rounded-md focus:ring-primary-500 focus:border-primary-500 ${errors.name ? 'border-red-500' : 'border-gray-300'}`}
-            placeholder="Ihr Name"
+            placeholder="Dein Name"
           />
           {errors.name && (
             <p className="mt-1 text-xs text-red-500">{errors.name}</p>
@@ -192,7 +192,7 @@ const ContactForm: React.FC<ContactFormProps> = ({ className }) => {
             value={formData.email}
             onChange={handleChange}
             className={`w-full p-2 border rounded-md focus:ring-primary-500 focus:border-primary-500 ${errors.email ? 'border-red-500' : 'border-gray-300'}`}
-            placeholder="Ihre E-Mail-Adresse"
+            placeholder="Deine E-Mail-Adresse"
           />
           {errors.email && (
             <p className="mt-1 text-xs text-red-500">{errors.email}</p>
@@ -210,7 +210,7 @@ const ContactForm: React.FC<ContactFormProps> = ({ className }) => {
             value={formData.phone}
             onChange={handleChange}
             className={`w-full p-2 border rounded-md focus:ring-primary-500 focus:border-primary-500 ${errors.phone ? 'border-red-500' : 'border-gray-300'}`}
-            placeholder="Ihre Telefonnummer"
+            placeholder="Deine Telefonnummer"
           />
           {errors.phone && (
             <p className="mt-1 text-xs text-red-500">{errors.phone}</p>
@@ -228,7 +228,7 @@ const ContactForm: React.FC<ContactFormProps> = ({ className }) => {
             value={formData.subject}
             onChange={handleChange}
             className={`w-full p-2 border rounded-md focus:ring-primary-500 focus:border-primary-500 ${errors.subject ? 'border-red-500' : 'border-gray-300'}`}
-            placeholder="Betreff Ihrer Anfrage"
+            placeholder="Betreff deiner Anfrage"
           />
           {errors.subject && (
             <p className="mt-1 text-xs text-red-500">{errors.subject}</p>
@@ -246,7 +246,7 @@ const ContactForm: React.FC<ContactFormProps> = ({ className }) => {
             onChange={handleChange}
             rows={5}
             className={`w-full p-2 border rounded-md focus:ring-primary-500 focus:border-primary-500 ${errors.message ? 'border-red-500' : 'border-gray-300'}`}
-            placeholder="Ihre Nachricht an uns"
+            placeholder="Deine Nachricht"
           />
           {errors.message && (
             <p className="mt-1 text-xs text-red-500">{errors.message}</p>

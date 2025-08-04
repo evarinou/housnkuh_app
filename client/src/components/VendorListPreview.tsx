@@ -37,7 +37,7 @@ const VendorListPreview: React.FC<VendorListPreviewProps> = ({
             <span className="font-medium">Für Direktvermarkter</span>
           </div>
           <p className="text-sm text-gray-600">
-            Registrieren Sie sich bereits jetzt und seien Sie von Beginn an dabei!
+            Registriere dich bereits jetzt und sei von Beginn an dabei!
           </p>
         </div>
         
@@ -63,7 +63,7 @@ const VendorListPreview: React.FC<VendorListPreviewProps> = ({
         {/* Newsletter suggestion */}
         <div className="mt-6 pt-6 border-t border-gray-200">
           <p className="text-sm text-gray-500 mb-3">
-            Möchten Sie informiert bleiben?
+            Möchtest du informiert bleiben?
           </p>
           <Link 
             to="/#newsletter" 

@@ -1,6 +1,6 @@
 const axios = require('axios');
 
-const API_URL = 'http://172.23.192.1:4000/api';
+const API_URL = process.env.API_URL || 'http://localhost:4000/api';
 
 // Test-Daten
 const testVendor = {
@@ -21,7 +21,6 @@ const testVendor = {
     setupFee: 99,
     selectedOptions: {
       logoEintrag: true,
-      socialMediaPaket: false,
       seoOptimierung: false,
       premiumPlatzierung: false
     },

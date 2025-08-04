@@ -1,0 +1,256 @@
+const mongoose = require('mongoose');
+const bcrypt = require('bcrypt');
+
+async function createSampleData() {
+  try {
+    // Verbindung zur Datenbank
+    await mongoose.connect('mongodb://192.168.178.99:27017/housnkuh');
+    console.log('✅ Verbindung zur Datenbank hergestellt');
+    
+    // Models importieren
+    const User = require('../dist/models/User.js').default;
+    const Mietfach = require('../dist/models/Mietfach.js').default;
+    const Vertrag = require('../dist/models/Vertrag.js').default;
+    const MonthlyRevenue = require('../dist/models/MonthlyRevenue.js').default;
+    
+    console.log('🧹 Lösche bestehende Testdaten...');
+    await User.deleteMany({ 
+      $or: [
+        { username: /^admin$/ },
+        { username: /^vendor\d+@example\.com$/ }
+      ]
+    });
+    await Mietfach.deleteMany({ bezeichnung: /^M\d{3}$/ });
+    await Vertrag.deleteMany({});
+    await MonthlyRevenue.deleteMany({});
+    
+    console.log('👤 Erstelle Admin-Benutzer...');
+    const hashedPassword = await bcrypt.hash('admin123', 10);
+    const adminUser = new User({
+      username: 'admin',
+      password: hashedPassword,
+      isAdmin: true,
+      isFullAccount: true,
+      kontakt: {
+        name: 'Administrator',
+        email: 'admin@housnkuh.com',
+        status: 'aktiv'
+      }
+    });
+    await adminUser.save();
+    console.log('✅ Admin-Benutzer erstellt: admin / admin123');
+    
+    console.log('🏪 Erstelle Mietfächer...');
+    const mietfaecher = [];
+    const typen = ['regal', 'kuehlregal', 'verkaufstisch'];
+    const beschreibungen = ['Regal', 'Kühlregal', 'Verkaufstisch'];
+    
+    for (let i = 1; i <= 20; i++) {
+      const typeIndex = (i - 1) % 3;
+      const mietfach = new Mietfach({
+        bezeichnung: `M${String(i).padStart(3, '0')}`,
+        typ: typen[typeIndex],
+        groesse: {
+          flaeche: [1, 1.5, 2][typeIndex],
+          einheit: 'm²'
+        },
+        verfuegbar: i > 15, // Erste 15 sind belegt
+        standort: 'Hauptstandort München',
+        beschreibung: `Mietfach ${i} - ${beschreibungen[typeIndex]}`,
+        features: typeIndex === 1 ? ['gekühlt'] : typeIndex === 2 ? ['verkaufsfläche'] : []
+      });
+      await mietfach.save();
+      mietfaecher.push(mietfach);
+    }
+    console.log('✅ 20 Mietfächer erstellt (M001-M020)');
+    
+    console.log('🧑‍🌾 Erstelle Direktvermarkter...');
+    const vendors = [];
+    const vendorNames = [
+      'Müller Hofprodukte', 'Schmidt Biohof', 'Weber Landwirtschaft',
+      'Fischer Obstbau', 'Meyer Gemüsehof', 'Bauer Naturprodukte',
+      'Hartmann Direktvertrieb', 'Koch Bauernhof', 'Wolf Biomarkt',
+      'Richter Regionalladen', 'Klein Hofladen', 'Groß Frischevertrieb',
+      'Jung Ökolandwirtschaft', 'Alt Traditionsmarkt', 'Neu Stadtgarten'
+    ];
+    
+    const kategorien = ['Gemüse', 'Obst', 'Fleisch', 'Milchprodukte', 'Backwaren'];
+    const orte = ['München', 'Augsburg', 'Nürnberg', 'Würzburg'];
+    
+    for (let i = 0; i < 15; i++) {
+      const isTrialUser = i < 3; // Erste 3 sind im Trial
+      
+      const vendor = new User({
+        username: `vendor${i + 1}@example.com`,
+        password: await bcrypt.hash('vendor123', 10),
+        isVendor: true,
+        isFullAccount: true,
+        registrationStatus: isTrialUser ? 'trial_active' : 'active',
+        trialEndDate: isTrialUser ? new Date(Date.now() + 20 * 24 * 60 * 60 * 1000) : undefined,
+        kontakt: {
+          name: vendorNames[i],
+          email: `vendor${i + 1}@example.com`,
+          telefon: `089-${String(Math.floor(Math.random() * 9000000) + 1000000)}`,
+          status: 'aktiv'
+        },
+        adresse: {
+          strasse: `Landstraße ${i + 1}`,
+          hausnummer: String(Math.floor(Math.random() * 99) + 1),
+          plz: String(80000 + Math.floor(Math.random() * 999)),
+          ort: orte[i % 4],
+          land: 'Deutschland'
+        },
+        geschaeftsinformationen: {
+          firmenname: vendorNames[i],
+          beschreibung: `Regionaler Direktvermarkter mit frischen Produkten aus der Region. Spezialisiert auf ${kategorien[i % 5]}.`,
+          kategorie: kategorien[i % 5]
+        }
+      });
+      await vendor.save();
+      vendors.push(vendor);
+    }
+    console.log('✅ 15 Direktvermarkter erstellt (3 im Trial, 12 aktiv)');
+    
+    console.log('📋 Erstelle Verträge und Buchungen...');
+    const contracts = [];
+    const preise = [120, 180, 250]; // Monatliche Preise für die verschiedenen Mietfach-Typen
+    
+    for (let i = 0; i < 15; i++) {
+      const vendor = vendors[i];
+      const mietfach = mietfaecher[i];
+      
+      const isTrialUser = vendor.registrationStatus === 'trial_active';
+      const startDate = new Date(Date.now() - Math.floor(Math.random() * 90) * 24 * 60 * 60 * 1000);
+      const typeIndex = i % 3;
+      const preis = preise[typeIndex];
+      
+      const vertrag = new Vertrag({
+        user: vendor._id,
+        datum: startDate,
+        services: [{
+          mietfach: mietfach._id,
+          mietbeginn: startDate,
+          monatspreis: preis
+        }],
+        totalMonthlyPrice: preis,
+        contractDuration: 12, // 12 Monate
+        status: 'active',
+        scheduledStartDate: startDate,
+        actualStartDate: startDate,
+        availabilityImpact: {
+          from: startDate,
+          to: new Date(startDate.getTime() + 365 * 24 * 60 * 60 * 1000) // 1 Jahr
+        },
+        istProbemonatBuchung: isTrialUser,
+        probemonatUserId: isTrialUser ? vendor._id : undefined,
+        zahlungspflichtigAb: isTrialUser ? vendor.trialEndDate : startDate,
+        gekuendigtInProbemonat: false
+      });
+      await vertrag.save();
+      contracts.push(vertrag);
+      
+      // Mietfach als belegt markieren
+      mietfach.verfuegbar = false;
+      await mietfach.save();
+    }
+    console.log('✅ 15 Verträge erstellt (3 Trial-Buchungen, 12 aktive Verträge)');
+    
+    console.log('💰 Berechne Umsätze für die letzten 6 Monate...');
+    for (let monthsBack = 5; monthsBack >= 0; monthsBack--) {
+      const date = new Date();
+      date.setMonth(date.getMonth() - monthsBack);
+      const year = date.getFullYear();
+      const month = date.getMonth() + 1;
+      
+      // Verträge für diesen Monat finden
+      const monthStart = new Date(year, month - 1, 1);
+      const monthEnd = new Date(year, month, 0);
+      
+      const activeContracts = await Vertrag.find({
+        scheduledStartDate: { $lte: monthEnd },
+        $or: [
+          { 'availabilityImpact.to': { $exists: false } },
+          { 'availabilityImpact.to': { $gte: monthStart } }
+        ],
+        $or: [
+          { istProbemonatBuchung: false },
+          { 
+            istProbemonatBuchung: true,
+            zahlungspflichtigAb: { $lte: monthEnd }
+          }
+        ]
+      }).populate('services.mietfach');
+      
+      const trialContracts = await Vertrag.find({
+        scheduledStartDate: { $lte: monthEnd },
+        istProbemonatBuchung: true,
+        zahlungspflichtigAb: { $gt: monthEnd }
+      }).populate('services.mietfach');
+      
+      const totalRevenue = activeContracts.reduce((sum, contract) => sum + contract.totalMonthlyPrice, 0);
+      
+      const einnahmenProMietfach = [];
+      const mietfachMap = new Map();
+      
+      activeContracts.forEach(contract => {
+        contract.services.forEach(service => {
+          if (service.mietfach) {
+            const nummer = service.mietfach.bezeichnung;
+            if (!mietfachMap.has(nummer)) {
+              mietfachMap.set(nummer, {
+                mietfachNummer: nummer,
+                mietfachId: service.mietfach._id,
+                einnahmen: 0,
+                anzahlVertraege: 0,
+                anzahlProbemonatVertraege: 0
+              });
+            }
+            const entry = mietfachMap.get(nummer);
+            entry.einnahmen += service.monatspreis;
+            entry.anzahlVertraege += 1;
+          }
+        });
+      });
+      
+      trialContracts.forEach(contract => {
+        contract.services.forEach(service => {
+          if (service.mietfach) {
+            const nummer = service.mietfach.bezeichnung;
+            if (mietfachMap.has(nummer)) {
+              mietfachMap.get(nummer).anzahlProbemonatVertraege += 1;
+            }
+          }
+        });
+      });
+      
+      einnahmenProMietfach.push(...mietfachMap.values());
+      
+      const monthlyRevenue = new MonthlyRevenue({
+        monat: monthStart,
+        gesamteinnahmen: totalRevenue,
+        anzahlAktiveVertraege: activeContracts.length,
+        anzahlProbemonatVertraege: trialContracts.length,
+        einnahmenProMietfach: einnahmenProMietfach
+      });
+      
+      await monthlyRevenue.save();
+      console.log(`✅ Umsatz für ${month}/${year}: €${totalRevenue} (${activeContracts.length} aktive, ${trialContracts.length} Trial)`);
+    }
+    
+    console.log('\n🎉 ERFOLGREICH! Beispieldaten erstellt:');
+    console.log('👤 1 Admin-Benutzer: admin / admin123');
+    console.log('🧑‍🌾 15 Direktvermarkter (3 im Trial)');
+    console.log('🏪 20 Mietfächer (15 belegt, 5 verfügbar)');
+    console.log('📋 15 aktive Verträge');
+    console.log('💰 6 Monate Umsatzdaten');
+    console.log('\n🔗 Sie können sich jetzt als Admin anmelden und alle Daten im Dashboard sehen!');
+    
+  } catch (error) {
+    console.error('❌ Fehler beim Erstellen der Daten:', error);
+  } finally {
+    mongoose.disconnect();
+  }
+}
+
+// Skript ausführen
+createSampleData();

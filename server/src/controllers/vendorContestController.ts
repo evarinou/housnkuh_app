@@ -1,4 +1,9 @@
-// server/src/controllers/vendorContestController.ts
+/**
+ * @file Vendor Contest controller for the housnkuh marketplace application
+ * @description Vendor contest management controller with validation and email processing
+ * Handles vendor contest submissions, validation, and admin management
+ */
+
 import { Request, Response } from 'express';
 import VendorContest from '../models/VendorContest';
 import { sendVendorContestEmail } from '../utils/emailService';
@@ -92,14 +97,14 @@ export const submitVendorContest = async (req: Request, res: Response): Promise<
     
     res.status(200).json({ 
       success: true, 
-      message: 'Ihre Teilnahme wurde erfolgreich registriert. Viel Glück beim Gewinnspiel!'
+      message: 'Deine Teilnahme wurde erfolgreich registriert. Viel Glück beim Gewinnspiel!'
     });
     
   } catch (error) {
     console.error('Fehler bei der Verarbeitung des Vendor Contest Formulars:', error);
     res.status(500).json({ 
       success: false, 
-      message: 'Es ist ein Fehler aufgetreten. Bitte versuchen Sie es später noch einmal.'
+      message: 'Es ist ein Fehler aufgetreten. Bitte versuche es später noch einmal.'
     });
   }
 };

@@ -310,7 +310,7 @@ const DirektvermarkterMapPage: React.FC = () => {
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-4">Direktvermarkter auf der Karte</h1>
         <p className="text-lg text-gray-600">
-          Finden Sie alle Direktvermarkter in der Region auf einer interaktiven Karte und entdecken Sie, wo Sie frische, lokale Produkte direkt vom Erzeuger bekommen können.
+          Finde alle Direktvermarkter in der Region auf einer interaktiven Karte und entdecke, wo du frische, lokale Produkte direkt vom Erzeuger bekommen kannst.
         </p>
       </div>
       

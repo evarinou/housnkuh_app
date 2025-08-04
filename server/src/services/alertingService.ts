@@ -1,38 +1,77 @@
+/**
+ * @file Alerting Service for monitoring system health and performance
+ * @description Service for monitoring system alerts, notifications, and automated alerting rules
+ * @author System
+ * @version 1.0.0
+ * @since 2024-01-01
+ */
+
 // server/src/services/alertingService.ts
 import { SystemHealth, ComponentHealth } from './healthCheckService';
 import { PerformanceSummary } from '../utils/performanceMonitor';
 import User from '../models/User';
 import Settings from '../models/Settings';
 
+/**
+ * @interface AlertRule
+ * @description Configuration for automated alerting rules
+ */
 export interface AlertRule {
+  /** @description Unique rule identifier */
   id: string;
+  /** @description Human-readable rule name */
   name: string;
+  /** @description Type of alert rule */
   type: 'health' | 'performance' | 'error' | 'business';
+  /** @description Alert condition expression */
   condition: string;
+  /** @description Threshold value for triggering alert */
   threshold: number | string;
+  /** @description Alert severity level */
   severity: 'warning' | 'critical' | 'emergency';
+  /** @description Whether rule is enabled */
   enabled: boolean;
-  cooldownMinutes: number; // Minimum time between alerts of same type
-  recipients: string[]; // Admin user IDs or email addresses
+  /** @description Minimum time between alerts of same type */
+  cooldownMinutes: number;
+  /** @description Admin user IDs or email addresses */
+  recipients: string[];
 }
 
+/**
+ * @interface Alert
+ * @description Alert instance with notification tracking
+ */
 export interface Alert {
+  /** @description Unique alert identifier */
   id: string;
+  /** @description Rule ID that triggered this alert */
   ruleId: string;
+  /** @description Alert type */
   type: string;
+  /** @description Alert severity */
   severity: 'warning' | 'critical' | 'emergency';
+  /** @description Alert title */
   title: string;
+  /** @description Alert message */
   message: string;
+  /** @description Additional alert details */
   details: any;
+  /** @description Alert timestamp */
   timestamp: Date;
+  /** @description Whether alert is resolved */
   resolved: boolean;
+  /** @description Resolution timestamp */
   resolvedAt?: Date;
+  /** @description Number of notifications sent */
   notificationsSent: number;
 }
 
 /**
- * Alerting Service for monitoring system health and performance
- * Sends notifications via email using existing emailService patterns
+ * @class AlertingService
+ * @description Alerting Service for monitoring system health and performance
+ * @sends Notifications via email using existing emailService patterns
+ * @security Manages alert rules and notifications with cooldown periods
+ * @complexity High - Complex alerting system with rule evaluation and notification management
  */
 export class AlertingService {
   private static alerts: Map<string, Alert> = new Map();
@@ -129,7 +168,10 @@ export class AlertingService {
   ];
 
   /**
-   * Initialize alerting service with default rules
+   * @description Initialize alerting service with default rules
+   * @security Loads admin recipients and configures default alerting rules
+   * @complexity Medium - Service initialization with admin recipient setup
+   * @returns {Promise<void>}
    */
   static async initialize(): Promise<void> {
     console.log('📢 Initializing Alerting Service...');
@@ -151,7 +193,11 @@ export class AlertingService {
   }
 
   /**
-   * Check health status and trigger alerts if necessary
+   * @description Check health status and trigger alerts if necessary
+   * @param {SystemHealth} healthStatus - System health status to evaluate
+   * @security Evaluates health status and triggers appropriate alerts
+   * @complexity Medium - Health status evaluation with alert triggering
+   * @returns {Promise<void>}
    */
   static async checkHealthAlerts(healthStatus: SystemHealth): Promise<void> {
     for (const component of healthStatus.components) {
@@ -160,7 +206,11 @@ export class AlertingService {
   }
 
   /**
-   * Check performance metrics and trigger alerts if necessary
+   * @description Check performance metrics and trigger alerts if necessary
+   * @param {PerformanceSummary} performanceData - Performance data to evaluate
+   * @security Evaluates performance metrics and triggers alerts based on thresholds
+   * @complexity Medium - Performance evaluation with rule-based alerting
+   * @returns {Promise<void>}
    */
   static async checkPerformanceAlerts(performanceData: PerformanceSummary): Promise<void> {
     const performanceRules = this.defaultRules.filter(rule => 
@@ -183,7 +233,11 @@ export class AlertingService {
   }
 
   /**
-   * Evaluate health rule for a specific component
+   * @description Evaluate health rule for a specific component
+   * @param {ComponentHealth} component - Component health status to evaluate
+   * @security Evaluates component health against alerting rules
+   * @complexity Medium - Component-specific health rule evaluation
+   * @returns {Promise<void>}
    */
   private static async evaluateHealthRule(component: ComponentHealth): Promise<void> {
     const healthRules = this.defaultRules.filter(rule => 
@@ -202,7 +256,12 @@ export class AlertingService {
   }
 
   /**
-   * Evaluate performance rule against current metrics
+   * @description Evaluate performance rule against current metrics
+   * @param {AlertRule} rule - Alert rule to evaluate
+   * @param {PerformanceSummary} data - Performance data to check against
+   * @security Evaluates performance data against rule thresholds
+   * @complexity Medium - Rule-based performance evaluation
+   * @returns {boolean} True if rule condition is met
    */
   private static evaluatePerformanceRule(rule: AlertRule, data: PerformanceSummary): boolean {
     try {
@@ -232,7 +291,12 @@ export class AlertingService {
   }
 
   /**
-   * Check if enough time has passed since last alert of same type
+   * @description Check if enough time has passed since last alert of same type
+   * @param {string} ruleId - Rule ID to check cooldown for
+   * @param {number} cooldownMinutes - Cooldown period in minutes
+   * @security Implements cooldown to prevent alert spam
+   * @complexity Low - Simple cooldown check
+   * @returns {boolean} True if alert can be sent
    */
   private static canSendAlert(ruleId: string, cooldownMinutes: number): boolean {
     const lastAlertTime = this.lastAlertTimes.get(ruleId);
@@ -248,7 +312,12 @@ export class AlertingService {
   }
 
   /**
-   * Create and send alert
+   * @description Create and send alert
+   * @param {AlertRule} rule - Alert rule that triggered
+   * @param {any} data - Data that triggered the alert
+   * @security Creates alert and sends notifications to configured recipients
+   * @complexity Medium - Alert creation and notification sending
+   * @returns {Promise<void>}
    */
   private static async createAndSendAlert(rule: AlertRule, data: any): Promise<void> {
     const alertId = `${rule.id}-${Date.now()}`;
@@ -277,7 +346,11 @@ export class AlertingService {
   }
 
   /**
-   * Generate alert message based on rule and data
+   * @description Generate alert message based on rule and data
+   * @param {AlertRule} rule - Alert rule
+   * @param {any} data - Data that triggered the alert
+   * @complexity Medium - Context-aware message generation
+   * @returns {string} Generated alert message
    */
   private static generateAlertMessage(rule: AlertRule, data: any): string {
     switch (rule.id) {
@@ -313,7 +386,12 @@ export class AlertingService {
   }
 
   /**
-   * Send alert notifications via email
+   * @description Send alert notifications via email
+   * @param {Alert} alert - Alert to send notifications for
+   * @param {string[]} recipients - List of recipient email addresses
+   * @security Sends alert notifications to configured recipients
+   * @complexity Medium - Email notification sending with error handling
+   * @returns {Promise<void>}
    */
   private static async sendAlertNotifications(alert: Alert, recipients: string[]): Promise<void> {
     if (recipients.length === 0) {
@@ -352,7 +430,11 @@ export class AlertingService {
   }
 
   /**
-   * Mark alert as resolved
+   * @description Mark alert as resolved
+   * @param {string} alertId - Alert ID to resolve
+   * @security Updates alert status to resolved
+   * @complexity Low - Simple alert resolution
+   * @returns {boolean} True if alert was found and resolved
    */
   static resolveAlert(alertId: string): boolean {
     const alert = this.alerts.get(alertId);
@@ -370,14 +452,21 @@ export class AlertingService {
   }
 
   /**
-   * Get all active alerts
+   * @description Get all active alerts
+   * @security Returns only unresolved alerts
+   * @complexity Low - Simple alert filtering
+   * @returns {Alert[]} Array of active alerts
    */
   static getActiveAlerts(): Alert[] {
     return Array.from(this.alerts.values()).filter(alert => !alert.resolved);
   }
 
   /**
-   * Get alert history
+   * @description Get alert history
+   * @param {number} limit - Maximum number of alerts to return
+   * @security Returns alert history with pagination
+   * @complexity Low - Simple alert history retrieval
+   * @returns {Alert[]} Array of historical alerts
    */
   static getAlertHistory(limit: number = 50): Alert[] {
     return Array.from(this.alerts.values())
@@ -386,7 +475,11 @@ export class AlertingService {
   }
 
   /**
-   * Get alerts by severity
+   * @description Get alerts by severity
+   * @param {'warning' | 'critical' | 'emergency'} severity - Severity level to filter by
+   * @security Returns alerts filtered by severity level
+   * @complexity Low - Simple severity filtering
+   * @returns {Alert[]} Array of alerts with specified severity
    */
   static getAlertsBySeverity(severity: 'warning' | 'critical' | 'emergency'): Alert[] {
     return Array.from(this.alerts.values()).filter(alert => 
@@ -395,7 +488,9 @@ export class AlertingService {
   }
 
   /**
-   * Clear old resolved alerts to prevent memory buildup
+   * @description Clear old resolved alerts to prevent memory buildup
+   * @security Removes old resolved alerts to prevent memory leaks
+   * @complexity Low - Simple cleanup with age-based filtering
    */
   static cleanupOldAlerts(): void {
     const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
@@ -414,7 +509,10 @@ export class AlertingService {
   }
 
   /**
-   * Get alert statistics
+   * @description Get alert statistics
+   * @security Provides aggregated alert statistics
+   * @complexity Medium - Statistical aggregation of alerts
+   * @returns {object} Alert statistics object
    */
   static getAlertStatistics(): {
     total: number;
@@ -446,7 +544,10 @@ export class AlertingService {
   }
 
   /**
-   * Test alert system by sending a test alert
+   * @description Test alert system by sending a test alert
+   * @security Sends test alert to verify system functionality
+   * @complexity Medium - Test alert creation and sending
+   * @returns {Promise<boolean>} True if test alert was sent successfully
    */
   static async sendTestAlert(): Promise<boolean> {
     try {

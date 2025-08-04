@@ -6,7 +6,7 @@ import SimpleMapComponent from '../components/SimpleMapComponent';
 const KontaktPage: React.FC = () => {
   return (
     <div className="container mx-auto p-4 pb-12">
-      <h1 className="text-3xl font-bold text-primary-900 my-6 text-center">Kontaktieren Sie uns</h1>
+      <h1 className="text-3xl font-bold text-primary-900 my-6 text-center">Kontaktieren Sie Eva-Maria Schaller</h1>
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
         {/* Linke Seite - Kontaktformular */}
@@ -17,7 +17,7 @@ const KontaktPage: React.FC = () => {
         {/* Rechte Seite - Kontaktinformationen und Karte */}
         <div className="flex flex-col">
           <div className="bg-white shadow-lg rounded-lg p-6 mb-6">
-            <h2 className="text-2xl font-bold text-primary-900 mb-4">Unsere Kontaktdaten</h2>
+            <h2 className="text-2xl font-bold text-primary-900 mb-4">Kontaktdaten</h2>
             
             <div className="mb-4">
               <h3 className="text-lg font-semibold text-primary-800 mb-2">Adresse:</h3>

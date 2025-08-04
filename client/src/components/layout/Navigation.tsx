@@ -7,13 +7,30 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useVendorAuth } from '../../contexts/VendorAuthContext';
 import { resolveImageUrl } from '../../utils/imageUtils';
 
+// Safe hook wrappers that handle missing context
+const useSafeAuth = () => {
+  try {
+    return useAuth();
+  } catch {
+    return { isAuthenticated: false, user: null };
+  }
+};
+
+const useSafeVendorAuth = () => {
+  try {
+    return useVendorAuth();
+  } catch {
+    return { isAuthenticated: false, user: null };
+  }
+};
+
 const Navigation: React.FC = () => {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [scrolled, setScrolled] = useState<boolean>(false);
   
-  // Authentication contexts
-  const { isAuthenticated: isAdminAuth } = useAuth();
-  const { isAuthenticated: isVendorAuth, user: vendorUser } = useVendorAuth();
+  // Authentication contexts with safe access
+  const { isAuthenticated: isAdminAuth } = useSafeAuth();
+  const { isAuthenticated: isVendorAuth, user: vendorUser } = useSafeVendorAuth();
   
   // Determine if any user is authenticated and their dashboard route
   const isAuthenticated = isAdminAuth || isVendorAuth;

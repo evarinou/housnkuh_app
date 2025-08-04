@@ -1,0 +1,189 @@
+.revenue-chart-container {
+  background: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
+}
+
+.chart-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.chart-type-toggle {
+  display: flex;
+  background: #f3f4f6;
+  border-radius: 6px;
+  padding: 2px;
+}
+
+.chart-type-toggle button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: #6b7280;
+  transition: all 0.2s ease-in-out;
+}
+
+.chart-type-toggle button.active {
+  background: white;
+  color: #374151;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.chart-type-toggle button:hover:not(.active) {
+  color: #374151;
+}
+
+.trial-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: #374151;
+}
+
+.trial-toggle input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: #3b82f6;
+}
+
+.toggle-text {
+  user-select: none;
+}
+
+.chart-wrapper {
+  position: relative;
+  width: 100%;
+  height: 400px;
+}
+
+.chart-tooltip {
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 0.75rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.tooltip-label {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #374151;
+}
+
+.chart-tooltip p {
+  margin: 0.25rem 0;
+  font-size: 0.875rem;
+}
+
+.projection-indicator {
+  font-weight: 400;
+  font-style: italic;
+  color: #8b5cf6;
+  font-size: 0.75rem;
+}
+
+.chart-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 400px;
+  color: #6b7280;
+  text-align: center;
+}
+
+.chart-empty-state i {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.chart-empty-state h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.chart-empty-state p {
+  margin: 0;
+  font-size: 0.875rem;
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .revenue-chart-container {
+    padding: 1rem;
+  }
+
+  .chart-controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .chart-type-toggle {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .trial-toggle {
+    justify-content: center;
+  }
+
+  .chart-wrapper {
+    height: 300px;
+  }
+
+  .chart-empty-state {
+    height: 300px;
+  }
+
+  .chart-empty-state i {
+    font-size: 2rem;
+  }
+
+  .chart-empty-state h3 {
+    font-size: 1.125rem;
+  }
+}
+
+/* Recharts responsive adjustments */
+.recharts-responsive-container {
+  background: transparent;
+}
+
+.recharts-legend-wrapper {
+  padding-top: 1rem !important;
+}
+
+.recharts-default-legend {
+  display: flex !important;
+  justify-content: center !important;
+  flex-wrap: wrap !important;
+  gap: 1rem !important;
+}
+
+.recharts-legend-item {
+  margin: 0 !important;
+}
+
+@media (max-width: 480px) {
+  .recharts-default-legend {
+    font-size: 0.75rem !important;
+  }
+}

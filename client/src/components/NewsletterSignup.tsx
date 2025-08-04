@@ -77,15 +77,15 @@ const NewsletterSignup: React.FC = () => {
 
   return (
     <div className="bg-secondary text-white rounded-lg p-8 text-center">
-      <h2 className="text-2xl font-bold mb-4">Bleiben Sie informiert!</h2>
+      <h2 className="text-2xl font-bold mb-4">Bleib informiert!</h2>
       <p className="mb-6">
-        Melden Sie sich für den Newsletter an und erfahren Sie als Erste/r von der Eröffnung.
+        Melde dich für den Newsletter an und erfahre als Erste/r von der Eröffnung.
       </p>
       
       {status === 'success' ? (
         <div className="flex items-center justify-center text-lg">
           <Check className="mr-2" />
-          {message || 'Vielen Dank für Ihre Anmeldung! Bitte bestätigen Sie Ihre E-Mail-Adresse.'}
+          {message || 'Vielen Dank für deine Anmeldung! Bitte bestätige deine E-Mail-Adresse.'}
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -94,7 +94,7 @@ const NewsletterSignup: React.FC = () => {
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Ihr Name (optional)"
+              placeholder="Dein Name (optional)"
               className="px-4 py-2 rounded-lg text-gray-900 w-full sm:w-auto"
             />
           </div>
@@ -104,7 +104,7 @@ const NewsletterSignup: React.FC = () => {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="Ihre E-Mail-Adresse"
+              placeholder="Deine E-Mail-Adresse"
               className="px-4 py-2 rounded-lg text-gray-900 w-full sm:w-auto"
               required
             />

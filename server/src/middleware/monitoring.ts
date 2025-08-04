@@ -1,11 +1,26 @@
-// server/src/middleware/monitoring.ts
+/**
+ * @file Monitoring middleware for application performance and health tracking
+ * @description Provides comprehensive monitoring middleware for request tracking,
+ * error monitoring, health checks, and performance analysis
+ * @author Development Team
+ * @version 1.0.0
+ * @since 2024-01-01
+ */
+
 import { Request, Response, NextFunction } from 'express';
 import { performanceMonitor } from '../utils/performanceMonitor';
 import HealthCheckService from '../services/healthCheckService';
 import AlertingService from '../services/alertingService';
+import logger from '../utils/logger';
 
 /**
  * Monitoring middleware that automatically tracks requests and triggers alerts
+ * @param {Request} req - Express request object
+ * @param {Response} res - Express response object
+ * @param {NextFunction} next - Express next function
+ * @returns {void}
+ * @complexity O(1)
+ * @description Tracks request metrics, response times, and error rates
  */
 export const monitoringMiddleware = (req: Request, res: Response, next: NextFunction) => {
   const startTime = Date.now();
@@ -31,7 +46,7 @@ export const monitoringMiddleware = (req: Request, res: Response, next: NextFunc
     
     // Log slow requests
     if (responseTime > 3000) {
-      console.warn(`🐌 Very slow request: ${req.method} ${req.path} - ${responseTime}ms`);
+      logger.warn(`🐌 Very slow request: ${req.method} ${req.path} - ${responseTime}ms`);
     }
     
     // Track errors for alerting
@@ -52,13 +67,20 @@ export const monitoringMiddleware = (req: Request, res: Response, next: NextFunc
   };
   
   // Track request start
-  console.log(`📊 ${req.method} ${req.path} - Started`);
+  logger.info(`📊 ${req.method} ${req.path} - Started`);
   
   next();
 };
 
 /**
  * Error tracking middleware that records application errors
+ * @param {Error} err - Error object to track
+ * @param {Request} req - Express request object
+ * @param {Response} res - Express response object
+ * @param {NextFunction} next - Express next function
+ * @returns {void}
+ * @complexity O(1)
+ * @description Records errors for monitoring and passes to next error handler
  */
 export const errorTrackingMiddleware = (err: Error, req: Request, res: Response, next: NextFunction) => {
   // Record the error
@@ -68,7 +90,7 @@ export const errorTrackingMiddleware = (err: Error, req: Request, res: Response,
   );
   
   // Log the error with context
-  console.error(`🚨 Application Error: ${err.message}`, {
+  logger.error(`🚨 Application Error: ${err.message}`, {
     path: req.path,
     method: req.method,
     userAgent: req.get('User-Agent'),
@@ -82,6 +104,12 @@ export const errorTrackingMiddleware = (err: Error, req: Request, res: Response,
 
 /**
  * Health check middleware for public endpoints
+ * @param {Request} req - Express request object
+ * @param {Response} res - Express response object
+ * @param {NextFunction} next - Express next function
+ * @returns {Promise<void>}
+ * @complexity O(1)
+ * @description Validates system health on health check endpoints
  */
 export const healthCheckMiddleware = async (req: Request, res: Response, next: NextFunction) => {
   // Only run on health check endpoints
@@ -94,12 +122,12 @@ export const healthCheckMiddleware = async (req: Request, res: Response, next: N
     const simpleStatus = await HealthCheckService.getSimpleStatus();
     
     if (simpleStatus.status === 'error') {
-      console.warn('⚠️ Health check middleware detected system issues');
+      logger.warn('⚠️ Health check middleware detected system issues');
     }
     
     next();
   } catch (error) {
-    console.error('❌ Health check middleware error:', error);
+    logger.error('❌ Health check middleware error:', error);
     // Don't block the request, just log the issue
     next();
   }
@@ -107,7 +135,9 @@ export const healthCheckMiddleware = async (req: Request, res: Response, next: N
 
 /**
  * Performance monitoring trigger middleware
- * Runs performance checks and triggers alerts based on configurable intervals
+ * @description Runs performance checks and triggers alerts based on configurable intervals
+ * @returns {function} Express middleware function
+ * @complexity O(1) - runs background checks periodically
  */
 export const performanceCheckMiddleware = (() => {
   let lastPerformanceCheck = 0;
@@ -129,7 +159,7 @@ export const performanceCheckMiddleware = (() => {
             const performanceSummary = performanceMonitor.getPerformanceSummary();
             await AlertingService.checkPerformanceAlerts(performanceSummary);
           } catch (error) {
-            console.error('Background performance check failed:', error);
+            logger.error('Background performance check failed:', error);
           }
         });
       }
@@ -144,12 +174,12 @@ export const performanceCheckMiddleware = (() => {
             const healthStatus = await HealthCheckService.performHealthCheck();
             await AlertingService.checkHealthAlerts(healthStatus);
           } catch (error) {
-            console.error('Background health check failed:', error);
+            logger.error('Background health check failed:', error);
           }
         });
       }
     } catch (error) {
-      console.error('Performance check middleware error:', error);
+      logger.error('Performance check middleware error:', error);
     }
     
     next();
@@ -158,7 +188,14 @@ export const performanceCheckMiddleware = (() => {
 
 /**
  * Database operation monitoring wrapper
- * Use this to wrap database operations for performance tracking
+ * @description Wraps database operations for performance tracking and error monitoring
+ * @template T - Return type of the database operation
+ * @param {string} operation - Name of the database operation
+ * @param {string} collection - Database collection name
+ * @param {function} dbFunction - Database operation function to monitor
+ * @returns {Promise<T>} Promise resolving to the database operation result
+ * @complexity O(1) + complexity of wrapped operation
+ * @throws {Error} Re-throws any errors from the wrapped operation
  */
 export const withDatabaseMonitoring = async <T>(
   operation: string,
@@ -189,12 +226,12 @@ export const withDatabaseMonitoring = async <T>(
     
     // Log slow database operations
     if (duration > 2000) {
-      console.warn(`🐌 Slow database operation: ${operation} on ${collection} - ${duration}ms`);
+      logger.warn(`🐌 Slow database operation: ${operation} on ${collection} - ${duration}ms`);
     }
     
     // Log database errors
     if (!success) {
-      console.error(`❌ Database operation failed: ${operation} on ${collection} - ${error}`);
+      logger.error(`❌ Database operation failed: ${operation} on ${collection} - ${error}`);
     }
   }
 };
@@ -225,7 +262,7 @@ export const rateLimitMonitoringMiddleware = (() => {
     
     // Check for high request rates
     if (current.count > WARNING_THRESHOLD) {
-      console.warn(`⚠️ High request rate detected from IP ${clientIp}: ${current.count} requests/minute`);
+      logger.warn(`⚠️ High request rate detected from IP ${clientIp}: ${current.count} requests/minute`);
       
       // Record as a potential issue
       performanceMonitor.recordError(
@@ -256,9 +293,9 @@ export const cleanupMonitoringMiddleware = (() => {
       setImmediate(() => {
         try {
           AlertingService.cleanupOldAlerts();
-          console.log('🧹 Monitoring data cleanup completed');
+          logger.info('🧹 Monitoring data cleanup completed');
         } catch (error) {
-          console.error('Monitoring cleanup error:', error);
+          logger.error('Monitoring cleanup error:', error);
         }
       });
     }

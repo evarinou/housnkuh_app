@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registrierung bestätigt - housnkuh</title>
+  <style>
+    /* Responsive email styles */
+    @media only screen and (max-width: 600px) {
+      .container { width: 100% !important; }
+      .service-card { width: 100% !important; margin-bottom: 15px !important; }
+      .price-row { display: block !important; }
+      .price-cell { display: block !important; text-align: left !important; margin-bottom: 5px; }
+      .service-flex { flex-direction: column !important; }
+    }
+    
+    /* Fallbacks for Outlook */
+    <!--[if mso]>
+    <style type="text/css">
+      .service-card {
+        width: 48% !important;
+      }
+      table {
+        border-collapse: collapse !important;
+      }
+    </style>
+    <![endif]-->
+  </style>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f8f9fa; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+  
+  <div class="container" style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+    
+    <!-- Header -->
+    <div style="background: linear-gradient(135deg, #e17564 0%, #09122c 100%); padding: 30px 20px; text-align: center;">
+      <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: bold;">
+        🎉 Willkommen bei housnkuh!
+      </h1>
+      <p style="color: #ffffff; margin: 10px 0 0 0; font-size: 16px; opacity: 0.9;">
+Deine Registrierung war erfolgreich
+      </p>
+    </div>
+
+    <!-- Main Content -->
+    <div style="padding: 30px 20px;">
+      
+      <!-- Success Message -->
+      <div style="background-color: #f0f9ff; border: 2px solid #3b82f6; border-radius: 8px; padding: 20px; margin-bottom: 25px;">
+        <h2 style="color: #1e40af; margin: 0 0 10px 0; font-size: 20px;">
+          ✅ Registrierung erfolgreich abgeschlossen
+        </h2>
+        <p style="color: #1e40af; margin: 0; font-size: 14px;">
+Dein Mietvertrag wurde erstellt und wird zeitnah von unserem Team bearbeitet.
+        </p>
+      </div>
+
+      <!-- Package Details -->
+      <h3 style="color: #09122c; margin: 0 0 15px 0; font-size: 18px;">📦 Deine Buchungsdetails</h3>
+      
+      <div style="background-color: #f8f9fa; border-radius: 8px; padding: 20px; margin-bottom: 25px;">
+        
+        <!-- Provision Model -->
+        <div style="margin-bottom: 20px;">
+          <strong style="color: #09122c;">Provisionsmodell:</strong>
+          {{#if (eq selectedProvisionType 'premium')}}
+            <span style="color: #059669; font-weight: bold;">Premium-Modell (7% Provision)</span>
+          {{else}}
+            <span style="color: #dc2626; font-weight: bold;">Basis-Modell (4% Provision)</span>
+          {{/if}}
+        </div>
+
+        <!-- Mietfächer -->
+        {{#if packageCounts}}
+        <div style="margin-bottom: 20px;">
+          <strong style="color: #09122c;">Gebuchte Mietfächer:</strong>
+          <div style="margin-top: 10px;">
+            {{#each packageCounts}}
+            {{#if this}}
+            <div style="background-color: #ffffff; padding: 10px; border-radius: 6px; margin-bottom: 8px; border-left: 4px solid #e17564;">
+              <span style="font-weight: medium;">{{formatPackageName @key this ../packageOptions}}</span>
+            </div>
+            {{/if}}
+            {{/each}}
+          </div>
+        </div>
+        {{/if}}
+
+        <!-- Contract Duration -->
+        {{#if rentalDuration}}
+        <div style="margin-bottom: 20px;">
+          <strong style="color: #09122c;">Vertragslaufzeit:</strong>
+          <span>{{rentalDuration}} Monat(e)</span>
+        </div>
+        {{/if}}
+
+      </div>
+
+      <!-- Zusatzleistungen Section -->
+      {{#if (ifZusatzleistungen zusatzleistungen selectedProvisionType)}}
+      <div style="background: linear-gradient(135deg, #f0f9ff 0%, #ecfdf5 100%); border: 2px solid #10b981; border-radius: 12px; padding: 25px; margin-bottom: 25px;" role="region" aria-label="Zusatzleistungen Details">
+        
+        <h3 style="color: #065f46; margin: 0 0 15px 0; font-size: 20px; display: flex; align-items: center;">
+          <span style="margin-right: 10px;">🎯</span>
+Deine Premium-Zusatzleistungen
+        </h3>
+        
+        <p style="color: #047857; margin: 0 0 20px 0; font-size: 14px;">
+Du hast folgende Services zu deinem Vertrag hinzugebucht:
+        </p>
+
+        <div class="service-flex" style="display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 20px;">
+          
+          <!-- Lagerservice Card -->
+          {{#if zusatzleistungen.lagerservice}}
+          <div class="service-card" style="background-color: #ffffff; border: 2px solid #10b981; border-radius: 8px; padding: 20px; flex: 1; min-width: 250px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);" role="article" aria-label="Lagerservice für 20 Euro pro Monat">
+            <div style="display: flex; align-items: center; margin-bottom: 15px;">
+              <span style="font-size: 32px; margin-right: 12px;" aria-hidden="true">📦</span>
+              <div>
+                <h4 style="color: #065f46; margin: 0; font-size: 18px; font-weight: bold;">Lagerservice</h4>
+                <p style="color: #10b981; margin: 0; font-size: 16px; font-weight: bold;">+20€/Monat</p>
+              </div>
+            </div>
+            <ul style="margin: 0; padding-left: 0; list-style: none; color: #374151; font-size: 14px;">
+              <li style="margin-bottom: 6px;">✓ Professionelle Lagerung Ihrer Produkte</li>
+              <li style="margin-bottom: 6px;">✓ Temperaturkontrollierte Umgebung</li>
+              <li style="margin-bottom: 6px;">✓ Sichere und hygienische Aufbewahrung</li>
+              <li style="margin-bottom: 6px;">✓ Flexible Zugriffsmöglichkeiten</li>
+            </ul>
+          </div>
+          {{/if}}
+
+          <!-- Versandservice Card -->
+          {{#if zusatzleistungen.versandservice}}
+          <div class="service-card" style="background-color: #ffffff; border: 2px solid #3b82f6; border-radius: 8px; padding: 20px; flex: 1; min-width: 250px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);" role="article" aria-label="Versandservice für 5 Euro pro Monat">
+            <div style="display: flex; align-items: center; margin-bottom: 15px;">
+              <span style="font-size: 32px; margin-right: 12px;" aria-hidden="true">🚚</span>
+              <div>
+                <h4 style="color: #1e40af; margin: 0; font-size: 18px; font-weight: bold;">Versandservice</h4>
+                <p style="color: #3b82f6; margin: 0; font-size: 16px; font-weight: bold;">+5€/Monat</p>
+              </div>
+            </div>
+            <ul style="margin: 0; padding-left: 0; list-style: none; color: #374151; font-size: 14px;">
+              <li style="margin-bottom: 6px;">✓ Professionelle Verpackung</li>
+              <li style="margin-bottom: 6px;">✓ Schneller und sicherer Versand</li>
+              <li style="margin-bottom: 6px;">✓ Sendungsverfolgung inkludiert</li>
+              <li style="margin-bottom: 6px;">✓ Versandkostenoptimierung</li>
+            </ul>
+          </div>
+          {{/if}}
+
+        </div>
+
+        <!-- Next Steps -->
+        <div style="background-color: #ffffff; border-radius: 8px; padding: 20px; border: 1px solid #d1d5db;">
+          <h5 style="color: #374151; margin: 0 0 15px 0; font-size: 16px; font-weight: bold;">
+            📋 Nächste Schritte für deine Zusatzleistungen:
+          </h5>
+          
+          {{#if zusatzleistungen.lagerservice}}
+          <div style="margin-bottom: 12px; display: flex; align-items: flex-start;">
+            <span style="color: #10b981; margin-right: 8px; margin-top: 2px;" aria-hidden="true">📦</span>
+            <div>
+              <strong style="color: #065f46;">Lagerservice:</strong>
+              <span style="color: #374151; font-size: 14px;">
+Du erhältst eine separate E-Mail mit Informationen zur Produktanlieferung und Lagerverwaltung.
+              </span>
+            </div>
+          </div>
+          {{/if}}
+          
+          {{#if zusatzleistungen.versandservice}}
+          <div style="margin-bottom: 12px; display: flex; align-items: flex-start;">
+            <span style="color: #3b82f6; margin-right: 8px; margin-top: 2px;" aria-hidden="true">🚚</span>
+            <div>
+              <strong style="color: #1e40af;">Versandservice:</strong>
+              <span style="color: #374151; font-size: 14px;">
+Unser Team kontaktiert dich für die Einrichtung deines Versandprofils und deiner Präferenzen.
+              </span>
+            </div>
+          </div>
+          {{/if}}
+          
+        </div>
+
+      </div>
+      {{/if}}
+
+      <!-- Price Breakdown -->
+      <h3 style="color: #09122c; margin: 0 0 15px 0; font-size: 18px;">💰 Kostenübersicht</h3>
+      
+      <div style="background-color: #f8f9fa; border-radius: 8px; padding: 20px; margin-bottom: 25px;">
+        <table style="width: 100%; border-collapse: collapse;" class="price-table">
+          
+          <!-- Mietfach Costs -->
+          {{#if packageCounts}}
+          {{#each packageCounts}}
+          {{#if this}}
+          <tr class="price-row" style="border-bottom: 1px solid #e5e7eb;">
+            <td class="price-cell" style="padding: 8px 0; color: #374151;">{{formatPackageName @key this ../packageOptions}}</td>
+            <td class="price-cell" style="padding: 8px 0; text-align: right; color: #374151;">
+              {{formatPrice (calculatePackagePrice @key this ../packageOptions)}}€/Monat
+            </td>
+          </tr>
+          {{/if}}
+          {{/each}}
+          {{/if}}
+
+          <!-- Zusatzleistungen Costs -->
+          {{#if zusatzleistungen}}
+          {{#if zusatzleistungen.lagerservice}}
+          <tr class="price-row" style="border-bottom: 1px solid #e5e7eb;">
+            <td class="price-cell" style="padding: 8px 0; color: #10b981; font-weight: medium;">
+              📦 Lagerservice
+            </td>
+            <td class="price-cell" style="padding: 8px 0; text-align: right; color: #10b981; font-weight: bold;">
+              +20.00€/Monat
+            </td>
+          </tr>
+          {{/if}}
+          {{#if zusatzleistungen.versandservice}}
+          <tr class="price-row" style="border-bottom: 1px solid #e5e7eb;">
+            <td class="price-cell" style="padding: 8px 0; color: #3b82f6; font-weight: medium;">
+              🚚 Versandservice
+            </td>
+            <td class="price-cell" style="padding: 8px 0; text-align: right; color: #3b82f6; font-weight: bold;">
+              +5.00€/Monat
+            </td>
+          </tr>
+          {{/if}}
+          {{/if}}
+
+          <!-- Subtotal -->
+          <tr class="price-row" style="border-bottom: 2px solid #374151;">
+            <td class="price-cell" style="padding: 12px 0; color: #374151; font-weight: medium;">
+              Zwischensumme:
+            </td>
+            <td class="price-cell" style="padding: 12px 0; text-align: right; color: #374151; font-weight: medium;">
+              {{formatPrice subtotal}}€/Monat
+            </td>
+          </tr>
+
+          <!-- Discount -->
+          {{#if discount}}
+          <tr class="price-row">
+            <td class="price-cell" style="padding: 8px 0; color: #dc2626;">
+              Rabatt ({{multiply discount 100}}%):
+            </td>
+            <td class="price-cell" style="padding: 8px 0; text-align: right; color: #dc2626;">
+              -{{formatPrice discountAmount}}€/Monat
+            </td>
+          </tr>
+          {{/if}}
+
+          <!-- Total -->
+          <tr class="price-row" style="background-color: #f0f9ff;">
+            <td class="price-cell" style="padding: 15px 10px; color: #1e40af; font-size: 18px; font-weight: bold;">
+              Gesamtkosten:
+            </td>
+            <td class="price-cell" style="padding: 15px 10px; text-align: right; color: #1e40af; font-size: 20px; font-weight: bold;">
+              {{formatPrice totalCost}}€/Monat
+            </td>
+          </tr>
+
+        </table>
+
+        <!-- Tax Notice -->
+        <p style="color: #6b7280; font-size: 12px; margin: 15px 0 0 0; text-align: center; font-style: italic;">
+          * Alle Preise verstehen sich als Nettopreise zzgl. der gesetzlichen Mehrwertsteuer
+        </p>
+
+      </div>
+
+      <!-- Contact Information -->
+      <div style="background-color: #f9fafb; border-left: 4px solid #e17564; padding: 20px; margin-bottom: 25px;">
+        <h4 style="color: #09122c; margin: 0 0 10px 0; font-size: 16px;">
+          📞 Hast du Fragen?
+        </h4>
+        <p style="color: #374151; margin: 0 0 10px 0; font-size: 14px;">
+Bei Fragen zu deinen Paketen oder Zusatzleistungen kannst du uns jederzeit kontaktieren:
+        </p>
+        <div style="color: #374151; font-size: 14px;">
+          <div style="margin-bottom: 5px;">
+            <strong>E-Mail:</strong> eva-maria.schaller@housnkuh.de
+          </div>
+          <div style="margin-bottom: 5px;">
+            <strong>Telefon:</strong> 0157 35711257
+          </div>
+          <div>
+            <strong>Öffnungszeiten:</strong> Mo-Fr 9:00-18:00 Uhr
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div style="background-color: #09122c; padding: 20px; text-align: center;">
+      <p style="color: #ffffff; margin: 0; font-size: 14px;">
+        © 2024 housnkuh - Dein Partner für regionale Direktvermarktung
+      </p>
+      <p style="color: #9ca3af; margin: 10px 0 0 0; font-size: 12px;">
+        Diese E-Mail wurde automatisch generiert. Bitte antworte nicht direkt auf diese E-Mail.
+      </p>
+    </div>
+
+  </div>
+
+</body>
+</html>

@@ -3,18 +3,32 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { User, Package, Calendar, AlertTriangle, Clock, XCircle, CheckCircle, ShoppingCart, BarChart3, FileText, Receipt } from 'lucide-react';
 import { useVendorAuth } from '../contexts/VendorAuthContext';
+import { createNavigationHelper } from '../utils/navigation';
 import VendorLayout from '../components/vendor/VendorLayout';
+import DashboardMessage from '../components/vendor/DashboardMessage';
+import TrialStatusDashboard from '../components/vendor/TrialStatusDashboard';
+import { TrialStatusWidget } from '../components/vendor/TrialStatusWidget';
+import { TrialAccessGuard } from '../components/vendor/TrialAccessGuard';
+import PackageTrackingWidget from '../components/vendor/PackageTrackingWidget';
+import useDashboardMessages from '../hooks/useDashboardMessages';
 import axios from 'axios';
 
 const VendorDashboardPage: React.FC = () => {
   const { user, isAuthenticated, isLoading } = useVendorAuth();
   const navigate = useNavigate();
+  const navigationHelper = createNavigationHelper(navigate);
   const [storeOpeningDate, setStoreOpeningDate] = useState<Date | null>(null);
   const [isStoreOpen, setIsStoreOpen] = useState(false);
   const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0 });
   const [showCancellationModal, setShowCancellationModal] = useState(false);
   const [cancellationReason, setCancellationReason] = useState('');
   const [isCancelling, setIsCancelling] = useState(false);
+  const [hasZusatzleistungen, setHasZusatzleistungen] = useState(false);
+  
+  // Dashboard messages
+  const { messages, dismissMessage } = useDashboardMessages({ 
+    userId: user?.id || '' 
+  });
   
   // Wenn nicht authentifiziert und das Laden abgeschlossen ist, zum Login weiterleiten
   useEffect(() => {
@@ -41,6 +55,33 @@ const VendorDashboardPage: React.FC = () => {
     
     fetchStoreOpening();
   }, []);
+
+  // Check if vendor has zusatzleistungen
+  useEffect(() => {
+    const checkZusatzleistungen = async () => {
+      if (!user?.id) return;
+      
+      try {
+        const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+        const response = await axios.get(`${apiUrl}/vendor/contracts/zusatzleistungen`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('vendorToken')}`
+          }
+        });
+        
+        if (response.data.success && response.data.contracts) {
+          const hasServices = response.data.contracts.some((contract: any) => 
+            contract.zusatzleistungen?.lagerservice || contract.zusatzleistungen?.versandservice
+          );
+          setHasZusatzleistungen(hasServices);
+        }
+      } catch (err) {
+        console.error('Error checking zusatzleistungen:', err);
+      }
+    };
+    
+    checkZusatzleistungen();
+  }, [user?.id]);
   
   // Countdown-Timer
   useEffect(() => {
@@ -80,8 +121,9 @@ const VendorDashboardPage: React.FC = () => {
   }
   
   return (
-    <VendorLayout>
-      <div className="max-w-5xl mx-auto">
+    <TrialAccessGuard>
+      <VendorLayout>
+        <div className="max-w-5xl mx-auto">
         {/* Willkommens-Header mit erweitertem Profil */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-8">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
@@ -133,37 +175,9 @@ const VendorDashboardPage: React.FC = () => {
           </div>
         </div>
         
-        {/* Trial Status Banner */}
+        {/* Enhanced Trial Status Widget */}
         {user?.registrationStatus === 'trial_active' && user?.trialEndDate && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
-            <div className="flex items-start justify-between">
-              <div className="flex items-start">
-                <CheckCircle className="w-6 h-6 text-blue-500 mr-3 flex-shrink-0 mt-1" />
-                <div>
-                  <h2 className="text-lg font-semibold text-blue-800 mb-2">Kostenloser Probemonat aktiv</h2>
-                  <p className="text-blue-700 mb-2">
-                    Ihr kostenloser Probemonat läuft bis zum{' '}
-                    <strong>
-                      {new Date(user.trialEndDate).toLocaleDateString('de-DE', {
-                        day: '2-digit',
-                        month: '2-digit',
-                        year: 'numeric'
-                      })}
-                    </strong>
-                  </p>
-                  <p className="text-sm text-blue-600">
-                    Nutzen Sie diese Zeit, um Ihr Profil zu vervollständigen und erste Produkte anzulegen.
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => setShowCancellationModal(true)}
-                className="px-4 py-2 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
-              >
-                Kündigen
-              </button>
-            </div>
-          </div>
+          <TrialStatusWidget showActions={true} />
         )}
         
         {/* Trial Expired Banner */}
@@ -246,38 +260,57 @@ const VendorDashboardPage: React.FC = () => {
           </div>
         )}
         
-        {/* Status-Karte für ausstehende Buchung */}
-        {user?.hasPendingBooking && (
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-6 mb-8">
-            <div className="flex items-start">
-              <AlertTriangle className="w-6 h-6 text-amber-500 mr-3 flex-shrink-0 mt-1" />
-              <div>
-                <h2 className="text-lg font-semibold text-amber-800 mb-2">Buchungsanfrage in Bearbeitung</h2>
-                <p className="text-amber-700 mb-4">
-                  Ihre Buchungsanfrage wird aktuell bearbeitet. Wir setzen uns in Kürze mit Ihnen in Verbindung, 
-                  um die Details zu besprechen und den Mietvertrag zu finalisieren.
-                </p>
-                <div className="text-sm text-amber-600">
-                  <p>Bei Fragen kontaktieren Sie uns gerne:</p>
-                  <p className="mt-1">
-                    <a href="tel:+4915735711257" className="text-primary hover:underline">
-                      0157 35711257
-                    </a>
-                    {' '}oder{' '}
-                    <a href="mailto:info@housnkuh.de" className="text-primary hover:underline">
-                      info@housnkuh.de
-                    </a>
-                  </p>
-                </div>
-              </div>
-            </div>
+        {/* Trial Status Dashboard */}
+        {user?.registrationStatus === 'trial_active' && (
+          <TrialStatusDashboard />
+        )}
+        
+        {/* Dynamic Dashboard Messages */}
+        {messages.length > 0 && (
+          <div className="space-y-4 mb-8">
+            {messages.map(message => (
+              <DashboardMessage 
+                key={message.id}
+                message={message}
+                onDismiss={message.dismissible ? () => dismissMessage(message.id) : undefined}
+              />
+            ))}
           </div>
         )}
         
         {/* Hauptbereich mit Dashboard-Karten */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+          {/* Trial Status - Compact Card */}
+          {user?.registrationStatus === 'trial_active' && user?.trialEndDate && (
+            <div className="bg-white rounded-lg shadow-md overflow-hidden">
+              <div className="bg-blue-50 p-4 border-b border-blue-100">
+                <div className="flex items-center">
+                  <CheckCircle className="w-6 h-6 text-blue-600 mr-2" />
+                  <h2 className="text-lg font-semibold text-secondary">Testperiode Status</h2>
+                </div>
+              </div>
+              <div className="p-4">
+                <TrialStatusWidget compact={true} showActions={false} />
+                <div className="mt-4 flex gap-2">
+                  <Link
+                    to="/vendor/upgrade"
+                    className="flex-1 text-center px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                  >
+                    Upgraden
+                  </Link>
+                  <button
+                    onClick={() => setShowCancellationModal(true)}
+                    className="px-3 py-2 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+                  >
+                    Kündigen
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+          
           {/* Buchungen */}
-          <div className="bg-white rounded-lg shadow-md overflow-hidden">
+          <Link to="/vendor/meine-buchungen" className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
             <div className="bg-blue-50 p-4 border-b border-blue-100">
               <div className="flex items-center">
                 <Package className="w-6 h-6 text-blue-600 mr-2" />
@@ -288,24 +321,17 @@ const VendorDashboardPage: React.FC = () => {
               {user?.hasPendingBooking ? (
                 <div className="text-gray-600">
                   <p>Sie haben eine ausstehende Buchungsanfrage.</p>
-                  <p className="mt-2">Sobald diese bestätigt wurde, werden hier Ihre aktiven Buchungen angezeigt.</p>
+                  <p className="mt-2 text-blue-600 font-medium">→ Alle Buchungen anzeigen</p>
                 </div>
               ) : (
                 <div className="text-gray-600">
                   <p>Sie haben derzeit keine aktiven Buchungen.</p>
-                  <p className="mt-2">Buchen Sie Verkaufsflächen über unsere Preisseite.</p>
-                  <div className="mt-4">
-                    <a 
-                      href="/pricing" 
-                      className="inline-block px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
-                    >
-                      Flächen buchen
-                    </a>
-                  </div>
+                  <p className="mt-2 text-blue-600 font-medium">→ Buchungen verwalten</p>
                 </div>
               )}
             </div>
-          </div>
+          </Link>
+
           
           {/* Kalender */}
           <div className="bg-white rounded-lg shadow-md overflow-hidden">
@@ -368,21 +394,26 @@ const VendorDashboardPage: React.FC = () => {
             </div>
           </div>
           
-          {/* Berichte einsehen */}
-          <div className="bg-white rounded-lg shadow-md overflow-hidden">
-            <div className="bg-purple-50 p-4 border-b border-purple-100">
-              <div className="flex items-center">
-                <BarChart3 className="w-6 h-6 text-purple-600 mr-2" />
-                <h2 className="text-lg font-semibold text-secondary">Berichte einsehen</h2>
+          {/* Package Tracking Widget - nur wenn Zusatzleistungen vorhanden */}
+          {hasZusatzleistungen ? (
+            <PackageTrackingWidget />
+          ) : (
+            /* Berichte einsehen */
+            <div className="bg-white rounded-lg shadow-md overflow-hidden">
+              <div className="bg-purple-50 p-4 border-b border-purple-100">
+                <div className="flex items-center">
+                  <BarChart3 className="w-6 h-6 text-purple-600 mr-2" />
+                  <h2 className="text-lg font-semibold text-secondary">Berichte einsehen</h2>
+                </div>
+              </div>
+              <div className="p-6">
+                <p className="text-gray-600 mb-4">Analysieren Sie Ihre Verkaufszahlen und Performance-Daten.</p>
+                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                  <p className="text-sm text-gray-500 italic">Kommende Funktion: Detaillierte Verkaufsberichte, Statistiken und Analysen Ihrer Geschäftstätigkeit.</p>
+                </div>
               </div>
             </div>
-            <div className="p-6">
-              <p className="text-gray-600 mb-4">Analysieren Sie Ihre Verkaufszahlen und Performance-Daten.</p>
-              <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                <p className="text-sm text-gray-500 italic">Kommende Funktion: Detaillierte Verkaufsberichte, Statistiken und Analysen Ihrer Geschäftstätigkeit.</p>
-              </div>
-            </div>
-          </div>
+          )}
           
           {/* Ausgangsrechnungen (Endkunde) */}
           <div className="bg-white rounded-lg shadow-md overflow-hidden">
@@ -422,11 +453,11 @@ const VendorDashboardPage: React.FC = () => {
           <h2 className="text-lg font-semibold text-secondary mb-4">Nächste Schritte</h2>
           <div className="prose prose-sm max-w-none text-gray-700">
             <p>
-              Willkommen in Ihrem persönlichen Vendor-Dashboard! Hier verwalten Sie in Zukunft Ihre Verkaufsflächen,
-              Produkte und mehr. Wir arbeiten kontinuierlich daran, Ihnen weitere nützliche Funktionen bereitzustellen.
+              Willkommen in deinem persönlichen Vendor-Dashboard! Hier verwaltest du in Zukunft deine Verkaufsflächen,
+              Produkte und mehr. Wir arbeiten kontinuierlich daran, dir weitere nützliche Funktionen bereitzustellen.
             </p>
             <p className="mt-2">
-              Bei Fragen oder Anregungen kontaktieren Sie uns gerne unter{' '}
+              Bei Fragen oder Anregungen kontaktiere uns gerne unter{' '}
               <a href="mailto:info@housnkuh.de" className="text-primary hover:underline">
                 info@housnkuh.de
               </a>.
@@ -488,7 +519,7 @@ const VendorDashboardPage: React.FC = () => {
                     if (response.data.success) {
                       alert('Ihre Kündigung wurde erfolgreich bearbeitet.');
                       // Logout after successful cancellation
-                      window.location.href = '/vendor/login';
+                      navigationHelper.goToVendorLogin();
                     }
                   } catch (error) {
                     console.error('Cancellation error:', error);
@@ -506,7 +537,8 @@ const VendorDashboardPage: React.FC = () => {
           </div>
         </div>
       )}
-    </VendorLayout>
+      </VendorLayout>
+    </TrialAccessGuard>
   );
 };
 

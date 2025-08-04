@@ -41,7 +41,7 @@ const LoginPage: React.FC = () => {
         setError('Ungültiger Benutzername oder Passwort');
       }
     } catch (err) {
-      setError('Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.');
+      setError('Ein Fehler ist aufgetreten. Bitte versuche es erneut.');
       console.error('Login error:', err);
     } finally {
       setIsLoading(false);

@@ -68,11 +68,11 @@ const ContestBanner: React.FC = () => {
         
         <div className="flex items-center gap-3 mb-4">
           <Award className="text-primary w-8 h-8 flex-shrink-0 animate-pulse" />
-          <h3 className="text-xl font-bold">Erraten Sie unsere Direktvermarkter!</h3>
+          <h3 className="text-xl font-bold">Errate unsere Direktvermarkter!</h3>
         </div>
         
         <p className="mb-4 text-white/90">
-          Nehmen Sie am Wettbewerb teil und gewinnen Sie einen 50€-Gutschein! Welche drei lokalen Produzenten werden bei der Eröffnung dabei sein?
+          Nimm am Wettbewerb teil und gewinne einen 50€-Gutschein! Welche drei lokalen Produzenten werden bei der Eröffnung dabei sein?
         </p>
         
         <button 

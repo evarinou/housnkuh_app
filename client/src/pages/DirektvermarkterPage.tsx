@@ -66,7 +66,7 @@ const DirektvermarkterPage: React.FC = () => {
               transition={{ duration: 0.8 }}
               className="text-4xl md:text-5xl font-bold mb-6"
             >
-              Entdecken Sie unsere<br />
+              Entdecke unsere<br />
               <span className="text-primary-200">Direktvermarkter</span>
             </motion.h1>
             <motion.p 
@@ -97,7 +97,7 @@ const DirektvermarkterPage: React.FC = () => {
                   <h3 className="text-2xl font-bold">Übersicht aller Direktvermarkter</h3>
                 </div>
                 <p className="text-white/90 mb-6 leading-relaxed">
-                  Durchsuchen Sie alle registrierten Direktvermarkter, filtern Sie nach Produkten und finden Sie genau das, was Sie suchen.
+                  Durchsuche alle registrierten Direktvermarkter, filtere nach Produkten und finde genau das, was du suchst.
                 </p>
                 <div className="flex items-center text-white group-hover:translate-x-2 transition-transform duration-300">
                   <span className="font-semibold mr-2">Zur Übersicht</span>
@@ -122,7 +122,7 @@ const DirektvermarkterPage: React.FC = () => {
                   <h3 className="text-2xl font-bold">Standorte auf der Karte</h3>
                 </div>
                 <p className="text-white/90 mb-6 leading-relaxed">
-                  Entdecken Sie alle Direktvermarkter-Standorte auf einer interaktiven Karte und finden Sie die nächstgelegenen Anbieter.
+                  Entdecke alle Direktvermarkter-Standorte auf einer interaktiven Karte und finde die nächstgelegenen Anbieter.
                 </p>
                 <div className="flex items-center text-white group-hover:translate-x-2 transition-transform duration-300">
                   <span className="font-semibold mr-2">Zur Karte</span>
@@ -142,7 +142,7 @@ const DirektvermarkterPage: React.FC = () => {
               Warum housnkuh Direktvermarkter?
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Erleben Sie die Vorteile regionaler Direktvermarktung und unterstützen Sie lokale Erzeuger
+              Erlebe die Vorteile regionaler Direktvermarktung und unterstütze lokale Erzeuger
             </p>
           </div>
 
@@ -156,13 +156,13 @@ const DirektvermarkterPage: React.FC = () => {
             <FeatureCard 
               icon={Users}
               title="Persönlicher Kontakt"
-              description="Lernen Sie die Menschen hinter den Produkten kennen und erfahren Sie mehr über Herkunft und Herstellung."
+              description="Lerne die Menschen hinter den Produkten kennen und erfahre mehr über Herkunft und Herstellung."
               delay={1}
             />
             <FeatureCard 
               icon={Star}
               title="Regionale Vielfalt"
-              description="Entdecken Sie die kulinarische Vielfalt Ihrer Region und unterstützen Sie lokale Betriebe."
+              description="Entdecke die kulinarische Vielfalt deiner Region und unterstütze lokale Betriebe."
               delay={2}
             />
           </div>
@@ -173,11 +173,11 @@ const DirektvermarkterPage: React.FC = () => {
       <section className="py-20 bg-gradient-to-r from-secondary/10 to-primary/10">
         <div className="max-w-4xl mx-auto px-6 text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-secondary mb-6">
-            Sind Sie Direktvermarkter?
+            Bist du Direktvermarkter?
           </h2>
           <p className="text-xl text-gray-600 mb-10 max-w-3xl mx-auto leading-relaxed">
-            Möchten Sie Ihre Produkte bei housnkuh anbieten? Registrieren Sie sich als Direktvermarkter 
-            und profitieren Sie von unserer innovativen Plattform für regionale Vermarktung.
+            Möchtest du deine Produkte bei housnkuh anbieten? Registriere dich als Direktvermarkter 
+            und profitiere von unserer innovativen Plattform für regionale Vermarktung.
           </p>
           
           <div className="flex flex-col sm:flex-row justify-center gap-6">

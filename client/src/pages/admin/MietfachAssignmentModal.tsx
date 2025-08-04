@@ -1,6 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { X, Package, MapPin, Square } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { X, Package, MapPin, Square, Calendar } from 'lucide-react';
 import axios from 'axios';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+import { format, addMonths } from 'date-fns';
+import { de } from 'date-fns/locale';
 
 interface Mietfach {
   _id: string;
@@ -21,10 +25,19 @@ interface MietfachAssignment {
   priceChangeReason?: string;
 }
 
+interface MietfachWithAvailability extends Mietfach {
+  available: boolean;
+  conflicts?: any[];
+  nextAvailable?: Date | null;
+}
+
 interface MietfachAssignmentModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (assignments: MietfachAssignment[]) => void;
+  onConfirm: (assignments: MietfachAssignment[], scheduledStartDate: Date, additionalData?: {
+    zusatzleistungen?: any;
+    totalPrice?: number;
+  }) => void;
   user: {
     _id: string;
     kontakt: {
@@ -50,6 +63,9 @@ const MietfachAssignmentModal: React.FC<MietfachAssignmentModalProps> = ({
   const [loading, setLoading] = useState(true);
   const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState('');
+  const [scheduledStartDate, setScheduledStartDate] = useState<Date>(new Date());
+  const [loadingAvailability, setLoadingAvailability] = useState(false);
+  const [filteredMietfaecher, setFilteredMietfaecher] = useState<MietfachWithAvailability[]>([]);
 
   useEffect(() => {
     if (isOpen) {
@@ -58,9 +74,98 @@ const MietfachAssignmentModal: React.FC<MietfachAssignmentModalProps> = ({
       setSelectedMietfaecher([]);
       setPriceAdjustments({});
       setConfirming(false);
+      setScheduledStartDate(new Date());
       fetchAvailableMietfaecher();
     }
   }, [isOpen]);
+
+  const getRequestedMietfachTypes = useCallback(() => {
+    const types: string[] = [];
+    const packageData = user.pendingBooking?.packageData;
+    
+    console.log('🔍 Debug: packageData.packageCounts:', packageData?.packageCounts);
+    
+    if (packageData?.packageCounts) {
+      Object.entries(packageData.packageCounts).forEach(([packageId, count]) => {
+        console.log(`🔍 Debug: Processing packageId: "${packageId}", count: ${count}`);
+        
+        if (Number(count) > 0) {
+          // Map package IDs to Mietfach types - mehr Varianten abdecken
+          const lowerPackageId = packageId.toLowerCase();
+          
+          if (lowerPackageId.includes('kühl') || lowerPackageId.includes('kuehl') || lowerPackageId.includes('cold')) {
+            types.push('kuehlregal');
+            console.log('✅ Added: kuehlregal');
+          }
+          if (lowerPackageId.includes('gefrier') || lowerPackageId.includes('tiefkühl') || lowerPackageId.includes('tiefkuehl') || lowerPackageId.includes('frozen')) {
+            types.push('gefrierregal');
+            console.log('✅ Added: gefrierregal');
+          }
+          if (lowerPackageId.includes('regal') && !lowerPackageId.includes('kühl') && !lowerPackageId.includes('gefrier')) {
+            types.push('regal');
+            console.log('✅ Added: regal');
+          }
+          if (lowerPackageId.includes('lager') || lowerPackageId.includes('storage')) {
+            types.push('lagerraum');
+            console.log('✅ Added: lagerraum');
+          }
+        }
+      });
+    }
+    
+    console.log('🔍 Debug: Final requested types:', types);
+    return types.length > 0 ? types : ['all'];
+  }, [user.pendingBooking?.packageData]);
+
+  const checkAvailabilityForDate = useCallback(async () => {
+    if (!user.pendingBooking?.packageData) return;
+    
+    setLoadingAvailability(true);
+    try {
+      const token = localStorage.getItem('adminToken');
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+      const duration = user.pendingBooking.packageData.rentalDuration || 1;
+      const requestedTypes = getRequestedMietfachTypes();
+      
+      console.log('🔍 Debug: Making availability request with:', {
+        startDate: scheduledStartDate,
+        duration,
+        requestedTypes
+      });
+      
+      const response = await axios.post(
+        `${apiUrl}/admin/check-mietfach-availability`,
+        {
+          startDate: scheduledStartDate,
+          duration: duration,
+          requestedTypes: requestedTypes
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+      
+      console.log('🔍 Debug: Availability response:', response.data);
+      
+      if (response.data.success) {
+        console.log('🔍 Debug: Setting filtered mietfaecher:', response.data.mietfaecher);
+        setFilteredMietfaecher(response.data.mietfaecher);
+      }
+    } catch (err) {
+      console.error('Error checking availability:', err);
+      // Fallback to showing all mietfaecher without availability info
+      console.log('🔍 Debug: Falling back to all available mietfaecher:', availableMietfaecher);
+      setFilteredMietfaecher(availableMietfaecher.map(mf => ({ ...mf, available: true })));
+    } finally {
+      setLoadingAvailability(false);
+    }
+  }, [scheduledStartDate, user.pendingBooking?.packageData, availableMietfaecher, getRequestedMietfachTypes]);
+
+  useEffect(() => {
+    if (availableMietfaecher.length > 0 && user.pendingBooking?.packageData) {
+      checkAvailabilityForDate();
+    }
+  }, [checkAvailabilityForDate, availableMietfaecher, user.pendingBooking?.packageData]);
 
   const fetchAvailableMietfaecher = async () => {
     try {
@@ -81,6 +186,24 @@ const MietfachAssignmentModal: React.FC<MietfachAssignmentModalProps> = ({
     } finally {
       setLoading(false);
     }
+  };
+
+  // Helper function to display user-friendly type names
+  const getDisplayTypeName = (typ: string): string => {
+    const typeMap: Record<string, string> = {
+      'kuehlregal': 'Kühlregal',
+      'gefrierregal': 'Gefrierregal',
+      'regal': 'Regal',
+      'regal-b': 'Regal Typ B',
+      'verkaufstisch': 'Verkaufstisch',
+      'schaufenster': 'Schaufenster',
+      'lagerraum': 'Lagerraum',
+      'sonstiges': 'Sonstiges',
+      'Standard': 'Standard',
+      'Premium': 'Premium'
+    };
+    
+    return typeMap[typ] || typ;
   };
 
   const toggleMietfach = (mietfachId: string) => {
@@ -106,6 +229,33 @@ const MietfachAssignmentModal: React.FC<MietfachAssignmentModalProps> = ({
       ...prev,
       [mietfachId]: newPrice
     }));
+  };
+
+  // Calculate total price including Zusatzleistungen
+  const calculateTotalPriceWithZusatzleistungen = () => {
+    let total = 0;
+    
+    // Basis-Mietfachpreise
+    selectedMietfaecher.forEach(mietfachId => {
+      total += priceAdjustments[mietfachId] || 0;
+    });
+    
+    // Zusatzleistungen hinzufügen (nur bei Premium-Modell)
+    const zusatzleistungen = user.pendingBooking?.packageData?.zusatzleistungen;
+    const provisionType = user.pendingBooking?.packageData?.selectedProvisionType;
+    
+    if (zusatzleistungen && provisionType === 'premium') {
+      if (zusatzleistungen.lagerservice) total += 20;
+      if (zusatzleistungen.versandservice) total += 5;
+    }
+    
+    // Rabatt anwenden (falls vorhanden)
+    const discount = user.pendingBooking?.packageData?.discount || 0;
+    if (discount > 0) {
+      total = total * (1 - discount);
+    }
+    
+    return Math.round(total * 100) / 100; // Auf 2 Dezimalstellen runden
   };
 
   const handleConfirm = async () => {
@@ -145,7 +295,15 @@ const MietfachAssignmentModal: React.FC<MietfachAssignmentModalProps> = ({
         };
       });
 
-      await onConfirm(assignments);
+      // Calculate total price and prepare additional data
+      const totalPrice = calculateTotalPriceWithZusatzleistungen();
+      const additionalData = {
+        zusatzleistungen: user.pendingBooking?.packageData?.zusatzleistungen,
+        totalPrice
+      };
+
+      await onConfirm(assignments, scheduledStartDate, additionalData);
+      setConfirming(false); // Reset spinner on success too
     } catch (error) {
       console.error('Error in modal confirmation:', error);
       setError('Fehler beim Bestätigen der Buchung. Bitte versuchen Sie es erneut.');
@@ -172,6 +330,38 @@ const MietfachAssignmentModal: React.FC<MietfachAssignmentModalProps> = ({
           >
             <X className="w-6 h-6" />
           </button>
+        </div>
+
+        {/* Date Selection Section */}
+        <div className="p-6 bg-blue-50 border-b">
+          <h3 className="text-lg font-semibold mb-3 flex items-center">
+            <Calendar className="w-5 h-5 mr-2 text-blue-600" />
+            Startdatum festlegen
+          </h3>
+          <div className="flex items-center gap-4">
+            <div className="flex-1">
+              <DatePicker
+                selected={scheduledStartDate}
+                onChange={(date: Date | null) => date && setScheduledStartDate(date)}
+                minDate={new Date()}
+                dateFormat="dd.MM.yyyy"
+                locale={de}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholderText="Startdatum wählen"
+              />
+            </div>
+            <div className="text-sm text-gray-600">
+              <span className="font-medium">Laufzeit:</span> {user.pendingBooking?.packageData?.rentalDuration || 1} Monate
+              <br />
+              <span className="font-medium">Enddatum:</span> {format(addMonths(scheduledStartDate, user.pendingBooking?.packageData?.rentalDuration || 1), 'dd.MM.yyyy', { locale: de })}
+            </div>
+          </div>
+          {loadingAvailability && (
+            <div className="mt-3 text-sm text-blue-600 flex items-center">
+              <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mr-2"></div>
+              Verfügbarkeit wird geprüft...
+            </div>
+          )}
         </div>
 
         {/* Vendor Comments - Show prominently at top */}
@@ -255,6 +445,45 @@ const MietfachAssignmentModal: React.FC<MietfachAssignmentModalProps> = ({
               </div>
             )}
 
+            {/* Zusatzleistungen */}
+            {user.pendingBooking.packageData.zusatzleistungen && 
+             user.pendingBooking.packageData.selectedProvisionType === 'premium' && 
+             (user.pendingBooking.packageData.zusatzleistungen.lagerservice || user.pendingBooking.packageData.zusatzleistungen.versandservice) && (
+              <div className="mb-4 p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border-2 border-green-200">
+                <h4 className="font-semibold text-gray-800 mb-3 flex items-center">
+                  <Package className="w-5 h-5 mr-2 text-green-600" />
+                  Gebuchte Zusatzleistungen
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {user.pendingBooking.packageData.zusatzleistungen.lagerservice && (
+                    <div className="bg-white p-3 rounded-lg border-2 border-green-200 shadow-sm">
+                      <div className="flex items-center">
+                        <span className="text-2xl mr-3">📦</span>
+                        <div>
+                          <div className="font-medium text-green-800">Lagerservice</div>
+                          <div className="text-sm text-green-600 font-semibold">+20€/Monat</div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  {user.pendingBooking.packageData.zusatzleistungen.versandservice && (
+                    <div className="bg-white p-3 rounded-lg border-2 border-blue-200 shadow-sm">
+                      <div className="flex items-center">
+                        <span className="text-2xl mr-3">🚚</span>
+                        <div>
+                          <div className="font-medium text-blue-800">Versandservice</div>
+                          <div className="text-sm text-blue-600 font-semibold">+5€/Monat</div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <div className="mt-3 text-xs text-gray-600 bg-white p-2 rounded border">
+                  <strong>Hinweis:</strong> Zusatzleistungen werden zu den Mietfachkosten hinzugerechnet.
+                </div>
+              </div>
+            )}
+
             {/* Provision Details */}
             <div className="bg-amber-50 p-3 rounded border-l-4 border-amber-400">
               <div className="text-sm">
@@ -293,27 +522,44 @@ const MietfachAssignmentModal: React.FC<MietfachAssignmentModalProps> = ({
           ) : (
             <>
               <div className="mb-4">
-                <h3 className="text-lg font-semibold">Verfügbare Mietfächer ({availableMietfaecher.length})</h3>
+                <h3 className="text-lg font-semibold">Verfügbare Mietfächer</h3>
                 <p className="text-gray-600">Wählen Sie die Mietfächer aus, die Sie diesem Vendor zuweisen möchten.</p>
+                {filteredMietfaecher.length > 0 && (
+                  <div className="mt-2 flex gap-4 text-sm">
+                    <span className="flex items-center">
+                      <div className="w-3 h-3 bg-green-500 rounded-full mr-1"></div>
+                      Verfügbar: {filteredMietfaecher.filter(m => m.available).length}
+                    </span>
+                    <span className="flex items-center">
+                      <div className="w-3 h-3 bg-red-500 rounded-full mr-1"></div>
+                      Belegt: {filteredMietfaecher.filter(m => !m.available).length}
+                    </span>
+                  </div>
+                )}
               </div>
 
-              {availableMietfaecher.length === 0 ? (
+              {(filteredMietfaecher.length === 0 && !loadingAvailability) ? (
                 <div className="text-center py-8">
                   <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                   <p className="text-gray-500">Keine verfügbaren Mietfächer vorhanden</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {availableMietfaecher.map((mietfach) => (
-                    <div
-                      key={mietfach._id}
-                      onClick={() => toggleMietfach(mietfach._id)}
-                      className={`border rounded-lg p-4 cursor-pointer transition-all ${
-                        selectedMietfaecher.includes(mietfach._id)
-                          ? 'border-blue-500 bg-blue-50'
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                    >
+                <div className="space-y-6">
+                  {/* Available Mietfächer */}
+                  {filteredMietfaecher.filter(m => m.available).length > 0 && (
+                    <div>
+                      <h4 className="font-semibold text-green-700 mb-3">Verfügbar ab {format(scheduledStartDate, 'dd.MM.yyyy', { locale: de })}</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {filteredMietfaecher.filter(m => m.available).map((mietfach) => (
+                          <div
+                            key={mietfach._id}
+                            onClick={() => toggleMietfach(mietfach._id)}
+                            className={`border rounded-lg p-4 cursor-pointer transition-all ${
+                              selectedMietfaecher.includes(mietfach._id)
+                                ? 'border-blue-500 bg-blue-50'
+                                : 'border-gray-200 hover:border-gray-300'
+                            }`}
+                          >
                       <div className="flex items-start justify-between mb-2">
                         <h4 className="font-semibold text-gray-900">{mietfach.bezeichnung}</h4>
                         <input
@@ -327,7 +573,7 @@ const MietfachAssignmentModal: React.FC<MietfachAssignmentModalProps> = ({
                       <div className="space-y-2 text-sm">
                         <div className="flex items-center text-gray-600">
                           <Package className="w-4 h-4 mr-2" />
-                          <span>{mietfach.typ}</span>
+                          <span>{getDisplayTypeName(mietfach.typ)}</span>
                         </div>
                         
                         {mietfach.standort && (
@@ -384,8 +630,54 @@ const MietfachAssignmentModal: React.FC<MietfachAssignmentModalProps> = ({
                           </div>
                         )}
                       </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  ))}
+                  )}
+                  
+                  {/* Unavailable Mietfächer */}
+                  {filteredMietfaecher.filter(m => !m.available).length > 0 && (
+                    <div>
+                      <h4 className="font-semibold text-red-700 mb-3">Nicht verfügbar für den gewählten Zeitraum</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {filteredMietfaecher.filter(m => !m.available).map((mietfach) => (
+                          <div
+                            key={mietfach._id}
+                            className="border rounded-lg p-4 opacity-60 cursor-not-allowed border-gray-200 bg-gray-50"
+                          >
+                            <div className="flex items-start justify-between mb-2">
+                              <h4 className="font-semibold text-gray-500">{mietfach.bezeichnung}</h4>
+                              <div className="w-4 h-4 bg-red-500 rounded-full"></div>
+                            </div>
+                            
+                            <div className="space-y-2 text-sm">
+                              <div className="flex items-center text-gray-500">
+                                <Package className="w-4 h-4 mr-2" />
+                                <span>{getDisplayTypeName(mietfach.typ)}</span>
+                              </div>
+                              
+                              {mietfach.standort && (
+                                <div className="flex items-center text-gray-500">
+                                  <MapPin className="w-4 h-4 mr-2" />
+                                  <span>{mietfach.standort}</span>
+                                </div>
+                              )}
+                              
+                              <div className="mt-2 p-2 bg-red-50 rounded text-xs text-red-700">
+                                Bereits gebucht für diesen Zeitraum
+                                {mietfach.nextAvailable && (
+                                  <div className="mt-1">
+                                    Nächster freier Termin: {format(new Date(mietfach.nextAvailable), 'dd.MM.yyyy', { locale: de })}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </>
@@ -413,14 +705,114 @@ const MietfachAssignmentModal: React.FC<MietfachAssignmentModalProps> = ({
                   );
                 })}
                 <div className="border-t pt-2 mt-2">
-                  <div className="flex justify-between items-center font-semibold">
-                    <span>Gesamt:</span>
-                    <span className="text-lg">
-                      {selectedMietfaecher.reduce((total, mietfachId) => {
+                  {(() => {
+                    // Use the new price calculation service for consistency
+                    const mietfachPrices = selectedMietfaecher.map(mietfachId => {
+                      const mietfach = availableMietfaecher.find(m => m._id === mietfachId);
+                      return {
+                        id: mietfachId,
+                        name: mietfach?.bezeichnung || 'Mietfach',
+                        price: priceAdjustments[mietfachId] || 0
+                      };
+                    });
+
+                    const priceConfig = {
+                      mietfachPrices,
+                      zusatzleistungen: user.pendingBooking?.packageData?.zusatzleistungen,
+                      discount: user.pendingBooking?.packageData?.discount,
+                      provisionType: user.pendingBooking?.packageData?.selectedProvisionType || 'basic'
+                    };
+
+                    // Import price calculation service dynamically
+                    let priceBreakdown: any = null;
+                    try {
+                      // For now, use inline calculation for immediate display
+                      // TODO: Replace with service import after ensuring no circular dependencies
+                      const mietfachTotal = priceConfig.mietfachPrices.reduce((sum, item) => sum + item.price, 0);
+                      
+                      // Zusatzleistungen (nur bei Premium)
+                      let zusatzleistungenTotal = 0;
+                      if (priceConfig.zusatzleistungen && priceConfig.provisionType === 'premium') {
+                        if (priceConfig.zusatzleistungen.lagerservice) zusatzleistungenTotal += 20;
+                        if (priceConfig.zusatzleistungen.versandservice) zusatzleistungenTotal += 5;
+                      }
+                      
+                      const subtotal = mietfachTotal + zusatzleistungenTotal;
+                      const discount = priceConfig.discount || 0;
+                      const discountAmount = subtotal * discount;
+                      const finalTotal = subtotal - discountAmount;
+                      
+                      priceBreakdown = {
+                        mietfachTotal,
+                        zusatzleistungenTotal,
+                        subtotal,
+                        discountAmount,
+                        finalTotal
+                      };
+                    } catch (error) {
+                      console.error('Price calculation error:', error);
+                      // Fallback calculation
+                      const mietfachTotal = selectedMietfaecher.reduce((total, mietfachId) => {
                         return total + (priceAdjustments[mietfachId] || 0);
-                      }, 0).toFixed(2)}€/Monat
-                    </span>
-                  </div>
+                      }, 0);
+                      priceBreakdown = { mietfachTotal, zusatzleistungenTotal: 0, subtotal: mietfachTotal, discountAmount: 0, finalTotal: mietfachTotal };
+                    }
+                    
+                    return (
+                      <>
+                        {/* Mietfach-Preise */}
+                        <div className="flex justify-between items-center text-sm text-gray-600">
+                          <span>Mietfächer:</span>
+                          <span>{priceBreakdown.mietfachTotal.toFixed(2)}€/Monat</span>
+                        </div>
+                        
+                        {/* Zusatzleistungen */}
+                        {priceBreakdown.zusatzleistungenTotal > 0 && (
+                          <div className="space-y-1">
+                            {user.pendingBooking?.packageData?.zusatzleistungen?.lagerservice && (
+                              <div className="flex justify-between items-center text-sm text-green-600">
+                                <span>📦 Lagerservice:</span>
+                                <span>+20.00€/Monat</span>
+                              </div>
+                            )}
+                            {user.pendingBooking?.packageData?.zusatzleistungen?.versandservice && (
+                              <div className="flex justify-between items-center text-sm text-blue-600">
+                                <span>🚚 Versandservice:</span>
+                                <span>+5.00€/Monat</span>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        
+                        {/* Zwischensumme */}
+                        <div className="flex justify-between items-center text-sm text-gray-600 border-t pt-2 mt-2">
+                          <span>Zwischensumme:</span>
+                          <span>{priceBreakdown.subtotal.toFixed(2)}€/Monat</span>
+                        </div>
+                        
+                        {/* Rabatt */}
+                        {priceBreakdown.discountAmount > 0 ? (
+                          <div className="flex justify-between items-center text-sm text-red-600">
+                            <span>Rabatt (-{((user.pendingBooking?.packageData?.discount || 0) * 100).toFixed(0)}%):</span>
+                            <span>-{priceBreakdown.discountAmount.toFixed(2)}€/Monat</span>
+                          </div>
+                        ) : (
+                          <div className="flex justify-between items-center text-sm text-gray-500">
+                            <span>Rabatt:</span>
+                            <span>Keine (Laufzeit: {user.pendingBooking?.packageData?.rentalDuration || 0} Monate)</span>
+                          </div>
+                        )}
+                        
+                        {/* Gesamtsumme */}
+                        <div className="flex justify-between items-center font-semibold border-t pt-2 mt-2 text-lg">
+                          <span>Gesamt:</span>
+                          <span className="text-green-600">
+                            {priceBreakdown.finalTotal.toFixed(2)}€/Monat
+                          </span>
+                        </div>
+                      </>
+                    );
+                  })()}
                 </div>
               </div>
             </div>

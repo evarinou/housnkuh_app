@@ -99,7 +99,6 @@ const AGBPage: React.FC = () => {
                   <ul className="text-gray-700 space-y-1">
                     <li>• Lagerservice mit Warenauffüllung und MHD-Kontrolle</li>
                     <li>• Schaufensterplätze</li>
-                    <li>• Social Media Spotlight-Aktionen</li>
                     <li>• Weitere Leistungen gemäß aktueller Preisliste</li>
                   </ul>
                 </div>

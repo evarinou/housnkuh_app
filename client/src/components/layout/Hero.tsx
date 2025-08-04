@@ -58,7 +58,7 @@ const Hero: React.FC = () => {
               </div>
               
               <h1 className="text-3xl md:text-4xl font-bold text-secondary mb-4 leading-tight animate-slideDown drop-shadow-md text-center">
-                Ihr Marktplatz für lokale Produkte
+                Dein Marktplatz für lokale Produkte
               </h1>
               
               <p className="text-lg md:text-xl text-secondary font-semibold mb-4 animate-slideUp drop-shadow-sm text-center">
@@ -101,7 +101,7 @@ const Hero: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="text-lg font-bold text-secondary mb-1">Fast 24/7 Einkaufen</h3>
-                  <p className="text-secondary/90 text-sm">Einkaufen, wann immer Sie möchten – dank moderner Zutrittskontrolle</p>
+                  <p className="text-secondary/90 text-sm">Einkaufen, wann immer du möchtest – dank moderner Zutrittskontrolle</p>
                 </div>
               </div>
             </div>
