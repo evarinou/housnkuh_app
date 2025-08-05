@@ -69,68 +69,6 @@ interface VendorRegistrationModalProps {
   onSuccess: () => void;
 }
 
-// Memoized form input component to prevent unnecessary re-renders
-interface MemoizedFormInputProps {
-  type: string;
-  name: string;
-  value: string;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  placeholder: string;
-  className: string;
-  icon?: React.ReactNode;
-  required?: boolean;
-  autoComplete?: string;
-  id?: string;
-}
-
-const MemoizedFormInput = React.memo<MemoizedFormInputProps>(({ 
-  type, name, value, onChange, placeholder, className, icon, required, autoComplete, id 
-}) => (
-  <div className="relative">
-    {icon && (
-      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-        {icon}
-      </div>
-    )}
-    <input
-      type={type}
-      id={id}
-      name={name}
-      value={value}
-      onChange={onChange}
-      placeholder={placeholder}
-      className={className}
-      required={required}
-      autoComplete={autoComplete}
-    />
-  </div>
-));
-
-// Memoized checkbox component
-interface MemoizedCheckboxProps {
-  name: string;
-  checked: boolean;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  className: string;
-  children: React.ReactNode;
-  required?: boolean;
-}
-
-const MemoizedCheckbox = React.memo<MemoizedCheckboxProps>(({ 
-  name, checked, onChange, className, children, required 
-}) => (
-  <label className="flex items-start">
-    <input
-      type="checkbox"
-      name={name}
-      checked={checked}
-      onChange={onChange}
-      className={className}
-      required={required}
-    />
-    <span className="ml-2 text-sm text-gray-700">{children}</span>
-  </label>
-));
 
 interface FormData {
   // Login-Daten
