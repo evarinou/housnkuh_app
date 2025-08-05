@@ -1,26 +1,55 @@
+/**
+ * @file sanitization.ts
+ * @purpose Comprehensive input sanitization and validation utilities for XSS prevention and data security
+ * @created 2025-01-15
+ * @modified 2025-08-05
+ */
+
 import DOMPurify from 'dompurify';
 
-// DOMPurify configuration
+/**
+ * DOMPurify configuration for HTML sanitization
+ * @description Defines allowed tags, attributes, and security rules for HTML content
+ * @constant
+ */
 const purifyConfig = {
+  /** Safe HTML tags allowed in content */
   ALLOWED_TAGS: [
     'b', 'i', 'em', 'strong', 'u', 'br', 'p', 'div', 'span',
     'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
     'ul', 'ol', 'li',
     'a', 'img'
   ],
+  /** Safe HTML attributes allowed on elements */
   ALLOWED_ATTR: [
     'href', 'src', 'alt', 'title', 'class', 'id'
   ],
+  /** Regex pattern for allowed URI schemes */
   ALLOWED_URI_REGEXP: /^(?:(?:https?|ftp):\/\/|mailto:|tel:)/i,
+  /** Explicitly forbidden tags for security */
   FORBID_TAGS: ['script', 'iframe', 'object', 'embed', 'form', 'input'],
+  /** Explicitly forbidden attributes for security */
   FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover', 'onfocus', 'onblur'],
+  /** Keep text content when removing forbidden tags */
   KEEP_CONTENT: true,
+  /** Return string instead of DOM */
   RETURN_DOM: false,
+  /** Return string instead of DOM fragment */
   RETURN_DOM_FRAGMENT: false,
+  /** Don't use trusted types */
   RETURN_TRUSTED_TYPE: false
 };
 
-// Sanitize HTML content
+/**
+ * Sanitize HTML content to prevent XSS attacks
+ * 
+ * @description Multi-layer sanitization: pre-processing to remove dangerous patterns,
+ * then DOMPurify with strict configuration. Removes scripts, event handlers, and
+ * dangerous URI schemes while preserving safe HTML formatting.
+ * 
+ * @param {string} html - HTML content to sanitize
+ * @returns {string} Sanitized HTML safe for display
+ */
 export const sanitizeHtml = (html: string): string => {
   if (!html || typeof html !== 'string') {
     return '';
@@ -37,7 +66,15 @@ export const sanitizeHtml = (html: string): string => {
   return DOMPurify.sanitize(cleanedHtml, purifyConfig);
 };
 
-// Sanitize plain text (remove any HTML tags)
+/**
+ * Sanitize plain text by removing all HTML tags
+ * 
+ * @description Strips all HTML tags and attributes from input text.
+ * Used for user input that should be displayed as plain text only.
+ * 
+ * @param {string} text - Text content to sanitize
+ * @returns {string} Plain text with all HTML removed
+ */
 export const sanitizeText = (text: string): string => {
   if (!text || typeof text !== 'string') {
     return '';
@@ -46,7 +83,16 @@ export const sanitizeText = (text: string): string => {
   return DOMPurify.sanitize(text, { ALLOWED_TAGS: [], ALLOWED_ATTR: [] });
 };
 
-// Sanitize URL
+/**
+ * Sanitize URL to prevent malicious protocols
+ * 
+ * @description Removes dangerous protocols (javascript:, data:, vbscript:)
+ * and validates that URLs use safe protocols (http, https, mailto, tel).
+ * Also allows relative URLs starting with '/'.
+ * 
+ * @param {string} url - URL to sanitize
+ * @returns {string} Safe URL or empty string if invalid
+ */
 export const sanitizeUrl = (url: string): string => {
   if (!url || typeof url !== 'string') {
     return '';
@@ -63,7 +109,16 @@ export const sanitizeUrl = (url: string): string => {
   return cleanUrl;
 };
 
-// Sanitize object for API requests
+/**
+ * Recursively sanitize object properties for API requests
+ * 
+ * @description Deep sanitization of objects and arrays. Sanitizes all string values
+ * using sanitizeText while preserving object structure. Handles nested objects
+ * and arrays recursively. Non-string values pass through unchanged.
+ * 
+ * @param {any} obj - Object to sanitize recursively
+ * @returns {any} Sanitized object with safe string values
+ */
 export const sanitizeObject = (obj: any): any => {
   if (!obj || typeof obj !== 'object') {
     return obj;

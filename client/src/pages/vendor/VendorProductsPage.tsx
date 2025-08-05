@@ -1,8 +1,25 @@
-// client/src/pages/vendor/VendorProductsPage.tsx
+/**
+ * @file VendorProductsPage.tsx
+ * @purpose Vendor product management page for managing product catalog, pricing, and inventory. Currently shows coming soon message as product management features are under development.
+ * @created 2025-01-15
+ * @modified 2025-08-05
+ */
 import React from 'react';
 import { ShoppingCart, Plus, Package, Tag } from 'lucide-react';
 import VendorLayout from '../../components/vendor/VendorLayout';
 
+/**
+ * VendorProductsPage - Product management page (Coming Soon)
+ * 
+ * This component serves as a placeholder for the upcoming product management functionality:
+ * - Displays coming soon message for product management features
+ * - Shows preview of planned features (product creation, categorization, inventory)
+ * - Provides contact information for vendor inquiries
+ * - Maintains consistent layout with vendor dashboard structure
+ * 
+ * @component
+ * @returns {JSX.Element} The product management coming soon page
+ */
 const VendorProductsPage: React.FC = () => {
   return (
     <VendorLayout>
@@ -71,8 +88,8 @@ const VendorProductsPage: React.FC = () => {
                 info@housnkuh.de
               </a>
               {' '}oder{' '}
-              <a href="tel:+4915735711257" className="text-emerald-600 hover:underline font-medium">
-                0157 35711257
+              <a href="tel:+4915222035788" className="text-emerald-600 hover:underline font-medium">
+                0152 22035788
               </a>
             </p>
           </div>

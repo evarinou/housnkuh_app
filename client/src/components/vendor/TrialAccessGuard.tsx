@@ -1,3 +1,10 @@
+/**
+ * @file TrialAccessGuard.tsx
+ * @purpose Critical trial access control component managing feature access based on trial status with modal integration
+ * @created 2025-01-15
+ * @modified 2025-08-05
+ */
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useVendorAuth } from '../../contexts/VendorAuthContext';
@@ -5,12 +12,55 @@ import { createNavigationHelper } from '../../utils/navigation';
 import { TrialExpirationModal } from './TrialExpirationModal';
 import { useTrialExpiration } from '../../hooks/useTrialExpiration';
 
+/**
+ * Props interface for the TrialAccessGuard component
+ * @interface TrialAccessGuardProps
+ * @property {React.ReactNode} children - Components to render when access is granted
+ * @property {boolean} requiresFullAccess - Whether this component requires full access (blocks expired trials)
+ * @property {React.ReactNode} fallbackComponent - Custom component to show when access is denied
+ */
 interface TrialAccessGuardProps {
   children: React.ReactNode;
   requiresFullAccess?: boolean;
   fallbackComponent?: React.ReactNode;
 }
 
+/**
+ * TrialAccessGuard component providing granular access control for trial users
+ * 
+ * @component
+ * @param {TrialAccessGuardProps} props - Component props
+ * @returns {JSX.Element} Children components with conditional access control
+ * 
+ * @description
+ * Critical component for trial access management. Controls feature availability
+ * based on trial status and expiration dates. Integrates with TrialExpirationModal
+ * for seamless user experience during trial transitions.
+ * 
+ * @example
+ * // Allow trial users with fallback for expired trials
+ * <TrialAccessGuard requiresFullAccess={true}>
+ *   <PremiumFeature />
+ * </TrialAccessGuard>
+ * 
+ * @example  
+ * // Always allow access but show expiration warnings
+ * <TrialAccessGuard>
+ *   <BasicFeature />
+ * </TrialAccessGuard>
+ * 
+ * @access_control
+ * - Non-trial users: Full access always granted
+ * - Active trial users: Access granted with modal warnings
+ * - Expired trial users: Conditional access based on requiresFullAccess
+ * 
+ * @business_logic
+ * - Integrates with useTrialExpiration hook for state management
+ * - Manages modal display timing and user interactions
+ * - Provides upgrade flow navigation
+ * 
+ * @complexity O(1) - Simple conditional rendering based on trial state
+ */
 export const TrialAccessGuard: React.FC<TrialAccessGuardProps> = ({
   children,
   requiresFullAccess = false,
@@ -21,12 +71,18 @@ export const TrialAccessGuard: React.FC<TrialAccessGuardProps> = ({
   const navigationHelper = createNavigationHelper(navigate);
   const { trialState, dismissModal, handleUpgrade, handleCancelTrial } = useTrialExpiration();
 
-  // If user is not on trial, allow full access
+  /**
+   * Grant full access to non-trial users
+   * Users with completed registrations or other statuses bypass trial restrictions
+   */
   if (!user || user.registrationStatus !== 'trial_active') {
     return <>{children}</>;
   }
 
-  // Show modal if needed
+  /**
+   * Conditional modal rendering based on trial expiration state
+   * Shows expiration warnings and upgrade prompts
+   */
   const modalComponent = trialState.shouldShowModal && (
     <TrialExpirationModal
       isOpen={true}
@@ -38,7 +94,10 @@ export const TrialAccessGuard: React.FC<TrialAccessGuardProps> = ({
     />
   );
 
-  // If trial is expired and component requires full access, show fallback
+  /**
+   * Block access for expired trials requiring full access
+   * Shows fallback component or default expired message
+   */
   if (trialState.isExpired && requiresFullAccess) {
     return (
       <>
@@ -48,7 +107,10 @@ export const TrialAccessGuard: React.FC<TrialAccessGuardProps> = ({
     );
   }
 
-  // Otherwise, show children with modal if needed
+  /**
+   * Allow access with modal overlay for trial warnings
+   * Standard behavior for most components
+   */
   return (
     <>
       {children}
@@ -57,6 +119,16 @@ export const TrialAccessGuard: React.FC<TrialAccessGuardProps> = ({
   );
 };
 
+/**
+ * Default fallback component for expired trial access
+ * 
+ * @component
+ * @returns {JSX.Element} Warning message with upgrade call-to-action
+ * 
+ * @description
+ * Displays when trial has expired and component requires full access.
+ * Provides clear messaging and direct navigation to upgrade flow.
+ */
 const TrialExpiredFallback: React.FC = () => {
   const navigate = useNavigate();
   const navigationHelper = createNavigationHelper(navigate);

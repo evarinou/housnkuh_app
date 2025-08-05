@@ -1,8 +1,22 @@
+/**
+ * @file UnauthorizedPage.tsx
+ * @purpose Displays access denied message for unauthorized admin area access attempts
+ * @created 2024-11-10
+ * @modified 2025-08-04
+ */
+
 // client/src/pages/admin/UnauthorizedPage.tsx
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Shield, Home } from 'lucide-react';
 
+/**
+ * Unauthorized access page component
+ * @description Simple error page shown when users attempt to access admin areas without proper permissions.
+ * Provides clear messaging and navigation back to safe areas.
+ * @returns {React.FC} Unauthorized access error page with navigation options
+ * @complexity Simple error page with clear messaging and navigation
+ */
 const UnauthorizedPage: React.FC = () => {
   return (
     <div className="flex flex-col items-center justify-center py-12">

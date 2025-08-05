@@ -1,4 +1,10 @@
-// client/src/pages/VendorConfirmPage.tsx
+/**
+ * @file VendorConfirmPage.tsx
+ * @purpose Vendor registration confirmation page displaying booking details and confirmation status
+ * @created 2024-01-01
+ * @modified 2025-08-05
+ */
+
 import React, { useEffect, useState } from 'react';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { AlertCircle, Loader, Package, User, CheckCircle, Percent, Check } from 'lucide-react';
@@ -8,11 +14,24 @@ import { PriceCalculationService } from '../services/priceCalculationService';
 import { Zusatzleistungen } from '../types';
 //import { useVendorAuth } from '../contexts/VendorAuthContext';
 
-// ZusatzleistungenSection Component
-const ZusatzleistungenSection: React.FC<{
+/**
+ * Props interface for ZusatzleistungenSection component
+ * @interface ZusatzleistungenSectionProps
+ * @property {Zusatzleistungen} [zusatzleistungen] - Additional services configuration
+ * @property {'basic' | 'premium'} provisionType - Type of commission model
+ */
+interface ZusatzleistungenSectionProps {
   zusatzleistungen?: Zusatzleistungen;
   provisionType: 'basic' | 'premium';
-}> = ({ zusatzleistungen, provisionType }) => {
+}
+
+/**
+ * Additional services section component for vendor confirmation
+ * @description Displays booked additional services with details and pricing
+ * @param {ZusatzleistungenSectionProps} props - Component props
+ * @returns {JSX.Element | null} Additional services section or null if not applicable
+ */
+const ZusatzleistungenSection: React.FC<ZusatzleistungenSectionProps> = ({ zusatzleistungen, provisionType }) => {
   if (!zusatzleistungen || provisionType !== 'premium') {
     return null;
   }
@@ -329,6 +348,11 @@ const MobileZusatzleistungenCard: React.FC<{
   );
 };
 
+/**
+ * Vendor confirmation page component
+ * @description Handles vendor email confirmation and displays booking details with success/error states
+ * @returns {JSX.Element} Complete vendor confirmation page with status handling
+ */
 const VendorConfirmPage: React.FC = () => {
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [message, setMessage] = useState<string>('');
@@ -528,7 +552,7 @@ const VendorConfirmPage: React.FC = () => {
           Haben Sie Fragen?
         </h3>
         <p className="text-gray-600">
-          Telefon: 0157 35711257<br/>
+          Telefon: 0152 22035788<br/>
           E-Mail: eva-maria.schaller@housnkuh.de
         </p>
       </div>

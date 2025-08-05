@@ -1,6 +1,23 @@
+/**
+ * @file ProvisionSelector.tsx
+ * @purpose Commission model selection component for vendor onboarding with detailed benefits and rate display
+ * @created 2025-01-15
+ * @modified 2025-08-05
+ * @complexity Medium - Business rules for commission models, visual selection interface
+ */
+
 import React from 'react';
 import { Check } from 'lucide-react';
 
+/**
+ * Provision type configuration for commission models
+ * @interface ProvisionType
+ * @param {string} id - Unique identifier for the provision type
+ * @param {string} name - Display name of the commission model
+ * @param {number} rate - Commission rate as percentage (0-100)
+ * @param {string} description - Detailed explanation of the commission model
+ * @param {string[]} benefits - List of benefits and features included
+ */
 interface ProvisionType {
   id: string;
   name: string;
@@ -9,12 +26,37 @@ interface ProvisionType {
   benefits: string[];
 }
 
+/**
+ * Props for ProvisionSelector component
+ * @interface ProvisionSelectorProps
+ * @param {ProvisionType[]} provisionTypes - Available commission models to choose from
+ * @param {string} selectedProvisionType - Currently selected provision type ID
+ * @param {function} onProvisionTypeChange - Callback when provision selection changes
+ */
 interface ProvisionSelectorProps {
   provisionTypes: ProvisionType[];
   selectedProvisionType: string;
   onProvisionTypeChange: (type: string) => void;
 }
 
+/**
+ * ProvisionSelector component for choosing commission models during vendor onboarding
+ * 
+ * Features:
+ * - Visual card-based selection interface
+ * - Commission rate display with percentage badges
+ * - Detailed benefit listings with checkmarks
+ * - Responsive grid layout (1 column mobile, 2 columns desktop)
+ * - Interactive hover and selection states
+ * 
+ * Business Logic:
+ * - Multiple commission tiers (Basic, Standard, Premium)
+ * - Different benefit packages per tier
+ * - Visual selection feedback with brand colors
+ * 
+ * @param {ProvisionSelectorProps} props - Component configuration and handlers
+ * @returns {JSX.Element} Commission model selector with visual cards
+ */
 const ProvisionSelector: React.FC<ProvisionSelectorProps> = ({
   provisionTypes,
   selectedProvisionType,

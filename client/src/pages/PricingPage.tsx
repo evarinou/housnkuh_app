@@ -1,7 +1,19 @@
+/**
+ * @file PricingPage.tsx
+ * @purpose Pricing information page displaying rental options and package builder for vendors
+ * @created 2024-01-01
+ * @modified 2025-08-05
+ */
+
 import React from 'react';
 import { Info } from 'lucide-react';
 import PackageBuilder from '../components/PackageBuilder';
 
+/**
+ * Pricing page component for vendor sales space rental
+ * @description Displays pricing options and interactive package builder for vendors to select rental packages
+ * @returns {JSX.Element} Complete pricing page with package builder
+ */
 const PricingPage: React.FC = () => {
   return (
     <div className="py-12 bg-gradient-to-b from-gray-50 to-white">
@@ -61,7 +73,7 @@ const PricingPage: React.FC = () => {
           <div className="mt-8 p-4 bg-gray-50 rounded-lg">
             <p className="text-center text-gray-600">
               Du hast noch Fragen? Kontaktiere uns gerne direkt unter <br />
-              <a href="tel:015735711257" className="text-[var(--primary)] font-medium">0157 35711257</a> oder 
+              <a href="tel:015222035788" className="text-[var(--primary)] font-medium">0152 22035788</a> oder 
               <a href="mailto:eva-maria.schaller@housnkuh.de" className="text-[var(--primary)] font-medium"> eva-maria.schaller@housnkuh.de</a>
             </p>
           </div>

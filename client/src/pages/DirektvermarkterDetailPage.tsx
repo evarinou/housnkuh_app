@@ -1,4 +1,10 @@
-// client/src/pages/DirektvermarkterDetailPage.tsx
+/**
+ * @file DirektvermarkterDetailPage.tsx
+ * @purpose Detailed profile page for individual direct marketers with comprehensive information
+ * @created 2024-01-01
+ * @modified 2025-08-05
+ */
+
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Phone, Mail, MapPin, ExternalLink, Calendar, Clock, Facebook, Instagram, ChevronLeft } from 'lucide-react';
@@ -6,7 +12,16 @@ import axios from 'axios';
 import { resolveImageUrl } from '../utils/imageUtils';
 import SimpleMapComponent from '../components/SimpleMapComponent';
 
-// Typen für die Daten
+/**
+ * Tag/category information for direct marketers
+ * @property {string} id - Unique identifier for the tag
+ * @property {string} name - Display name of the tag
+ * @property {string} slug - URL-friendly tag identifier
+ * @property {string} [description] - Optional detailed description
+ * @property {'product'|'certification'|'method'|'feature'} category - Tag category type
+ * @property {string} [color] - Optional color code for display
+ * @property {string} [icon] - Optional icon representation
+ */
 interface Tag {
   id: string;
   name: string;
@@ -17,6 +32,15 @@ interface Tag {
   icon?: string;
 }
 
+/**
+ * Rental compartment/Mietfach information
+ * @property {string} id - Unique identifier for the compartment
+ * @property {string} name - Display name of the compartment
+ * @property {string} beschreibung - Description of the compartment
+ * @property {number} preis - Monthly rental price
+ * @property {string} groesse - Size specification
+ * @property {string} standort - Location/site name
+ */
 interface Mietfach {
   id: string;
   name: string;
@@ -26,13 +50,31 @@ interface Mietfach {
   standort: string;
 }
 
+/**
+ * Complete direct marketer profile data
+ * @property {string} id - Unique identifier for the direct marketer
+ * @property {string} name - Contact person name
+ * @property {string} unternehmen - Company/business name
+ * @property {string} beschreibung - Business description
+ * @property {string} profilBild - Profile image URL
+ * @property {string} bannerBild - Banner image URL
+ * @property {string} telefon - Contact phone number
+ * @property {string} email - Contact email address
+ * @property {object} adresse - Complete address information with optional coordinates
+ * @property {object} oeffnungszeiten - Weekly opening hours
+ * @property {Tag[]} tags - Associated product/service tags
+ * @property {string} slogan - Business slogan or motto
+ * @property {string} website - Business website URL
+ * @property {object} socialMedia - Social media handles
+ * @property {Mietfach[]} mietfaecher - Rented compartments/locations
+ */
 interface Direktvermarkter {
   id: string;
   name: string;
   unternehmen: string;
   beschreibung: string;
   profilBild: string;
-  bannerBild: string; // Banner-Bild hinzugefügt
+  bannerBild: string;
   telefon: string;
   email: string;
   adresse: {
@@ -54,7 +96,7 @@ interface Direktvermarkter {
     samstag: string;
     sonntag: string;
   };
-  tags: Tag[]; // Tag-basiertes System
+  tags: Tag[];
   slogan: string;
   website: string;
   socialMedia: {
@@ -64,6 +106,11 @@ interface Direktvermarkter {
   mietfaecher: Mietfach[];
 }
 
+/**
+ * Direct marketer detail page component with comprehensive profile information
+ * @description Complete profile page displaying all information about a specific direct marketer including contact details, location map, opening hours, and product categories
+ * @returns {JSX.Element} Detailed profile page with interactive map, contact information, and business details
+ */
 const DirektvermarkterDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [direktvermarkter, setDirektvermarkter] = useState<Direktvermarkter | null>(null);

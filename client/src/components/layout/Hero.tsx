@@ -1,9 +1,35 @@
+/**
+ * @file Hero.tsx
+ * @purpose Hero section component for homepage with marketing content, CTAs, and glassmorphism design
+ * @created 2025-01-15
+ * @modified 2025-08-05
+ */
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Calendar, ArrowRight, MapPin, ShoppingBag, Clock } from 'lucide-react';
 import logo from '../../assets/images/logo.svg'; // Zurück zum ursprünglichen Logo
 import heroImage from "../../assets/images/Hero_Large.png"; // Dein Hero-Bild
 
+/**
+ * Hero section component for the homepage with full-screen background and marketing content
+ * 
+ * Features:
+ * - Full-viewport height hero section with background image
+ * - Glassmorphism design with backdrop blur effects
+ * - Interactive "What is housnkuh?" overlay with hover animations
+ * - Two-column layout with main content and feature highlights
+ * - Call-to-action buttons for key user journeys
+ * - Responsive design with mobile-optimized layouts
+ * - Opening date display with calendar icon
+ * 
+ * Design Elements:
+ * - Gradient overlay for text readability
+ * - Transform animations and hover effects
+ * - Feature cards with icons and descriptions
+ * - Glassmorphism styling throughout
+ * 
+ * @returns {JSX.Element} The complete hero section with all interactive elements
+ */
 const Hero: React.FC = () => {
   return (
     <section className="relative min-h-[100vh] flex items-end overflow-hidden">

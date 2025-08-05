@@ -1,6 +1,16 @@
+/**
+ * @file RevenueByUnitTable.tsx
+ * @purpose Advanced revenue table by Mietfach unit with sorting, pagination, and filtering capabilities
+ * @created 2025-01-15
+ * @modified 2025-08-05
+ */
 import React, { useState, useEffect, useCallback } from 'react';
 import './RevenueByUnitTable.css';
 
+/**
+ * Revenue data structure for individual Mietfach units
+ * @interface UnitRevenue
+ */
 interface UnitRevenue {
   mietfachId: string;
   mietfachNummer: string;
@@ -11,16 +21,28 @@ interface UnitRevenue {
   status: 'occupied' | 'available';
 }
 
+/**
+ * Date range structure for filtering revenue data
+ * @interface DateRange
+ */
 interface DateRange {
   startDate: Date;
   endDate: Date;
 }
 
+/**
+ * Props for the RevenueByUnitTable component
+ * @interface RevenueByUnitTableProps
+ */
 interface RevenueByUnitTableProps {
   dateRange: DateRange;
   onUnitClick: (mietfachId: string) => void;
 }
 
+/**
+ * Pagination configuration and controls
+ * @interface Pagination
+ */
 interface Pagination {
   currentPage: number;
   totalPages: number;
@@ -28,6 +50,26 @@ interface Pagination {
   onPageChange: (page: number) => void;
 }
 
+/**
+ * Pagination component with intelligent page range calculation and navigation controls
+ * 
+ * Features:
+ * - Smart visible page range with up to 5 pages displayed
+ * - Centering current page when possible
+ * - Previous/next navigation with disabled states
+ * - Total count display with German locale
+ * - FontAwesome chevron icons for navigation
+ * - Automatically hides when only 1 page exists
+ * 
+ * @param {Pagination} props - Pagination configuration
+ * @param {number} props.currentPage - Currently active page number (1-based)
+ * @param {number} props.totalPages - Total number of available pages
+ * @param {number} props.totalCount - Total number of items across all pages
+ * @param {(page: number) => void} props.onPageChange - Callback for page navigation
+ * @returns {JSX.Element|null} Pagination controls or null if single page
+ * 
+ * @complexity O(1) - Fixed range calculation regardless of total pages
+ */
 const PaginationComponent: React.FC<Pagination> = ({ currentPage, totalPages, totalCount, onPageChange }) => {
   const getVisiblePages = () => {
     const pages = [];
@@ -84,6 +126,32 @@ const PaginationComponent: React.FC<Pagination> = ({ currentPage, totalPages, to
   );
 };
 
+/**
+ * Advanced revenue table by Mietfach unit with comprehensive data management and analytics
+ * 
+ * Features:
+ * - Paginated table with 20 items per page and intelligent navigation
+ * - Multi-column sorting (Mietfach/Kategorie/Einnahmen/Verträge) with visual indicators
+ * - Real-time search filtering by Mietfach number and category
+ * - German currency formatting (EUR) using Intl.NumberFormat
+ * - Trial contract badges with visual identification
+ * - Status indicators (Belegt/Verfügbar) with color coding
+ * - Row-level click handling for detailed unit analysis
+ * - Summary footer with totals calculation
+ * - Empty state handling with helpful messaging
+ * - Loading states with spinner animation
+ * - Error handling with retry functionality
+ * - API integration with authentication headers
+ * - Responsive design with horizontal scrolling
+ * - Auto-reset pagination on date/filter changes
+ * 
+ * @param {RevenueByUnitTableProps} props - Component props
+ * @param {DateRange} props.dateRange - Date range for revenue data filtering
+ * @param {(mietfachId: string) => void} props.onUnitClick - Callback for unit row clicks
+ * @returns {JSX.Element} Revenue table with sorting, filtering, and pagination
+ * 
+ * @complexity O(n log n) - Sorting operations with pagination optimization
+ */
 export default function RevenueByUnitTable({ dateRange, onUnitClick }: RevenueByUnitTableProps) {
   const [data, setData] = useState<UnitRevenue[]>([]);
   const [loading, setLoading] = useState(true);

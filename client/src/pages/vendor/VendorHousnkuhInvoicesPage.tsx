@@ -1,8 +1,25 @@
-// client/src/pages/vendor/VendorHousnkuhInvoicesPage.tsx
+/**
+ * @file VendorHousnkuhInvoicesPage.tsx
+ * @purpose Vendor incoming invoices page for viewing and managing invoices received from housnkuh for rental services, fees, and additional services. Important financial management component.
+ * @created 2025-01-15
+ * @modified 2025-08-05
+ */
 import React from 'react';
 import { Receipt, Calendar, CreditCard, Archive } from 'lucide-react';
 import VendorLayout from '../../components/vendor/VendorLayout';
 
+/**
+ * VendorHousnkuhInvoicesPage - Incoming invoices management page (Coming Soon)
+ * 
+ * This component serves as a placeholder for the upcoming invoice management functionality:
+ * - Displays coming soon message for invoice viewing features
+ * - Shows preview of planned features (monthly billing, payment history, invoice archive)
+ * - Provides contact information for billing inquiries
+ * - Important financial management component for vendor-platform relationships
+ * 
+ * @component
+ * @returns {JSX.Element} The incoming invoices management coming soon page
+ */
 const VendorHousnkuhInvoicesPage: React.FC = () => {
   return (
     <VendorLayout>
@@ -71,8 +88,8 @@ const VendorHousnkuhInvoicesPage: React.FC = () => {
                 info@housnkuh.de
               </a>
               {' '}oder{' '}
-              <a href="tel:+4915735711257" className="text-indigo-600 hover:underline font-medium">
-                0157 35711257
+              <a href="tel:+4915222035788" className="text-indigo-600 hover:underline font-medium">
+                0152 22035788
               </a>
             </p>
           </div>

@@ -1,8 +1,19 @@
+/**
+ * @file ContactsPage.tsx
+ * @purpose Contact request management interface for admin operations and customer communication tracking
+ * @created 2025-01-15
+ * @modified 2025-08-04
+ */
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
+/**
+ * @interface Contact
+ * @description Data structure for contact request information
+ */
 interface Contact {
   _id: string;
   name: string;
@@ -16,6 +27,12 @@ interface Contact {
   updatedAt: string;
 }
 
+/**
+ * @component ContactsPage
+ * @description Contact request management interface with read/unread tracking, filtering, and administrative actions
+ * @complexity HIGH - Complex state management, authentication flow, filtering logic, and real-time status updates
+ * @returns {JSX.Element} Complete contact management interface with list view, detail view, and administrative functions
+ */
 const ContactsPage: React.FC = () => {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState<boolean>(true);

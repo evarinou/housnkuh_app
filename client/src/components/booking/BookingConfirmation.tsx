@@ -1,7 +1,19 @@
+/**
+ * @file BookingConfirmation.tsx
+ * @purpose Final confirmation modal for additional booking with comprehensive summary and validation
+ * @created 2025-01-15
+ * @modified 2025-08-05
+ * @complexity High - Complete booking validation, cost calculations, user confirmation workflow
+ */
+
 import React from 'react';
 import { Package } from 'lucide-react';
 import { Zusatzleistungen } from '../../types';
 
+/**
+ * Provision type configuration for commission models
+ * @interface ProvisionType
+ */
 interface ProvisionType {
   id: string;
   name: string;
@@ -10,6 +22,10 @@ interface ProvisionType {
   benefits: string[];
 }
 
+/**
+ * Package option configuration for rental packages
+ * @interface PackageOption
+ */
 interface PackageOption {
   id: string;
   name: string;
@@ -21,12 +37,32 @@ interface PackageOption {
   priceDisplay?: string;
 }
 
+/**
+ * Total cost breakdown structure
+ * @interface TotalCost
+ */
 interface TotalCost {
   monthly: number;
   oneTime: number;
   provision: number;
 }
 
+/**
+ * Props for BookingConfirmation modal component
+ * @interface BookingConfirmationProps
+ * @param {boolean} showBookingConfirmation - Controls modal visibility
+ * @param {boolean} bookingInProgress - Loading state during booking submission
+ * @param {any} vendorUser - Current vendor user data with name for personalization
+ * @param {ProvisionType[]} provisionTypes - Available commission models
+ * @param {PackageOption[]} packageOptions - Available rental packages
+ * @param {string} selectedProvisionType - Selected commission model ID
+ * @param {Record<string, number>} packageCounts - Selected package quantities by ID
+ * @param {number} rentalDuration - Selected rental period in months
+ * @param {TotalCost} totalCost - Final calculated costs
+ * @param {Zusatzleistungen} zusatzleistungen - Additional services selection
+ * @param {function} onClose - Modal close handler
+ * @param {function} onSubmit - Booking submission handler
+ */
 interface BookingConfirmationProps {
   showBookingConfirmation: boolean;
   bookingInProgress: boolean;
@@ -42,6 +78,33 @@ interface BookingConfirmationProps {
   onSubmit: () => void;
 }
 
+/**
+ * BookingConfirmation modal component for final booking validation and submission
+ * 
+ * Features:
+ * - Full-screen modal overlay with responsive design
+ * - Personalized greeting with vendor name
+ * - Complete booking summary with all selections
+ * - Package-by-package breakdown with individual pricing
+ * - Additional services display for premium users
+ * - Loading state with spinner during submission
+ * - Confirmation and cancellation buttons
+ * 
+ * Business Logic:
+ * - Only shows additional services for premium provision type
+ * - Calculates individual package costs (price × quantity)
+ * - Displays final monthly total from calculations
+ * - Prevents interaction during booking submission
+ * - Adds to existing vendor packages (not replacement)
+ * 
+ * Validation:
+ * - Comprehensive summary before final confirmation
+ * - All pricing calculations displayed transparently
+ * - Clear indication this is additional to existing packages
+ * 
+ * @param {BookingConfirmationProps} props - Modal configuration and data
+ * @returns {JSX.Element|null} Confirmation modal or null if hidden
+ */
 const BookingConfirmation: React.FC<BookingConfirmationProps> = ({
   showBookingConfirmation,
   bookingInProgress,

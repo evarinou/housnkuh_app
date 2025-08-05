@@ -1,25 +1,63 @@
-// client/src/components/vendor/VendorLayout.tsx
+/**
+ * @file VendorLayout.tsx
+ * @purpose Layout wrapper component for vendor dashboard providing navigation, authentication state, and trial status display
+ * @created 2025-01-15
+ * @modified 2025-08-05
+ */
+
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { User, Package, Home, LogOut, Settings, FileText, ShoppingCart, BarChart3, Receipt, Star } from 'lucide-react';
 import { useVendorAuth } from '../../contexts/VendorAuthContext';
 
+/**
+ * Props interface for the VendorLayout component
+ * @interface VendorLayoutProps
+ * @property {React.ReactNode} children - Child components to render within the layout
+ */
 interface VendorLayoutProps {
   children: React.ReactNode;
 }
 
+/**
+ * VendorLayout component providing consistent layout structure and navigation for vendor dashboard
+ * 
+ * @component
+ * @param {VendorLayoutProps} props - Component props
+ * @returns {JSX.Element} Vendor dashboard layout with navigation sidebar and content area
+ * 
+ * @example
+ * <VendorLayout>
+ *   <VendorDashboard />
+ * </VendorLayout>
+ * 
+ * @features
+ * - Vendor authentication status display
+ * - Trial period countdown badge
+ * - Pending bookings notification badge
+ * - Responsive sidebar navigation
+ * - Logout functionality
+ */
 const VendorLayout: React.FC<VendorLayoutProps> = ({ children }) => {
   const { user, logout } = useVendorAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [pendingCount, setPendingCount] = useState(0);
   
+  /**
+   * Handles vendor logout process
+   * Clears authentication and redirects to vendor login page
+   */
   const handleLogout = () => {
     logout();
     navigate('/vendor/login');
   };
 
-  // Calculate trial days remaining
+  /**
+   * Calculates remaining days in trial period
+   * @param {string | null | undefined} trialEndDate - ISO date string of trial end
+   * @returns {number} Days remaining in trial (0 if expired or no trial)
+   */
   const calculateDaysRemaining = (trialEndDate?: string | null): number => {
     if (!trialEndDate) return 0;
     const end = new Date(trialEndDate);
@@ -31,7 +69,11 @@ const VendorLayout: React.FC<VendorLayoutProps> = ({ children }) => {
   const isInTrial = user?.registrationStatus === 'trial_active';
   const trialDaysRemaining = calculateDaysRemaining(user?.trialEndDate);
 
-  // Fetch pending bookings count for notification badge
+  /**
+   * Effect hook to fetch and update pending bookings count
+   * Updates notification badge with count of bookings awaiting vendor action
+   * @dependency {string | undefined} user?.id - Vendor user ID
+   */
   useEffect(() => {
     const fetchPendingCount = async () => {
       if (!user?.id) return;

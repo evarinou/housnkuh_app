@@ -1,7 +1,17 @@
+/**
+ * @file LaunchDayMonitor.tsx
+ * @purpose Real-time launch day monitoring dashboard with vendor activation tracking and countdown functionality
+ * @created 2025-01-15
+ * @modified 2025-08-05
+ */
 import React, { useState, useEffect } from 'react';
 import { Clock, Users, CheckCircle, AlertCircle, RefreshCw, Rocket, Timer, Package } from 'lucide-react';
 import axios from 'axios';
 
+/**
+ * Complete launch day metrics data structure
+ * @interface LaunchDayMetrics
+ */
 interface LaunchDayMetrics {
   launchConfiguration: {
     enabled: boolean;
@@ -43,6 +53,25 @@ interface LaunchDayMetrics {
   };
 }
 
+/**
+ * Real-time launch day monitoring dashboard for tracking store opening and vendor activations
+ * 
+ * Features:
+ * - Live countdown to store opening with precise time calculations
+ * - Real-time vendor statistics (preregistered/active/expired)
+ * - Launch status monitoring with visual indicators
+ * - Recent activation tracking table
+ * - System status and scheduled job monitoring
+ * - Manual activation trigger for admin control
+ * - Auto-refresh every 30 seconds
+ * - Responsive statistics cards layout
+ * - German locale integration for dates/times
+ * - Loading and error state handling
+ * 
+ * @returns {JSX.Element} Launch day monitoring dashboard with real-time updates
+ * 
+ * @complexity O(1) - Real-time dashboard with periodic API calls
+ */
 const LaunchDayMonitor: React.FC = () => {
   const [metrics, setMetrics] = useState<LaunchDayMetrics | null>(null);
   const [isLoading, setIsLoading] = useState(true);

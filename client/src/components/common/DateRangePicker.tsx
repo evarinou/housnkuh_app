@@ -1,20 +1,69 @@
+/**
+ * @file DateRangePicker.tsx
+ * @purpose Advanced date range picker component with preset options and custom date selection
+ * @created 2025-01-15
+ * @modified 2025-08-05
+ */
+
 import React, { useState } from 'react';
 import './DateRangePicker.css';
 
+/**
+ * Interface representing a date range with start and end dates
+ * @interface DateRange
+ */
 interface DateRange {
+  /** Start date of the range */
   startDate: Date;
+  /** End date of the range */
   endDate: Date;
 }
 
+/**
+ * Props interface for DateRangePicker component
+ * @interface DateRangePickerProps
+ */
 interface DateRangePickerProps {
+  /** Currently selected start date */
   startDate: Date;
+  /** Currently selected end date */
   endDate: Date;
+  /** Callback function called when date range changes */
   onChange: (dateRange: DateRange) => void;
+  /** Optional maximum selectable date */
   maxDate?: Date;
+  /** Optional minimum selectable date (defaults to 2020-01-01) */
   minDate?: Date;
+  /** Whether future dates are allowed for selection (defaults to false) */
   allowFuture?: boolean;
 }
 
+/**
+ * Advanced date range picker component with preset options and custom date selection.
+ * 
+ * Features:
+ * - Dropdown interface with toggle button showing current range
+ * - Preset date ranges: heute, letzte 7 Tage, dieser Monat, etc.
+ * - Custom date input fields with validation
+ * - German date formatting and labels
+ * - Optional future date support
+ * - Min/max date constraints
+ * - FontAwesome icons for UI elements
+ * 
+ * Preset Options:
+ * - Heute: Current day only
+ * - Letzte 7 Tage: Last 7 days from today
+ * - Dieser Monat: Current month from 1st to today
+ * - Letzter Monat: Previous month (full month)
+ * - Dieses Quartal: Current quarter from start to today
+ * - Dieses Jahr: Current year from Jan 1st to today
+ * - Nächste 6 Monate: Next 6 months (if allowFuture=true)
+ * - Bis Ende nächstes Jahr: Until end of next year (if allowFuture=true)
+ * 
+ * @component
+ * @param {DateRangePickerProps} props - Component props
+ * @returns {JSX.Element} Rendered date range picker component
+ */
 export default function DateRangePicker({
   startDate,
   endDate,
@@ -23,8 +72,14 @@ export default function DateRangePicker({
   minDate = new Date(2020, 0, 1),
   allowFuture = false
 }: DateRangePickerProps) {
+  /** State controlling dropdown visibility */
   const [isOpen, setIsOpen] = useState(false);
 
+  /**
+   * Formats a Date object to German locale string format (DD.MM.YYYY)
+   * @param {Date} date - Date to format
+   * @returns {string} Formatted date string in DD.MM.YYYY format
+   */
   const formatDate = (date: Date): string => {
     return date.toLocaleDateString('de-DE', {
       day: '2-digit',
@@ -33,10 +88,20 @@ export default function DateRangePicker({
     });
   };
 
+  /**
+   * Formats a Date object to ISO string format for HTML date inputs (YYYY-MM-DD)
+   * @param {Date} date - Date to format
+   * @returns {string} Formatted date string in YYYY-MM-DD format
+   */
   const formatDateForInput = (date: Date): string => {
     return date.toISOString().split('T')[0];
   };
 
+  /**
+   * Handles start date input changes with validation
+   * Only updates if new start date is not after the current end date
+   * @param {React.ChangeEvent<HTMLInputElement>} event - Input change event
+   */
   const handleStartDateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newStartDate = new Date(event.target.value);
     if (newStartDate <= endDate) {
@@ -44,6 +109,11 @@ export default function DateRangePicker({
     }
   };
 
+  /**
+   * Handles end date input changes with validation
+   * Only updates if new end date is not before the current start date
+   * @param {React.ChangeEvent<HTMLInputElement>} event - Input change event
+   */
   const handleEndDateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newEndDate = new Date(event.target.value);
     if (newEndDate >= startDate) {
@@ -51,6 +121,12 @@ export default function DateRangePicker({
     }
   };
 
+  /**
+   * Handles preset button clicks to set predefined date ranges
+   * Calculates appropriate start and end dates based on preset type
+   * Respects allowFuture flag for future date presets
+   * @param {string} preset - Preset identifier (today, week, month, etc.)
+   */
   const handlePresetClick = (preset: string) => {
     const today = new Date();
     let newStartDate: Date;

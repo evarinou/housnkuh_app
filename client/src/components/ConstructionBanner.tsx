@@ -1,4 +1,9 @@
-// client/src/components/ConstructionBanner.tsx
+/**
+ * @file ConstructionBanner.tsx
+ * @purpose Construction status banner displaying store setup progress with dynamic updates and timeline information
+ * @created 2025-01-15
+ * @modified 2025-08-05
+ */
 import React, { useEffect, useState } from 'react';
 import { Settings, AlertTriangle, Calendar, Clock } from 'lucide-react';
 import axios from 'axios';

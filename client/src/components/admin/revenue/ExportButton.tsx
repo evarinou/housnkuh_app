@@ -1,21 +1,54 @@
+/**
+ * @file ExportButton.tsx
+ * @purpose Revenue data export component with CSV and PDF format support, progress tracking, and notifications
+ * @created 2025-01-15
+ * @modified 2025-08-05
+ */
 import React, { useState } from 'react';
 import './ExportButton.css';
 
+/**
+ * Date range structure for export filtering
+ * @interface DateRange
+ */
 interface DateRange {
   startDate: Date;
   endDate: Date;
 }
 
+/**
+ * Props for the ExportButton component
+ * @interface ExportButtonProps
+ */
 interface ExportButtonProps {
   dateRange: DateRange;
 }
 
+/**
+ * Props for notification display component
+ * @interface NotificationProps
+ */
 interface NotificationProps {
   message: string;
   type: 'success' | 'error';
   onClose: () => void;
 }
 
+/**
+ * Notification toast component for export feedback
+ * 
+ * Features:
+ * - Success and error notification types with color coding
+ * - FontAwesome icons for visual indication
+ * - Auto-dismiss functionality
+ * - Manual close button
+ * 
+ * @param {NotificationProps} props - Notification configuration
+ * @param {string} props.message - Message text to display
+ * @param {('success'|'error')} props.type - Notification type for styling
+ * @param {() => void} props.onClose - Callback for closing notification
+ * @returns {JSX.Element} Toast notification with message and close button
+ */
 const Notification: React.FC<NotificationProps> = ({ message, type, onClose }) => {
   return (
     <div className={`notification notification-${type}`}>
@@ -30,6 +63,29 @@ const Notification: React.FC<NotificationProps> = ({ message, type, onClose }) =
   );
 };
 
+/**
+ * Revenue data export component with multiple format support and comprehensive user experience
+ * 
+ * Features:
+ * - Multi-format export support (CSV for spreadsheets, PDF for reports)
+ * - Dropdown menu with format selection and descriptions
+ * - Real-time progress tracking with animated progress bar
+ * - Automatic file download with intelligent naming
+ * - German date formatting and localization
+ * - Success/error notifications with auto-dismiss
+ * - Loading states with spinner animation
+ * - Click-outside menu handling
+ * - API integration with authentication headers
+ * - Error handling with user-friendly messages
+ * - File blob handling and URL management
+ * - Date range display for user confirmation
+ * 
+ * @param {ExportButtonProps} props - Component props
+ * @param {DateRange} props.dateRange - Date range for export filtering
+ * @returns {JSX.Element} Export button with dropdown menu and progress tracking
+ * 
+ * @complexity O(1) - Export processing handled by server-side API
+ */
 export default function ExportButton({ dateRange }: ExportButtonProps) {
   const [showMenu, setShowMenu] = useState(false);
   const [exporting, setExporting] = useState(false);

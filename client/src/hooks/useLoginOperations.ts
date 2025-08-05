@@ -1,12 +1,8 @@
 /**
- * @file Login operations service for vendor authentication
- * @description Extracted from VendorAuthContext to provide clean separation of login concerns.
- * This service handles vendor login functionality with proper error handling and state management.
- * 
- * Following the established service extraction pattern from S32-S35.
- * 
- * @see Sprint 36 - Provider Architecture Optimization
- * @see M020 - Client Core Architecture Refactoring
+ * @file useLoginOperations.ts
+ * @purpose Custom hook for vendor authentication login operations
+ * @created 2025-01-15
+ * @modified 2025-08-05
  */
 
 import { useCallback, useState } from 'react';
@@ -62,12 +58,11 @@ export interface LoginOperationsService {
 }
 
 /**
- * Login operations service hook
- * 
- * Extracts login functionality from VendorAuthContext to provide clean separation
- * of concerns and improve testability.
- * 
- * @returns LoginOperationsService interface
+ * Custom hook for vendor login operations
+ * @description Provides vendor authentication functionality with error handling and loading states
+ * @hook useLoginOperations
+ * @dependencies useCallback, useState, axios
+ * @returns Login operations service interface with performLogin function and state
  */
 export const useLoginOperations = (): LoginOperationsService => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -75,6 +70,7 @@ export const useLoginOperations = (): LoginOperationsService => {
 
   /**
    * Clear error state
+   * @description Resets error state to null
    */
   const clearError = useCallback(() => {
     setError(null);
@@ -82,7 +78,7 @@ export const useLoginOperations = (): LoginOperationsService => {
 
   /**
    * Perform vendor login with comprehensive error handling
-   * 
+   * @description Handles vendor authentication API call, token validation, and user data processing
    * @param email - Vendor email address
    * @param password - Vendor password
    * @param processUserData - Function to process user data

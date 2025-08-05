@@ -1,9 +1,20 @@
+/**
+ * @file usePackageBuilder.ts
+ * @purpose Package selection and booking builder with price calculation and vendor registration flow
+ * @created 2025-01-15
+ * @modified 2025-08-05
+ */
+
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Zusatzleistungen, PriceCalculation } from '../types';
 import { createNavigationHelper } from '../utils/navigation';
 import axios from 'axios';
 
+/**
+ * Commission/provision type configuration
+ * @interface ProvisionType
+ */
 interface ProvisionType {
   id: string;
   name: string;
@@ -29,6 +40,23 @@ interface TotalCost {
   provision: number;
 }
 
+/**
+ * Custom hook for package selection and booking builder with price calculation
+ * 
+ * @description Comprehensive package builder hook that manages:
+ * - Provision type selection (Basic 4% / Premium 7%)
+ * - Package selection with quantities
+ * - Real-time price calculations with discounts
+ * - Premium services (Lagerservice/Versandservice)
+ * - Vendor registration and booking flow
+ * - Navigation and modal states
+ * 
+ * @returns {object} Complete package builder state and actions
+ * 
+ * @hook
+ * @dependencies useState, useEffect, useCallback, useMemo, useNavigate
+ * @complexity High - Central business logic for package selection flow
+ */
 export const usePackageBuilder = () => {
   const navigate = useNavigate();
   const navigationHelper = createNavigationHelper(navigate);

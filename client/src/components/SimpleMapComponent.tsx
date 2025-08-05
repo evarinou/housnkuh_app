@@ -1,4 +1,9 @@
-// client/src/components/SimpleMapComponent.tsx
+/**
+ * @file SimpleMapComponent.tsx
+ * @purpose Interactive map component using Leaflet with custom markers for location display and navigation
+ * @created 2025-01-15
+ * @modified 2025-08-05
+ */
 import React, { useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';

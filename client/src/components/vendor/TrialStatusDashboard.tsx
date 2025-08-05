@@ -1,8 +1,26 @@
+/**
+ * @file TrialStatusDashboard.tsx
+ * @purpose Comprehensive trial management dashboard displaying trial status, countdown, and booking management
+ * @created 2025-01-15
+ * @modified 2025-08-05
+ */
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Star, CheckCircle, Package, Info } from 'lucide-react';
 import { useVendorAuth } from '../../contexts/VendorAuthContext';
 
+/**
+ * Interface for individual trial booking data
+ * @interface TrialBooking
+ * @property {string} id - Unique booking identifier
+ * @property {string} mietfachNummer - Assigned Mietfach number
+ * @property {string} startDate - Booking start date
+ * @property {string} trialEndDate - Trial period end date
+ * @property {string} willBeChargedOn - Date when charges begin
+ * @property {boolean} isCancellable - Whether booking can be cancelled
+ * @property {string} status - Current booking status
+ */
 interface TrialBooking {
   id: string;
   mietfachNummer: string;
@@ -13,6 +31,14 @@ interface TrialBooking {
   status: string;
 }
 
+/**
+ * Interface for complete trial status data
+ * @interface TrialData
+ * @property {boolean} isInTrial - Whether vendor is currently in trial period
+ * @property {TrialBooking[]} trialBookings - Array of trial bookings
+ * @property {number} daysRemaining - Days remaining in trial
+ * @property {boolean} canBookMore - Whether additional bookings are allowed
+ */
 interface TrialData {
   isInTrial: boolean;
   trialBookings: TrialBooking[];
@@ -20,12 +46,52 @@ interface TrialData {
   canBookMore: boolean;
 }
 
+/**
+ * Interface for countdown timer display
+ * @interface TimeRemaining
+ * @property {number} days - Days remaining
+ * @property {number} hours - Hours remaining
+ * @property {number} minutes - Minutes remaining
+ */
 interface TimeRemaining {
   days: number;
   hours: number;
   minutes: number;
 }
 
+/**
+ * TrialStatusDashboard component providing comprehensive trial period management
+ * 
+ * @component
+ * @returns {JSX.Element | null} Trial dashboard with countdown, bookings, and navigation
+ * 
+ * @description
+ * Central dashboard component for vendors in trial period. Displays real-time countdown,
+ * trial booking management, benefit highlights, and navigation to booking and info pages.
+ * Only renders when vendor is actively in trial period.
+ * 
+ * @features
+ * - Real-time countdown timer (days, hours, minutes)
+ * - Trial booking display and cancellation
+ * - Trial benefits presentation
+ * - Navigation to booking and information pages
+ * - Responsive loading and error states
+ * - Auto-refresh trial status data
+ * 
+ * @business_logic
+ * - Fetches trial status from VendorAuth context
+ * - Updates countdown every second for real-time display
+ * - Handles trial booking cancellation with confirmation
+ * - Conditional rendering based on trial status
+ * 
+ * @trial_benefits
+ * - First booking completely free
+ * - Cancellable anytime without notice
+ * - Full access to all features
+ * - No payment obligation
+ * 
+ * @complexity O(n) where n = number of trial bookings to display
+ */
 const TrialStatusDashboard: React.FC = () => {
   const { user, getTrialStatus, cancelTrialBooking } = useVendorAuth();
   const navigate = useNavigate();
@@ -34,6 +100,12 @@ const TrialStatusDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  /**
+   * Fetches current trial status data from the backend
+   * @async
+   * @function fetchTrialStatus
+   * @returns {Promise<void>} Updates trialData state with current trial information
+   */
   const fetchTrialStatus = useCallback(async () => {
     try {
       setLoading(true);
@@ -51,6 +123,11 @@ const TrialStatusDashboard: React.FC = () => {
     }
   }, [getTrialStatus]);
 
+  /**
+   * Updates the real-time countdown display every second
+   * @callback updateCountdown
+   * @returns {void} Updates timeRemaining state with current countdown values
+   */
   const updateCountdown = useCallback(() => {
     if (user?.trialEndDate) {
       const end = new Date(user.trialEndDate);
@@ -69,12 +146,22 @@ const TrialStatusDashboard: React.FC = () => {
     }
   }, [user?.trialEndDate]);
 
+  /**
+   * Effect hook for data fetching and countdown timer setup
+   * Fetches trial status on mount and sets up 1-second interval for countdown
+   */
   useEffect(() => {
     fetchTrialStatus();
     const timer = setInterval(updateCountdown, 1000);
     return () => clearInterval(timer);
   }, [fetchTrialStatus, updateCountdown]);
 
+  /**
+   * Handles trial booking cancellation with user confirmation
+   * @async
+   * @param {string} bookingId - ID of booking to cancel
+   * @returns {Promise<void>} Cancels booking and refreshes trial status
+   */
   const handleCancelBooking = async (bookingId: string) => {
     if (!window.confirm('Möchten Sie diese Buchung wirklich stornieren?')) {
       return;

@@ -1,3 +1,9 @@
+/**
+ * @file AvailabilityCalendar.tsx
+ * @purpose Interactive calendar component for displaying and selecting Mietfach availability with real-time data
+ * @created 2025-01-15
+ * @modified 2025-08-05
+ */
 import React, { useState, useEffect } from 'react';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
@@ -5,6 +11,10 @@ import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import axios from 'axios';
 
+/**
+ * Props for the AvailabilityCalendar component
+ * @interface AvailabilityCalendarProps
+ */
 interface AvailabilityCalendarProps {
   mietfachType?: string;
   onDateSelect: (date: Date) => void;
@@ -12,10 +22,37 @@ interface AvailabilityCalendarProps {
   selectedDate: Date;
 }
 
+/**
+ * Availability data mapping date keys to available Mietfach counts
+ * @interface AvailabilityData
+ */
 interface AvailabilityData {
   [dateKey: string]: number;
 }
 
+/**
+ * Interactive availability calendar component for Mietfach booking system
+ * 
+ * Features:
+ * - Real-time availability data fetching for 3-month period
+ * - Color-coded availability indicators (good/limited/none)
+ * - Type-specific filtering (Lagerservice/Versandservice)
+ * - Duration-based availability checking
+ * - German locale integration with date-fns
+ * - Disabled past dates functionality
+ * - Visual availability counts on calendar tiles
+ * - Responsive design with custom styling
+ * - Loading states during data fetching
+ * 
+ * @param {AvailabilityCalendarProps} props - Component props
+ * @param {string} [props.mietfachType] - Optional Mietfach type filter
+ * @param {(date: Date) => void} props.onDateSelect - Callback when date is selected
+ * @param {number} props.duration - Booking duration in months
+ * @param {Date} props.selectedDate - Currently selected date
+ * @returns {JSX.Element} Interactive calendar with availability visualization
+ * 
+ * @complexity O(n*m) - Date range iteration with API calls for each date
+ */
 const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
   mietfachType,
   onDateSelect,
@@ -29,6 +66,10 @@ const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
     fetchAvailabilityData();
   }, [mietfachType, duration]);
 
+  /**
+   * Fetches availability data for 3-month period from API
+   * @returns {Promise<void>}
+   */
   const fetchAvailabilityData = async () => {
     setLoading(true);
     try {

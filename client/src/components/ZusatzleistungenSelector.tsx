@@ -1,4 +1,9 @@
-// client/src/components/ZusatzleistungenSelector.tsx
+/**
+ * @file ZusatzleistungenSelector.tsx
+ * @purpose Additional services selector component with checkbox controls for storage and shipping services
+ * @created 2025-01-15
+ * @modified 2025-08-05
+ */
 import React from 'react';
 import { Package, Truck } from 'lucide-react';
 import { Zusatzleistungen } from '../types';

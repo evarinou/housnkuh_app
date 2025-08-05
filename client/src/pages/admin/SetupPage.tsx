@@ -1,11 +1,24 @@
 // client/src/pages/admin/SetupPage.tsx
+/**
+ * @file SetupPage.tsx
+ * @purpose Initial admin account setup interface for first-time system configuration
+ * @created 2025-01-15
+ * @modified 2025-08-04
+ */
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Shield, AlertCircle } from 'lucide-react';
-import axios from 'axios';
+import { AlertCircle, Shield } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import axios from 'axios';
 import logo from '../../assets/images/logo.svg';
 
+/**
+ * @component SetupPage
+ * @description Initial admin registration form with validation for system setup
+ * @complexity HIGH - Complex form validation, password confirmation, setup key verification, and error handling
+ * @returns {JSX.Element} Complete setup form with multi-field validation and secure registration
+ */
 const SetupPage: React.FC = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');

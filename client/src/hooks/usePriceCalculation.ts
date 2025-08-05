@@ -1,11 +1,8 @@
 /**
- * @file usePriceCalculation - Price calculation service hook
- * @description Extracted pricing calculation logic from VendorAuthContext
- * for better separation of concerns and maintainability.
- * 
- * @author Claude Code
- * @date 2025-01-17
- * @version 1.0.0
+ * @file usePriceCalculation.ts
+ * @purpose Custom hook for vendor pricing calculations and package data processing
+ * @created 2025-01-15
+ * @modified 2025-08-05
  */
 
 import { useCallback, useState } from 'react';
@@ -56,8 +53,12 @@ interface UsePriceCalculationReturn {
 }
 
 /**
- * Custom hook for handling price calculations
- * @returns Price calculation utilities and state
+ * Custom hook for vendor price calculations and package data processing
+ * @description Provides utilities for calculating monthly prices, creating package summaries,
+ * and processing user data with pricing information
+ * @hook usePriceCalculation
+ * @dependencies useCallback, useState
+ * @returns Price calculation utilities, processing functions, and state
  */
 export const usePriceCalculation = (): UsePriceCalculationReturn => {
   const [isCalculating, setIsCalculating] = useState(false);
@@ -65,6 +66,7 @@ export const usePriceCalculation = (): UsePriceCalculationReturn => {
 
   /**
    * Calculate monthly price from package data
+   * @description Extracts monthly cost from package data with error handling
    * @param packageData - Package data containing cost information
    * @returns Monthly price
    */
@@ -79,6 +81,7 @@ export const usePriceCalculation = (): UsePriceCalculationReturn => {
 
   /**
    * Create package summary from package data
+   * @description Builds structured package summary with Mietfächer and Zusatzleistungen
    * @param packageData - Package data containing package information
    * @returns Package summary object
    */
@@ -121,6 +124,7 @@ export const usePriceCalculation = (): UsePriceCalculationReturn => {
 
   /**
    * Process user data with pricing calculations
+   * @description Enhances user data with calculated pricing and package summary from booking data
    * @param userData - Raw user data
    * @returns Processed user data with pricing information
    */

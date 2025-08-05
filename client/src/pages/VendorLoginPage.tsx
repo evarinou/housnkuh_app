@@ -1,9 +1,20 @@
-// client/src/pages/VendorLoginPage.tsx
+/**
+ * @file VendorLoginPage.tsx
+ * @purpose Vendor authentication login page with form validation and error handling
+ * @created 2024-01-01
+ * @modified 2025-08-05
+ */
+
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { useVendorAuth } from '../contexts/VendorAuthContext';
 
+/**
+ * Vendor login page component with authentication form
+ * @description Secure login interface for direct marketers with validation, error handling, and password visibility toggle
+ * @returns {JSX.Element} Login form with email/password fields and authentication flow
+ */
 const VendorLoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -14,11 +25,22 @@ const VendorLoginPage: React.FC = () => {
   const { login } = useVendorAuth();
   const navigate = useNavigate();
   
+  /**
+   * Validates email address format using regex
+   * @description Checks if the provided email matches standard email format
+   * @param {string} email - Email address to validate
+   * @returns {boolean} True if email is valid, false otherwise
+   */
   const validateEmail = (email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   };
   
+  /**
+   * Handles form submission for vendor login
+   * @description Validates form inputs, performs authentication, and handles success/error states
+   * @param {React.FormEvent} e - Form submission event
+   */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -158,8 +180,8 @@ const VendorLoginPage: React.FC = () => {
                 info@housnkuh.de
               </a>{' '}
               oder{' '}
-              <a href="tel:+4915735711257" className="text-primary hover:underline">
-                0157 35711257
+              <a href="tel:+4915222035788" className="text-primary hover:underline">
+                0152 22035788
               </a>
             </p>
           </div>

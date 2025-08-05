@@ -1,15 +1,33 @@
-// client/src/pages/StandortPage.tsx
+/**
+ * @file StandortPage.tsx
+ * @purpose Location information page displaying business location details, opening hours, and contact information
+ * @created 2024-01-01
+ * @modified 2025-08-05
+ */
+
 import React from 'react';
 import { MapPin, Clock, Phone, Mail, Car, Bus } from 'lucide-react';
 import SimpleMapComponent from '../components/SimpleMapComponent';
 
-// Hilfsfunktion für Standortmerkmale (Adresse, Öffnungszeiten usw.)
+/**
+ * Props interface for LocationFeature component
+ * @interface LocationFeatureProps
+ * @property {React.ElementType} icon - Icon component to display
+ * @property {string} title - Feature title
+ * @property {React.ReactNode} children - Feature content
+ */
 interface LocationFeatureProps {
   icon: React.ElementType;
   title: string;
   children: React.ReactNode;
 }
 
+/**
+ * Location feature component displaying an icon, title, and content
+ * @description Renders a location-related feature with icon and structured content
+ * @param {LocationFeatureProps} props - Component props
+ * @returns {JSX.Element} Location feature display
+ */
 const LocationFeature: React.FC<LocationFeatureProps> = ({ icon: Icon, title, children }) => (
   <div className="flex items-start">
     <Icon className="w-6 h-6 text-primary mr-3 mt-1 flex-shrink-0" />
@@ -20,11 +38,21 @@ const LocationFeature: React.FC<LocationFeatureProps> = ({ icon: Icon, title, ch
   </div>
 );
 
-// Komponente für einzelne Parkplatz-Einträge
+/**
+ * Props interface for ParkingSpot component
+ * @interface ParkingSpotProps
+ * @property {string} location - Parking location description
+ */
 interface ParkingSpotProps {
   location: string;
 }
 
+/**
+ * Individual parking spot list item component
+ * @description Renders a parking location with bullet point styling
+ * @param {ParkingSpotProps} props - Component props
+ * @returns {JSX.Element} Parking spot list item
+ */
 const ParkingSpot: React.FC<ParkingSpotProps> = ({ location }) => (
   <li className="flex items-center space-x-2">
     <span className="w-2 h-2 bg-primary rounded-full" />
@@ -32,7 +60,11 @@ const ParkingSpot: React.FC<ParkingSpotProps> = ({ location }) => (
   </li>
 );
 
-// Komponente für den Geschichtsabschnitt
+/**
+ * History section component displaying location historical information
+ * @description Shows the historical background of the business location
+ * @returns {JSX.Element} History section with location background
+ */
 const HistorySection: React.FC = () => (
   <div className="bg-gradient-to-br from-gray-50 to-white rounded-lg p-8 mt-12">
     <h3 className="text-xl font-semibold mb-4">Geschichte des Standorts</h3>
@@ -46,7 +78,11 @@ const HistorySection: React.FC = () => (
   </div>
 );
 
-// Haupt-Komponente für die Standort-Seite
+/**
+ * Main location page component
+ * @description Displays comprehensive location information including map, address, opening hours, and parking
+ * @returns {JSX.Element} Complete location information page
+ */
 const StandortPage: React.FC = () => {
   return (
     <div className="py-12 bg-gradient-to-b from-gray-50 to-white">
@@ -83,7 +119,7 @@ const StandortPage: React.FC = () => {
             </LocationFeature>
             
             <LocationFeature icon={Phone} title="Telefon">
-              <p className="text-gray-600">0157 35711257</p>
+              <p className="text-gray-600">0152 22035788</p>
             </LocationFeature>
             
             <LocationFeature icon={Mail} title="E-Mail">

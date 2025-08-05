@@ -28,9 +28,9 @@ export const DATABASE_CONFIG = {
     autoIndex: process.env.NODE_ENV !== 'production', // Only auto-create indexes in development
     
     // Additional performance options
-    readPreference: 'primary', // Always read from primary for consistency
-    readConcern: { level: 'local' }, // Local read concern for better performance
-    writeConcern: { w: 'majority' }, // Majority write concern for durability
+    readPreference: 'primary' as any, // Always read from primary for consistency
+    readConcern: { level: 'local' } as any, // Local read concern for better performance
+    writeConcern: { w: 'majority' } as any, // Majority write concern for durability
   },
   
   // Query timeout settings
@@ -218,7 +218,7 @@ export async function checkDatabaseHealth(): Promise<{
   } catch (error) {
     return {
       status: 'unhealthy',
-      details: { error: error.message }
+      details: { error: error instanceof Error ? error.message : String(error) }
     };
   }
 }

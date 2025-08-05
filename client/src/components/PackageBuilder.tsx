@@ -1,3 +1,9 @@
+/**
+ * @file PackageBuilder.tsx
+ * @purpose Interactive package configuration component allowing users to build custom rental packages with provision types, package selection, and additional services
+ * @created 2025-01-15
+ * @modified 2025-08-05
+ */
 import React from 'react';
 import { Package } from 'lucide-react';
 import VendorRegistrationModal from './VendorRegistrationModal';
@@ -9,7 +15,11 @@ import BookingConfirmation from './booking/BookingConfirmation';
 import { useVendorAuth } from '../contexts/VendorAuthContext';
 import { usePackageBuilder } from '../hooks/usePackageBuilder';
 
-// Safe hook wrapper that handles missing context
+/**
+ * Safe hook wrapper that handles missing VendorAuthContext gracefully
+ * Prevents crashes when component is rendered outside of VendorProviderWrapper
+ * @returns {object} Authentication state with fallback values
+ */
 const useSafeVendorAuth = () => {
   try {
     return useVendorAuth();
@@ -18,6 +28,26 @@ const useSafeVendorAuth = () => {
   }
 };
 
+/**
+ * Main package configuration component that allows users to build custom rental packages.
+ * Manages complex state including provision types, package selections, pricing calculations,
+ * and booking workflows for both authenticated and unauthenticated users.
+ * 
+ * Key Features:
+ * - Multi-step package configuration (provision type → packages → additional services)
+ * - Dynamic pricing with discount calculations
+ * - Authentication-aware booking flow
+ * - Integration with VendorRegistrationModal for new users
+ * - Booking confirmation with detailed summary
+ * - Form validation and disabled states
+ * 
+ * State Management:
+ * - Uses usePackageBuilder hook for complex business logic
+ * - Manages modal visibility states
+ * - Handles authentication context safely
+ * 
+ * @returns {JSX.Element} Complete package builder interface with modals
+ */
 const PackageBuilder: React.FC = () => {
   const { isAuthenticated: isVendorAuthenticated, user: vendorUser } = useSafeVendorAuth();
   

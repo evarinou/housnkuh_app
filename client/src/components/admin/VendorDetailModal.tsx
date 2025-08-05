@@ -1,8 +1,17 @@
-// client/src/components/admin/VendorDetailModal.tsx
+/**
+ * @file VendorDetailModal.tsx
+ * @purpose Comprehensive vendor details modal with tabbed interface for vendor management and verification
+ * @created 2025-01-15
+ * @modified 2025-08-05
+ */
 import React, { useState, useEffect, useCallback } from 'react';
 import { X, User, Building, Calendar, Eye, EyeOff, Clock, MapPin, Globe, Facebook, Instagram, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import axios from 'axios';
 
+/**
+ * Vendor profile data structure for business information
+ * @interface VendorProfile
+ */
 interface VendorProfile {
   unternehmen?: string;
   beschreibung?: string;
@@ -26,6 +35,10 @@ interface VendorProfile {
   verifyStatus?: 'unverified' | 'pending' | 'verified';
 }
 
+/**
+ * Complete vendor data structure including user info, profile, and trial status
+ * @interface VendorData
+ */
 interface VendorData {
   _id: string;
   username?: string;
@@ -56,6 +69,10 @@ interface VendorData {
   vendorProfile?: VendorProfile;
 }
 
+/**
+ * Props for the VendorDetailModal component
+ * @interface VendorDetailModalProps
+ */
 interface VendorDetailModalProps {
   vendorId: string;
   isOpen: boolean;
@@ -63,12 +80,38 @@ interface VendorDetailModalProps {
   onUpdate?: () => void;
 }
 
+/**
+ * Comprehensive vendor details modal with tabbed interface for vendor management
+ * 
+ * Features:
+ * - Tabbed interface: Overview, Profile, Addresses, Trial Status
+ * - Vendor verification status management with admin controls
+ * - Real-time vendor data fetching and display
+ * - Social media links and business information display
+ * - Trial period tracking and status indicators
+ * - Address management and contact information
+ * - Loading states and error handling
+ * - Responsive design with modal overlay
+ * 
+ * @param {VendorDetailModalProps} props - Component props
+ * @param {string} props.vendorId - ID of vendor to display details for
+ * @param {boolean} props.isOpen - Whether modal is visible
+ * @param {() => void} props.onClose - Callback when modal is closed
+ * @param {() => void} [props.onUpdate] - Optional callback when vendor data is updated
+ * @returns {JSX.Element|null} Modal component or null when closed
+ * 
+ * @complexity O(1) - Linear rendering with API calls
+ */
 const VendorDetailModal: React.FC<VendorDetailModalProps> = ({ vendorId, isOpen, onClose, onUpdate }) => {
   const [vendor, setVendor] = useState<VendorData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState<'overview' | 'profile' | 'addresses' | 'trial'>('overview');
 
+  /**
+   * Fetches complete vendor details from the API
+   * @returns {Promise<void>}
+   */
   const fetchVendorDetails = useCallback(async () => {
     try {
       setLoading(true);
@@ -94,6 +137,11 @@ const VendorDetailModal: React.FC<VendorDetailModalProps> = ({ vendorId, isOpen,
     }
   }, [isOpen, vendorId, fetchVendorDetails]);
 
+  /**
+   * Updates vendor verification status via API and local state
+   * @param {('verified'|'pending'|'unverified')} newStatus - New verification status
+   * @returns {Promise<void>}
+   */
   const handleVerificationChange = async (newStatus: 'verified' | 'pending' | 'unverified') => {
     try {
       const token = localStorage.getItem('adminToken');
@@ -119,6 +167,11 @@ const VendorDetailModal: React.FC<VendorDetailModalProps> = ({ vendorId, isOpen,
     }
   };
 
+  /**
+   * Generates status badge component for verification status
+   * @param {string} [status] - Verification status ('verified'|'pending'|'unverified')
+   * @returns {JSX.Element} Status badge with icon and color coding
+   */
   const getStatusBadge = (status?: string) => {
     const statusConfig = {
       verified: { color: 'bg-green-100 text-green-800', icon: CheckCircle, label: 'Verifiziert' },
@@ -137,6 +190,11 @@ const VendorDetailModal: React.FC<VendorDetailModalProps> = ({ vendorId, isOpen,
     );
   };
 
+  /**
+   * Generates status badge component for registration status
+   * @param {string} [status] - Registration status ('preregistered'|'trial_active'|'trial_expired'|'active'|'cancelled')
+   * @returns {JSX.Element} Registration status badge with color coding
+   */
   const getRegistrationStatusBadge = (status?: string) => {
     const statusConfig = {
       preregistered: { color: 'bg-blue-100 text-blue-800', label: 'Vorangemeldet' },
@@ -160,6 +218,11 @@ const VendorDetailModal: React.FC<VendorDetailModalProps> = ({ vendorId, isOpen,
   //   return new Date(dateString).toLocaleDateString('de-DE');
   // };
 
+  /**
+   * Formats date string to German locale date and time
+   * @param {string} [dateString] - ISO date string to format
+   * @returns {string} Formatted date/time or 'Nicht gesetzt' if empty
+   */
   const formatDateTime = (dateString?: string) => {
     if (!dateString) return 'Nicht gesetzt';
     return new Date(dateString).toLocaleString('de-DE');

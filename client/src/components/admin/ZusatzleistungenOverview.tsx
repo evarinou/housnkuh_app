@@ -1,4 +1,9 @@
-// client/src/components/admin/ZusatzleistungenOverview.tsx
+/**
+ * @file ZusatzleistungenOverview.tsx
+ * @purpose Comprehensive overview and management interface for additional services (Lager/Versand) with statistics
+ * @created 2025-01-15
+ * @modified 2025-08-05
+ */
 import React, { useState } from 'react';
 import { 
   Package, 
@@ -13,6 +18,10 @@ import {
 } from 'lucide-react';
 import { Contract } from '../../types/contract.types';
 
+/**
+ * Props for the ZusatzleistungenOverview component
+ * @interface ZusatzleistungenOverviewProps
+ */
 interface ZusatzleistungenOverviewProps {
   contracts: Contract[];
   statistics: {
@@ -24,11 +33,37 @@ interface ZusatzleistungenOverviewProps {
   onRefresh: () => void;
 }
 
+/**
+ * Action data structure for contract operations
+ * @interface ContractAction
+ */
 interface ContractAction {
   contract: Contract;
   action: 'view' | 'edit' | 'manage';
 }
 
+/**
+ * Comprehensive overview and management interface for additional services (Zusatzleistungen)
+ * 
+ * Features:
+ * - Statistics dashboard with service breakdown (Lager/Versand/Active/Pending)
+ * - Interactive contract table with service badges
+ * - Bulk selection and operations
+ * - Service status indicators with color coding
+ * - Monthly cost calculations including additional services
+ * - Action menu for contract management (view/edit/manage packages)
+ * - Service confirmation status tracking
+ * - Responsive statistics cards layout
+ * - Empty state handling
+ * 
+ * @param {ZusatzleistungenOverviewProps} props - Component props
+ * @param {Contract[]} props.contracts - Array of contracts with additional services
+ * @param {Object} props.statistics - Service statistics object
+ * @param {() => void} props.onRefresh - Callback to refresh data after operations
+ * @returns {JSX.Element} Service overview interface with statistics and management
+ * 
+ * @complexity O(n) - Linear contract processing and rendering
+ */
 const ZusatzleistungenOverview: React.FC<ZusatzleistungenOverviewProps> = ({
   contracts,
   statistics,

@@ -1,4 +1,10 @@
-// client/src/pages/DirektvermarkterUebersichtPage.tsx
+/**
+ * @file DirektvermarkterUebersichtPage.tsx
+ * @purpose Overview page displaying all direct marketers with advanced filtering, search, and pagination
+ * @created 2024-01-01
+ * @modified 2025-08-05
+ */
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Phone, Mail, MapPin, ExternalLink, Search, Map, X, ChevronDown, ChevronUp, SlidersHorizontal } from 'lucide-react';
@@ -6,7 +12,13 @@ import axios from 'axios';
 import { resolveImageUrl } from '../utils/imageUtils';
 import VendorListPreview from '../components/VendorListPreview';
 
-// Simple debounce utility function
+/**
+ * Custom debounce hook for delayed function execution
+ * @description Delays function execution until after a specified time has elapsed since the last call
+ * @param {T} callback - Function to debounce
+ * @param {number} delay - Delay in milliseconds
+ * @returns {T} Debounced function with cancel method
+ */
 function useDebounce<T extends (...args: any[]) => void>(
   callback: T,
   delay: number
@@ -32,7 +44,16 @@ function useDebounce<T extends (...args: any[]) => void>(
   }, [callback, delay]);
 }
 
-// Typen für die Daten
+/**
+ * Rental unit (Mietfach) data interface for vendor listings
+ * @interface Mietfach
+ * @property {string} id - Unique identifier for the rental unit
+ * @property {string} name - Display name of the rental unit
+ * @property {string} beschreibung - Description of the rental unit
+ * @property {number} preis - Monthly rental price
+ * @property {string} groesse - Size description of the unit
+ * @property {string} standort - Location/site of the rental unit
+ */
 interface Mietfach {
   id: string;
   name: string;
@@ -42,6 +63,17 @@ interface Mietfach {
   standort: string;
 }
 
+/**
+ * Tag system interface for categorizing vendors and products
+ * @interface Tag
+ * @property {string} id - Unique tag identifier
+ * @property {string} name - Display name of the tag
+ * @property {string} slug - URL-friendly tag identifier
+ * @property {string} [description] - Optional tag description
+ * @property {'product' | 'certification' | 'method' | 'feature'} category - Tag category type
+ * @property {string} [color] - Optional display color
+ * @property {string} [icon] - Optional icon representation
+ */
 interface Tag {
   id: string;
   name: string;
@@ -52,6 +84,15 @@ interface Tag {
   icon?: string;
 }
 
+/**
+ * Business details interface for vendor business information
+ * @interface BusinessDetails
+ * @property {Tag[]} certifications - Business certifications and quality marks
+ * @property {Tag[]} productionMethods - Production methods and techniques used
+ * @property {'farm' | 'cooperative' | 'processing' | 'retail'} businessType - Type of business operation
+ * @property {string} farmSize - Size of the farm or production facility
+ * @property {string | null} founded - Year the business was founded
+ */
 interface BusinessDetails {
   certifications: Tag[];
   productionMethods: Tag[];
@@ -60,6 +101,14 @@ interface BusinessDetails {
   founded: string | null;
 }
 
+/**
+ * Location information interface for vendor geographical data
+ * @interface Location
+ * @property {[number, number] | null} coordinates - GPS coordinates [lat, lng]
+ * @property {string} address - Full address string
+ * @property {number | null} deliveryRadius - Delivery radius in kilometers
+ * @property {string[]} deliveryAreas - List of delivery area names
+ */
 interface Location {
   coordinates: [number, number] | null;
   address: string;
@@ -67,6 +116,29 @@ interface Location {
   deliveryAreas: string[];
 }
 
+/**
+ * Direct marketer (Direktvermarkter) complete profile interface
+ * @interface Direktvermarkter
+ * @property {string} id - Unique vendor identifier
+ * @property {string} name - Contact person name
+ * @property {string} unternehmen - Company/business name
+ * @property {string} beschreibung - Business description
+ * @property {string} profilBild - Profile image URL
+ * @property {string} bannerBild - Banner image URL
+ * @property {string} telefon - Phone number
+ * @property {string} email - Email address
+ * @property {object} adresse - Address components
+ * @property {Tag[]} tags - Associated tags for categorization
+ * @property {BusinessDetails} businessDetails - Detailed business information
+ * @property {Location} location - Location and delivery information
+ * @property {string} slogan - Business slogan or tagline
+ * @property {string} website - Website URL
+ * @property {object} socialMedia - Social media links
+ * @property {Mietfach[]} mietfaecher - Rented units information
+ * @property {'verified' | 'pending' | 'unverified'} verifyStatus - Verification status
+ * @property {'trial_active' | 'active' | 'preregistered'} registrationStatus - Registration status
+ * @property {string} registrationDate - Date of registration
+ */
 interface Direktvermarkter {
   id: string;
   name: string;
@@ -100,6 +172,18 @@ interface Direktvermarkter {
   registrationDate: string;
 }
 
+/**
+ * Vendor filtering options interface
+ * @interface VendorFilters
+ * @property {string} search - Search term for name/company/description
+ * @property {string[]} tags - Selected tag IDs or slugs
+ * @property {string[]} standorte - Selected location filters
+ * @property {string} verifyStatus - Verification status filter
+ * @property {string} registrationStatus - Registration status filter
+ * @property {string} sortBy - Field to sort by
+ * @property {'asc' | 'desc'} sortOrder - Sort direction
+ * @property {number} page - Current page number
+ */
 interface VendorFilters {
   search: string;
   tags: string[]; // Tag-IDs oder Slugs
@@ -111,6 +195,16 @@ interface VendorFilters {
   page: number;
 }
 
+/**
+ * Pagination information interface
+ * @interface PaginationInfo
+ * @property {number} currentPage - Current page number
+ * @property {number} totalPages - Total number of pages
+ * @property {number} totalCount - Total number of items
+ * @property {number} limit - Items per page
+ * @property {boolean} hasNextPage - Whether there is a next page
+ * @property {boolean} hasPrevPage - Whether there is a previous page
+ */
 interface PaginationInfo {
   currentPage: number;
   totalPages: number;
@@ -120,6 +214,15 @@ interface PaginationInfo {
   hasPrevPage: boolean;
 }
 
+/**
+ * Available filter options interface from API
+ * @interface AvailableFilters
+ * @property {Tag[]} tags - Currently used tags by vendors
+ * @property {Tag[]} allTags - All available tags in the system
+ * @property {string[]} standorte - Available location filters
+ * @property {string[]} verifyStatuses - Available verification statuses
+ * @property {string[]} registrationStatuses - Available registration statuses
+ */
 interface AvailableFilters {
   tags: Tag[]; // Verwendete Tags
   allTags: Tag[]; // Alle verfügbaren Tags
@@ -128,6 +231,11 @@ interface AvailableFilters {
   registrationStatuses: string[];
 }
 
+/**
+ * Direct marketers overview page component with advanced filtering
+ * @description Comprehensive listing page with search, tag filtering, location filtering, and pagination
+ * @returns {JSX.Element} Complete overview page with vendor cards and filtering interface
+ */
 const DirektvermarkterUebersichtPage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();

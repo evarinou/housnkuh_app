@@ -1,3 +1,9 @@
+/**
+ * @file VendorContest.tsx
+ * @purpose Vendor contest participation component with form submission and contest information display
+ * @created 2025-01-15
+ * @modified 2025-08-05
+ */
 import React, { useState } from 'react';
 import { Award, Send, CheckCircle, AlertCircle, Loader } from 'lucide-react';
 

@@ -1,4 +1,9 @@
-// client/src/components/ContestBanner.tsx
+/**
+ * @file ContestBanner.tsx
+ * @purpose Promotional banner component for vendor contests with dismissible functionality and navigation integration
+ * @created 2025-01-15
+ * @modified 2025-08-05
+ */
 import React, { useState, useEffect } from 'react';
 import { Award, X, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';

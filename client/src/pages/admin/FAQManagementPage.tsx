@@ -1,9 +1,29 @@
+/**
+ * @file FAQManagementPage.tsx
+ * @purpose Admin interface for creating, editing, and managing frequently asked questions (FAQs) with categorization and search functionality
+ * @created 2024-12-10
+ * @modified 2025-08-04
+ */
+
 // client/src/pages/admin/FAQManagementPage.tsx
 import React, { useState, useEffect } from 'react';
 import { HelpCircle, Plus, Edit2, Trash2, Eye, EyeOff, Search } from 'lucide-react';
 import axios from 'axios';
 import { tokenStorage, apiUtils } from '../../utils/auth';
 
+/**
+ * FAQ data structure
+ * @interface FAQ
+ * @property {string} _id - Unique identifier
+ * @property {string} category - FAQ category (Allgemein, Registrierung, etc.)
+ * @property {string} question - FAQ question text (max 500 chars)
+ * @property {string} answer - FAQ answer text (max 5000 chars)
+ * @property {string[]} keywords - Search keywords for FAQ discovery
+ * @property {number} order - Display order priority
+ * @property {boolean} isActive - Whether FAQ is publicly visible
+ * @property {string} createdAt - Creation timestamp
+ * @property {string} updatedAt - Last update timestamp
+ */
 interface FAQ {
   _id: string;
   category: string;
@@ -16,6 +36,13 @@ interface FAQ {
   updatedAt: string;
 }
 
+/**
+ * Admin FAQ management page component
+ * @description Provides full CRUD operations for FAQs with category filtering, keyword search,
+ * active/inactive status toggle, and bulk statistics overview
+ * @returns {React.FC} FAQ management interface
+ * @complexity CRUD operations with real-time search filtering and status management
+ */
 const FAQManagementPage: React.FC = () => {
   const [faqs, setFaqs] = useState<FAQ[]>([]);
   const [loading, setLoading] = useState(true);
@@ -38,6 +65,12 @@ const FAQManagementPage: React.FC = () => {
     fetchFAQs();
   }, []);
 
+  /**
+   * Fetches all FAQs from the admin API endpoint
+   * @description Retrieves complete FAQ list with all metadata for admin management
+   * @async
+   * @returns {Promise<void>} Updates component state with fetched FAQs
+   */
   const fetchFAQs = async () => {
     try {
       const token = tokenStorage.getToken('ADMIN');
@@ -57,6 +90,13 @@ const FAQManagementPage: React.FC = () => {
     }
   };
 
+  /**
+   * Handles FAQ form submission for create/update operations
+   * @description Validates form data, processes keywords, and sends to appropriate API endpoint
+   * @param {React.FormEvent} e - Form submission event
+   * @returns {Promise<void>} Creates/updates FAQ and refreshes list on success
+   * @complexity Validation logic for character limits and required fields
+   */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
@@ -115,6 +155,12 @@ const FAQManagementPage: React.FC = () => {
     }
   };
 
+  /**
+   * Deletes an FAQ after user confirmation
+   * @description Shows confirmation dialog before permanently removing FAQ
+   * @param {string} id - FAQ ID to delete
+   * @returns {Promise<void>} Deletes FAQ and refreshes list on success
+   */
   const handleDelete = async (id: string) => {
     if (!window.confirm('Sind Sie sicher, dass Sie diese FAQ löschen möchten?')) {
       return;
@@ -138,6 +184,12 @@ const FAQManagementPage: React.FC = () => {
     }
   };
 
+  /**
+   * Toggles FAQ active/inactive status
+   * @description Switches FAQ visibility without requiring full edit
+   * @param {string} id - FAQ ID to toggle
+   * @returns {Promise<void>} Updates status and refreshes list
+   */
   const toggleActive = async (id: string) => {
     try {
       const token = tokenStorage.getToken('ADMIN');
@@ -158,6 +210,12 @@ const FAQManagementPage: React.FC = () => {
     }
   };
 
+  /**
+   * Opens modal for creating new FAQ or editing existing one
+   * @description Prepares form state based on whether creating or editing
+   * @param {FAQ} [faq] - Optional FAQ object for editing mode
+   * @returns {void} Shows modal with appropriate form state
+   */
   const openModal = (faq?: FAQ) => {
     if (faq) {
       setEditingFAQ(faq);
@@ -195,6 +253,12 @@ const FAQManagementPage: React.FC = () => {
     setErrors({});
   };
 
+  /**
+   * Filters FAQs based on selected category and search term
+   * @description Searches in question, answer, and keywords fields
+   * @returns {FAQ[]} Filtered FAQ array
+   * @complexity Multi-field search with case-insensitive matching
+   */
   const filteredFAQs = faqs.filter(faq => {
     const matchesCategory = selectedCategory === 'all' || faq.category === selectedCategory;
     const matchesSearch = searchTerm === '' ||

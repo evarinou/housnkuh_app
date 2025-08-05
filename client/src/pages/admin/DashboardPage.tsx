@@ -1,10 +1,21 @@
 // client/src/pages/admin/DashboardPage.tsx
+/**
+ * @file DashboardPage.tsx
+ * @purpose Admin Dashboard interface displaying system overview with statistics, notifications, and recent activity
+ * @created 2025-01-15
+ * @modified 2025-08-04
+ */
+
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Mail, Users, ShoppingBag, Package, Clock, ArrowRight, Trophy, Calendar } from 'lucide-react';
+import { ArrowRight, Mail, Package, ShoppingBag, Clock, Trophy, Users, Calendar } from 'lucide-react';
 import axios from 'axios';
 import LaunchDayMonitor from '../../components/admin/LaunchDayMonitor';
 
+/**
+ * @interface DashboardData
+ * @description Data structure for admin dashboard overview containing system statistics and notifications
+ */
 interface DashboardData {
   newsletter: {
     total: number;
@@ -30,7 +41,10 @@ interface DashboardData {
   }>;
 }
 
-// Statistik-Karte Komponente
+/**
+ * @interface StatCardProps
+ * @description Props interface for dashboard statistic card component
+ */
 interface StatCardProps {
   title: string;
   value: number | string;
@@ -41,6 +55,12 @@ interface StatCardProps {
   subtitle?: React.ReactNode;
 }
 
+/**
+ * @component StatCard
+ * @description Reusable dashboard statistic card displaying metrics with icon and optional link
+ * @param {StatCardProps} props - Component props
+ * @returns {JSX.Element} Formatted statistic card component
+ */
 const StatCard: React.FC<StatCardProps> = React.memo(({ 
   title, 
   value, 
@@ -79,6 +99,12 @@ const StatCard: React.FC<StatCardProps> = React.memo(({
   </div>
 ));
 
+/**
+ * @component DashboardPage
+ * @description Main admin dashboard component displaying system overview, statistics, and recent activity
+ * @complexity HIGH - Manages multiple data sources, real-time updates, and complex UI state
+ * @returns {JSX.Element} Complete dashboard interface with statistics cards, recent activity, and quick actions
+ */
 const DashboardPage: React.FC = React.memo(() => {
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [isLoading, setIsLoading] = useState(true);

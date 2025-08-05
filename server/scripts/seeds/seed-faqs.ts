@@ -114,7 +114,7 @@ const defaultFAQs = [
   {
     category: 'Support',
     question: 'Wie erreiche ich den housnkuh-Support?',
-    answer: 'Unser Support-Team ist per E-Mail unter info@housnkuh.de oder telefonisch unter 0157 35711257 erreichbar. Wir antworten in der Regel innerhalb von 24 Stunden. Für dringende Fälle nutzen Sie bitte das Telefon.',
+    answer: 'Unser Support-Team ist per E-Mail unter info@housnkuh.de oder telefonisch unter 0152 22035788 erreichbar. Wir antworten in der Regel innerhalb von 24 Stunden. Für dringende Fälle nutzen Sie bitte das Telefon.',
     keywords: ['support', 'hilfe', 'kontakt', 'email', 'telefon', 'dringend'],
     order: 13,
     isActive: true

@@ -1,12 +1,8 @@
 /**
- * @file Provider state management service for vendor authentication
- * @description Extracted from VendorAuthContext to provide clean separation of state management logic.
- * This service handles state/actions object creation and memoization for better performance.
- * 
- * Following the established service extraction pattern from S32-S36.
- * 
- * @see Sprint 36 - Provider Architecture Optimization
- * @see M020 - Client Core Architecture Refactoring
+ * @file useProviderState.ts
+ * @purpose Custom hook for vendor authentication state and actions management
+ * @created 2025-01-15
+ * @modified 2025-08-05
  */
 
 import { useMemo } from 'react';
@@ -64,16 +60,16 @@ export interface ProviderStateService {
 }
 
 /**
- * Provider state management service hook
- * 
- * Extracts state and actions object creation from VendorAuthContext
- * for better performance and maintainability.
- * 
- * @returns ProviderStateService interface
+ * Custom hook for vendor authentication state and actions management
+ * @description Provides memoized state and actions object creation for VendorAuthContext
+ * @hook useProviderState
+ * @dependencies useMemo
+ * @returns Provider state service with memoized state and actions creators
  */
 export const useProviderState = (): ProviderStateService => {
   /**
    * Create memoized state object
+   * @description Creates vendor authentication state object with memoization
    */
   const createState = useMemo(() => {
     return (
@@ -93,6 +89,7 @@ export const useProviderState = (): ProviderStateService => {
 
   /**
    * Create memoized actions object
+   * @description Creates vendor authentication actions object with memoization
    */
   const createActions = useMemo(() => {
     return (

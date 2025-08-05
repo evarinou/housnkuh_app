@@ -65,6 +65,28 @@ npm run build-all
 ```
 
 ### Testing
+
+The project uses **co-located tests** - test files are placed alongside their corresponding components and modules for better organization and maintainability.
+
+#### Test Structure
+```
+src/
+  components/
+    MyComponent/
+      MyComponent.tsx
+      MyComponent.test.tsx
+      MyComponent.css
+  services/
+    userService.ts
+    userService.test.ts
+  __tests__/
+    integration/
+      userFlow.test.ts
+    performance/
+      loadTest.test.ts
+```
+
+#### Running Tests
 ```bash
 # Run client tests
 cd client && npm test
@@ -78,7 +100,23 @@ cd server && npm run test:watch
 
 # Run E2E tests
 npm run test:e2e
+
+# Run specific test files
+cd client && npm test -- MyComponent.test.tsx
+cd server && npm test -- userService.test.ts
 ```
+
+#### Test Configuration
+- **Client**: Uses Jest + React Testing Library
+- **Server**: Uses Jest with TypeScript support
+- **E2E**: Uses Playwright (configuration files in root)
+- **Test utilities**: setupTests.ts, jest.config.js preserved in each module
+
+#### Writing Tests
+- Place `.test.tsx` files next to React components
+- Place `.test.ts` files next to TypeScript modules
+- Use `__tests__/` directories only for integration/performance tests
+- Follow naming convention: `ComponentName.test.tsx` or `moduleName.test.ts`
 
 ### Code Quality Checks
 ```bash
@@ -150,22 +188,37 @@ Every file should have a header:
 ```
 
 ### Test Structure
-Tests are co-located with components:
+Tests are co-located with their corresponding components and modules:
 ```
 components/
   MyComponent/
     MyComponent.tsx
     MyComponent.test.tsx
     MyComponent.css
+services/
+  userService.ts
+  userService.test.ts
+__tests__/
+  integration/     # Integration tests only
+  performance/     # Performance tests only
 ```
+
+**Legacy test directories have been removed** - all tests now live alongside their code for better maintainability and discoverability.
 
 ## Common Tasks
 
 ### Adding a New Component
 1. Create component file with documentation header
-2. Create test file alongside
-3. Update relevant Task document in `.task/current/`
-4. Run `npm run update:architecture` if adding to main directories
+2. Create co-located test file alongside (e.g., `MyComponent.test.tsx`)
+3. Follow naming conventions: `ComponentName.tsx` + `ComponentName.test.tsx`
+4. Update relevant Task document in `.task/current/`
+5. Run `npm run update:architecture` if adding to main directories
+
+### Adding a New Service/Utility
+1. Create module file with documentation header
+2. Create co-located test file alongside (e.g., `userService.test.ts`)
+3. Place integration tests in `__tests__/integration/` if needed
+4. Update relevant Task document in `.task/current/`
 
 ### Working with Tasks
 ```bash

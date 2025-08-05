@@ -1,14 +1,28 @@
+/**
+ * @file VendorContractsPage.tsx
+ * @purpose Vendor contracts overview page displaying all active and historical contracts with services and pricing details. Shows vendor's rental agreements with Mietfächer and associated services.
+ * @created 2025-01-15
+ * @modified 2025-08-05
+ */
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useVendorAuth } from '../../contexts/VendorAuthContext';
 import VendorLayout from '../../components/vendor/VendorLayout';
 
+/**
+ * Mietfach (rental unit) interface
+ * @interface Mietfach
+ */
 interface Mietfach {
   _id: string;
   bezeichnung: string;
   typ: string;
 }
 
+/**
+ * Service interface representing a rental service within a contract
+ * @interface Service
+ */
 interface Service {
   mietfach: Mietfach;
   mietbeginn: string;
@@ -17,6 +31,10 @@ interface Service {
   status: 'aktiv' | 'beendet';
 }
 
+/**
+ * Contract interface representing a rental agreement with multiple services
+ * @interface Vertrag
+ */
 interface Vertrag {
   id: string;
   datum: string;
@@ -25,12 +43,29 @@ interface Vertrag {
   gesamtpreis: number;
 }
 
+/**
+ * VendorContractsPage - Displays vendor's rental contracts and services
+ * 
+ * This component provides vendors with:
+ * - Overview of all rental contracts (active and historical)
+ * - Detailed service breakdown for each contract
+ * - Contract status and pricing information
+ * - Navigation to book new Mietfächer if no contracts exist
+ * 
+ * @component
+ * @returns {JSX.Element} The vendor contracts overview page
+ */
 const VendorContractsPage: React.FC = () => {
   const { user } = useVendorAuth();
   const [vertraege, setVertraege] = useState<Vertrag[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  /**
+   * Fetches vendor contracts from the API
+   * @description Retrieves all contracts for the authenticated vendor
+   * @returns {Promise<void>}
+   */
   const fetchContracts = async () => {
     try {
       const token = localStorage.getItem('vendorToken');
@@ -59,11 +94,21 @@ const VendorContractsPage: React.FC = () => {
     }
   }, [user?.id]);
 
+  /**
+   * Formats date string for German locale display
+   * @param {string} dateString - ISO date string to format
+   * @returns {string} Formatted date string in German format
+   */
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('de-DE');
   };
 
+  /**
+   * Formats number as currency in German locale (EUR)
+   * @param {number} amount - Amount to format as currency
+   * @returns {string} Formatted currency string
+   */
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('de-DE', {
       style: 'currency',

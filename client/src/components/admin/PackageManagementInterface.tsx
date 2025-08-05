@@ -1,4 +1,9 @@
-// client/src/components/admin/PackageManagementInterface.tsx
+/**
+ * @file PackageManagementInterface.tsx
+ * @purpose Complete package tracking and management interface with bulk operations and status workflows
+ * @created 2025-01-15
+ * @modified 2025-08-05
+ */
 import React, { useState } from 'react';
 import { 
   Package, 
@@ -14,17 +19,46 @@ import {
 } from 'lucide-react';
 import { PackageTracking } from '../../types/contract.types';
 
+/**
+ * Props for the PackageManagementInterface component
+ * @interface PackageManagementInterfaceProps
+ */
 interface PackageManagementInterfaceProps {
   packages: PackageTracking[];
   onRefresh: () => void;
 }
 
+/**
+ * Action data structure for package status updates
+ * @interface PackageAction
+ */
 interface PackageAction {
   packageId: string;
   action: 'confirm_arrival' | 'confirm_stored' | 'mark_shipped' | 'mark_delivered';
   notes?: string;
 }
 
+/**
+ * Comprehensive package management interface for tracking and updating package status
+ * 
+ * Features:
+ * - Complete package workflow management (expected → arrived → stored → shipped → delivered)
+ * - Bulk operations for multiple packages with selection
+ * - Status-based grouping and display
+ * - Individual and bulk action buttons
+ * - Package type differentiation (Lagerservice vs Versandservice)
+ * - Timestamp tracking for all status changes
+ * - Notes system for documentation
+ * - Confirmation modals for status updates
+ * - Responsive table design with overflow handling
+ * 
+ * @param {PackageManagementInterfaceProps} props - Component props
+ * @param {PackageTracking[]} props.packages - Array of package tracking objects
+ * @param {() => void} props.onRefresh - Callback to refresh package data after updates
+ * @returns {JSX.Element} Package management interface with status workflow
+ * 
+ * @complexity O(n log n) - Package grouping and sorting operations
+ */
 const PackageManagementInterface: React.FC<PackageManagementInterfaceProps> = ({
   packages,
   onRefresh
@@ -34,6 +68,11 @@ const PackageManagementInterface: React.FC<PackageManagementInterfaceProps> = ({
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
 
+  /**
+   * Generates color-coded status badge with icon for package status
+   * @param {string} status - Package status ('erwartet'|'angekommen'|'eingelagert'|'versandt'|'zugestellt')
+   * @returns {JSX.Element} Status badge with appropriate styling and icon
+   */
   const getStatusBadge = (status: string) => {
     const statusConfig = {
       'erwartet': { color: 'bg-gray-100 text-gray-800', icon: Clock, text: 'Erwartet' },
@@ -54,6 +93,11 @@ const PackageManagementInterface: React.FC<PackageManagementInterfaceProps> = ({
     );
   };
 
+  /**
+   * Generates type badge for package service type
+   * @param {string} packageTyp - Package type ('lagerservice'|'versandservice')
+   * @returns {JSX.Element} Type badge with appropriate styling and icon
+   */
   const getTypeBadge = (packageTyp: string) => {
     const typeConfig = {
       'lagerservice': { color: 'bg-orange-100 text-orange-800', icon: Package, text: 'Lagerservice' },
@@ -71,6 +115,11 @@ const PackageManagementInterface: React.FC<PackageManagementInterfaceProps> = ({
     );
   };
 
+  /**
+   * Determines available actions based on package status and type
+   * @param {PackageTracking} pkg - Package tracking object
+   * @returns {Array} Array of available action objects with labels and icons
+   */
   const getAvailableActions = (pkg: PackageTracking) => {
     const actions = [];
 

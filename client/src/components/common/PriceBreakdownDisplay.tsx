@@ -1,27 +1,82 @@
-// client/src/components/common/PriceBreakdownDisplay.tsx
+/**
+ * @file PriceBreakdownDisplay.tsx
+ * @purpose Component for displaying detailed price breakdowns for rental packages and additional services
+ * @created 2025-01-15
+ * @modified 2025-08-05
+ */
+
 import React from 'react';
 import { PriceBreakdown, PriceCalculationService } from '../../services/priceCalculationService';
 
-interface PriceBreakdownProps {
-  breakdown: PriceBreakdown;
-  showDetails?: boolean;
-  className?: string;
-  zusatzleistungen?: {
-    lagerservice: boolean;
-    versandservice: boolean;
-  };
+/**
+ * Additional services configuration for price breakdown display
+ * @interface ZusatzleistungenConfig
+ */
+interface ZusatzleistungenConfig {
+  /** Whether storage service (Lagerservice) is included */
+  lagerservice: boolean;
+  /** Whether shipping service (Versandservice) is included */
+  versandservice: boolean;
 }
 
+/**
+ * Props interface for PriceBreakdownDisplay component
+ * @interface PriceBreakdownProps
+ */
+interface PriceBreakdownProps {
+  /** Price breakdown data containing all cost components */
+  breakdown: PriceBreakdown;
+  /** Whether to show detailed breakdown sections (defaults to true) */
+  showDetails?: boolean;
+  /** Additional CSS classes to apply to the root element */
+  className?: string;
+  /** Configuration for additional services to display */
+  zusatzleistungen?: ZusatzleistungenConfig;
+}
+
+/**
+ * Price breakdown display component that shows detailed cost structure for rental packages.
+ * 
+ * Features:
+ * - Hierarchical cost breakdown (packages, addons, services)
+ * - German currency formatting (€)
+ * - Collapsible details view
+ * - Visual indicators for different service types
+ * - Discount calculation and display
+ * - Monthly total with prominent styling
+ * - Tailwind CSS styling with semantic colors
+ * 
+ * Sections Displayed:
+ * - Mietfächer: Base package costs and addon costs
+ * - Zusatzleistungen: Additional services (storage, shipping)
+ * - Zwischensumme: Subtotal before discounts
+ * - Rabatt: Discount amount and percentage
+ * - Gesamt: Final monthly total
+ * 
+ * @component
+ * @param {PriceBreakdownProps} props - Component props
+ * @returns {JSX.Element} Rendered price breakdown display
+ */
 export const PriceBreakdownDisplay: React.FC<PriceBreakdownProps> = ({
   breakdown,
   showDetails = true,
   className = '',
   zusatzleistungen
 }) => {
+  /**
+   * Formats a price number to German currency format with Euro symbol
+   * @param {number} price - Price value to format
+   * @returns {string} Formatted price string (e.g., "25.50€")
+   */
   const formatPrice = (price: number): string => {
     return `${price.toFixed(2)}€`;
   };
 
+  /**
+   * Formats a price change with appropriate sign prefix for positive values
+   * @param {number} price - Price change value to format
+   * @returns {string} Formatted price change string (e.g., "+5.00€" or "-2.50€")
+   */
   const formatPriceChange = (price: number): string => {
     return price > 0 ? `+${formatPrice(price)}` : formatPrice(price);
   };

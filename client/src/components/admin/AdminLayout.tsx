@@ -1,19 +1,49 @@
-// client/src/components/admin/AdminLayout.tsx
+/**
+ * @file AdminLayout.tsx
+ * @purpose Main admin layout wrapper providing navigation sidebar and responsive layout for all admin pages
+ * @created 2025-01-15
+ * @modified 2025-08-05
+ */
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Menu, X, Home, Users, Mail, Package, FileText, LogOut, MessageSquare, Calendar, Trophy, Settings, Tag, HelpCircle, DollarSign, Boxes } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import logo from '../../assets/images/logo.svg';
 
+/**
+ * Props for the AdminLayout component
+ * @interface AdminLayoutProps
+ */
 interface AdminLayoutProps {
+  /** React children to be rendered within the layout */
   children: React.ReactNode;
 }
 
+/**
+ * Admin layout wrapper component providing responsive navigation sidebar and header
+ * 
+ * Features:
+ * - Responsive mobile/desktop sidebar navigation
+ * - Complete admin navigation menu with all admin routes
+ * - User authentication display and logout functionality
+ * - Mobile hamburger menu with overlay
+ * - Fixed layout structure for consistent admin UX
+ * 
+ * @param {AdminLayoutProps} props - Component props
+ * @param {React.ReactNode} props.children - Content to render within the layout
+ * @returns {JSX.Element} Admin layout with navigation and content area
+ * 
+ * @complexity O(1) - Static layout rendering
+ */
 const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
+  /**
+   * Handles user logout by clearing authentication and redirecting to login
+   * @returns {void}
+   */
   const handleLogout = () => {
     logout();
     navigate('/admin/login');

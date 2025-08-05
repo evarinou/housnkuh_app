@@ -1,8 +1,18 @@
-// client/src/pages/admin/NewsletterPage.tsx
+/**
+ * @file NewsletterPage.tsx
+ * @purpose Newsletter subscription management interface for admin operations and subscriber analytics
+ * @created 2025-01-15
+ * @modified 2025-08-04
+ */
+
 import React, { useState, useEffect } from 'react';
 import { Trash2, Filter, Download, Check, X, Search } from 'lucide-react';
 import axios from 'axios';
 
+/**
+ * @interface Subscriber
+ * @description Data structure for newsletter subscriber information
+ */
 interface Subscriber {
   _id: string;
   kontakt: {
@@ -16,6 +26,12 @@ interface Subscriber {
   updatedAt: string;
 }
 
+/**
+ * @component NewsletterPage
+ * @description Newsletter subscriber management interface with filtering, search, and CSV export functionality
+ * @complexity HIGH - Complex filtering logic, CSV export, async operations, and comprehensive subscriber management
+ * @returns {JSX.Element} Complete newsletter management interface with subscriber table and administrative functions
+ */
 const NewsletterPage: React.FC = () => {
   const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
   const [filteredSubscribers, setFilteredSubscribers] = useState<Subscriber[]>([]);

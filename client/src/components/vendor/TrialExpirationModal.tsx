@@ -1,8 +1,25 @@
+/**
+ * @file TrialExpirationModal.tsx
+ * @purpose Modal component for trial expiration warnings and upgrade prompts with contextual messaging
+ * @created 2025-01-15
+ * @modified 2025-08-05
+ */
+
 import React, { useState } from 'react';
 import { X, AlertTriangle, Clock, CheckCircle } from 'lucide-react';
 import { useVendorAuth } from '../../contexts/VendorAuthContext';
 import './TrialExpirationModal.css';
 
+/**
+ * Props interface for the TrialExpirationModal component
+ * @interface TrialExpirationModalProps
+ * @property {boolean} isOpen - Modal visibility state
+ * @property {function} onClose - Callback function to close modal
+ * @property {function} onUpgrade - Callback function for upgrade action
+ * @property {function} [onExtendTrial] - Optional callback for trial extension
+ * @property {string} [expirationDate] - Trial expiration date (ISO string)
+ * @property {number} [daysRemaining] - Days remaining in trial period (default: 0)
+ */
 interface TrialExpirationModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -12,6 +29,54 @@ interface TrialExpirationModalProps {
   daysRemaining?: number;
 }
 
+/**
+ * TrialExpirationModal component providing contextual trial expiration warnings and upgrade prompts
+ * 
+ * @component
+ * @param {TrialExpirationModalProps} props - Component props containing state and callbacks
+ * @returns {JSX.Element | null} Contextual expiration modal or null when closed
+ * 
+ * @description
+ * Comprehensive modal component that displays contextual trial expiration warnings based on
+ * remaining time. Provides upgrade prompts, trial extension options, and feature benefits.
+ * Adapts messaging, styling, and urgency based on days remaining.
+ * 
+ * @features
+ * - Contextual messaging based on expiration urgency
+ * - Dynamic styling (expired: red, urgent: orange, warning: blue)
+ * - Feature benefits presentation for paid plans
+ * - Optional trial extension functionality
+ * - Access restriction warnings for expired trials
+ * - Loading states during async operations
+ * - German localized content
+ * 
+ * @urgency_levels
+ * - Expired (≤0 days): Red styling, access restrictions, urgent upgrade required
+ * - Urgent (≤1 day): Orange styling, last chance messaging, immediate action needed
+ * - Warning (≤3 days): Blue styling, preparation messaging, upgrade encouraged
+ * - Info (>3 days): Blue styling, informational messaging, exploration encouraged
+ * 
+ * @modal_states
+ * - expired: Red theme, AlertTriangle icon, access restrictions shown
+ * - urgent: Orange theme, Clock icon, last chance messaging
+ * - warning: Blue theme, CheckCircle icon, preparation messaging
+ * - info: Blue theme, CheckCircle icon, exploration messaging
+ * 
+ * @feature_benefits
+ * - Unlimited access to all features
+ * - Priority support
+ * - Advanced sales tools
+ * - Detailed analytics and reports
+ * - Ad-free experience
+ * 
+ * @accessibility
+ * - ARIA labels and descriptions
+ * - Keyboard navigation support
+ * - Focus management within modal
+ * - Clear visual hierarchy and contrast
+ * 
+ * @complexity O(1) - Fixed rendering regardless of trial data
+ */
 export const TrialExpirationModal: React.FC<TrialExpirationModalProps> = ({
   isOpen,
   onClose,

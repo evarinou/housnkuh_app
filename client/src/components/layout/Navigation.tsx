@@ -1,4 +1,9 @@
-// client/src/components/layout/Navigation.tsx oder Navbar.tsx
+/**
+ * @file Navigation.tsx
+ * @purpose Main navigation component with responsive design, authentication state, and scroll effects
+ * @created 2025-01-15
+ * @modified 2025-08-05
+ */
 import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import { Menu, X, User, LogIn } from 'lucide-react';
@@ -7,7 +12,16 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useVendorAuth } from '../../contexts/VendorAuthContext';
 import { resolveImageUrl } from '../../utils/imageUtils';
 
-// Safe hook wrappers that handle missing context
+/**
+ * Safe hook wrappers that handle missing context scenarios
+ * 
+ * These wrappers prevent crashes when auth contexts are not available
+ * in certain components or during testing scenarios.
+ */
+/**
+ * Safe wrapper for admin authentication context
+ * @returns {object} Admin authentication state or fallback values
+ */
 const useSafeAuth = () => {
   try {
     return useAuth();
@@ -16,6 +30,10 @@ const useSafeAuth = () => {
   }
 };
 
+/**
+ * Safe wrapper for vendor authentication context
+ * @returns {object} Vendor authentication state or fallback values
+ */
 const useSafeVendorAuth = () => {
   try {
     return useVendorAuth();
@@ -24,6 +42,19 @@ const useSafeVendorAuth = () => {
   }
 };
 
+/**
+ * Main navigation component with responsive design and authentication integration
+ * 
+ * Features:
+ * - Responsive design with mobile hamburger menu
+ * - Scroll-based styling changes (background opacity and padding)
+ * - Dual authentication support (admin and vendor contexts)
+ * - Profile image display for authenticated vendors
+ * - Dynamic navigation based on authentication state
+ * - Accessible mobile menu with proper ARIA attributes
+ * 
+ * @returns {JSX.Element} The navigation bar with all interactive elements
+ */
 const Navigation: React.FC = () => {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [scrolled, setScrolled] = useState<boolean>(false);

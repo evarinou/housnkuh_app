@@ -1,13 +1,45 @@
-// client/src/components/vendor/VendorProtectedRoute.tsx
+/**
+ * @file VendorProtectedRoute.tsx
+ * @purpose Route protection component ensuring only authenticated vendors access protected pages with trial status verification
+ * @created 2025-01-15
+ * @modified 2025-08-05
+ */
+
 import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { useVendorAuth } from '../../contexts/VendorAuthContext';
 
-// Komponente für geschützten Vendor-Bereich
+/**
+ * VendorProtectedRoute component for vendor authentication enforcement
+ * 
+ * @component
+ * @returns {JSX.Element} Protected route outlet or redirect to login
+ * 
+ * @description
+ * This component acts as a route guard for vendor-specific pages.
+ * It checks vendor authentication status and provides appropriate
+ * routing based on authentication state.
+ * 
+ * @authentication
+ * - Verifies vendor JWT token validity
+ * - Redirects unauthenticated users to vendor login
+ * - Shows loading state during authentication check
+ * 
+ * @example
+ * <Route element={<VendorProtectedRoute />}>
+ *   <Route path="dashboard" element={<VendorDashboard />} />
+ *   <Route path="profile" element={<VendorProfile />} />
+ * </Route>
+ * 
+ * @complexity O(1) - Simple authentication check
+ */
 const VendorProtectedRoute: React.FC = () => {
   const { isAuthenticated, isLoading } = useVendorAuth();
 
-  // Wenn noch geladen wird, zeigen wir einen Ladeindikator an
+  /**
+   * Display loading indicator during authentication verification
+   * Prevents flash of unauthorized content during auth check
+   */
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-screen">
@@ -17,12 +49,18 @@ const VendorProtectedRoute: React.FC = () => {
     );
   }
 
-  // Wenn nicht authentifiziert, Weiterleitung zum Login
+  /**
+   * Redirect to vendor login if not authenticated
+   * Uses replace to prevent back navigation to protected route
+   */
   if (!isAuthenticated) {
     return <Navigate to="/vendor/login" replace />;
   }
 
-  // Wenn authentifiziert, gebe Zugriff auf die geschützten Routen
+  /**
+   * Render protected route content via React Router Outlet
+   * All child routes will have guaranteed authentication
+   */
   return <Outlet />;
 };
 

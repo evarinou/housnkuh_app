@@ -164,7 +164,7 @@ const emailTemplates = [
     
     <div class="contact-info">
       <h4>Kontakt & Support:</h4>
-      <p>📞 Telefon: 0157 35711257</p>
+      <p>📞 Telefon: 0152 22035788</p>
       <p>✉️ E-Mail: eva-maria.schaller@housnkuh.de</p>
       <p>📍 Adresse: Strauer Str. 15, 96317 Kronach</p>
     </div>
@@ -209,7 +209,7 @@ deine Vorteile im Probemonat:
 - Jederzeit kündbar ohne Kosten
 
 Kontakt & Support:
-📞 Telefon: 0157 35711257
+📞 Telefon: 0152 22035788
 ✉️ E-Mail: eva-maria.schaller@housnkuh.de
 📍 Adresse: Strauer Str. 15, 96317 Kronach
 
@@ -391,7 +391,7 @@ Kontakt & Support:
     
     <div class="contact-info">
       <h4>Bei weiteren Fragen steht dir Eva-Maria Schaller gerne zur Verfügung:</h4>
-      <p>📞 Telefon: 0157 35711257</p>
+      <p>📞 Telefon: 0152 22035788</p>
       <p>✉️ E-Mail: eva-maria.schaller@housnkuh.de</p>
       <p>📍 Adresse: Strauer Str. 15, 96317 Kronach</p>
     </div>
@@ -593,7 +593,7 @@ Kontakt & Support:
     
     <div class="contact-info">
       <h4>Bei Fragen steht dir Eva-Maria Schaller gerne zur Verfügung:</h4>
-      <p>📞 Telefon: 0157 35711257</p>
+      <p>📞 Telefon: 0152 22035788</p>
       <p>✉️ E-Mail: eva-maria.schaller@housnkuh.de</p>
       <p>📍 Adresse: Strauer Str. 15, 96317 Kronach</p>
     </div>
@@ -1063,7 +1063,7 @@ Ihr housnkuh Team
     
     <div class="contact-info">
       <h4 style="color: #09122c;">Kontakt & Support:</h4>
-      <p style="color: #333; margin: 5px 0;">📞 Telefon: 0157 35711257</p>
+      <p style="color: #333; margin: 5px 0;">📞 Telefon: 0152 22035788</p>
       <p style="color: #333; margin: 5px 0;">✉️ E-Mail: eva-maria.schaller@housnkuh.de</p>
       <p style="color: #333; margin: 5px 0;">📍 Adresse: Strauer Str. 15, 96317 Kronach</p>
     </div>
@@ -1147,7 +1147,7 @@ Ihr housnkuh Team
       <h4 style="color: #09122c; margin-top: 0;">❌ Kündigen?</h4>
       <p style="margin: 10px 0;">Falls du kündigen möchtest, kontaktiere uns bis spätestens <strong>{{cancellationDeadline}}</strong>:</p>
       <ul style="margin: 10px 0; padding-left: 20px;">
-        <li>📞 Telefon: 0157 35711257</li>
+        <li>📞 Telefon: 0152 22035788</li>
         <li>✉️ E-Mail: eva-maria.schaller@housnkuh.de</li>
       </ul>
       
@@ -1170,7 +1170,7 @@ Ihr housnkuh Team
     
     <div class="contact-info">
       <h4 style="color: #09122c;">Fragen? Wir helfen gerne!</h4>
-      <p style="color: #333; margin: 5px 0;">📞 Telefon: 0157 35711257</p>
+      <p style="color: #333; margin: 5px 0;">📞 Telefon: 0152 22035788</p>
       <p style="color: #333; margin: 5px 0;">✉️ E-Mail: eva-maria.schaller@housnkuh.de</p>
       <p style="color: #333; margin: 5px 0;">📍 Adresse: Strauer Str. 15, 96317 Kronach</p>
     </div>
@@ -1298,7 +1298,7 @@ Ihr housnkuh Team
     
     <div class="contact-info">
       <h4 style="color: #09122c;">Bei Fragen sind wir da!</h4>
-      <p style="color: #333; margin: 5px 0;">📞 Telefon: 0157 35711257</p>
+      <p style="color: #333; margin: 5px 0;">📞 Telefon: 0152 22035788</p>
       <p style="color: #333; margin: 5px 0;">✉️ E-Mail: eva-maria.schaller@housnkuh.de</p>
       <p style="color: #333; margin: 5px 0;">📍 Adresse: Strauer Str. 15, 96317 Kronach</p>
     </div>
@@ -1427,7 +1427,7 @@ Ihr housnkuh Team
     
     <div class="contact-info">
       <h4 style="color: #09122c;">Kontakt für Rückfragen:</h4>
-      <p style="color: #333; margin: 5px 0;">📞 Telefon: 0157 35711257</p>
+      <p style="color: #333; margin: 5px 0;">📞 Telefon: 0152 22035788</p>
       <p style="color: #333; margin: 5px 0;">✉️ E-Mail: eva-maria.schaller@housnkuh.de</p>
       <p style="color: #333; margin: 5px 0;">📍 Adresse: Strauer Str. 15, 96317 Kronach</p>
     </div>
@@ -1601,7 +1601,7 @@ Ihr housnkuh Team
     
     <div class="contact-info">
       <h4 style="color: #09122c;">Kontakt & Support:</h4>
-      <p style="color: #333; margin: 5px 0;">📞 Telefon: 0157 35711257</p>
+      <p style="color: #333; margin: 5px 0;">📞 Telefon: 0152 22035788</p>
       <p style="color: #333; margin: 5px 0;">✉️ E-Mail: eva-maria.schaller@housnkuh.de</p>
       <p style="color: #333; margin: 5px 0;">📍 Adresse: Strauer Str. 15, 96317 Kronach</p>
     </div>

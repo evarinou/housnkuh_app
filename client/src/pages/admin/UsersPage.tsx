@@ -1,9 +1,20 @@
 // client/src/pages/admin/UsersPage.tsx
+/**
+ * @file UsersPage.tsx
+ * @purpose User management interface for admin operations including user creation, editing, and role management
+ * @created 2025-01-15
+ * @modified 2025-08-04
+ */
+
 import React, { useState, useEffect } from 'react';
-import { User, Search, Filter, Edit, Trash2, Plus, UserCheck, UserX, Eye, EyeOff, Building, CheckCircle, AlertCircle, XCircle } from 'lucide-react';
+import { Eye, EyeOff, Edit, Trash2, Plus, Users, Search, Filter, Mail, Check, X, CheckCircle, AlertCircle, XCircle, User, UserCheck, UserX, Building } from 'lucide-react';
 import axios from 'axios';
 import VendorDetailModal from '../../components/admin/VendorDetailModal';
 
+/**
+ * @interface UserData
+ * @description Data structure for user information in the management system
+ */
 interface UserData {
   _id: string;
   username: string;
@@ -17,6 +28,12 @@ interface UserData {
   registrationStatus?: string;
 }
 
+/**
+ * @component UsersPage
+ * @description User management interface providing CRUD operations for system users
+ * @complexity HIGH - Complex state management, user operations, role handling, and real-time updates
+ * @returns {JSX.Element} Complete user management interface with listing, creation, and editing capabilities
+ */
 const UsersPage: React.FC = () => {
   const [users, setUsers] = useState<UserData[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<UserData[]>([]);

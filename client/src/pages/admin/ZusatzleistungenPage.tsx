@@ -1,3 +1,10 @@
+/**
+ * @file ZusatzleistungenPage.tsx
+ * @purpose Admin interface for managing additional services (Lager/Versand) with contract tracking and package management
+ * @created 2024-12-03
+ * @modified 2025-08-04
+ */
+
 // client/src/pages/admin/ZusatzleistungenPage.tsx
 import React, { useState, useEffect } from 'react';
 import { Package, Search, Filter, Download, RefreshCw } from 'lucide-react';
@@ -5,12 +12,22 @@ import ZusatzleistungenOverview from '../../components/admin/ZusatzleistungenOve
 import PackageManagementInterface from '../../components/admin/PackageManagementInterface';
 import { Contract, PackageTracking } from '../../types/contract.types';
 
+/**
+ * Filter criteria for additional services
+ * @interface ZusatzleistungenFilter
+ */
 interface ZusatzleistungenFilter {
   service_type?: 'lager' | 'versand' | '';
   status?: 'active' | 'inactive' | 'pending' | '';
   search?: string;
 }
 
+/**
+ * Admin additional services management page
+ * @description Manages Lager and Versand services with dual-tab interface for overview and package tracking
+ * @returns {React.FC} Additional services management interface
+ * @complexity Complex business logic with filtering, dual-tab interface, and service management
+ */
 const ZusatzleistungenPage: React.FC = () => {
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [packages, setPackages] = useState<PackageTracking[]>([]);
@@ -23,6 +40,14 @@ const ZusatzleistungenPage: React.FC = () => {
     search: ''
   });
 
+  /**
+   * Fetches contracts with additional services from the API
+   * @description Retrieves all contracts that include Lager or Versand services,
+   * with filtering and package extraction capabilities
+   * @async
+   * @returns {Promise<void>} Updates component state with contracts and packages
+   * @complexity Filters contracts and extracts package data for separate display
+   */
   const fetchContracts = async () => {
     try {
       setLoading(true);
@@ -75,14 +100,29 @@ const ZusatzleistungenPage: React.FC = () => {
     fetchContracts();
   }, [filters]);
 
+  /**
+   * Updates filter criteria for contract listing
+   * @param {Partial<ZusatzleistungenFilter>} newFilters - New filter values to merge
+   * @returns {void} Updates filter state which triggers data refetch
+   */
   const handleFilterChange = (newFilters: Partial<ZusatzleistungenFilter>) => {
     setFilters(prev => ({ ...prev, ...newFilters }));
   };
 
+  /**
+   * Refreshes contract and package data
+   * @returns {void} Triggers data refetch
+   */
   const handleRefresh = () => {
     fetchContracts();
   };
 
+  /**
+   * Exports contract data as CSV file
+   * @description Downloads filtered contract data in CSV format with current filters applied
+   * @async
+   * @returns {Promise<void>} Triggers CSV download in browser
+   */
   const handleExport = async () => {
     try {
       const queryParams = new URLSearchParams();

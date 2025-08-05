@@ -1,7 +1,19 @@
-// src/components/layout/Features.tsx
+/**
+ * @file Features.tsx
+ * @purpose Features showcase component displaying platform benefits with animated cards and icons
+ * @created 2025-01-15
+ * @modified 2025-08-05
+ */
 import React from 'react';
 import { Clock, MapPin, Heart, Store, ShoppingBag, Users } from 'lucide-react';
 
+/**
+ * Props for individual feature card component
+ * @param icon - Lucide React icon component to display
+ * @param title - Feature title text
+ * @param description - Feature description text
+ * @param iconBgColor - Optional background color for icon container
+ */
 interface FeatureCardProps {
   icon: React.ElementType;
   title: string;
@@ -9,7 +21,11 @@ interface FeatureCardProps {
   iconBgColor?: string;
 }
 
-// Feature Card Komponente mit Animation und Hover-Effekt
+/**
+ * Individual feature card with hover animations and accessible design
+ * @param props - Feature card properties including icon, title, and description
+ * @returns {JSX.Element} Animated feature card with icon and text
+ */
 const FeatureCard: React.FC<FeatureCardProps> = ({ 
   icon: Icon, 
   title, 
@@ -28,6 +44,19 @@ const FeatureCard: React.FC<FeatureCardProps> = ({
 };
 
 // Hauptkomponente mit gestaffelter Animation
+/**
+ * Main features showcase component displaying platform benefits in a responsive grid.
+ * 
+ * Features displayed:
+ * - Extended opening hours for customer convenience  
+ * - Regional focus connecting local producers and customers
+ * - Community building through local food networks
+ * - Modern store technology and digital solutions
+ * - Convenient shopping experience with delivery options
+ * - Growing vendor community with business opportunities
+ * 
+ * @returns {JSX.Element} Features section with animated cards and responsive layout
+ */
 const Features: React.FC = () => {
   const featuresData = [
     {

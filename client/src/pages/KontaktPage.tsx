@@ -1,8 +1,19 @@
-// client/src/pages/KontaktPage.tsx
+/**
+ * @file KontaktPage.tsx
+ * @purpose Contact page displaying contact form, business information, and location map
+ * @created 2024-01-01
+ * @modified 2025-08-05
+ */
+
 import React from 'react';
 import ContactForm from '../components/ContactForm';
 import SimpleMapComponent from '../components/SimpleMapComponent';
 
+/**
+ * Contact page component for Housnkuh marketplace
+ * @description Displays contact form, business information, opening hours, and interactive map
+ * @returns {JSX.Element} Complete contact page with form and business details
+ */
 const KontaktPage: React.FC = () => {
   return (
     <div className="container mx-auto p-4 pb-12">
@@ -29,7 +40,7 @@ const KontaktPage: React.FC = () => {
             <div className="mb-4">
               <h3 className="text-lg font-semibold text-primary-800 mb-2">Telefon:</h3>
               <p className="text-gray-700">
-                <a href="tel:015735711257" className="hover:text-primary-600 transition duration-300">0157 35711257</a>
+                <a href="tel:015222035788" className="hover:text-primary-600 transition duration-300">0152 22035788</a>
               </p>
             </div>
             

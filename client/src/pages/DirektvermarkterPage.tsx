@@ -1,11 +1,24 @@
-// client/src/pages/DirektvermarkterPage.tsx
+/**
+ * @file DirektvermarkterPage.tsx
+ * @purpose Information page for direct marketers (Direktvermarkter) showcasing platform features and benefits
+ * @created 2024-01-01
+ * @modified 2025-08-05
+ */
+
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, List, MapPin, Users, ShoppingBag, Star } from 'lucide-react';
 import { motion, useAnimation } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 
-// Feature Card Component
+/**
+ * Props interface for FeatureCard component
+ * @interface FeatureCardProps
+ * @property {React.ComponentType<any>} icon - Icon component to display
+ * @property {string} title - Feature title text
+ * @property {string} description - Feature description text
+ * @property {number} delay - Animation delay multiplier
+ */
 interface FeatureCardProps {
   icon: React.ComponentType<any>;
   title: string;
@@ -13,6 +26,12 @@ interface FeatureCardProps {
   delay: number;
 }
 
+/**
+ * Animated feature card component with scroll-triggered animations
+ * @description Displays a feature with icon, title, and description with staggered animation on scroll
+ * @param {FeatureCardProps} props - Component props
+ * @returns {JSX.Element} Animated feature card
+ */
 const FeatureCard: React.FC<FeatureCardProps> = ({ icon: Icon, title, description, delay }) => {
   const controls = useAnimation();
   const [ref, inView] = useInView({ threshold: 0.2, triggerOnce: true });
@@ -43,6 +62,11 @@ const FeatureCard: React.FC<FeatureCardProps> = ({ icon: Icon, title, descriptio
   );
 };
 
+/**
+ * Direktvermarkter information page component
+ * @description Main page showcasing direct marketers with hero section, feature cards, and call-to-action
+ * @returns {JSX.Element} Complete Direktvermarkter information page with navigation options
+ */
 const DirektvermarkterPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">

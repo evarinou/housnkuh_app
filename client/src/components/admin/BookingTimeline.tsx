@@ -1,8 +1,18 @@
+/**
+ * @file BookingTimeline.tsx
+ * @purpose Visual timeline component for displaying booking periods with progress indicators and status tracking
+ * @created 2025-01-15
+ * @modified 2025-08-05
+ */
 import React from 'react';
 import { format, addMonths, isBefore, isAfter, differenceInDays } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Calendar, Clock, CheckCircle } from 'lucide-react';
 
+/**
+ * Props for the BookingTimeline component
+ * @interface BookingTimelineProps
+ */
 interface BookingTimelineProps {
   startDate: Date;
   duration: number;
@@ -14,6 +24,30 @@ interface BookingTimelineProps {
   status?: 'scheduled' | 'active' | 'completed';
 }
 
+/**
+ * Visual timeline component for booking period visualization and status tracking
+ * 
+ * Features:
+ * - Interactive timeline visualization with progress bar
+ * - Real-time status indicators (scheduled/active/completed)
+ * - Date-based calculations using date-fns
+ * - Progress visualization during active bookings
+ * - Status-based color coding and icons
+ * - Countdown displays for upcoming and ending bookings
+ * - Mietfach information display
+ * - German locale integration
+ * - Responsive grid layout
+ * - Alert notifications for soon-starting/ending bookings
+ * 
+ * @param {BookingTimelineProps} props - Component props
+ * @param {Date} props.startDate - Booking start date
+ * @param {number} props.duration - Booking duration in months
+ * @param {Object} [props.mietfach] - Optional Mietfach details
+ * @param {('scheduled'|'active'|'completed')} [props.status='scheduled'] - Booking status
+ * @returns {JSX.Element} Timeline visualization with status and progress
+ * 
+ * @complexity O(1) - Simple date calculations and rendering
+ */
 const BookingTimeline: React.FC<BookingTimelineProps> = ({
   startDate,
   duration,

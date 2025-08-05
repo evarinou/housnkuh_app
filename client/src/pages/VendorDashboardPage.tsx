@@ -1,4 +1,10 @@
-// client/src/pages/VendorDashboardPage.tsx
+/**
+ * @file VendorDashboardPage.tsx
+ * @purpose Main vendor dashboard page displaying trial status, bookings, profile, and upcoming features
+ * @created 2024-01-01
+ * @modified 2025-08-05
+ */
+
 import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { User, Package, Calendar, AlertTriangle, Clock, XCircle, CheckCircle, ShoppingCart, BarChart3, FileText, Receipt } from 'lucide-react';
@@ -13,6 +19,11 @@ import PackageTrackingWidget from '../components/vendor/PackageTrackingWidget';
 import useDashboardMessages from '../hooks/useDashboardMessages';
 import axios from 'axios';
 
+/**
+ * Vendor dashboard page component with comprehensive business management features
+ * @description Main dashboard for direct marketers showing trial status, bookings, profile management, and upcoming features
+ * @returns {JSX.Element} Complete vendor dashboard with trial management, booking overview, and feature widgets
+ */
 const VendorDashboardPage: React.FC = () => {
   const { user, isAuthenticated, isLoading } = useVendorAuth();
   const navigate = useNavigate();

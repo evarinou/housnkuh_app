@@ -1,8 +1,28 @@
-// client/src/components/NewsletterSignup.tsx - Debug-Version
+/**
+ * @file NewsletterSignup.tsx
+ * @purpose Newsletter subscription component with customer/vendor type selection, validation, and API integration
+ * @created 2025-01-15
+ * @modified 2025-08-05
+ */
 import React, { useState } from 'react';
 import { Send, Check, AlertCircle } from 'lucide-react';
 import axios from 'axios';
 
+/**
+ * Newsletter subscription component with type selection and comprehensive status handling.
+ * 
+ * Features:
+ * - Email and name collection with validation
+ * - Customer/vendor type selection for targeted newsletters
+ * - Form submission with loading states
+ * - Success/error message display with visual feedback
+ * - Debug information display for development
+ * - Email format validation
+ * - API integration with newsletter service
+ * - Responsive design with accessibility features
+ * 
+ * @returns {JSX.Element} Newsletter signup form with type selection and status feedback
+ */
 const NewsletterSignup: React.FC = () => {
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');

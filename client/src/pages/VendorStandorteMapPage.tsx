@@ -1,16 +1,40 @@
-// client/src/pages/VendorStandorteMapPage.tsx
+/**
+ * @file VendorStandorteMapPage.tsx
+ * @purpose Interactive map displaying vendor locations with filtering and detailed information
+ * @created 2024-01-01
+ * @modified 2025-08-05
+ */
+
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { MapPin, Search, Phone, Info, ArrowLeft, ChevronDown, ChevronUp, Filter } from 'lucide-react';
 import axios from 'axios';
 import SimpleMapComponent from '../components/SimpleMapComponent';
 
-// Typen für die Standortdaten
+/**
+ * Geographic coordinates for vendor locations
+ * @property {number} lat - Latitude coordinate
+ * @property {number} lng - Longitude coordinate
+ */
 interface LocationCoordinates {
   lat: number;
   lng: number;
 }
 
+/**
+ * Vendor location data structure
+ * @property {string} id - Unique identifier for the vendor location
+ * @property {string} name - Display name of the vendor location
+ * @property {string} adresse - Street address
+ * @property {string} plz - Postal code (PLZ)
+ * @property {string} ort - City/town name
+ * @property {string} beschreibung - Location description
+ * @property {string} telefon - Contact phone number
+ * @property {LocationCoordinates} koordinaten - Geographic coordinates
+ * @property {string[]} kategorien - Available product categories
+ * @property {string[]} direktvermarkter - List of direct marketers at this location
+ * @property {boolean} aktiviert - Whether the location is active/available
+ */
 interface VendorStandort {
   id: string;
   name: string;
@@ -25,6 +49,11 @@ interface VendorStandort {
   aktiviert: boolean;
 }
 
+/**
+ * Vendor locations map page component with interactive filtering and selection
+ * @description Map-based interface for browsing vendor locations with search, filtering, and detailed views
+ * @returns {JSX.Element} Interactive map page with vendor location listings and filtering options
+ */
 const VendorStandorteMapPage: React.FC = () => {
   // State für Standorte und Filter
   const [standorte, setStandorte] = useState<VendorStandort[]>([]);

@@ -1,8 +1,26 @@
+/**
+ * @file TrialBookingConfirmation.tsx
+ * @purpose Trial booking confirmation component with terms acceptance and success states for trial management
+ * @created 2025-01-15
+ * @modified 2025-08-05
+ */
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Gift, CheckCircle, Info, Calendar, Euro, Star } from 'lucide-react';
 import { useVendorAuth } from '../../contexts/VendorAuthContext';
 
+/**
+ * Interface for booking data required for trial confirmation
+ * @interface BookingData
+ * @property {string} mietfachNummer - Display number of the Mietfach
+ * @property {string} mietfachId - Unique identifier for the Mietfach
+ * @property {string} startdatum - Booking start date (ISO string)
+ * @property {number} preis - Regular monthly price after trial
+ * @property {string} kategorie - Mietfach category/type
+ * @property {string} [groesse] - Optional size information
+ * @property {string[]} [features] - Optional array of Mietfach features
+ */
 interface BookingData {
   mietfachNummer: string;
   mietfachId: string;
@@ -13,15 +31,56 @@ interface BookingData {
   features?: string[];
 }
 
+/**
+ * Props interface for the TrialBookingConfirmation component
+ * @interface TrialBookingConfirmationProps
+ * @property {BookingData} booking - Complete booking data for confirmation
+ * @property {function} [onBack] - Optional callback for back navigation
+ */
 interface TrialBookingConfirmationProps {
   booking: BookingData;
   onBack?: () => void;
 }
 
+/**
+ * Props interface for the TrialBookingSuccess component
+ * @interface TrialBookingSuccessProps
+ * @property {BookingData} booking - Booking data for success display
+ */
 interface TrialBookingSuccessProps {
   booking: BookingData;
 }
 
+/**
+ * TrialBookingSuccess component displaying successful trial booking confirmation
+ * 
+ * @component
+ * @param {TrialBookingSuccessProps} props - Component props containing booking data
+ * @returns {JSX.Element} Success confirmation display with next steps
+ * 
+ * @description
+ * Success page component shown after successful trial booking confirmation.
+ * Provides user feedback, next steps information, and navigation options.
+ * 
+ * @features
+ * - Success confirmation with checkmark icon
+ * - Clear next steps communication
+ * - Timeline expectations (24h activation, email confirmation)
+ * - Navigation options to bookings or dashboard
+ * - Green-themed success styling
+ * 
+ * @next_steps
+ * - Confirmation email sent
+ * - 24-hour Mietfach activation
+ * - Immediate usage capability
+ * - 7-day reminder before trial end
+ * 
+ * @navigation
+ * - "Meine Buchungen anzeigen" → trial bookings page
+ * - "Zum Dashboard" → vendor dashboard
+ * 
+ * @complexity O(1) - Static success display
+ */
 const TrialBookingSuccess: React.FC<TrialBookingSuccessProps> = ({ booking }) => {
   const navigate = useNavigate();
 
@@ -65,6 +124,47 @@ const TrialBookingSuccess: React.FC<TrialBookingSuccessProps> = ({ booking }) =>
   );
 };
 
+/**
+ * TrialBookingConfirmation component for trial booking confirmation with terms acceptance
+ * 
+ * @component
+ * @param {TrialBookingConfirmationProps} props - Component props containing booking data and callbacks
+ * @returns {JSX.Element} Comprehensive booking confirmation interface or success page
+ * 
+ * @description
+ * Main trial booking confirmation component that guides users through accepting trial terms
+ * and confirming their booking. Transitions to success state after confirmation.
+ * 
+ * @features
+ * - Comprehensive booking overview with pricing details
+ * - Trial terms and conditions display
+ * - Terms acceptance checkbox requirement
+ * - API integration for booking confirmation
+ * - Loading states during submission
+ * - Error handling with user feedback
+ * - Success state transition
+ * - Cancellation information and policies
+ * 
+ * @trial_terms
+ * - First month completely free
+ * - Cancellable anytime during trial without reasons
+ * - Regular monthly billing after trial
+ * - 7-day reminder before trial end
+ * - 24-hour activation timeline
+ * 
+ * @api_integration
+ * - POST to /vendor-auth/bookings/confirm
+ * - Includes mietfachId, startdatum, istProbemonatBuchung flag
+ * - Bearer token authentication
+ * - Error handling with user alerts
+ * 
+ * @state_management
+ * - confirmed: Boolean for success state transition
+ * - termsAccepted: Boolean for terms acceptance validation
+ * - isSubmitting: Boolean for loading state during API calls
+ * 
+ * @complexity O(1) - Fixed form processing regardless of data size
+ */
 const TrialBookingConfirmation: React.FC<TrialBookingConfirmationProps> = ({ 
   booking, 
   onBack 

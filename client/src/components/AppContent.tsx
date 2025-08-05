@@ -1,4 +1,9 @@
-// client/src/components/AppContent.tsx
+/**
+ * @file AppContent.tsx
+ * @purpose Main routing component that defines all application routes with lazy loading and provider wrapping
+ * @created 2025-01-15
+ * @modified 2025-08-05
+ */
 import React, { Suspense } from 'react';
 import { Routes, Route, Outlet } from 'react-router-dom';
 import Hero from './layout/Hero';
@@ -57,14 +62,21 @@ const RevenueOverviewPage = React.lazy(() => import('../pages/admin/RevenueOverv
 const ZusatzleistungenPage = React.lazy(() => import('../pages/admin/ZusatzleistungenPage'));
 const EmailTemplatesPage = React.lazy(() => import('../pages/admin/EmailTemplatesPage'));
 
-// Loading component for lazy-loaded components
+/**
+ * Loading spinner component displayed while lazy-loaded components are being loaded
+ * @returns {JSX.Element} Animated spinning loader with orange accent
+ */
 const LoadingSpinner: React.FC = () => (
   <div className="flex items-center justify-center min-h-screen">
     <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-orange-500"></div>
   </div>
 );
 
-// Layout-Komponente für öffentliche Seiten mit Hero
+/**
+ * Layout wrapper component for public pages that includes the Hero section
+ * Used specifically for the homepage to display hero banner above content
+ * @returns {JSX.Element} PublicLayout with Hero section and outlet for child routes
+ */
 const PublicLayoutWithHero: React.FC = () => {
   return (
     <PublicLayout>
@@ -74,7 +86,19 @@ const PublicLayoutWithHero: React.FC = () => {
   );
 };
 
-// AppContent ist die Haupt-Routing-Komponente
+/**
+ * Main application routing component that defines all routes with proper authentication, 
+ * lazy loading, and provider context wrapping for both admin and vendor sections
+ * 
+ * Features:
+ * - Lazy loading for performance optimization
+ * - Separate authentication contexts for admin and vendor roles
+ * - Protected routes with role-based access control
+ * - Fallback loading states for all lazy-loaded components
+ * - Organized route structure: admin, vendor, and public routes
+ * 
+ * @returns {JSX.Element} Complete application routing structure
+ */
 const AppContent: React.FC = () => {
   return (
     <Routes>

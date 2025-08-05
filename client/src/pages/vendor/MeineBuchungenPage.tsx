@@ -1,3 +1,9 @@
+/**
+ * @file MeineBuchungenPage.tsx
+ * @purpose Vendor dashboard page for managing bookings and package tracking. Displays vendor's active bookings with status filters and package tracking for additional services like storage and shipping.
+ * @created 2025-01-15
+ * @modified 2025-08-05
+ */
 import React, { useState, useEffect, useCallback } from 'react';
 import { useVendorAuth } from '../../contexts/VendorAuthContext';
 import VendorLayout from '../../components/vendor/VendorLayout';
@@ -8,6 +14,10 @@ import BookingDetailModal from '../../components/vendor/BookingDetailModal';
 import { Package, Truck, CheckCircle, Clock, MapPin } from 'lucide-react';
 import axios from 'axios';
 
+/**
+ * Status counts interface for booking status filter tabs
+ * @interface StatusCounts
+ */
 interface StatusCounts {
   all: number;
   pending: number;
@@ -16,6 +26,10 @@ interface StatusCounts {
   completed: number;
 }
 
+/**
+ * Package tracking interface for Lager- and Versandservice packages
+ * @interface PackageTracking
+ */
 interface PackageTracking {
   _id: string;
   vertrag_id: string;
@@ -31,6 +45,10 @@ interface PackageTracking {
   updated_at: string;
 }
 
+/**
+ * Contract interface with additional services (Zusatzleistungen) and package tracking
+ * @interface Contract
+ */
 interface Contract {
   _id: string;
   zusatzleistungen?: {
@@ -42,6 +60,18 @@ interface Contract {
   packages?: PackageTracking[];
 }
 
+/**
+ * MeineBuchungenPage - Vendor dashboard for managing bookings and package tracking
+ * 
+ * This component provides vendors with:
+ * - Overview of all their bookings with status filtering
+ * - Package tracking for additional services (Lagerservice/Versandservice)
+ * - Detailed booking modal for individual booking information
+ * - Tab-based navigation between bookings and package tracking
+ * 
+ * @component
+ * @returns {JSX.Element} The vendor bookings management page
+ */
 const MeineBuchungenPage: React.FC = () => {
   const { user } = useVendorAuth();
   const [bookings, setBookings] = useState<IBooking[]>([]);
@@ -53,7 +83,11 @@ const MeineBuchungenPage: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'bookings' | 'packages'>('bookings');
 
-  // Fetch bookings from API
+  /**
+   * Fetches vendor bookings from the API
+   * @description Retrieves all bookings for the authenticated vendor with error handling
+   * @returns {Promise<void>}
+   */
   const fetchBookings = useCallback(async () => {
     if (!user?.id) return;
     
@@ -81,7 +115,11 @@ const MeineBuchungenPage: React.FC = () => {
     }
   }, [user?.id]);
 
-  // Fetch contracts with packages
+  /**
+   * Fetches vendor contracts with package tracking information
+   * @description Retrieves contracts with Zusatzleistungen and associated package tracking data
+   * @returns {Promise<void>}
+   */
   const fetchContractsWithPackages = useCallback(async () => {
     if (!user?.id) return;
     
@@ -106,7 +144,11 @@ const MeineBuchungenPage: React.FC = () => {
     fetchContractsWithPackages();
   }, [user?.id, fetchBookings, fetchContractsWithPackages]);
 
-  // Calculate status counts
+  /**
+   * Calculates booking status counts for filter tabs
+   * @param {IBooking[]} bookings - Array of booking objects to count
+   * @returns {StatusCounts} Object containing counts for each booking status
+   */
   const getStatusCounts = (bookings: IBooking[]): StatusCounts => {
     const counts = {
       all: bookings.length,
@@ -123,24 +165,38 @@ const MeineBuchungenPage: React.FC = () => {
     return counts;
   };
 
-  // Filter bookings based on selected filter
+  /**
+   * Filters bookings based on selected status filter
+   * @description Returns all bookings or filters by specific status
+   */
   const filteredBookings = filter === 'all' 
     ? bookings 
     : bookings.filter(booking => booking.status === filter);
 
   const statusCounts = getStatusCounts(bookings);
 
+  /**
+   * Handles clicking on a booking to open detail modal
+   * @param {IBooking} booking - The booking to display in detail
+   */
   const handleBookingClick = (booking: IBooking) => {
     setSelectedBooking(booking);
     setIsModalOpen(true);
   };
 
+  /**
+   * Handles closing the booking detail modal
+   */
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedBooking(null);
   };
 
-  // Helper functions for package tracking
+  /**
+   * Gets status configuration for package tracking display
+   * @param {string} status - Package status
+   * @returns {object} Configuration object with color, icon, and text for the status
+   */
   const getStatusConfig = (status: string) => {
     const configs = {
       'erwartet': { 
@@ -172,6 +228,11 @@ const MeineBuchungenPage: React.FC = () => {
     return configs[status as keyof typeof configs] || configs.erwartet;
   };
 
+  /**
+   * Formats date string for German locale display
+   * @param {string | undefined} dateString - ISO date string to format
+   * @returns {string} Formatted date string or dash if undefined
+   */
   const formatDate = (dateString: string | undefined) => {
     if (!dateString) return '–';
     return new Date(dateString).toLocaleDateString('de-DE', {

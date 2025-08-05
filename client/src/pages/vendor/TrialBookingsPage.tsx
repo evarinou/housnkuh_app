@@ -1,3 +1,9 @@
+/**
+ * @file TrialBookingsPage.tsx
+ * @purpose Trial period booking management page for vendors. Displays active trial bookings with options to cancel before conversion to paid subscriptions. Critical component for vendor trial-to-paid conversion flow.
+ * @created 2025-01-15
+ * @modified 2025-08-05
+ */
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Star, Clock, Package, Calendar, X, CheckCircle } from 'lucide-react';
@@ -5,6 +11,10 @@ import { useVendorAuth } from '../../contexts/VendorAuthContext';
 import VendorLayout from '../../components/vendor/VendorLayout';
 import TrialCancellationModal from '../../components/vendor/TrialCancellationModal';
 
+/**
+ * Trial booking interface representing a vendor's trial period booking
+ * @interface TrialBooking
+ */
 interface TrialBooking {
   id: string;
   mietfachNummer: string;
@@ -17,6 +27,10 @@ interface TrialBooking {
   status: string;
 }
 
+/**
+ * Trial data interface containing trial status and bookings information
+ * @interface TrialData
+ */
 interface TrialData {
   isInTrial: boolean;
   trialBookings: TrialBooking[];
@@ -24,6 +38,19 @@ interface TrialData {
   canBookMore: boolean;
 }
 
+/**
+ * TrialBookingsPage - Vendor trial period booking management
+ * 
+ * This critical component manages the vendor's trial-to-paid conversion flow:
+ * - Displays active trial bookings with countdown timers
+ * - Allows cancellation of trial bookings before paid conversion
+ * - Shows trial status and remaining days
+ * - Provides trial FAQ and conversion information
+ * - Handles trial cancellation with optional reason collection
+ * 
+ * @component
+ * @returns {JSX.Element} The trial bookings management page
+ */
 const TrialBookingsPage: React.FC = () => {
   const { user, getTrialStatus, cancelTrialBooking } = useVendorAuth();
   const navigate = useNavigate();
@@ -38,6 +65,11 @@ const TrialBookingsPage: React.FC = () => {
     fetchBookings();
   }, []);
 
+  /**
+   * Fetches trial bookings from vendor auth context
+   * @description Retrieves current trial status and associated bookings
+   * @returns {Promise<void>}
+   */
   const fetchBookings = async () => {
     try {
       setLoading(true);
@@ -55,11 +87,20 @@ const TrialBookingsPage: React.FC = () => {
     }
   };
 
+  /**
+   * Handles clicking the cancel button for a trial booking
+   * @param {TrialBooking} booking - The booking to cancel
+   */
   const handleCancelClick = (booking: TrialBooking) => {
     setSelectedBooking(booking);
     setShowCancelModal(true);
   };
 
+  /**
+   * Confirms trial booking cancellation with optional reason
+   * @param {string} [reason] - Optional cancellation reason
+   * @returns {Promise<void>}
+   */
   const handleCancelConfirm = async (reason?: string) => {
     if (!selectedBooking) return;
 
@@ -79,12 +120,20 @@ const TrialBookingsPage: React.FC = () => {
     }
   };
 
+  /**
+   * Shows notification message with auto-dismiss
+   * @param {('success'|'error')} type - Notification type
+   * @param {string} message - Message to display
+   */
   const showNotification = (type: 'success' | 'error', message: string) => {
     setNotification({ type, message });
     setTimeout(() => setNotification(null), 5000);
   };
 
-  // Calculate trial countdown badge
+  /**
+   * Trial countdown badge component showing remaining trial days
+   * @returns {JSX.Element|null} Badge component or null if no trial
+   */
   const TrialCountdownBadge = () => {
     if (!user?.trialEndDate) return null;
 

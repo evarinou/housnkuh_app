@@ -411,7 +411,7 @@ export const sendVendorConfirmationEmail = async (to: string, data: { name: stri
       currentDate: new Date().toLocaleDateString('de-DE'),
       dashboardUrl: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/vendor/dashboard`,
       frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
-      phone: '0157 35711257',
+      phone: '015222035788',
       adminEmail: 'eva-maria.schaller@housnkuh.de',
       adminName: 'Eva-Maria Schaller',
       address: 'Strauer Str. 15, 96317 Kronach',
@@ -588,7 +588,7 @@ export const sendContactFormEmail = async (formData: ContactFormData): Promise<b
       message: formData.message,
       currentDate,
       adminEmail: 'eva-maria.schaller@housnkuh.de',
-      phone: '0157 35711257'
+      phone: '015222035788'
     };
 
     // Send admin notification using database template
@@ -699,7 +699,7 @@ const sendContactFormEmailUserHardcoded = async (formData: ContactFormData): Pro
           <p><strong>Betreff:</strong> ${formData.subject}</p>
           <p><strong>Nachricht:</strong> ${formData.message}</p>
         </div>
-        <p>Bei dringenden Fragen erreichst du uns auch telefonisch unter 0157 35711257.</p>
+        <p>Bei dringenden Fragen erreichst du uns auch telefonisch unter 015222035788.</p>
         <p>Mit freundlichen Grüßen<br>Das housnkuh Team</p>
       </div>`;
 
@@ -971,7 +971,7 @@ export async function sendVendorContestEmail(contestData: VendorContestData): Pr
           
           <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee;">
             <h4 style="color: #09122c;">Bei Fragen steht dir Eva-Maria Schaller gerne zur Verfügung:</h4>
-            <p style="color: #333; margin: 5px 0;">📞 Telefon: 0157 35711257</p>
+            <p style="color: #333; margin: 5px 0;">📞 Telefon: 015222035788</p>
             <p style="color: #333; margin: 5px 0;">✉️ E-Mail: eva-maria.schaller@housnkuh.de</p>
             <p style="color: #333; margin: 5px 0;">📍 Adresse: Strauer Str. 15, 96317 Kronach</p>
           </div>
@@ -1090,7 +1090,7 @@ export const sendTrialActivationEmail = async (
       trialEndDate: formatDate(trialEndDate),
       dashboardUrl: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/vendor/dashboard`,
       frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
-      phone: '0157 35711257',
+      phone: '015222035788',
       adminEmail: 'eva-maria.schaller@housnkuh.de',
       adminName: 'Eva-Maria Schaller',
       address: 'Strauer Str. 15, 96317 Kronach',
@@ -1270,7 +1270,7 @@ export const sendTrialExpirationWarning = async (
       trialEndDate: formatDate(trialEndDate),
       provisionRate: '4',
       dashboardUrl: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/vendor/dashboard`,
-      phone: '0157 35711257',
+      phone: '015222035788',
       adminEmail: 'eva-maria.schaller@housnkuh.de',
       address: 'Strauer Str. 15, 96317 Kronach',
       currentYear: new Date().getFullYear(),
@@ -1428,7 +1428,7 @@ export const sendTrialExpiredEmail = async (
       vendorName: name,
       trialEndDate: formatDate(trialEndDate),
       adminEmail: 'eva-maria.schaller@housnkuh.de',
-      phone: '0157 35711257',
+      phone: '015222035788',
       address: 'Strauer Str. 15, 96317 Kronach',
       currentYear: new Date().getFullYear(),
       siteUrl: 'https://housnkuh.de'
@@ -1579,7 +1579,7 @@ export const sendCancellationConfirmationEmail = async (to: string, name: string
       vendorName: name,
       trialEndDate: trialEndDate ? formatDate(trialEndDate) : null,
       dataRetentionDays: 30,
-      phone: '0157 35711257',
+      phone: '015222035788',
       adminEmail: 'eva-maria.schaller@housnkuh.de',
       currentYear: new Date().getFullYear(),
       siteUrl: 'https://housnkuh.de'
@@ -1990,7 +1990,7 @@ ${bookingData.confirmationToken ? `
           
           <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee;">
             <h4 style="color: #09122c;">Kontakt & Support:</h4>
-            <p style="color: #333; margin: 5px 0;">📞 Telefon: 0157 35711257</p>
+            <p style="color: #333; margin: 5px 0;">📞 Telefon: 015222035788</p>
             <p style="color: #333; margin: 5px 0;">✉️ E-Mail: eva-maria.schaller@housnkuh.de</p>
             <p style="color: #333; margin: 5px 0;">📍 Adresse: Strauer Str. 15, 96317 Kronach</p>
           </div>
@@ -2800,7 +2800,7 @@ export const sendBookingConfirmationWithSchedule = async (data: BookingConfirmat
             </p>
             <div style="color: #2D3748;">
               <p style="margin: 5px 0;">📧 <strong>E-Mail:</strong> eva-maria.schaller@housnkuh.de</p>
-              <p style="margin: 5px 0;">📞 <strong>Telefon:</strong> 0157 35711257</p>
+              <p style="margin: 5px 0;">📞 <strong>Telefon:</strong> 015222035788</p>
               <p style="margin: 5px 0;">📍 <strong>Adresse:</strong> Strauer Str. 15, 96317 Kronach</p>
             </div>
           </div>
@@ -3159,7 +3159,7 @@ export const sendPackageArrivalConfirmation = async (data: PackageArrivalNotific
             </p>
             <p style="color: #2d3748; margin: 0;">
               📧 <strong>E-Mail:</strong> eva-maria.schaller@housnkuh.de<br>
-              📞 <strong>Telefon:</strong> 0157 35711257
+              📞 <strong>Telefon:</strong> 015222035788
             </p>
           </div>
           
@@ -3306,7 +3306,7 @@ export const sendLagerserviceActivationNotification = async (data: LagerserviceA
             </p>
             <p style="color: #2d3748; margin: 0;">
               📧 <strong>E-Mail:</strong> eva-maria.schaller@housnkuh.de<br>
-              📞 <strong>Telefon:</strong> 0157 35711257<br>
+              📞 <strong>Telefon:</strong> 015222035788<br>
               📍 <strong>Adresse:</strong> Strauer Str. 15, 96317 Kronach
             </p>
           </div>

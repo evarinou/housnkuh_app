@@ -1,12 +1,8 @@
 /**
- * @file Authentication operations service for vendor authentication
- * @description Provides authentication operations (login, logout, state management) 
- * extracted from VendorAuthContext to improve separation of concerns.
- * 
- * This service handles pure authentication operations without business logic,
- * following the established pattern from previous service extractions.
- * 
- * @see S35_M020_Authentication_Simplification sprint documentation
+ * @file useAuthOperations.ts
+ * @purpose Custom hook for vendor authentication operations (logout, state management)
+ * @created 2025-01-15
+ * @modified 2025-08-05
  */
 
 import { useCallback, useState } from 'react';
@@ -44,9 +40,11 @@ export interface UseAuthOperations {
 }
 
 /**
- * Authentication operations service hook
- * @description Provides authentication operations for vendor users
- * @returns {UseAuthOperations} Authentication operations interface
+ * Custom hook for vendor authentication operations
+ * @description Provides logout functionality, state clearing, and error handling for vendor auth
+ * @hook useAuthOperations
+ * @dependencies useCallback, useState, authOperations
+ * @returns Authentication operations interface with logout and state management
  */
 export const useAuthOperations = (): UseAuthOperations => {
   const [isLoggingOut, setIsLoggingOut] = useState<boolean>(false);
@@ -54,7 +52,7 @@ export const useAuthOperations = (): UseAuthOperations => {
 
   /**
    * Clear authentication state
-   * @description Internal helper to reset authentication state
+   * @description Internal helper to reset authentication state and error flags
    */
   const clearAuthState = useCallback((): void => {
     setIsLoggingOut(false);
@@ -63,8 +61,7 @@ export const useAuthOperations = (): UseAuthOperations => {
 
   /**
    * Logout current vendor user
-   * @description Clears authentication state and removes stored credentials
-   * Identical behavior to the original logout function in VendorAuthContext
+   * @description Clears authentication state, removes stored credentials, and calls optional state update callback
    */
   const logout = useCallback((onStateUpdate?: () => void): void => {
     try {

@@ -1,8 +1,29 @@
+/**
+ * @file TagsPage.tsx
+ * @purpose Admin interface for managing tags used across the platform for categorizing products, certifications, methods and features
+ * @created 2024-12-08
+ * @modified 2025-08-04
+ */
+
 // client/src/pages/admin/TagsPage.tsx
 import React, { useState, useEffect } from 'react';
 import { Tag, Search, Filter, Edit, Trash2, Plus, CheckCircle, AlertCircle, XCircle, Save, X } from 'lucide-react';
 import axios from 'axios';
 
+/**
+ * Tag data structure
+ * @interface TagData
+ * @property {string} _id - Unique identifier
+ * @property {string} name - Display name of the tag
+ * @property {string} slug - URL-friendly version of the name
+ * @property {string} [description] - Optional description of the tag
+ * @property {'product' | 'certification' | 'method' | 'feature'} category - Tag category type
+ * @property {string} [color] - Hex color for tag display
+ * @property {string} [icon] - Optional emoji icon for visual representation
+ * @property {boolean} isActive - Whether the tag is currently active
+ * @property {string} createdAt - Creation timestamp
+ * @property {string} updatedAt - Last update timestamp
+ */
 interface TagData {
   _id: string;
   name: string;
@@ -16,6 +37,10 @@ interface TagData {
   updatedAt: string;
 }
 
+/**
+ * Form data structure for creating/editing tags
+ * @interface TagFormData
+ */
 interface TagFormData {
   name: string;
   description: string;
@@ -25,6 +50,13 @@ interface TagFormData {
   isActive: boolean;
 }
 
+/**
+ * Admin tag management page component
+ * @description Provides comprehensive tag management with categorization, visual customization (color/icon),
+ * filtering by category/status/search, and real-time preview of tag appearance
+ * @returns {React.FC} Tag management interface with CRUD operations
+ * @complexity Full CRUD with advanced filtering, visual customization, and status management
+ */
 const TagsPage: React.FC = () => {
   const [tags, setTags] = useState<TagData[]>([]);
   const [filteredTags, setFilteredTags] = useState<TagData[]>([]);
@@ -51,13 +83,23 @@ const TagsPage: React.FC = () => {
     isActive: true
   });
 
-  // Notification helper
+  /**
+   * Shows temporary notification message
+   * @param {'success' | 'error'} type - Notification type
+   * @param {string} message - Message to display
+   * @returns {void} Sets notification state with auto-dismiss
+   */
   const showNotification = (type: 'success' | 'error', message: string) => {
     setNotification({ type, message });
     setTimeout(() => setNotification(null), 5000);
   };
 
-  // Load tags
+  /**
+   * Loads all tags from the API
+   * @description Fetches complete tag list with all metadata
+   * @async
+   * @returns {Promise<void>} Updates component state with tags
+   */
   const loadTags = async () => {
     setIsLoading(true);
     try {
@@ -156,7 +198,13 @@ const TagsPage: React.FC = () => {
     resetForm();
   };
 
-  // Handle form submission
+  /**
+   * Handles tag form submission for create/update operations
+   * @description Validates and submits tag data to appropriate endpoint
+   * @param {React.FormEvent} e - Form submission event
+   * @returns {Promise<void>} Creates/updates tag and refreshes list
+   * @complexity Handles both creation and update with proper error handling
+   */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -210,7 +258,12 @@ const TagsPage: React.FC = () => {
     }
   };
 
-  // Toggle tag status
+  /**
+   * Toggles tag active/inactive status
+   * @description Quick status toggle without full edit form
+   * @param {TagData} tag - Tag to toggle
+   * @returns {Promise<void>} Updates status and refreshes list
+   */
   const toggleTagStatus = async (tag: TagData) => {
     try {
       const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
@@ -238,7 +291,12 @@ const TagsPage: React.FC = () => {
     }
   };
 
-  // Delete tag
+  /**
+   * Deletes a tag after user confirmation
+   * @description Shows confirmation dialog before permanent deletion
+   * @param {TagData} tag - Tag to delete
+   * @returns {Promise<void>} Deletes tag and refreshes list
+   */
   const deleteTag = async (tag: TagData) => {
     if (!window.confirm(`Sind Sie sicher, dass Sie den Tag "${tag.name}" löschen möchten?`)) {
       return;
@@ -266,6 +324,11 @@ const TagsPage: React.FC = () => {
     }
   };
 
+  /**
+   * Gets localized label for tag category
+   * @param {string} category - Category key
+   * @returns {string} German label for category
+   */
   const getCategoryLabel = (category: string) => {
     const labels = {
       'product': 'Produkt',
@@ -276,6 +339,11 @@ const TagsPage: React.FC = () => {
     return labels[category as keyof typeof labels] || category;
   };
 
+  /**
+   * Gets color classes for tag category
+   * @param {string} category - Category key
+   * @returns {string} Tailwind CSS classes for category styling
+   */
   const getCategoryColor = (category: string) => {
     const colors = {
       'product': 'bg-green-100 text-green-800',

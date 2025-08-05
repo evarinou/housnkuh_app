@@ -1,8 +1,19 @@
 // client/src/pages/admin/VertraegeePage.tsx
+/**
+ * @file VertraegeePage.tsx
+ * @purpose Contract management interface for admin operations including contract lifecycle and vendor relationships
+ * @created 2025-01-15
+ * @modified 2025-08-04
+ */
+
 import React, { useState, useEffect } from 'react';
-import { FileText, Search, Filter, Edit, Eye, Download, Plus, CheckCircle, Clock, AlertCircle, XCircle } from 'lucide-react';
+import { Search, Filter, Eye, Edit, FileText, AlertCircle, CheckCircle, Clock, XCircle, Plus, Download } from 'lucide-react';
 import axios from 'axios';
 
+/**
+ * @interface Vertrag
+ * @description Data structure for contract information
+ */
 interface Vertrag {
   _id: string;
   vertragsnummer: string;
@@ -45,6 +56,12 @@ interface Vertrag {
   updatedAt: string;
 }
 
+/**
+ * @component VertraegeePage
+ * @description Contract management interface providing comprehensive contract lifecycle operations
+ * @complexity HIGH - Contract state management, vendor relationships, status tracking, and administrative operations
+ * @returns {JSX.Element} Complete contract management interface with listing, status management, and vendor operations
+ */
 const VertraegeePage: React.FC = () => {
   const [vertraege, setVertraege] = useState<Vertrag[]>([]);
   const [filteredVertraege, setFilteredVertraege] = useState<Vertrag[]>([]);

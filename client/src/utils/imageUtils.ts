@@ -1,8 +1,18 @@
-// client/src/utils/imageUtils.ts
+/**
+ * @file imageUtils.ts
+ * @purpose Image URL resolution and fallback utilities for handling relative/absolute paths and vendor image hierarchies
+ * @created 2025-01-15
+ * @modified 2025-08-05
+ */
 
 /**
  * Resolves image URLs to ensure they are complete URLs
- * Handles both relative paths and absolute URLs correctly
+ * 
+ * @description Converts relative image paths to absolute URLs by prepending the server base URL.
+ * Leaves already absolute URLs unchanged. Handles empty/null URLs gracefully.
+ * 
+ * @param {string} url - Image URL or path to resolve
+ * @returns {string} Complete absolute URL or empty string for invalid input
  */
 export const resolveImageUrl = (url: string): string => {
   if (!url) return '';
@@ -18,7 +28,16 @@ export const resolveImageUrl = (url: string): string => {
 };
 
 /**
- * Creates a fallback chain for vendor images (banner -> profile -> placeholder)
+ * Creates a fallback chain for vendor images with priority hierarchy
+ * 
+ * @description Implements image fallback logic: banner → profile → placeholder.
+ * Used for vendor listings where multiple image types may be available.
+ * Each URL is resolved through resolveImageUrl before returning.
+ * 
+ * @param {string} bannerUrl - Primary banner image URL (highest priority)
+ * @param {string} profileUrl - Fallback profile image URL (medium priority)
+ * @param {string} placeholderUrl - Final fallback placeholder URL (lowest priority)
+ * @returns {string} First available image URL or placeholder
  */
 export const getVendorImageWithFallback = (bannerUrl: string, profileUrl: string, placeholderUrl: string = ''): string => {
   if (bannerUrl) return resolveImageUrl(bannerUrl);

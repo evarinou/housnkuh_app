@@ -1,6 +1,23 @@
+/**
+ * @file TrialCancellationModal.tsx
+ * @purpose Modal component for trial booking cancellation with reason collection and confirmation workflow
+ * @created 2025-01-15
+ * @modified 2025-08-05
+ */
+
 import React, { useState } from 'react';
 import { X, Info, AlertTriangle } from 'lucide-react';
 
+/**
+ * Interface for trial booking data required for cancellation
+ * @interface TrialBooking
+ * @property {string} id - Unique booking identifier
+ * @property {string} mietfachNummer - Display number of the Mietfach
+ * @property {string} startDate - Booking start date (ISO string)
+ * @property {string} trialEndDate - Trial period end date (ISO string)
+ * @property {number} regularPrice - Regular monthly price (shows cost savings)
+ * @property {string} willBeChargedOn - Date when regular billing would start
+ */
 interface TrialBooking {
   id: string;
   mietfachNummer: string;
@@ -10,12 +27,70 @@ interface TrialBooking {
   willBeChargedOn: string;
 }
 
+/**
+ * Props interface for the TrialCancellationModal component
+ * @interface TrialCancellationModalProps
+ * @property {TrialBooking} booking - Trial booking data for cancellation
+ * @property {function} onConfirm - Async callback function for cancellation confirmation
+ * @property {function} onClose - Callback function to close the modal
+ */
 interface TrialCancellationModalProps {
   booking: TrialBooking;
   onConfirm: (reason?: string) => Promise<void>;
   onClose: () => void;
 }
 
+/**
+ * TrialCancellationModal component for handling trial booking cancellation workflow
+ * 
+ * @component
+ * @param {TrialCancellationModalProps} props - Component props containing booking data and callbacks
+ * @returns {JSX.Element} Full-screen modal with cancellation workflow
+ * 
+ * @description
+ * Comprehensive modal component for trial booking cancellation that collects cancellation
+ * reasons, displays impact information, and provides clear confirmation workflow.
+ * Ensures users understand consequences before proceeding with cancellation.
+ * 
+ * @features
+ * - Full-screen overlay modal with backdrop
+ * - Booking details summary with cost savings display
+ * - Cancellation impact information (immediate end, no costs)
+ * - Optional reason collection with predefined options
+ * - Confirmation checkbox requirement
+ * - Loading states during processing
+ * - Warning about Mietfach availability
+ * - German localized content
+ * 
+ * @cancellation_process
+ * - Shows immediate booking termination
+ * - Mietfach released for others
+ * - No costs incurred
+ * - Email confirmation sent
+ * - Prevents accidental cancellations
+ * 
+ * @reason_options
+ * - wrong_size: Mietfach doesn't fit needs
+ * - changed_mind: Changed mind about booking
+ * - found_alternative: Found alternative solution
+ * - technical_issues: Technical problems
+ * - cost_concerns: Cost-related reasons
+ * - time_constraints: Time management issues
+ * - other: Other unspecified reasons
+ * 
+ * @state_management
+ * - reason: String for selected cancellation reason
+ * - confirmed: Boolean for confirmation checkbox
+ * - isProcessing: Boolean for async operation states
+ * 
+ * @accessibility
+ * - Focus management within modal
+ * - Keyboard navigation support
+ * - Clear labeling and descriptions
+ * - Disabled states during processing
+ * 
+ * @complexity O(1) - Fixed form processing regardless of booking data
+ */
 const TrialCancellationModal: React.FC<TrialCancellationModalProps> = ({ 
   booking, 
   onConfirm, 

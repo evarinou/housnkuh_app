@@ -1,3 +1,10 @@
+/**
+ * @file HomePage.tsx
+ * @purpose Landing page component displaying concept graphic, Instagram feed, history section and newsletter signup
+ * @created 2024-01-01
+ * @modified 2025-08-05
+ */
+
 import React, { useEffect } from 'react';
 import { motion, useAnimation } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
@@ -7,7 +14,11 @@ import InstagramFeed from '../components/InstagramFeed';
 
 
 
-// History Section mit Standard-Background
+/**
+ * History section component displaying the story behind the "Housnkuh" name
+ * @description Shows the historical background of Kronach's "Housnkuh" symbol with animated reveal on scroll
+ * @returns {JSX.Element} Animated history section with story content
+ */
 const HistorySection: React.FC = () => {
   const controls = useAnimation();
   const [ref, inView] = useInView({ threshold: 0.2, triggerOnce: true });
@@ -56,6 +67,11 @@ const HistorySection: React.FC = () => {
   );
 };
 
+/**
+ * Main landing page component for the Housnkuh marketplace
+ * @description Renders the homepage with concept graphic, Instagram feed, history section, and newsletter signup
+ * @returns {JSX.Element} Complete homepage layout with all sections
+ */
 const HomePage: React.FC = () => {
 
 

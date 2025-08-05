@@ -1,10 +1,8 @@
 /**
- * @file useVendorRegistration - Registration service hook for vendor management
- * @description Extracted registration logic from VendorAuthContext for better separation of concerns.
- * Handles vendor registration with booking and pre-registration flows.
- * 
- * @author Sprint 32 - VendorAuthContext Refactoring
- * @version 1.0.0
+ * @file useVendorRegistration.ts
+ * @purpose Custom hook for vendor registration operations (booking and pre-registration)
+ * @created 2025-01-15
+ * @modified 2025-08-05
  */
 
 import { useCallback, useState } from 'react';
@@ -49,17 +47,12 @@ export interface UseVendorRegistration {
 }
 
 /**
- * useVendorRegistration hook
- * @description Custom hook that provides vendor registration functionality
- * extracted from VendorAuthContext for better separation of concerns.
- * 
- * Features:
- * - Register vendor with booking data
- * - Pre-register vendor before store opening
- * - Loading state management
- * - Error handling
- * 
- * @returns {UseVendorRegistration} Registration service interface
+ * Custom hook for vendor registration operations
+ * @description Provides vendor registration with booking and pre-registration functionality
+ * with loading states and error handling
+ * @hook useVendorRegistration
+ * @dependencies useCallback, useState, axios, apiUtils
+ * @returns Vendor registration interface with registration functions and state
  */
 export const useVendorRegistration = (): UseVendorRegistration => {
   const [isRegistering, setIsRegistering] = useState<boolean>(false);
@@ -67,9 +60,7 @@ export const useVendorRegistration = (): UseVendorRegistration => {
 
   /**
    * Register vendor with booking data
-   * @description Complete vendor registration with package booking information.
-   * This function handles the full registration flow including payment processing.
-   * 
+   * @description Complete vendor registration with package booking information and payment processing
    * @param {RegistrationData} registrationData - Complete registration data including package info
    * @returns {Promise<RegistrationResult>} Registration result with success status
    */
@@ -111,9 +102,7 @@ export const useVendorRegistration = (): UseVendorRegistration => {
 
   /**
    * Pre-register vendor before store opening
-   * @description Register vendor for pre-launch access, typically includes store opening information.
-   * This is used for vendors who want to register before the marketplace is fully operational.
-   * 
+   * @description Register vendor for pre-launch access with store opening information
    * @param {RegistrationData} registrationData - Registration data for pre-registration
    * @returns {Promise<RegistrationResult>} Registration result with opening info
    */

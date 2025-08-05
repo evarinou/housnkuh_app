@@ -1,3 +1,10 @@
+/**
+ * @file BookingsList.tsx
+ * @purpose List container component for displaying vendor bookings with loading and empty states
+ * @created 2025-01-15
+ * @modified 2025-08-05
+ */
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Package } from 'lucide-react';
@@ -5,15 +12,55 @@ import { createNavigationHelper } from '../../utils/navigation';
 import { IBooking } from '../../types/booking';
 import BookingCard from './BookingCard';
 
+/**
+ * Props interface for the BookingsList component
+ * @interface BookingsListProps
+ * @property {IBooking[]} bookings - Array of booking data to display
+ * @property {function} onBookingClick - Callback function when a booking is clicked
+ * @property {boolean} loading - Optional loading state indicator
+ */
 interface BookingsListProps {
   bookings: IBooking[];
   onBookingClick: (booking: IBooking) => void;
   loading?: boolean;
 }
 
+/**
+ * BookingsList component displaying a list of vendor bookings
+ * 
+ * @component
+ * @param {BookingsListProps} props - Component props containing bookings data and callbacks
+ * @returns {JSX.Element} List of booking cards with appropriate loading and empty states
+ * 
+ * @example
+ * <BookingsList 
+ *   bookings={vendorBookings} 
+ *   onBookingClick={(booking) => openDetailModal(booking)}
+ *   loading={isLoadingBookings}
+ * />
+ * 
+ * @features
+ * - Loading state with animated skeleton cards
+ * - Empty state with call-to-action navigation
+ * - Responsive booking card layout
+ * - Click handling delegation to BookingCard components
+ * - Integration with navigation helper for booking flow
+ * 
+ * @states
+ * - Loading: Shows 3 animated skeleton placeholders
+ * - Empty: Shows empty state with navigation to booking flow
+ * - Populated: Renders BookingCard components for each booking
+ * 
+ * @complexity O(n) where n = number of bookings to render
+ */
 const BookingsList: React.FC<BookingsListProps> = ({ bookings, onBookingClick, loading = false }) => {
   const navigate = useNavigate();
   const navigationHelper = createNavigationHelper(navigate);
+  
+  /**
+   * Loading state with animated skeleton placeholders
+   * Shows 3 skeleton cards to indicate data is being fetched
+   */
   if (loading) {
     return (
       <div className="space-y-4">
@@ -35,6 +82,10 @@ const BookingsList: React.FC<BookingsListProps> = ({ bookings, onBookingClick, l
     );
   }
 
+  /**
+   * Empty state when no bookings are found
+   * Provides call-to-action navigation to home page for new bookings
+   */
   if (bookings.length === 0) {
     return (
       <div className="text-center py-12">
@@ -61,6 +112,10 @@ const BookingsList: React.FC<BookingsListProps> = ({ bookings, onBookingClick, l
     );
   }
 
+  /**
+   * Main content state - render list of BookingCard components
+   * Each booking gets a unique key using either id or _id field
+   */
   return (
     <div className="space-y-4">
       {bookings.map((booking) => (

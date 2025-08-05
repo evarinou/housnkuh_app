@@ -1,4 +1,9 @@
-// client/src/components/ConceptGraphic.tsx
+/**
+ * @file ConceptGraphic.tsx
+ * @purpose Animated concept visualization showing the platform's business model flow with interactive elements
+ * @created 2025-01-15
+ * @modified 2025-08-05
+ */
 import React from 'react';
 import { Store, Users, Clock, ShoppingBag, ArrowRight } from 'lucide-react';
 

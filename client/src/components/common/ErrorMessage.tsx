@@ -1,16 +1,50 @@
+/**
+ * @file ErrorMessage.tsx
+ * @purpose Reusable error message display component with variants for different message types
+ * @created 2025-01-15
+ * @modified 2025-08-05
+ */
+
 import React from 'react';
 import { AlertTriangle, X, RefreshCw } from 'lucide-react';
 
+/**
+ * Props interface for ErrorMessage component
+ * @interface ErrorMessageProps
+ */
 export interface ErrorMessageProps {
+  /** The error message text to display */
   message: string;
+  /** Optional title/header for the error message (defaults to 'Fehler') */
   title?: string;
+  /** Visual variant of the error message - affects colors and styling */
   variant?: 'error' | 'warning' | 'info';
+  /** Optional callback function called when close button is clicked */
   onClose?: () => void;
+  /** Optional callback function called when retry button is clicked */
   onRetry?: () => void;
+  /** Additional CSS classes to apply to the root element */
   className?: string;
+  /** Whether to show the alert triangle icon (defaults to true) */
   showIcon?: boolean;
 }
 
+/**
+ * Reusable error message component for displaying various types of messages with consistent styling.
+ * 
+ * Features:
+ * - Three visual variants: error (red), warning (yellow), info (blue)
+ * - Optional close button with callback
+ * - Optional retry button with callback
+ * - Consistent German text labels
+ * - Lucide icons for visual consistency
+ * - Tailwind CSS styling with hover effects
+ * - Flexible styling through className prop
+ * 
+ * @component
+ * @param {ErrorMessageProps} props - Component props
+ * @returns {JSX.Element} Rendered error message component
+ */
 const ErrorMessage: React.FC<ErrorMessageProps> = ({
   message,
   title = 'Fehler',
@@ -20,6 +54,10 @@ const ErrorMessage: React.FC<ErrorMessageProps> = ({
   className = '',
   showIcon = true,
 }) => {
+  /**
+   * Returns appropriate Tailwind CSS classes based on the selected variant
+   * @returns {string} CSS classes for background, border and text colors
+   */
   const getVariantClasses = () => {
     switch (variant) {
       case 'warning':
@@ -31,6 +69,10 @@ const ErrorMessage: React.FC<ErrorMessageProps> = ({
     }
   };
 
+  /**
+   * Returns appropriate icon color class based on the selected variant
+   * @returns {string} CSS class for icon color
+   */
   const getIconColor = () => {
     switch (variant) {
       case 'warning':

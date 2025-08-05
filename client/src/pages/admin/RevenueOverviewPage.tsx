@@ -1,3 +1,10 @@
+/**
+ * @file RevenueOverviewPage.tsx
+ * @purpose Admin dashboard for comprehensive revenue analysis with charts, trends, projections and detailed breakdowns
+ * @created 2024-12-01
+ * @modified 2025-08-04
+ */
+
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
@@ -8,6 +15,18 @@ import DateRangePicker from '../../components/common/DateRangePicker';
 import ExportButton from '../../components/admin/revenue/ExportButton';
 import './RevenueOverviewPage.css';
 
+/**
+ * Revenue data structure from API
+ * @interface RevenueData
+ * @property {number} totalRevenue - Total revenue for selected period
+ * @property {number} monthlyAverage - Average monthly revenue
+ * @property {number} totalActiveContracts - Count of active contracts
+ * @property {number} totalTrialContracts - Count of trial period contracts
+ * @property {number} occupancyRate - Percentage of occupied Mietfächer
+ * @property {Object} revenueTrend - Revenue trend direction and percentage
+ * @property {Object} occupancyTrend - Occupancy trend direction and percentage
+ * @property {Array} revenueByMonth - Monthly breakdown data for charts
+ */
 interface RevenueData {
   totalRevenue: number;
   monthlyAverage: number;
@@ -30,11 +49,22 @@ interface RevenueData {
   }>;
 }
 
+/**
+ * Date range selection structure
+ * @interface DateRange
+ */
 interface DateRange {
   startDate: Date;
   endDate: Date;
 }
 
+/**
+ * Revenue overview dashboard page
+ * @description Comprehensive revenue analytics with widgets, trends, projections, and detailed breakdowns.
+ * Includes date range filtering, trial revenue toggle, future projections, and export functionality.
+ * @returns {React.FC} Revenue dashboard with multiple data visualizations
+ * @complexity Advanced business intelligence with multiple data sources and complex calculations
+ */
 export default function RevenueOverviewPage() {
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuth();
@@ -48,6 +78,14 @@ export default function RevenueOverviewPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  /**
+   * Fetches comprehensive revenue data from the API
+   * @description Retrieves revenue overview including totals, trends, occupancy rates,
+   * and monthly breakdowns with optional trial revenue inclusion
+   * @async
+   * @returns {Promise<void>} Updates component state with revenue data
+   * @complexity Complex data aggregation with date range filtering and trial revenue options
+   */
   const fetchRevenueData = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -97,10 +135,20 @@ export default function RevenueOverviewPage() {
     fetchRevenueData();
   }, [isAuthenticated, user, navigate, fetchRevenueData]);
 
+  /**
+   * Navigates to detailed view of a specific Mietfach
+   * @param {string} mietfachId - ID of the Mietfach to view
+   * @returns {void} Navigates to unit details page
+   */
   const navigateToUnitDetails = (mietfachId: string) => {
     navigate(`/admin/mietfaecher/${mietfachId}`);
   };
 
+  /**
+   * Handles date range selection changes
+   * @param {DateRange} newDateRange - New date range to apply
+   * @returns {void} Updates date range state which triggers data refetch
+   */
   const handleDateRangeChange = (newDateRange: DateRange) => {
     setDateRange(newDateRange);
   };

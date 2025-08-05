@@ -1,9 +1,39 @@
 // client/src/pages/admin/MietfaecherPage.tsx
-import React, { useState, useEffect, FormEvent } from 'react';
-import { Package, Search, Edit, Trash2, Plus, CheckCircle, XCircle, Tag, X, Save } from 'lucide-react';
-import axios from 'axios';
+/**
+ * @file MietfaecherPage.tsx
+ * @purpose Mietfach management interface for admin operations including assignment, configuration, and monitoring
+ * @created 2025-01-15
+ * @modified 2025-08-04
+ */
 
-// Frontend-Darstellung eines Mietfachs
+import React, { useState, useEffect, FormEvent } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
+import { 
+  Package, 
+  Plus, 
+  MapPin, 
+  Calendar, 
+  User, 
+  Search, 
+  Filter, 
+  Eye, 
+  Edit3 as Edit, 
+  Trash2,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
+  Settings,
+  Save,
+  X,
+  Tag
+} from 'lucide-react';
+import axios from 'axios';
+import MietfachAssignmentModal from './MietfachAssignmentModal';
+
+/**
+ * @interface Mietfach
+ * @description Data structure for rental compartment information
+ */
 interface Mietfach {
   _id: string;
   name: string;         // Entspricht 'bezeichnung' im Backend
@@ -59,6 +89,12 @@ interface MietfachAPI {
   istBelegt?: boolean;
 }
 
+/**
+ * @component MietfaecherPage
+ * @description Comprehensive Mietfach management interface with assignment, monitoring, and administrative functions
+ * @complexity VERY_HIGH - Complex state management, real-time updates, modal handling, assignment logic, and vendor operations
+ * @returns {JSX.Element} Complete Mietfach management system with grid view, assignment modals, and vendor tracking
+ */
 const MietfaecherPage: React.FC = () => {
   const [mietfaecher, setMietfaecher] = useState<Mietfach[]>([]);
   const [filteredMietfaecher, setFilteredMietfaecher] = useState<Mietfach[]>([]);

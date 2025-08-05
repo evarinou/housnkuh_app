@@ -1,7 +1,28 @@
+/**
+ * @file Footer.tsx
+ * @purpose Application footer with contact info, legal links, and social media integration
+ * @created 2025-01-15
+ * @modified 2025-08-05
+ */
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Instagram, Facebook } from 'lucide-react';
 
+/**
+ * Footer component providing site-wide navigation and company information
+ * 
+ * Features:
+ * - Four-column responsive layout
+ * - Contact information (address, phone, email)
+ * - Opening hours with card access information
+ * - Legal page navigation (Impressum, Datenschutz, AGB, FAQ)
+ * - Social media links (Instagram, Facebook, TikTok)
+ * - Hover effects and smooth transitions
+ * - Custom TikTok SVG icon implementation
+ * - Responsive grid that collapses on mobile
+ * 
+ * @returns {JSX.Element} The complete footer section with all navigation and info
+ */
 const Footer: React.FC = () => {
   return (
     <footer className="bg-[var(--secondary)] text-white mt-16">

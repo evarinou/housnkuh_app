@@ -1,8 +1,25 @@
-// client/src/pages/vendor/VendorReportsPage.tsx
+/**
+ * @file VendorReportsPage.tsx
+ * @purpose Vendor analytics and reports page for viewing sales statistics, revenue analysis, and business performance metrics. Currently shows coming soon message as reporting features are under development.
+ * @created 2025-01-15
+ * @modified 2025-08-05
+ */
 import React from 'react';
 import { BarChart3, TrendingUp, DollarSign, Users } from 'lucide-react';
 import VendorLayout from '../../components/vendor/VendorLayout';
 
+/**
+ * VendorReportsPage - Analytics and reporting page (Coming Soon)
+ * 
+ * This component serves as a placeholder for the upcoming analytics and reporting functionality:
+ * - Displays coming soon message for reporting features
+ * - Shows preview of planned analytics features (sales stats, revenue analysis, customer insights)
+ * - Provides contact information for custom reporting requests
+ * - Maintains consistent vendor dashboard layout and styling
+ * 
+ * @component
+ * @returns {JSX.Element} The analytics and reports coming soon page
+ */
 const VendorReportsPage: React.FC = () => {
   return (
     <VendorLayout>
@@ -71,8 +88,8 @@ const VendorReportsPage: React.FC = () => {
                 info@housnkuh.de
               </a>
               {' '}oder{' '}
-              <a href="tel:+4915735711257" className="text-purple-600 hover:underline font-medium">
-                0157 35711257
+              <a href="tel:+4915222035788" className="text-purple-600 hover:underline font-medium">
+                0152 22035788
               </a>
             </p>
           </div>

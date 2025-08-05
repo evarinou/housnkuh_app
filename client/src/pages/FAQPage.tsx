@@ -1,9 +1,25 @@
-// client/src/pages/FAQPage.tsx
+/**
+ * @file FAQPage.tsx
+ * @purpose FAQ page displaying frequently asked questions with search and category filtering
+ * @created 2024-01-01
+ * @modified 2025-08-05
+ */
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { HelpCircle, ChevronDown, Search, Phone, Mail, MessageCircle, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 
+/**
+ * Interface for FAQ item data structure
+ * @interface FAQItem
+ * @property {string} _id - Unique identifier for the FAQ item
+ * @property {string} category - Category classification for the FAQ
+ * @property {string} question - The question text
+ * @property {string} answer - The answer text
+ * @property {string[]} keywords - Keywords for search functionality
+ * @property {number} [order] - Optional order for display sorting
+ */
 interface FAQItem {
   _id: string;
   category: string;
@@ -13,6 +29,11 @@ interface FAQItem {
   order?: number;
 }
 
+/**
+ * FAQ page component displaying frequently asked questions with search and filtering
+ * @description Interactive FAQ page with search functionality, category filtering, and expandable question-answer pairs
+ * @returns {JSX.Element} Complete FAQ page with search, categories, and contact information
+ */
 const FAQPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
@@ -20,6 +41,10 @@ const FAQPage: React.FC = () => {
   const [faqItems, setFaqItems] = useState<FAQItem[]>([]);
   const [loading, setLoading] = useState(true);
 
+  /**
+   * Fetches FAQ data from the API with fallback to default FAQs
+   * @description Loads FAQ items from server, falls back to default data if API fails
+   */
   const fetchFAQs = useCallback(async () => {
     try {
       const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
@@ -41,7 +66,11 @@ const FAQPage: React.FC = () => {
     fetchFAQs();
   }, [fetchFAQs]);
 
-  // Fallback FAQs for when database is empty or API fails
+  /**
+   * Returns default FAQ items when API is unavailable
+   * @description Fallback FAQ data covering common questions about platform, registration, bookings, payments, products, and support
+   * @returns {FAQItem[]} Array of default FAQ items with comprehensive coverage
+   */
   const getDefaultFAQs = (): FAQItem[] => [
     // Allgemeine Fragen
     {
@@ -177,7 +206,7 @@ const FAQPage: React.FC = () => {
       _id: 'support-1',
       category: 'Support',
       question: 'Wie erreiche ich den housnkuh-Support?',
-      answer: 'housnkuh ist per E-Mail unter info@housnkuh.de oder telefonisch unter 0157 35711257 erreichbar. Du erhältst in der Regel innerhalb von 24 Stunden eine Antwort. Für dringende Fälle nutze bitte das Telefon.',
+      answer: 'housnkuh ist per E-Mail unter info@housnkuh.de oder telefonisch unter 0152 22035788 erreichbar. Du erhältst in der Regel innerhalb von 24 Stunden eine Antwort. Für dringende Fälle nutze bitte das Telefon.',
       keywords: ['support', 'hilfe', 'kontakt', 'email', 'telefon', 'dringend']
     },
     {
@@ -209,6 +238,11 @@ const FAQPage: React.FC = () => {
     return matchesSearch && matchesCategory;
   });
 
+  /**
+   * Toggles expanded state for FAQ items
+   * @description Manages which FAQ items are expanded to show their answers
+   * @param {string} id - The FAQ item ID to toggle
+   */
   const toggleExpanded = (id: string) => {
     setExpandedItems(prev => 
       prev.includes(id) 
@@ -347,11 +381,11 @@ const FAQPage: React.FC = () => {
               <div className="mt-8 p-6 bg-gradient-to-br from-primary/10 to-primary/5 rounded-xl">
                 <h4 className="font-bold text-secondary mb-4">Persönliche Hilfe</h4>
                 <div className="space-y-3">
-                  <a href="tel:+4915735711257" className="flex items-center text-sm group">
+                  <a href="tel:+4915222035788" className="flex items-center text-sm group">
                     <div className="bg-white p-2 rounded-lg mr-3 group-hover:shadow-md transition-all duration-300">
                       <Phone className="w-4 h-4 text-primary" />
                     </div>
-                    <span className="text-gray-700 group-hover:text-primary transition-colors">0157 35711257</span>
+                    <span className="text-gray-700 group-hover:text-primary transition-colors">0152 22035788</span>
                   </a>
                   <a href="mailto:info@housnkuh.de" className="flex items-center text-sm group">
                     <div className="bg-white p-2 rounded-lg mr-3 group-hover:shadow-md transition-all duration-300">
@@ -476,7 +510,7 @@ const FAQPage: React.FC = () => {
               <motion.a
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                href="tel:+4915735711257"
+                href="tel:+4915222035788"
                 className="inline-flex items-center px-8 py-4 bg-white text-primary rounded-xl hover:shadow-lg transition-all duration-300 font-bold"
               >
                 <Phone className="w-5 h-5 mr-3" />

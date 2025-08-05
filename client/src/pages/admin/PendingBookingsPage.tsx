@@ -1,13 +1,41 @@
+/**
+ * @file PendingBookingsPage.tsx
+ * @purpose Admin interface for managing pending booking requests from the Package Builder system
+ * @created 2024-11-15
+ * @modified 2025-08-04
+ */
+
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import MietfachAssignmentModal from './MietfachAssignmentModal';
 
+/**
+ * Mietfach assignment data structure
+ * @interface MietfachAssignment
+ * @property {string} mietfachId - ID of the assigned Mietfach
+ * @property {number} adjustedPrice - Custom price for this assignment
+ * @property {string} [priceChangeReason] - Optional reason for price adjustment
+ */
 interface MietfachAssignment {
   mietfachId: string;
   adjustedPrice: number;
   priceChangeReason?: string;
 }
 
+/**
+ * User with pending booking data structure
+ * @interface User
+ * @property {string} _id - Unique user identifier
+ * @property {Object} kontakt - Contact information
+ * @property {string} kontakt.email - User email address
+ * @property {string} kontakt.name - User display name
+ * @property {Object} [pendingBooking] - Optional pending booking data
+ * @property {any} pendingBooking.packageData - Package builder configuration
+ * @property {string} pendingBooking.createdAt - Booking request timestamp
+ * @property {string} pendingBooking.status - Current booking status
+ * @property {string} [pendingBooking.comments] - Optional vendor comments
+ * @property {string} createdAt - User creation timestamp
+ */
 interface User {
   _id: string;
   kontakt: {
@@ -23,6 +51,13 @@ interface User {
   createdAt: string;
 }
 
+/**
+ * Admin pending bookings management page
+ * @description Manages Package Builder requests, allows confirmation with Mietfach assignment,
+ * price adjustments, and provides detailed view of booking parameters and vendor comments
+ * @returns {React.FC} Pending bookings management interface
+ * @complexity Complex booking confirmation workflow with Mietfach assignment modal integration
+ */
 const PendingBookingsPage: React.FC = () => {
   const [pendingBookings, setPendingBookings] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -33,6 +68,12 @@ const PendingBookingsPage: React.FC = () => {
     fetchPendingBookings();
   }, []);
 
+  /**
+   * Fetches all pending booking requests from the API
+   * @description Retrieves users with pending Package Builder requests
+   * @async
+   * @returns {Promise<void>} Updates component state with pending bookings
+   */
   const fetchPendingBookings = async () => {
     try {
       const token = localStorage.getItem('adminToken');
@@ -55,11 +96,26 @@ const PendingBookingsPage: React.FC = () => {
     }
   };
 
+  /**
+   * Opens Mietfach assignment modal for booking confirmation
+   * @param {User} user - User to confirm booking for
+   * @returns {void} Sets selected user and shows assignment modal
+   */
   const handleConfirm = (user: User) => {
     setSelectedUser(user);
     setShowAssignmentModal(true);
   };
 
+  /**
+   * Handles Mietfach assignment and booking confirmation
+   * @description Processes final booking confirmation with assigned Mietfächer, price adjustments,
+   * and additional services, then creates contract and sends notification email
+   * @param {MietfachAssignment[]} assignments - Array of Mietfach assignments with prices
+   * @param {Date} scheduledStartDate - Contract start date
+   * @param {Object} [additionalData] - Optional additional services data
+   * @returns {Promise<void>} Confirms booking and refreshes list
+   * @complexity Multi-step process: assignment validation, contract creation, email notification
+   */
   const handleMietfachAssignment = async (
     assignments: MietfachAssignment[], 
     scheduledStartDate: Date, 
@@ -112,6 +168,12 @@ const PendingBookingsPage: React.FC = () => {
     }
   };
 
+  /**
+   * Rejects a pending booking request
+   * @description Permanently rejects the booking request and removes it from pending list
+   * @param {string} userId - User ID to reject booking for
+   * @returns {Promise<void>} Rejects booking and refreshes list
+   */
   const handleReject = async (userId: string) => {
     try {
       const token = localStorage.getItem('adminToken');

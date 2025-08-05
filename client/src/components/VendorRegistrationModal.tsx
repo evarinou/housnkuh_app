@@ -1,10 +1,19 @@
-// client/src/components/VendorRegistrationModal.tsx
+/**
+ * @file VendorRegistrationModal.tsx
+ * @purpose Multi-step vendor registration modal with package booking integration, supporting both new user registration and existing user login
+ * @created 2025-01-15
+ * @modified 2025-08-05
+ */
 import React, { useState, useCallback, useMemo } from 'react';
 import { X, User, Mail, Phone, Lock, Package, Eye, EyeOff, AlertCircle, CheckCircle, Clock } from 'lucide-react';
 import { useVendorAuth } from '../contexts/VendorAuthContext';
 import { useVendorRegistration } from '../hooks/useVendorRegistration';
 
-// Safe hook wrapper that handles missing context
+/**
+ * Safe hook wrapper that handles missing VendorAuthContext gracefully
+ * Provides all required auth methods with fallback implementations
+ * @returns {object} Complete auth interface with safe fallbacks
+ */
 const useSafeVendorAuth = () => {
   try {
     return useVendorAuth();
@@ -24,6 +33,10 @@ const useSafeVendorAuth = () => {
   }
 };
 
+/**
+ * Package data structure containing all selected packages, pricing, and additional services
+ * Used to pass booking information from PackageBuilder to registration modal
+ */
 interface PackageData {
   selectedProvisionType: string;
   selectedPackages: string[];
@@ -42,6 +55,13 @@ interface PackageData {
   };
 }
 
+/**
+ * Props for VendorRegistrationModal component
+ * @param isOpen - Controls modal visibility
+ * @param onClose - Callback when modal is closed
+ * @param packageData - Selected package configuration from PackageBuilder
+ * @param onSuccess - Callback after successful registration/login
+ */
 interface VendorRegistrationModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -137,6 +157,28 @@ interface FormData {
   agreeToPrivacy: boolean;
 }
 
+/**
+ * Multi-step vendor registration modal component with comprehensive form validation.
+ * 
+ * Features:
+ * - 4-step registration process: Login/Register → Personal Data → Address → Summary
+ * - Toggle between login and registration modes
+ * - Real-time form validation with visual feedback
+ * - Package data integration for booking workflow
+ * - Trial period information display
+ * - Secure password handling with visibility toggle
+ * - Comprehensive error handling and user feedback
+ * - Memoized components for performance optimization
+ * 
+ * Steps:
+ * 1. Login/Register: Email and password authentication
+ * 2. Personal Data: Name and contact information
+ * 3. Address: Complete address information with PLZ validation
+ * 4. Summary: Terms acceptance and final submission
+ * 
+ * @param props - Component props including modal state and package data
+ * @returns {JSX.Element} Complete registration modal with step navigation
+ */
 const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = React.memo(({
   isOpen,
   onClose,

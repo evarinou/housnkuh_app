@@ -1,7 +1,18 @@
-// client/src/pages/WettbewerbPage.tsx
+/**
+ * @file WettbewerbPage.tsx
+ * @purpose Contest/competition page for direct marketers guessing game with prizes
+ * @created 2024-01-01
+ * @modified 2025-08-05
+ */
+
 import React from 'react';
 import VendorContest from '../components/VendorContest';
 
+/**
+ * Contest page component for direct marketers guessing competition
+ * @description Interactive competition page where users can guess which direct marketers will be featured at launch
+ * @returns {JSX.Element} Contest page with information and VendorContest component
+ */
 const WettbewerbPage: React.FC = () => {
   return (
     <div className="py-12 bg-gray-50">

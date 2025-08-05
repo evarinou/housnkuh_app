@@ -1,12 +1,30 @@
+/**
+ * @file BookingCard.tsx
+ * @purpose Display card component for vendor bookings with comprehensive booking information and Zusatzleistungen
+ * @created 2025-01-15
+ * @modified 2025-08-05
+ */
+
 import React, { useCallback } from 'react';
 import { IBooking, IPackageData } from '../../types/booking';
 import BookingStatusBadge from './BookingStatusBadge';
 
+/**
+ * Props interface for the BookingCard component
+ * @interface BookingCardProps
+ * @property {IBooking} booking - Booking data to display
+ * @property {function} onClick - Callback function when card is clicked
+ */
 interface BookingCardProps {
   booking: IBooking;
   onClick: (booking: IBooking) => void;
 }
 
+/**
+ * Formats date for German locale display
+ * @param {Date} date - Date to format
+ * @returns {string} Formatted date string in DD.MM.YYYY format
+ */
 const formatDate = (date: Date): string => {
   if (!date) return 'Unbekannt';
   const dateObj = new Date(date);
@@ -17,6 +35,16 @@ const formatDate = (date: Date): string => {
   });
 };
 
+/**
+ * Formats price with breakdown for Zusatzleistungen display
+ * @param {IPackageData} packageData - Package data containing pricing information
+ * @returns {object} Price formatting result with breakdown and Zusatzleistungen flags
+ * @property {string} formatted - Formatted price in EUR currency
+ * @property {string} breakdown - Additional services breakdown text
+ * @property {boolean} hasZusatzleistungen - Whether additional services are included
+ * 
+ * @complexity O(1) - Simple data transformation
+ */
 const formatPriceWithBreakdown = (packageData?: IPackageData): { 
   formatted: string; 
   breakdown?: string; 
@@ -52,12 +80,49 @@ const formatPriceWithBreakdown = (packageData?: IPackageData): {
   return { formatted, breakdown: breakdownText, hasZusatzleistungen };
 };
 
+/**
+ * BookingCard component displaying detailed vendor booking information
+ * 
+ * @component
+ * @param {BookingCardProps} props - Component props containing booking data and onClick handler
+ * @returns {JSX.Element} Interactive booking card with comprehensive booking details
+ * 
+ * @example
+ * <BookingCard 
+ *   booking={bookingData} 
+ *   onClick={(booking) => openDetailModal(booking)} 
+ * />
+ * 
+ * @features
+ * - Booking status badge with color coding
+ * - Trial booking identification and payment schedule
+ * - Zusatzleistungen (Lagerservice, Versandservice) breakdown
+ * - Price breakdown with discounts and additional services
+ * - Mietfach assignment display
+ * - Keyboard navigation support
+ * - Click handling with event propagation control
+ * 
+ * @accessibility
+ * - ARIA labels for screen readers
+ * - Keyboard navigation (Enter/Space)
+ * - Focus management
+ * - Role and tabIndex attributes
+ * 
+ * @performance
+ * - React.memo for re-render optimization
+ * - useCallback for memoized click handler
+ * 
+ * @complexity O(n) where n = number of Mietfächer in booking
+ */
 const BookingCard: React.FC<BookingCardProps> = React.memo(({ booking, onClick }) => {
   const packageData = booking.packageDetails || booking.packageData;
   const mietfachArray = Array.isArray(booking.mietfach) ? booking.mietfach : booking.mietfach ? [booking.mietfach] : [];
   const priceInfo = formatPriceWithBreakdown(packageData);
   
-  // Memoize click handler to prevent unnecessary re-renders
+  /**
+   * Memoized click handler to prevent unnecessary re-renders
+   * @callback handleClick
+   */
   const handleClick = useCallback(() => {
     onClick(booking);
   }, [booking, onClick]);

@@ -1,6 +1,18 @@
+/**
+ * @file VendorsPage.tsx
+ * @purpose Vendors listing page showcasing direct marketers and contest participation
+ * @created 2024-01-01
+ * @modified 2025-08-05
+ */
+
 import React from 'react';
 import VendorContest from '../components/VendorContest';
 
+/**
+ * Vendors page component displaying direct marketers information and contest
+ * @description Information page about upcoming direct marketers with interactive contest participation
+ * @returns {JSX.Element} Vendors page with information about direct marketers and contest component
+ */
 const VendorsPage: React.FC = () => {
   return (
     <div className="py-12 bg-gray-50">

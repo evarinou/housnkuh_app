@@ -1,10 +1,23 @@
 // client/src/pages/admin/LoginPage.tsx
+/**
+ * @file LoginPage.tsx
+ * @purpose Admin authentication interface providing secure login functionality for system administrators
+ * @created 2025-01-15
+ * @modified 2025-08-04
+ */
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Lock,  AlertCircle } from 'lucide-react';
+import { Lock, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import logo from '../../assets/images/logo.svg';
 
+/**
+ * @component LoginPage
+ * @description Admin login interface with form validation, error handling, and secure authentication
+ * @complexity MEDIUM - Handles form state, validation, authentication flow, and error management
+ * @returns {JSX.Element} Complete login form with validation and error display
+ */
 const LoginPage: React.FC = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');

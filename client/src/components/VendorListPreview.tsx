@@ -1,4 +1,9 @@
-// client/src/components/VendorListPreview.tsx
+/**
+ * @file VendorListPreview.tsx
+ * @purpose Preview component showcasing vendor highlights with registration call-to-action and navigation links
+ * @created 2025-01-15
+ * @modified 2025-08-05
+ */
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Users, Store, ArrowRight } from 'lucide-react';

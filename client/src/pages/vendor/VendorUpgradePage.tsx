@@ -1,3 +1,9 @@
+/**
+ * @file VendorUpgradePage.tsx
+ * @purpose Vendor subscription upgrade page for trial-to-paid conversion. Shows subscription details, pricing, and upgrade options. Critical component in the vendor monetization flow.
+ * @created 2025-01-15
+ * @modified 2025-08-05
+ */
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useVendorAuth } from '../../contexts/VendorAuthContext';
@@ -6,6 +12,20 @@ import { TrialStatusWidget } from '../../components/vendor/TrialStatusWidget';
 import { TrialTransitionModal } from '../../components/vendor/TrialTransitionModal';
 import { ArrowLeft, CheckCircle, Star, Shield, CreditCard } from 'lucide-react';
 
+/**
+ * VendorUpgradePage - Trial to paid subscription conversion page
+ * 
+ * This critical monetization component handles the vendor subscription upgrade flow:
+ * - Displays subscription details and pricing for trial users
+ * - Shows trial status with countdown and automatic conversion information
+ * - Provides detailed feature overview and benefits of paid subscription
+ * - Handles trial transition modal for subscription details
+ * - Includes testimonials and FAQ to address conversion concerns
+ * - Central component in the trial-to-paid conversion funnel
+ * 
+ * @component
+ * @returns {JSX.Element} The vendor subscription upgrade page
+ */
 const VendorUpgradePage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useVendorAuth();

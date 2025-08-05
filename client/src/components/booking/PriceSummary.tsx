@@ -1,6 +1,23 @@
+/**
+ * @file PriceSummary.tsx
+ * @purpose Price calculation and summary component for booking flow with rental duration selection and cost breakdown
+ * @created 2025-01-15
+ * @modified 2025-08-05
+ * @complexity High - Complex pricing calculations, discounts, provision types, and package combinations
+ */
+
 import React from 'react';
 import { Zusatzleistungen } from '../../types';
 
+/**
+ * Provision type configuration for commission models
+ * @interface ProvisionType
+ * @param {string} id - Unique identifier for the provision type
+ * @param {string} name - Display name of the provision model
+ * @param {number} rate - Commission rate as percentage (0-100)
+ * @param {string} description - Detailed description of the provision model
+ * @param {string[]} benefits - List of benefits included in this provision model
+ */
 interface ProvisionType {
   id: string;
   name: string;
@@ -9,6 +26,18 @@ interface ProvisionType {
   benefits: string[];
 }
 
+/**
+ * Package option configuration for rental packages
+ * @interface PackageOption
+ * @param {string} id - Unique identifier for the package
+ * @param {string} name - Display name of the package
+ * @param {number} price - Monthly rental price in euros
+ * @param {string} description - Brief description of the package
+ * @param {string} image - Image URL for the package
+ * @param {string} detail - Detailed description of package features
+ * @param {'standard' | 'cooled' | 'premium' | 'visibility'} category - Package category type
+ * @param {string} [priceDisplay] - Optional custom price display format
+ */
 interface PackageOption {
   id: string;
   name: string;
@@ -20,12 +49,32 @@ interface PackageOption {
   priceDisplay?: string;
 }
 
+/**
+ * Total cost breakdown structure
+ * @interface TotalCost
+ * @param {number} monthly - Monthly recurring costs in euros
+ * @param {number} oneTime - One-time setup costs in euros
+ * @param {number} provision - Provision rate as percentage
+ */
 interface TotalCost {
   monthly: number;
   oneTime: number;
   provision: number;
 }
 
+/**
+ * Props for PriceSummary component
+ * @interface PriceSummaryProps
+ * @param {ProvisionType[]} provisionTypes - Available provision/commission models
+ * @param {PackageOption[]} packageOptions - Available rental packages
+ * @param {string} selectedProvisionType - Currently selected provision type ID
+ * @param {Record<string, number>} packageCounts - Count of selected packages by ID
+ * @param {number} rentalDuration - Selected rental duration in months (3, 6, or 12)
+ * @param {TotalCost} totalCost - Calculated total costs breakdown
+ * @param {Zusatzleistungen} zusatzleistungen - Additional services selection
+ * @param {number} discountRate - Applied discount rate (0-1, e.g., 0.1 for 10%)
+ * @param {function} onRentalDurationChange - Callback for rental duration changes
+ */
 interface PriceSummaryProps {
   provisionTypes: ProvisionType[];
   packageOptions: PackageOption[];
@@ -38,6 +87,26 @@ interface PriceSummaryProps {
   onRentalDurationChange: (duration: number) => void;
 }
 
+/**
+ * PriceSummary component displays rental duration selection and comprehensive cost breakdown
+ * 
+ * Features:
+ * - Rental duration selection (3, 6, 12 months) with discount indicators
+ * - Real-time cost calculations including discounts
+ * - Package selection summary with individual pricing
+ * - Provision model display with commission rates
+ * - Additional services (Zusatzleistungen) breakdown
+ * - Visibility packages (Schaufenster) counting
+ * 
+ * Business Logic:
+ * - 6 months: 5% discount
+ * - 12 months: 10% discount
+ * - Premium provision includes additional services
+ * - Complex package counting and categorization
+ * 
+ * @param {PriceSummaryProps} props - Component configuration and data
+ * @returns {JSX.Element} Price summary component with duration selection and cost breakdown
+ */
 const PriceSummary: React.FC<PriceSummaryProps> = ({
   provisionTypes,
   packageOptions,

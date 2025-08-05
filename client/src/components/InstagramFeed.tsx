@@ -1,7 +1,24 @@
-// client/src/components/InstagramFeed.tsx
+/**
+ * @file InstagramFeed.tsx
+ * @purpose Instagram feed integration component with embedded timeline and fallback content
+ * @created 2025-01-15
+ * @modified 2025-08-05
+ */
 import React, { useEffect } from 'react';
 import { Instagram } from 'lucide-react';
 
+/**
+ * Instagram feed component that embeds Instagram timeline widget.
+ * 
+ * Features:
+ * - Dynamic Instagram embedding script loading
+ * - Responsive iframe integration  
+ * - Fallback content with call-to-action
+ * - Error handling for script loading failures
+ * - SEO-friendly with proper titles and descriptions
+ * 
+ * @returns {JSX.Element} Instagram feed section with embedded timeline
+ */
 const InstagramFeed: React.FC = () => {
   useEffect(() => {
     // LightWidget-Skript laden, falls es noch nicht vorhanden ist

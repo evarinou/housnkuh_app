@@ -1,4 +1,9 @@
-// client/src/pages/vendor/VendorProfilePage.tsx
+/**
+ * @file VendorProfilePage.tsx
+ * @purpose Comprehensive vendor profile management page allowing vendors to update their business information, contact details, images, tags, certifications, and business details. Central hub for vendor account customization.
+ * @created 2025-01-15
+ * @modified 2025-08-05
+ */
 import React, { useState, useEffect, FormEvent, useRef, ChangeEvent } from 'react';
 import { User, Save, Mail, Phone, Building, CheckCircle, AlertCircle, Upload, X, Image } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -7,6 +12,10 @@ import VendorLayout from '../../components/vendor/VendorLayout';
 import axios from 'axios';
 import { resolveImageUrl } from '../../utils/imageUtils';
 
+/**
+ * Tag interface for product categorization and vendor profile tagging
+ * @interface Tag
+ */
 interface Tag {
   id?: string;
   _id?: string;
@@ -71,6 +80,22 @@ interface ProfileData {
   };
 }
 
+/**
+ * VendorProfilePage - Comprehensive vendor profile management interface
+ * 
+ * This complex component provides vendors with complete profile customization:
+ * - Personal information and contact details management
+ * - Profile and banner image upload with preview
+ * - Address and opening hours configuration
+ * - Tag-based product categorization system
+ * - Social media and marketing information
+ * - Dynamic tag creation and management
+ * - Real-time form validation and error handling
+ * - Image upload with progress indicators
+ * 
+ * @component
+ * @returns {JSX.Element} The comprehensive vendor profile management page
+ */
 const VendorProfilePage: React.FC = () => {
   const { user, isAuthenticated, isLoading } = useVendorAuth();
   const navigate = useNavigate();

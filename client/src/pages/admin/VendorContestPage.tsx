@@ -1,7 +1,26 @@
+/**
+ * @file VendorContestPage.tsx
+ * @purpose Admin interface for managing vendor contest entries where users guess which vendors will participate
+ * @created 2024-11-20
+ * @modified 2025-08-04
+ */
+
 import React, { useState, useEffect } from 'react';
 // import { useAuth } from '../../contexts/AuthContext';
 import { AlertCircle, Check, X, Users, Trophy, TrendingUp } from 'lucide-react';
 
+/**
+ * Contest entry data structure
+ * @interface VendorContestEntry
+ * @property {string} _id - Unique identifier
+ * @property {string} name - Participant name
+ * @property {string} email - Participant email
+ * @property {string} [phone] - Optional phone number
+ * @property {string[]} guessedVendors - List of vendors the participant guessed
+ * @property {boolean} isRead - Whether admin has reviewed this entry
+ * @property {string} createdAt - Submission timestamp
+ * @property {string} updatedAt - Last update timestamp
+ */
 interface VendorContestEntry {
   _id: string;
   name: string;
@@ -13,12 +32,26 @@ interface VendorContestEntry {
   updatedAt: string;
 }
 
+/**
+ * Contest statistics structure
+ * @interface ContestStats
+ * @property {number} totalEntries - Total contest submissions
+ * @property {number} unreadEntries - Count of unread entries
+ * @property {Array} topGuesses - Most frequently guessed vendors
+ */
 interface ContestStats {
   totalEntries: number;
   unreadEntries: number;
   topGuesses: { vendor: string; count: number }[];
 }
 
+/**
+ * Admin vendor contest management page
+ * @description Manages contest entries, tracks statistics, marks entries as read/unread,
+ * and provides insights into most frequently guessed vendors
+ * @returns {React.FC} Contest management interface with entries and statistics tabs
+ * @complexity Dual-tab interface with entry management and statistical analysis
+ */
 export default function VendorContestPage() {
   // const { user } = useAuth();
   const [entries, setEntries] = useState<VendorContestEntry[]>([]);
@@ -33,6 +66,12 @@ export default function VendorContestPage() {
     fetchStats();
   }, []);
 
+  /**
+   * Fetches all contest entries from the API
+   * @description Retrieves complete list of contest submissions
+   * @async
+   * @returns {Promise<void>} Updates component state with entries
+   */
   const fetchEntries = async () => {
     try {
       const token = localStorage.getItem('adminToken');
@@ -56,6 +95,12 @@ export default function VendorContestPage() {
     }
   };
 
+  /**
+   * Fetches contest statistics from the API
+   * @description Retrieves aggregated data including top guesses and entry counts
+   * @async
+   * @returns {Promise<void>} Updates component state with statistics
+   */
   const fetchStats = async () => {
     try {
       const token = localStorage.getItem('adminToken');
@@ -77,6 +122,13 @@ export default function VendorContestPage() {
     }
   };
 
+  /**
+   * Marks a contest entry as read
+   * @description Updates read status and adjusts unread count in statistics
+   * @param {string} id - Entry ID to mark as read
+   * @returns {Promise<void>} Updates local state on success
+   * @complexity Updates both entries list and statistics state
+   */
   const markAsRead = async (id: string) => {
     try {
       const token = localStorage.getItem('adminToken');
@@ -111,6 +163,12 @@ export default function VendorContestPage() {
     }
   };
 
+  /**
+   * Deletes a contest entry after user confirmation
+   * @description Shows confirmation dialog before permanent deletion
+   * @param {string} id - Entry ID to delete
+   * @returns {Promise<void>} Removes entry and refreshes statistics
+   */
   const deleteEntry = async (id: string) => {
     if (!window.confirm('Möchten Sie diesen Eintrag wirklich löschen?')) {
       return;
@@ -141,6 +199,13 @@ export default function VendorContestPage() {
     }
   };
 
+  /**
+   * Views detailed information for a contest entry
+   * @description Fetches and displays full entry details, automatically marks as read
+   * @param {string} id - Entry ID to view
+   * @returns {Promise<void>} Sets selected entry and updates read status
+   * @complexity Auto-marks as read and updates both entries and statistics
+   */
   const viewDetails = async (id: string) => {
     try {
       const token = localStorage.getItem('adminToken');

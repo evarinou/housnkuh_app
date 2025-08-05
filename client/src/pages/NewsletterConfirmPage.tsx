@@ -1,9 +1,20 @@
-// client/src/pages/NewsletterConfirmPage.tsx
+/**
+ * @file NewsletterConfirmPage.tsx
+ * @purpose Newsletter email confirmation page with token validation and user feedback
+ * @created 2024-01-01
+ * @modified 2025-08-05
+ */
+
 import React, { useEffect, useState } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import { Check, AlertCircle, Loader } from 'lucide-react';
 import axios from 'axios';
 
+/**
+ * Newsletter confirmation page component for email subscription verification
+ * @description Handles newsletter subscription confirmation via token validation with success/error states
+ * @returns {JSX.Element} Newsletter confirmation page with loading, success, and error states
+ */
 const NewsletterConfirmPage: React.FC = () => {
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [message, setMessage] = useState<string>('');

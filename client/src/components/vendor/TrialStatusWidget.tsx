@@ -1,15 +1,37 @@
+/**
+ * @file TrialStatusWidget.tsx
+ * @purpose Compact trial status widget with real-time countdown and progress visualization for trial management
+ * @created 2025-01-15
+ * @modified 2025-08-05
+ */
+
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useVendorAuth } from '../../contexts/VendorAuthContext';
 import { createNavigationHelper } from '../../utils/navigation';
 import './TrialStatusWidget.css';
 
+/**
+ * Props interface for the TrialStatusWidget component
+ * @interface TrialStatusWidgetProps
+ * @property {boolean} [compact] - Whether to render in compact mode (reduced information display)
+ * @property {boolean} [showActions] - Whether to show action buttons (upgrade, info)
+ * @property {string} [className] - Additional CSS classes for styling customization
+ */
 interface TrialStatusWidgetProps {
   compact?: boolean;
   showActions?: boolean;
   className?: string;
 }
 
+/**
+ * Interface for remaining time calculation display
+ * @interface TimeRemaining
+ * @property {number} days - Days remaining in trial period
+ * @property {number} hours - Hours remaining (0-23)
+ * @property {number} minutes - Minutes remaining (0-59)
+ * @property {number} seconds - Seconds remaining (0-59)
+ */
 interface TimeRemaining {
   days: number;
   hours: number;
@@ -17,6 +39,49 @@ interface TimeRemaining {
   seconds: number;
 }
 
+/**
+ * TrialStatusWidget component providing compact trial status visualization with real-time countdown
+ * 
+ * @component
+ * @param {TrialStatusWidgetProps} props - Component props for customization and behavior
+ * @returns {JSX.Element | null} Compact trial status widget or null if not in trial
+ * 
+ * @description
+ * Compact widget component designed for embedding in layouts to show trial status at a glance.
+ * Features real-time countdown, progress visualization, and contextual action buttons.
+ * Automatically updates every second and adapts styling based on urgency.
+ * 
+ * @features
+ * - Real-time countdown display (days:hours:minutes:seconds)
+ * - Progress bar showing trial completion percentage
+ * - Contextual styling based on urgency (active, warning, urgent)
+ * - Compact mode for space-constrained layouts
+ * - Action buttons for upgrade and information navigation
+ * - Automatic updates every second
+ * - German localized text and time formatting
+ * 
+ * @trial_management
+ * - Only renders for users with 'trial_active' registration status
+ * - Calculates progress from trial start to end dates
+ * - Urgency levels: active (>3 days), warning (≤3 days), urgent (≤1 day)
+ * - Zero-padded time formatting for consistent display
+ * 
+ * @modes
+ * - Full mode: Complete countdown with seconds, progress bar, full actions
+ * - Compact mode: Days/hours/minutes only, condensed layout, single action
+ * 
+ * @navigation_integration
+ * - Uses navigationHelper for consistent routing
+ * - Upgrade button → vendor upgrade flow
+ * - Info button → trial information page
+ * 
+ * @performance
+ * - 1-second interval updates for real-time display
+ * - Automatic cleanup on component unmount
+ * - Conditional rendering to minimize DOM updates
+ * 
+ * @complexity O(1) - Fixed calculations and rendering regardless of data size
+ */
 export const TrialStatusWidget: React.FC<TrialStatusWidgetProps> = ({ 
   compact = false, 
   showActions = true,

@@ -1,3 +1,10 @@
+/**
+ * @file TrialTransitionModal.tsx
+ * @purpose Modal component for trial-to-paid transition information with package breakdown and pricing details
+ * @created 2025-01-15
+ * @modified 2025-08-05
+ */
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { X, Info, Check, AlertCircle } from 'lucide-react';
@@ -5,12 +12,71 @@ import { useVendorAuth } from '../../contexts/VendorAuthContext';
 import { createNavigationHelper } from '../../utils/navigation';
 import './TrialTransitionModal.css';
 
+/**
+ * Props interface for the TrialTransitionModal component
+ * @interface TrialTransitionModalProps
+ * @property {boolean} isOpen - Modal visibility state
+ * @property {function} onClose - Callback function to close modal
+ * @property {number} [daysRemaining] - Days remaining in trial period (default: 0)
+ */
 interface TrialTransitionModalProps {
   isOpen: boolean;
   onClose: () => void;
   daysRemaining?: number;
 }
 
+/**
+ * TrialTransitionModal component for managing trial-to-paid subscription transitions
+ * 
+ * @component
+ * @param {TrialTransitionModalProps} props - Component props containing state and callbacks
+ * @returns {JSX.Element | null} Comprehensive transition information modal or null when closed
+ * 
+ * @description
+ * Informational modal component that educates users about the automatic transition from
+ * trial to paid subscription. Displays package breakdown, pricing details, and transition
+ * timeline. Provides options to continue or cancel trial early.
+ * 
+ * @features
+ * - Contextual messaging based on remaining trial days
+ * - Package breakdown with individual item pricing
+ * - Zusatzleistungen display (Lagerservice, Versandservice)
+ * - Total monthly price calculation and display
+ * - Automatic transition information
+ * - Early cancellation option for active trials
+ * - Billing and cancellation policy information
+ * - German localized content
+ * 
+ * @transition_states
+ * - Expired (≤0 days): Transition completed, subscription active
+ * - Last day (=1 day): Final warning, transition tomorrow
+ * - Expiring soon (≤3 days): Upcoming transition notification
+ * - Info (>3 days): General transition information
+ * 
+ * @package_display
+ * - Individual Mietfach items with names and prices
+ * - Zusatzleistungen breakdown (Lagerservice: €20, Versandservice: €5)
+ * - Total monthly price calculation
+ * - Fallback for uncalculated pricing
+ * 
+ * @pricing_features
+ * - Based on individual package composition
+ * - Monthly cancellation available
+ * - No setup fees
+ * - Automatic billing
+ * 
+ * @navigation_integration
+ * - Uses navigationHelper for consistent routing
+ * - Cancel option → vendor cancellation flow
+ * - Seamless integration with trial management
+ * 
+ * @user_data_integration
+ * - Accesses user.calculatedMonthlyPrice for pricing
+ * - Uses user.packageSummary for package breakdown
+ * - Displays Mietfächer and Zusatzleistungen selections
+ * 
+ * @complexity O(n) where n = number of package items to display
+ */
 export const TrialTransitionModal: React.FC<TrialTransitionModalProps> = ({
   isOpen,
   onClose,

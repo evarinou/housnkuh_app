@@ -1,3 +1,10 @@
+/**
+ * @file MietfachAssignmentModal.tsx
+ * @purpose Modal for assigning Mietfächer to confirmed bookings with price adjustment and availability checking
+ * @created 2024-11-15
+ * @modified 2025-08-04
+ */
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { X, Package, MapPin, Square, Calendar } from 'lucide-react';
 import axios from 'axios';
@@ -6,6 +13,19 @@ import 'react-datepicker/dist/react-datepicker.css';
 import { format, addMonths } from 'date-fns';
 import { de } from 'date-fns/locale';
 
+/**
+ * Mietfach data structure
+ * @interface Mietfach
+ * @property {string} _id - Unique identifier
+ * @property {string} bezeichnung - Display name/label
+ * @property {string} typ - Type of Mietfach (kuehlregal, gefrierregal, etc.)
+ * @property {string} [beschreibung] - Optional description
+ * @property {Object} [groesse] - Optional size information
+ * @property {number} groesse.flaeche - Area/size value
+ * @property {string} groesse.einheit - Size unit (m², pieces, etc.)
+ * @property {string} [standort] - Optional location information
+ * @property {string[]} [features] - Optional list of features
+ */
 interface Mietfach {
   _id: string;
   bezeichnung: string;
@@ -19,18 +39,41 @@ interface Mietfach {
   features?: string[];
 }
 
+/**
+ * Mietfach assignment with price adjustment
+ * @interface MietfachAssignment
+ * @property {string} mietfachId - ID of assigned Mietfach
+ * @property {number} adjustedPrice - Custom monthly price
+ * @property {string} [priceChangeReason] - Optional reason for price change
+ */
 interface MietfachAssignment {
   mietfachId: string;
   adjustedPrice: number;
   priceChangeReason?: string;
 }
 
+/**
+ * Mietfach with availability information
+ * @interface MietfachWithAvailability
+ * @extends Mietfach
+ * @property {boolean} available - Whether available for selected period
+ * @property {any[]} [conflicts] - Optional booking conflicts
+ * @property {Date | null} [nextAvailable] - Next available date if currently unavailable
+ */
 interface MietfachWithAvailability extends Mietfach {
   available: boolean;
   conflicts?: any[];
   nextAvailable?: Date | null;
 }
 
+/**
+ * Props for MietfachAssignmentModal component
+ * @interface MietfachAssignmentModalProps
+ * @property {boolean} isOpen - Whether modal is visible
+ * @property {() => void} onClose - Function to close modal
+ * @property {Function} onConfirm - Function to confirm assignments with pricing and date
+ * @property {Object} user - User with pending booking information
+ */
 interface MietfachAssignmentModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -51,6 +94,14 @@ interface MietfachAssignmentModalProps {
   };
 }
 
+/**
+ * Mietfach assignment modal component
+ * @description Complex modal for assigning Mietfächer to confirmed bookings with availability checking,
+ * price adjustment, date scheduling, and comprehensive booking details display
+ * @param {MietfachAssignmentModalProps} props - Component props
+ * @returns {React.FC} Mietfach assignment modal with booking confirmation workflow
+ * @complexity Advanced booking workflow with availability checking, pricing, and schedule management
+ */
 const MietfachAssignmentModal: React.FC<MietfachAssignmentModalProps> = ({
   isOpen,
   onClose,
@@ -79,6 +130,12 @@ const MietfachAssignmentModal: React.FC<MietfachAssignmentModalProps> = ({
     }
   }, [isOpen]);
 
+  /**
+   * Determines required Mietfach types based on package selection
+   * @description Maps package counts to Mietfach types (kühl, gefrier, lager, etc.)
+   * @returns {string[]} Array of required Mietfach types or ['all'] if none specified
+   * @complexity Business logic mapping package types to physical Mietfach types
+   */
   const getRequestedMietfachTypes = useCallback(() => {
     const types: string[] = [];
     const packageData = user.pendingBooking?.packageData;
@@ -117,6 +174,13 @@ const MietfachAssignmentModal: React.FC<MietfachAssignmentModalProps> = ({
     return types.length > 0 ? types : ['all'];
   }, [user.pendingBooking?.packageData]);
 
+  /**
+   * Checks Mietfach availability for selected date and duration
+   * @description Queries backend for availability conflicts and updates filtered list
+   * @async
+   * @returns {Promise<void>} Updates filteredMietfaecher with availability status
+   * @complexity Real-time availability checking with conflict detection
+   */
   const checkAvailabilityForDate = useCallback(async () => {
     if (!user.pendingBooking?.packageData) return;
     
@@ -167,6 +231,12 @@ const MietfachAssignmentModal: React.FC<MietfachAssignmentModalProps> = ({
     }
   }, [checkAvailabilityForDate, availableMietfaecher, user.pendingBooking?.packageData]);
 
+  /**
+   * Fetches all available Mietfächer from the API
+   * @description Retrieves complete list of Mietfächer for assignment selection
+   * @async
+   * @returns {Promise<void>} Updates availableMietfaecher state
+   */
   const fetchAvailableMietfaecher = async () => {
     try {
       const token = localStorage.getItem('adminToken');
@@ -188,7 +258,11 @@ const MietfachAssignmentModal: React.FC<MietfachAssignmentModalProps> = ({
     }
   };
 
-  // Helper function to display user-friendly type names
+  /**
+   * Maps technical type names to user-friendly display names
+   * @param {string} typ - Technical Mietfach type
+   * @returns {string} User-friendly display name
+   */
   const getDisplayTypeName = (typ: string): string => {
     const typeMap: Record<string, string> = {
       'kuehlregal': 'Kühlregal',
@@ -206,6 +280,11 @@ const MietfachAssignmentModal: React.FC<MietfachAssignmentModalProps> = ({
     return typeMap[typ] || typ;
   };
 
+  /**
+   * Toggles Mietfach selection and manages price adjustments
+   * @param {string} mietfachId - ID of Mietfach to toggle
+   * @returns {void} Updates selection state and clears price on deselection
+   */
   const toggleMietfach = (mietfachId: string) => {
     setSelectedMietfaecher(prev => {
       const isCurrentlySelected = prev.includes(mietfachId);
@@ -224,6 +303,12 @@ const MietfachAssignmentModal: React.FC<MietfachAssignmentModalProps> = ({
     });
   };
 
+  /**
+   * Updates price adjustment for a specific Mietfach
+   * @param {string} mietfachId - ID of Mietfach to update price for
+   * @param {number} newPrice - New monthly price
+   * @returns {void} Updates priceAdjustments state
+   */
   const handlePriceChange = (mietfachId: string, newPrice: number) => {
     setPriceAdjustments(prev => ({
       ...prev,
@@ -231,7 +316,12 @@ const MietfachAssignmentModal: React.FC<MietfachAssignmentModalProps> = ({
     }));
   };
 
-  // Calculate total price including Zusatzleistungen
+  /**
+   * Calculates total monthly price including Zusatzleistungen and discounts
+   * @description Computes final price with Mietfach costs, additional services, and applied discounts
+   * @returns {number} Total monthly price rounded to 2 decimal places
+   * @complexity Complex pricing logic with conditional services and discount calculations
+   */
   const calculateTotalPriceWithZusatzleistungen = () => {
     let total = 0;
     
@@ -258,6 +348,13 @@ const MietfachAssignmentModal: React.FC<MietfachAssignmentModalProps> = ({
     return Math.round(total * 100) / 100; // Auf 2 Dezimalstellen runden
   };
 
+  /**
+   * Handles booking confirmation with validation and assignment creation
+   * @description Validates selections, creates assignments, and triggers parent confirmation callback
+   * @async
+   * @returns {Promise<void>} Confirms booking with assignments, pricing, and additional data
+   * @complexity Multi-step validation and assignment creation with error handling
+   */
   const handleConfirm = async () => {
     if (selectedMietfaecher.length === 0) {
       setError('Bitte wählen Sie mindestens ein Mietfach aus');

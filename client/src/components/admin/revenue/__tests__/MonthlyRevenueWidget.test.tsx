@@ -1,8 +1,26 @@
+/**
+ * @file MonthlyRevenueWidget.test.tsx
+ * @purpose Comprehensive test suite for MonthlyRevenueWidget component with currency formatting and trend indicators
+ * @created 2025-01-15
+ * @modified 2025-08-05
+ */
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import MonthlyRevenueWidget from '../MonthlyRevenueWidget';
 
+/**
+ * Test suite for MonthlyRevenueWidget component functionality
+ * 
+ * Tests cover:
+ * - Basic rendering with title and currency formatting
+ * - Trend indicator display with directional arrows
+ * - Optional subtitle rendering
+ * - String value handling (percentage display)
+ * - Clickable state CSS class application
+ * - German locale currency formatting validation
+ * - Optional prop handling and edge cases
+ */
 describe('MonthlyRevenueWidget', () => {
   const mockProps = {
     title: 'Test Revenue',

@@ -75,4 +75,4 @@ This documentation is actively maintained by the development team. If you find o
 For questions about this documentation:
 - Team Lead: [See CLAUDE.md](../CLAUDE.md)
 - Email: info@housnkuh.de
-- Phone: 0157 35711257
+- Phone: 0152 22035788

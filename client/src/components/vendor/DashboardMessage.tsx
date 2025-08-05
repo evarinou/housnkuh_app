@@ -1,12 +1,58 @@
+/**
+ * @file DashboardMessage.tsx
+ * @purpose Reusable message component for dashboard notifications with type-based styling and dismissal functionality
+ * @created 2025-01-15
+ * @modified 2025-08-05
+ */
+
 import React from 'react';
 import { X, AlertCircle, CheckCircle, Info, AlertTriangle } from 'lucide-react';
 import { IDashboardMessage } from '../../types/booking';
 
+/**
+ * Props interface for the DashboardMessage component
+ * @interface DashboardMessageProps
+ * @property {IDashboardMessage} message - Message data containing type, title, content, and dismissal settings
+ * @property {function} [onDismiss] - Optional callback function for message dismissal
+ */
 interface DashboardMessageProps {
   message: IDashboardMessage;
   onDismiss?: () => void;
 }
 
+/**
+ * DashboardMessage component for displaying contextual notifications in vendor dashboard
+ * 
+ * @component
+ * @param {DashboardMessageProps} props - Component props containing message data and dismissal callback
+ * @returns {JSX.Element} Styled message component with appropriate icon and colors
+ * 
+ * @description
+ * Reusable notification component for displaying dashboard messages with consistent styling
+ * based on message type. Supports dismissible messages with close functionality.
+ * 
+ * @features
+ * - Type-based styling (success: green, warning: yellow, error: red, info: blue)
+ * - Contextual Lucide icons for each message type
+ * - Optional dismissal functionality with close button
+ * - Accessible design with aria-labels and focus management
+ * - Responsive layout with proper spacing
+ * - German localized accessibility labels
+ * 
+ * @message_types
+ * - success: Green styling with CheckCircle icon for positive actions
+ * - warning: Yellow styling with AlertTriangle icon for cautions
+ * - error: Red styling with AlertCircle icon for errors
+ * - info: Blue styling with Info icon for general information
+ * 
+ * @accessibility
+ * - aria-label on dismiss button ("Nachricht schließen")
+ * - Focus ring styling for keyboard navigation
+ * - High contrast color combinations
+ * - Clear visual hierarchy with icons and text
+ * 
+ * @complexity O(1) - Simple message rendering with fixed styling options
+ */
 const DashboardMessage: React.FC<DashboardMessageProps> = ({ message, onDismiss }) => {
   const getIcon = () => {
     switch (message.type) {

@@ -1,13 +1,40 @@
+/**
+ * @file BookingStatusBadge.tsx
+ * @purpose Status badge component for booking state visualization with color-coded icons and labels
+ * @created 2025-01-15
+ * @modified 2025-08-05
+ */
+
 import React from 'react';
 import { Clock, CheckCircle, Home, Archive } from 'lucide-react';
 
+/**
+ * Type definition for booking status values
+ * @typedef {'pending' | 'confirmed' | 'active' | 'completed'} BookingStatus
+ */
 export type BookingStatus = 'pending' | 'confirmed' | 'active' | 'completed';
 
+/**
+ * Props interface for the BookingStatusBadge component
+ * @interface BookingStatusBadgeProps
+ * @property {BookingStatus} status - Current booking status
+ * @property {string} className - Optional additional CSS classes
+ */
 interface BookingStatusBadgeProps {
   status: BookingStatus;
   className?: string;
 }
 
+/**
+ * Status configuration mapping for booking states
+ * Defines visual appearance and icons for each booking status
+ * 
+ * @const statusConfig
+ * @property {object} pending - Yellow badge for bookings in processing
+ * @property {object} confirmed - Green badge for confirmed bookings  
+ * @property {object} active - Blue badge for currently active bookings
+ * @property {object} completed - Gray badge for finished bookings
+ */
 const statusConfig = {
   pending: {
     label: 'In Bearbeitung',
@@ -31,10 +58,41 @@ const statusConfig = {
   }
 };
 
+/**
+ * BookingStatusBadge component displaying booking status with color-coded badges
+ * 
+ * @component
+ * @param {BookingStatusBadgeProps} props - Component props containing status and styling
+ * @returns {JSX.Element} Color-coded status badge with icon and label
+ * 
+ * @example
+ * <BookingStatusBadge status="confirmed" />
+ * <BookingStatusBadge status="pending" className="ml-2" />
+ * 
+ * @features
+ * - Color-coded status visualization (yellow, green, blue, gray)
+ * - Icon representation for each status state
+ * - German localized status labels
+ * - Fallback handling for unknown status values
+ * - Custom className support for additional styling
+ * 
+ * @status_flow
+ * pending → confirmed → active → completed
+ * 
+ * @accessibility
+ * - Semantic icon usage for visual status indication
+ * - High contrast color combinations
+ * - Readable German status labels
+ * 
+ * @complexity O(1) - Simple status lookup and rendering
+ */
 const BookingStatusBadge: React.FC<BookingStatusBadgeProps> = ({ status, className = '' }) => {
   const config = statusConfig[status];
   
-  // Fallback config for unknown status values
+  /**
+   * Fallback handling for unknown status values
+   * Logs warning and displays generic badge with provided status text
+   */
   if (!config) {
     console.warn(`Unknown booking status: "${status}". Using fallback.`);
     const fallbackConfig = {

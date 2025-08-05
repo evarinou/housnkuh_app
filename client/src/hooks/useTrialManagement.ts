@@ -1,3 +1,10 @@
+/**
+ * @file useTrialManagement.ts
+ * @purpose Custom hook for vendor trial management and authentication operations
+ * @created 2025-01-15
+ * @modified 2025-08-05
+ */
+
 import { useCallback, useState } from 'react';
 import axios from 'axios';
 import { VendorUser } from '../contexts/VendorAuthContext';
@@ -19,13 +26,12 @@ interface UseTrialManagementReturn {
 }
 
 /**
- * Hook for managing trial-related authentication and user profile processing
- * 
- * Provides functionality for:
- * - Authentication validation and token checking
- * - User profile data loading and processing
- * - Trial status validation
- * - Error handling for authentication operations
+ * Custom hook for vendor trial management and authentication operations
+ * @description Handles authentication checks, trial status validation, profile loading,
+ * trial status retrieval, and trial booking cancellation
+ * @hook useTrialManagement
+ * @dependencies useCallback, useState, axios, authValidation, userStorage
+ * @returns Trial management interface with auth and trial operations
  */
 export const useTrialManagement = (): UseTrialManagementReturn => {
   const [isCheckingAuth, setIsCheckingAuth] = useState(false);
@@ -33,6 +39,7 @@ export const useTrialManagement = (): UseTrialManagementReturn => {
 
   /**
    * Validates if user data indicates a valid trial status
+   * @description Checks user data structure and validates trial status using auth validation
    * @param userData - The user data to validate
    * @returns boolean indicating if trial status is valid
    */
@@ -50,6 +57,7 @@ export const useTrialManagement = (): UseTrialManagementReturn => {
 
   /**
    * Processes authentication response and returns user data
+   * @description Extracts and validates user data from auth response using storage and validation
    * @param response - The API response from authentication check
    * @returns Processed user data or null if invalid
    */
@@ -70,6 +78,7 @@ export const useTrialManagement = (): UseTrialManagementReturn => {
 
   /**
    * Performs authentication check with token validation and profile loading
+   * @description Validates token, checks auth status, loads current profile, and processes user data
    * @param token - Authentication token
    * @param processUserData - Function to process user data with pricing
    * @returns Promise<boolean> indicating authentication success
@@ -155,6 +164,7 @@ export const useTrialManagement = (): UseTrialManagementReturn => {
 
   /**
    * Gets the trial status with booking details
+   * @description Retrieves current trial status and booking information from API
    * @param token - Authentication token
    * @returns Promise with success status, data, and optional message
    */
@@ -199,6 +209,7 @@ export const useTrialManagement = (): UseTrialManagementReturn => {
 
   /**
    * Cancels a trial booking
+   * @description Sends cancellation request to API with booking ID and optional reason
    * @param token - Authentication token
    * @param bookingId - The ID of the booking to cancel
    * @param reason - Optional reason for cancellation

@@ -1,3 +1,9 @@
+/**
+ * @file RevenueChart.tsx
+ * @purpose Advanced revenue visualization component with Recharts integration, projections, and dual-axis charts
+ * @created 2025-01-15
+ * @modified 2025-08-05
+ */
 import React, { useState } from 'react';
 import {
   LineChart,
@@ -13,6 +19,10 @@ import {
 } from 'recharts';
 import './RevenueChart.css';
 
+/**
+ * Revenue data structure for chart visualization
+ * @interface RevenueData
+ */
 interface RevenueData {
   month: string;
   revenue: number;
@@ -21,12 +31,40 @@ interface RevenueData {
   isProjection?: boolean;
 }
 
+/**
+ * Props for the RevenueChart component
+ * @interface RevenueChartProps
+ */
 interface RevenueChartProps {
   data: RevenueData[];
   showProjections?: boolean;
   includeTrialRevenue?: boolean;
 }
 
+/**
+ * Advanced revenue visualization component using Recharts with projections and analytics
+ * 
+ * Features:
+ * - Dual-axis charts (revenue + contracts) with independent scaling
+ * - Line and bar chart toggle functionality
+ * - Historical data vs projection visualization with different styling
+ * - German locale date and currency formatting
+ * - Trial contract tracking with conditional display
+ * - Custom tooltip with projection indicators
+ * - Responsive design with ResponsiveContainer
+ * - Empty state handling for no data scenarios
+ * - FontAwesome icon integration for controls
+ * - Dashed lines for projections and trial data
+ * - Color-coded data series with legend
+ * 
+ * @param {RevenueChartProps} props - Component props
+ * @param {RevenueData[]} props.data - Array of revenue data points with dates
+ * @param {boolean} [props.showProjections=false] - Whether to display projection data
+ * @param {boolean} [props.includeTrialRevenue=false] - Whether to include trial revenue data
+ * @returns {JSX.Element} Interactive revenue chart with dual-axis visualization
+ * 
+ * @complexity O(n) - Linear data processing and chart rendering
+ */
 export default function RevenueChart({ data, showProjections = false, includeTrialRevenue = false }: RevenueChartProps) {
   const [chartType, setChartType] = useState<'line' | 'bar'>('line');
   const showTrialData = includeTrialRevenue;

@@ -1,9 +1,30 @@
-// client/src/components/layout/Navigation.tsx oder Navbar.tsx
+/**
+ * @file Navbar.tsx
+ * @purpose Simplified navbar component without authentication features for basic public navigation
+ * @created 2025-01-15
+ * @modified 2025-08-05
+ */
 import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import logo from '../../assets/images/logo.svg';
 
+/**
+ * Basic navigation component with responsive design and scroll effects
+ * 
+ * This is a simplified version of the main navigation without authentication features.
+ * Used in contexts where user authentication state is not relevant.
+ * 
+ * Features:
+ * - Responsive design with mobile hamburger menu
+ * - Scroll-based styling changes (shadow and padding adjustments)
+ * - Public navigation links (Direktvermarkter, Wettbewerb, Standort, etc.)
+ * - Mobile menu with smooth animations
+ * - Logo integration with home link
+ * - Accessible mobile menu controls
+ * 
+ * @returns {JSX.Element} The navigation bar for public pages
+ */
 const Navigation: React.FC = () => {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [scrolled, setScrolled] = useState<boolean>(false);

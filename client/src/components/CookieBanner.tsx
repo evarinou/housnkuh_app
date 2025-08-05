@@ -1,4 +1,9 @@
-// client/src/components/CookieBanner.tsx
+/**
+ * @file CookieBanner.tsx
+ * @purpose GDPR-compliant cookie consent banner with granular control and preferences management
+ * @created 2025-01-15
+ * @modified 2025-08-05
+ */
 import React, { useState, useEffect } from 'react';
 
 // Einfache Alert Dialog Komponente ohne shadcn/ui Abhängigkeit

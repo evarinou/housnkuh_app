@@ -1,7 +1,18 @@
-// client/src/pages/AGBPage.tsx
+/**
+ * @file AGBPage.tsx
+ * @purpose Terms and conditions (AGB) page displaying legal terms for Direktvermarkter
+ * @created 2024-01-01
+ * @modified 2025-08-05
+ */
+
 import React from 'react';
 import { FileText, Users, ShoppingCart, CreditCard, AlertTriangle, Shield, Building, Scale } from 'lucide-react';
 
+/**
+ * Terms and conditions page component for Direktvermarkter
+ * @description Displays complete AGB (Terms and Conditions) for direct marketers using the Housnkuh platform
+ * @returns {JSX.Element} Comprehensive legal terms page with sections for contract terms, pricing, obligations, and policies
+ */
 const AGBPage: React.FC = () => {
   return (
       <div className="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
@@ -636,7 +647,7 @@ const AGBPage: React.FC = () => {
               <p className="text-gray-700">96317 Kronach</p>
               <div className="pt-3 space-y-1">
                 <p className="text-gray-700">E-Mail: evam.schaller@gmail.com</p>
-                <p className="text-gray-700">Telefon: 0157 35711257</p>
+                <p className="text-gray-700">Telefon: 0152 22035788</p>
               </div>
             </div>
           </div>

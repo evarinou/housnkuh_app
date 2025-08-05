@@ -1,6 +1,26 @@
+/**
+ * @file MietfachCard.tsx
+ * @purpose Performance-optimized Mietfach display card with trial pricing and category-based styling
+ * @created 2025-01-15
+ * @modified 2025-08-05
+ */
+
 import React, { useCallback, useMemo } from 'react';
 import { Package, Snowflake, Ruler, Star, Info } from 'lucide-react';
 
+/**
+ * Interface for Mietfach data structure
+ * @interface MietfachData
+ * @property {string} id - Unique Mietfach identifier
+ * @property {string} nummer - Display number for the Mietfach
+ * @property {string} kategorie - Mietfach category type
+ * @property {string} [groesse] - Optional size information
+ * @property {string} [kuehlungsart] - Optional cooling type for refrigerated units
+ * @property {number} preis - Monthly rental price
+ * @property {boolean} verfuegbar - Availability status
+ * @property {string} [beschreibung] - Optional description text
+ * @property {string[]} [features] - Optional array of feature tags
+ */
 interface MietfachData {
   id: string;
   nummer: string;
@@ -13,6 +33,14 @@ interface MietfachData {
   features?: string[];
 }
 
+/**
+ * Props interface for the MietfachCard component
+ * @interface MietfachCardProps
+ * @property {MietfachData} mietfach - Complete Mietfach data for display
+ * @property {boolean} isInTrial - Whether user is currently in trial period
+ * @property {boolean} hasTrialBooking - Whether user already has a trial booking
+ * @property {function} onBookClick - Callback function when booking button is clicked
+ */
 interface MietfachCardProps {
   mietfach: MietfachData;
   isInTrial: boolean;
@@ -20,6 +48,61 @@ interface MietfachCardProps {
   onBookClick: (mietfach: MietfachData) => void;
 }
 
+/**
+ * MietfachCard component providing optimized display of Mietfach rental options
+ * 
+ * @component
+ * @param {MietfachCardProps} props - Component props containing Mietfach data and trial state
+ * @returns {JSX.Element} Comprehensive Mietfach card with pricing and booking functionality
+ * 
+ * @description
+ * Performance-optimized card component for displaying Mietfach rental options with
+ * category-based styling, trial pricing integration, and booking functionality.
+ * Uses React.memo for re-render prevention and extensive memoization for performance.
+ * 
+ * @features
+ * - Category-based color coding and styling
+ * - Trial period special pricing display
+ * - Feature truncation with overflow indication
+ * - Availability-based interaction states
+ * - Performance optimization with React.memo and useMemo
+ * - Responsive design with hover effects
+ * - German localized content
+ * 
+ * @category_types
+ * - regal/regal-b: Blue styling for standard shelving
+ * - kuehlregal: Cyan styling for refrigerated storage
+ * - gefrierregal: Indigo styling for frozen storage  
+ * - verkaufstisch: Green styling for sales tables
+ * - schaufenster: Purple styling for display windows
+ * - sonstiges: Gray styling for miscellaneous types
+ * 
+ * @trial_integration
+ * - Special trial badge for eligible users
+ * - Free first month pricing display
+ * - Trial benefit information tooltip
+ * - Conditional styling based on trial status
+ * 
+ * @performance_optimizations
+ * - React.memo wrapper prevents unnecessary re-renders
+ * - useMemo for computed values (trial badge visibility, styling)
+ * - useCallback for event handlers and helper functions
+ * - Memoized category color and display name calculations
+ * 
+ * @pricing_display
+ * - Regular pricing for standard users
+ * - Trial pricing with crossed-out regular price
+ * - Free month highlight with green styling
+ * - Clear monthly cost indication
+ * 
+ * @accessibility
+ * - Disabled state handling for unavailable units
+ * - Clear visual hierarchy and contrast
+ * - Descriptive button text based on availability
+ * - Proper focus states for interactive elements
+ * 
+ * @complexity O(1) - Fixed rendering complexity with memoized calculations
+ */
 const MietfachCard: React.FC<MietfachCardProps> = React.memo(({ 
   mietfach, 
   isInTrial, 

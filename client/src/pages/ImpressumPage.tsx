@@ -1,7 +1,18 @@
-// client/src/pages/ImpressumPage.tsx
+/**
+ * @file ImpressumPage.tsx
+ * @purpose Legal imprint page displaying required business information per German TMG
+ * @created 2024-01-01
+ * @modified 2025-08-05
+ */
+
 import React from 'react';
 import { Building, Mail, Phone, FileText } from 'lucide-react';
 
+/**
+ * Legal imprint page component for German TMG compliance
+ * @description Displays required legal information including business details, contact information, and liability disclaimers
+ * @returns {JSX.Element} Complete legal imprint page with business information and legal disclaimers
+ */
 const ImpressumPage: React.FC = () => {
   return (
       <div className="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
@@ -70,8 +81,8 @@ const ImpressumPage: React.FC = () => {
                     <div className="space-y-2">
                       <div className="flex items-center">
                         <Phone className="w-4 h-4 text-primary mr-2" />
-                        <a href="tel:+4915735711257" className="text-primary hover:underline">
-                          0157 35711257
+                        <a href="tel:+4915222035788" className="text-primary hover:underline">
+                          0152 22035788
                         </a>
                       </div>
                       <div className="flex items-center">

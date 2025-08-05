@@ -1,7 +1,18 @@
-// client/src/pages/DatenschutzPage.tsx
+/**
+ * @file DatenschutzPage.tsx
+ * @purpose Privacy policy page displaying GDPR-compliant data protection information
+ * @created 2024-01-01
+ * @modified 2025-08-05
+ */
+
 import React from 'react';
 import { Shield, Lock, Eye, Database, Mail, Phone } from 'lucide-react';
 
+/**
+ * Privacy policy page component for GDPR compliance
+ * @description Displays comprehensive privacy policy with data processing information, user rights, and GDPR compliance details
+ * @returns {JSX.Element} Complete privacy policy page with sections for data processing, user rights, and contact information
+ */
 const DatenschutzPage: React.FC = () => {
   return (
       <div className="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
@@ -36,8 +47,8 @@ const DatenschutzPage: React.FC = () => {
                 <div className="mt-4 space-y-1">
                   <div className="flex items-center">
                     <Phone className="w-4 h-4 text-primary mr-2" />
-                    <a href="tel:+4915735711257" className="text-primary hover:underline">
-                      0157 35711257
+                    <a href="tel:+4915222035788" className="text-primary hover:underline">
+                      0152 22035788
                     </a>
                   </div>
                   <div className="flex items-center">
@@ -261,8 +272,8 @@ const DatenschutzPage: React.FC = () => {
                 </div>
                 <div className="flex items-center">
                   <Phone className="w-4 h-4 text-primary mr-2" />
-                  <a href="tel:+4915735711257" className="text-primary hover:underline">
-                    0157 35711257
+                  <a href="tel:+4915222035788" className="text-primary hover:underline">
+                    0152 22035788
                   </a>
                 </div>
               </div>

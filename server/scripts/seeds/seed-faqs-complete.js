@@ -383,7 +383,7 @@ const faqData = [
   {
     category: '📞 Kontakt',
     question: 'Wie kann ich Housnkuh kontaktieren?',
-    answer: '• E-Mail: info@housnkuh.de\n• Telefon: 0157 35711257\n• Website: www.housnkuh.de\n• Social Media: @housnkuh (Instagram, Facebook)\n• Adresse: Strauer Str. 15, 96317 Kronach',
+    answer: '• E-Mail: info@housnkuh.de\n• Telefon: 0152 22035788\n• Website: www.housnkuh.de\n• Social Media: @housnkuh (Instagram, Facebook)\n• Adresse: Strauer Str. 15, 96317 Kronach',
     keywords: ['kontakt', 'email', 'telefon', 'adresse', 'social media'],
     order: 39,
     isActive: true
@@ -409,7 +409,7 @@ const faqData = [
   {
     category: '🚨 Notfälle',
     question: 'Was mache ich, wenn die Kasse nicht funktioniert?',
-    answer: 'Kontaktiere uns sofort unter 0157 35711257. Bei größeren Problemen schließen wir den Laden vorübergehend.',
+    answer: 'Kontaktiere uns sofort unter 0152 22035788. Bei größeren Problemen schließen wir den Laden vorübergehend.',
     keywords: ['kasse', 'defekt', 'notfall', 'problem', 'funktioniert nicht'],
     order: 42,
     isActive: true
@@ -425,7 +425,7 @@ const faqData = [
   {
     category: '🚨 Notfälle',
     question: 'An wen wende ich mich bei Beschwerden?',
-    answer: 'Direkt an uns: info@housnkuh.de oder 0157 35711257. Wir kümmern uns um eine schnelle Lösung.',
+    answer: 'Direkt an uns: info@housnkuh.de oder 0152 22035788. Wir kümmern uns um eine schnelle Lösung.',
     keywords: ['beschwerde', 'problem', 'reklamation', 'unzufrieden', 'hilfe'],
     order: 44,
     isActive: true

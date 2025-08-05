@@ -1,4 +1,10 @@
-// client/src/components/vendor/PackageTrackingWidget.tsx
+/**
+ * @file PackageTrackingWidget.tsx
+ * @purpose Complex widget component for tracking Zusatzleistungen packages with comprehensive status management
+ * @created 2025-01-15
+ * @modified 2025-08-05
+ */
+
 import React, { useState, useEffect } from 'react';
 import { 
   Package, 
@@ -14,6 +20,20 @@ import {
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 
+/**
+ * Package tracking data interface for Zusatzleistungen
+ * @interface PackageTracking
+ * @property {string} _id - Unique package identifier
+ * @property {string} vertrag_id - Associated contract ID
+ * @property {'lagerservice' | 'versandservice'} package_typ - Type of additional service
+ * @property {PackageStatus} status - Current package status in workflow
+ * @property {string} ankunft_datum - Package arrival timestamp
+ * @property {string} einlagerung_datum - Storage timestamp
+ * @property {string} versand_datum - Shipping timestamp
+ * @property {string} zustellung_datum - Delivery timestamp
+ * @property {string} notizen - Admin notes for package
+ * @property {string} tracking_nummer - External tracking number
+ */
 interface PackageTracking {
   _id: string;
   vertrag_id: string;
@@ -29,6 +49,13 @@ interface PackageTracking {
   updated_at: string;
 }
 
+/**
+ * Contract data interface with Zusatzleistungen configuration
+ * @interface Contract
+ * @property {string} _id - Contract identifier
+ * @property {object} zusatzleistungen - Additional services configuration object
+ * @property {PackageTracking[]} packages - Array of tracked packages for this contract
+ */
 interface Contract {
   _id: string;
   zusatzleistungen?: {
@@ -40,6 +67,37 @@ interface Contract {
   packages?: PackageTracking[];
 }
 
+/**
+ * PackageTrackingWidget component displaying Zusatzleistungen package tracking
+ * 
+ * @component
+ * @returns {JSX.Element} Widget displaying package tracking status and statistics
+ * 
+ * @description
+ * Complex widget for vendor dashboard showing package tracking for additional services
+ * (Lagerservice and Versandservice). Provides real-time status updates, timeline view,
+ * and package statistics. Only displays when vendor has active Zusatzleistungen.
+ * 
+ * @features
+ * - Real-time package status tracking (erwartet → angekommen → eingelagert → versandt → zugestellt)
+ * - Zusatzleistungen integration (Lagerservice/Versandservice detection)
+ * - Timeline display with timestamps for each status transition
+ * - Package statistics (stored vs shipped counts)
+ * - Admin notes display for package-specific information
+ * - Responsive design with loading and error states
+ * - Limited display (3 packages) with link to full view
+ * 
+ * @business_logic
+ * - Fetches contracts with Zusatzleistungen from /vendor-contracts/zusatzleistungen
+ * - Filters contracts to show only those with active additional services
+ * - Status workflow: erwartet → angekommen → eingelagert → versandt → zugestellt
+ * - Different handling for Lagerservice vs Versandservice packages
+ * 
+ * @api_endpoints
+ * - GET /vendor-contracts/zusatzleistungen - Fetch contracts with package data
+ * 
+ * @complexity O(n*m) where n = contracts, m = packages per contract
+ */
 const PackageTrackingWidget: React.FC = () => {
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [loading, setLoading] = useState(true);
@@ -49,6 +107,16 @@ const PackageTrackingWidget: React.FC = () => {
     fetchContractsWithPackages();
   }, []);
 
+  /**
+   * Fetches vendor contracts with Zusatzleistungen and package tracking data
+   * @async
+   * @function fetchContractsWithPackages
+   * @returns {Promise<void>} Updates contracts state with fetched data
+   * 
+   * @api_call GET /vendor-contracts/zusatzleistungen
+   * @authentication Bearer token from localStorage
+   * @error_handling 401 → Session expired, Other → Generic error message
+   */
   const fetchContractsWithPackages = async () => {
     try {
       const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
@@ -81,6 +149,21 @@ const PackageTrackingWidget: React.FC = () => {
     }
   };
 
+  /**
+   * Maps package status to display configuration (colors, icons, text)
+   * @param {string} status - Package status from database
+   * @returns {object} Status configuration with color classes, icon component, and text
+   * 
+   * @status_workflow
+   * erwartet → angekommen → eingelagert → versandt → zugestellt
+   * 
+   * @color_coding
+   * - Gray: erwartet (waiting)
+   * - Blue: angekommen (arrived)  
+   * - Green: eingelagert (stored)
+   * - Purple: versandt (shipped)
+   * - Emerald: zugestellt (delivered)
+   */
   const getStatusConfig = (status: string) => {
     const configs = {
       'erwartet': { 
@@ -117,6 +200,11 @@ const PackageTrackingWidget: React.FC = () => {
     return configs[status as keyof typeof configs] || configs.erwartet;
   };
 
+  /**
+   * Formats timestamp for German locale display with time
+   * @param {string | undefined} dateString - ISO date string from database
+   * @returns {string | null} Formatted date string or null if no date provided
+   */
   const formatDate = (dateString: string | undefined) => {
     if (!dateString) return null;
     try {

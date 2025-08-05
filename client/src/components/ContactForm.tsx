@@ -1,10 +1,43 @@
+/**
+ * @file ContactForm.tsx
+ * @purpose Comprehensive contact form component with validation, error handling, and API integration for customer inquiries
+ * @created 2025-01-15
+ * @modified 2025-08-05
+ */
 import React, { useState } from 'react';
 import axios from 'axios';
 
+/**
+ * Props for ContactForm component
+ * @param className - Optional additional CSS classes for styling
+ */
 interface ContactFormProps {
   className?: string;
 }
 
+/**
+ * Contact form component with comprehensive validation and API integration.
+ * 
+ * Features:
+ * - Real-time form validation for all fields
+ * - Email format validation with regex
+ * - Optional phone number validation
+ * - Form submission with loading states
+ * - Success and error message handling
+ * - Server-side error integration
+ * - Form reset after successful submission
+ * - Responsive design with accessible styling
+ * 
+ * Validation:
+ * - Name: Required field validation
+ * - Email: Required with format validation
+ * - Phone: Optional with format validation (6-20 chars, numbers, spaces, hyphens)
+ * - Subject: Required field validation
+ * - Message: Required field validation
+ * 
+ * @param props - Component props including optional className
+ * @returns {JSX.Element} Complete contact form with validation and submission
+ */
 const ContactForm: React.FC<ContactFormProps> = ({ className }) => {
   const [formData, setFormData] = useState({
     name: '',

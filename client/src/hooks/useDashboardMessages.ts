@@ -1,3 +1,10 @@
+/**
+ * @file useDashboardMessages.ts
+ * @purpose Custom hook for managing vendor dashboard messages with real-time updates
+ * @created 2025-01-15
+ * @modified 2025-08-05
+ */
+
 import { useState, useEffect, useCallback } from 'react';
 import { IDashboardMessage } from '../types/booking';
 
@@ -5,12 +12,23 @@ interface UseDashboardMessagesOptions {
   userId: string;
 }
 
+/**
+ * Custom hook for managing vendor dashboard messages
+ * @description Provides message fetching, dismissal, and real-time updates for vendor dashboard
+ * @hook useDashboardMessages
+ * @dependencies useState, useEffect, useCallback
+ * @param {UseDashboardMessagesOptions} options - Configuration with userId
+ * @returns Dashboard messages state and management functions
+ */
 export const useDashboardMessages = ({ userId }: UseDashboardMessagesOptions) => {
   const [messages, setMessages] = useState<IDashboardMessage[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch dashboard messages from API
+  /**
+   * Fetch dashboard messages from API
+   * @description Retrieves dashboard messages for the specified user from the backend API
+   */
   const fetchMessages = useCallback(async () => {
     if (!userId) return;
     
@@ -40,7 +58,11 @@ export const useDashboardMessages = ({ userId }: UseDashboardMessagesOptions) =>
     }
   }, [userId]);
 
-  // Dismiss a message
+  /**
+   * Dismiss a message
+   * @description Removes a specific message by ID and updates local state
+   * @param messageId - The ID of the message to dismiss
+   */
   const dismissMessage = useCallback(async (messageId: string) => {
     try {
       const token = localStorage.getItem('vendorToken');
@@ -81,7 +103,10 @@ export const useDashboardMessages = ({ userId }: UseDashboardMessagesOptions) =>
     };
   }, [userId, fetchMessages]);
 
-  // Refresh function
+  /**
+   * Refresh function
+   * @description Manually triggers a refresh of dashboard messages
+   */
   const refresh = useCallback(() => {
     fetchMessages();
   }, [fetchMessages]);

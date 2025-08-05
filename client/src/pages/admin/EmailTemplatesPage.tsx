@@ -1,8 +1,33 @@
+/**
+ * @file EmailTemplatesPage.tsx
+ * @purpose Admin interface for managing email templates with editing, preview, and testing capabilities
+ * @created 2024-12-05
+ * @modified 2025-08-04
+ */
+
 import React, { useState, useEffect } from 'react';
 import { Edit3, Eye, Send, Filter, Search, Plus, Trash2 } from 'lucide-react';
 import { sanitizeHtml } from '../../utils/sanitization';
 import { tokenStorage, apiUtils } from '../../utils/auth';
 
+/**
+ * Email template data structure
+ * @interface EmailTemplate
+ * @property {string} _id - Unique identifier
+ * @property {string} templateId - Template identifier string
+ * @property {string} name - Display name of the template
+ * @property {string} type - Template type for categorization
+ * @property {string} subject - Email subject line
+ * @property {string} [htmlBody] - Optional HTML email body
+ * @property {string} [textBody] - Optional plain text email body
+ * @property {string[]} [variables] - Optional template variables list
+ * @property {string} [description] - Optional template description
+ * @property {boolean} isActive - Whether template is currently active
+ * @property {number} version - Template version number
+ * @property {string} lastModified - Last modification timestamp
+ * @property {string} [modifiedBy] - Optional user who last modified
+ * @property {'vendor' | 'admin' | 'system' | 'notification'} category - Template category
+ */
 interface EmailTemplate {
   _id: string;
   templateId: string;
@@ -20,12 +45,26 @@ interface EmailTemplate {
   category: 'vendor' | 'admin' | 'system' | 'notification';
 }
 
+/**
+ * Template variable definition structure
+ * @interface TemplateVariable
+ * @property {string} name - Variable name
+ * @property {string} description - Variable description
+ * @property {string} example - Example usage
+ */
 interface TemplateVariable {
   name: string;
   description: string;
   example: string;
 }
 
+/**
+ * Admin email templates management page
+ * @description Comprehensive email template management with editing, preview, testing capabilities,
+ * category filtering, search functionality, template variable support, and test email sending
+ * @returns {React.FC} Email templates management interface
+ * @complexity Advanced template editor with real-time preview, variable injection, and testing workflow
+ */
 const EmailTemplatesPage: React.FC = () => {
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
   const [filteredTemplates, setFilteredTemplates] = useState<EmailTemplate[]>([]);
@@ -60,6 +99,12 @@ const EmailTemplatesPage: React.FC = () => {
     filterTemplates();
   }, [templates, searchTerm, categoryFilter, activeFilter]);
 
+  /**
+   * Fetches all email templates from the API
+   * @description Retrieves complete template list with metadata for admin management
+   * @async
+   * @returns {Promise<void>} Updates component state with templates
+   */
   const fetchTemplates = async () => {
     try {
       setLoading(true);
@@ -82,6 +127,12 @@ const EmailTemplatesPage: React.FC = () => {
     }
   };
 
+  /**
+   * Filters templates based on search term, category, and active status
+   * @description Applies multiple filter criteria to template list for enhanced searchability
+   * @returns {void} Updates filteredTemplates state
+   * @complexity Multi-field filtering with case-insensitive search
+   */
   const filterTemplates = () => {
     let filtered = templates;
 
@@ -109,6 +160,12 @@ const EmailTemplatesPage: React.FC = () => {
     setFilteredTemplates(filtered);
   };
 
+  /**
+   * Loads detailed template data for editing
+   * @description Fetches complete template including HTML/text bodies and variables
+   * @param {string} templateId - Template ID to load
+   * @returns {Promise<EmailTemplate | null>} Full template data or null on error
+   */
   const loadTemplate = async (templateId: string) => {
     try {
       const response = await fetch(`/api/admin/email-templates/${templateId}`, {
@@ -129,6 +186,13 @@ const EmailTemplatesPage: React.FC = () => {
     }
   };
 
+  /**
+   * Opens template editor with full template data
+   * @description Loads complete template data and initializes editor state with variables
+   * @param {EmailTemplate} template - Template to edit
+   * @returns {Promise<void>} Opens editor modal with template data
+   * @complexity Loads template details and associated variables for editing context
+   */
   const openEditor = async (template: EmailTemplate) => {
     const fullTemplate = await loadTemplate(template._id);
     if (fullTemplate) {
@@ -141,6 +205,12 @@ const EmailTemplatesPage: React.FC = () => {
     }
   };
 
+  /**
+   * Loads available variables for a specific template type
+   * @description Fetches template-specific variables for editor reference
+   * @param {string} templateType - Type of template to get variables for
+   * @returns {Promise<void>} Updates templateVariables state
+   */
   const loadTemplateVariables = async (templateType: string) => {
     try {
       const response = await fetch(`/api/admin/email-templates/variables/${templateType}`, {
@@ -158,6 +228,12 @@ const EmailTemplatesPage: React.FC = () => {
     }
   };
 
+  /**
+   * Saves template changes to the API
+   * @description Updates template with user modifications and increments version
+   * @returns {Promise<void>} Saves template and refreshes list on success
+   * @complexity Updates template fields while preserving system metadata
+   */
   const saveTemplate = async () => {
     if (!editingTemplate) return;
 
@@ -191,6 +267,11 @@ const EmailTemplatesPage: React.FC = () => {
     }
   };
 
+  /**
+   * Generates template preview with sample data
+   * @description Renders template with placeholder variables for preview
+   * @returns {Promise<void>} Shows preview modal with rendered template
+   */
   const previewTemplate = async () => {
     if (!editingTemplate) return;
 
@@ -219,6 +300,12 @@ const EmailTemplatesPage: React.FC = () => {
     }
   };
 
+  /**
+   * Sends test email using selected template
+   * @description Sends rendered template to specified test email address
+   * @returns {Promise<void>} Sends test email and shows confirmation
+   * @complexity Renders template with real data and sends via email service
+   */
   const sendTestEmail = async () => {
     if (!selectedTemplate || !testEmail) return;
 

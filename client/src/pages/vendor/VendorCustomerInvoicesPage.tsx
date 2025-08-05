@@ -1,8 +1,25 @@
-// client/src/pages/vendor/VendorCustomerInvoicesPage.tsx
+/**
+ * @file VendorCustomerInvoicesPage.tsx
+ * @purpose Vendor customer invoicing page for creating, managing, and tracking invoices sent to end customers. Critical component for vendor revenue management and customer billing.
+ * @created 2025-01-15
+ * @modified 2025-08-05
+ */
 import React from 'react';
 import { FileText, Send, Eye, Download } from 'lucide-react';
 import VendorLayout from '../../components/vendor/VendorLayout';
 
+/**
+ * VendorCustomerInvoicesPage - Customer invoicing management page (Coming Soon)
+ * 
+ * This component serves as a placeholder for the upcoming customer invoicing functionality:
+ * - Displays coming soon message for invoice creation and management features
+ * - Shows preview of planned features (invoice generation, payment tracking, export/archive)
+ * - Provides contact information for invoicing system inquiries
+ * - Critical component for vendor revenue management and customer billing operations
+ * 
+ * @component
+ * @returns {JSX.Element} The customer invoicing management coming soon page
+ */
 const VendorCustomerInvoicesPage: React.FC = () => {
   return (
     <VendorLayout>
@@ -71,8 +88,8 @@ const VendorCustomerInvoicesPage: React.FC = () => {
                 info@housnkuh.de
               </a>
               {' '}oder{' '}
-              <a href="tel:+4915735711257" className="text-orange-600 hover:underline font-medium">
-                0157 35711257
+              <a href="tel:+4915222035788" className="text-orange-600 hover:underline font-medium">
+                0152 22035788
               </a>
             </p>
           </div>

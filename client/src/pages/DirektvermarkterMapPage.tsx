@@ -1,16 +1,46 @@
-// client/src/pages/DirektvermarkterMapPage.tsx
+/**
+ * @file DirektvermarkterMapPage.tsx
+ * @purpose Interactive map page displaying direct marketers (Direktvermarkter) with filtering and location-based search
+ * @created 2024-01-01
+ * @modified 2025-08-05
+ */
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, Phone, Mail, ExternalLink, ArrowLeft, ChevronDown, ChevronUp, Filter } from 'lucide-react';
 import VendorListPreview from '../components/VendorListPreview';
 import SimpleMapComponent from '../components/SimpleMapComponent';
 
-// Typen für die Direktvermarkter-Daten
+/**
+ * Location coordinates interface for direct marketer locations
+ * @interface LocationCoordinates
+ * @property {number} lat - Latitude coordinate
+ * @property {number} lng - Longitude coordinate
+ */
 interface LocationCoordinates {
   lat: number;
   lng: number;
 }
 
+/**
+ * Direct marketer (Direktvermarkter) data interface
+ * @interface Direktvermarkter
+ * @property {string} id - Unique identifier for the direct marketer
+ * @property {string} name - Contact person name
+ * @property {string} unternehmen - Company/business name
+ * @property {string} profilBild - Profile image URL
+ * @property {string} telefon - Phone number
+ * @property {string} email - Email address
+ * @property {object} adresse - Address information
+ * @property {string} adresse.strasse - Street name
+ * @property {string} adresse.hausnummer - House number
+ * @property {string} adresse.plz - Postal code
+ * @property {string} adresse.ort - City/town
+ * @property {LocationCoordinates} koordinaten - GPS coordinates
+ * @property {string[]} kategorien - Product categories offered
+ * @property {string} beschreibung - Business description
+ * @property {string} website - Website URL
+ */
 interface Direktvermarkter {
   id: string;
   name: string;
@@ -30,6 +60,11 @@ interface Direktvermarkter {
   website: string;
 }
 
+/**
+ * Interactive map page component for direct marketers
+ * @description Displays direct marketers on an interactive map with filtering, search, and detailed information
+ * @returns {JSX.Element} Map page with vendor locations, filters, and selection capabilities
+ */
 const DirektvermarkterMapPage: React.FC = () => {
   // State für Direktvermarkter und Filter
   const [direktvermarkter, setDirektvermarkter] = useState<Direktvermarkter[]>([]);
@@ -59,7 +94,12 @@ const DirektvermarkterMapPage: React.FC = () => {
     'Handwerksprodukte'
   ];
 
-  // Geocoding-Funktion für einzelne Adresse
+  /**
+   * Geocodes a single address using OpenStreetMap Nominatim API
+   * @description Converts a text address to GPS coordinates for map display
+   * @param {string} address - Full address string to geocode
+   * @returns {Promise<{lat: number, lng: number} | null>} GPS coordinates or null if geocoding fails
+   */
   const geocodeAddress = async (address: string): Promise<{lat: number, lng: number} | null> => {
     try {
       const response = await fetch(
@@ -81,7 +121,12 @@ const DirektvermarkterMapPage: React.FC = () => {
     }
   };
 
-  // Batch-Geocoding für alle Vendors ohne Koordinaten
+  /**
+   * Batch geocodes vendors that don't have valid GPS coordinates
+   * @description Processes vendors in batches with API rate limiting to avoid overwhelming the geocoding service
+   * @param {Direktvermarkter[]} vendors - Array of vendors to process
+   * @returns {Promise<Direktvermarkter[]>} Updated vendors array with geocoded coordinates
+   */
   const geocodeVendorsInBatches = useCallback(async (vendors: Direktvermarkter[]) => {
     const vendorsNeedingGeocode = vendors.filter(vendor => 
       !vendor.koordinaten || 

@@ -1,3 +1,10 @@
+/**
+ * @file useTrialExpiration.ts
+ * @purpose Custom hook for managing vendor trial expiration state and modal handling
+ * @created 2025-01-15
+ * @modified 2025-08-05
+ */
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useVendorAuth } from '../contexts/VendorAuthContext';
@@ -12,7 +19,11 @@ interface TrialExpirationState {
   expirationDate: string | undefined;
 }
 
-// Safe hook wrapper that handles missing context
+/**
+ * Safe hook wrapper that handles missing context
+ * @description Provides fallback values if VendorAuthContext is not available
+ * @returns Vendor auth state or safe defaults
+ */
 const useSafeVendorAuth = () => {
   try {
     return useVendorAuth();
@@ -25,6 +36,14 @@ const useSafeVendorAuth = () => {
   }
 };
 
+/**
+ * Custom hook for managing vendor trial expiration state and modal handling
+ * @description Monitors vendor trial expiration status, calculates remaining days,
+ * manages expiration modal display, and provides handlers for trial actions
+ * @hook useTrialExpiration
+ * @dependencies useVendorAuth, useNavigate, useState, useEffect
+ * @returns Trial expiration state and action handlers
+ */
 export const useTrialExpiration = () => {
   const { user } = useSafeVendorAuth();
   const navigate = useNavigate();
@@ -81,6 +100,10 @@ export const useTrialExpiration = () => {
     return () => clearInterval(interval);
   }, [user?.trialEndDate, user?.registrationStatus, user?.id, modalShown]);
 
+  /**
+   * Dismisses the trial expiration modal
+   * @description Hides modal and stores warning state in localStorage
+   */
   const dismissModal = () => {
     setModalShown(true);
     
@@ -95,11 +118,19 @@ export const useTrialExpiration = () => {
     }));
   };
 
+  /**
+   * Handles trial upgrade action
+   * @description Closes modal as transition is automatic
+   */
   const handleUpgrade = () => {
     // No upgrade needed - just close the modal as transition is automatic
     dismissModal();
   };
 
+  /**
+   * Handles trial cancellation action
+   * @description Navigates to vendor cancellation flow
+   */
   const handleCancelTrial = async () => {
     // Navigate to cancellation flow
     navigationHelper.goToVendorCancel();

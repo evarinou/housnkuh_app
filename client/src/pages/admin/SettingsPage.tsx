@@ -1,8 +1,21 @@
+/**
+ * @file SettingsPage.tsx
+ * @purpose System settings administration interface for global configuration and launch date management
+ * @created 2025-01-15
+ * @modified 2025-08-04
+ */
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Calendar, AlertCircle, CheckCircle, Save } from 'lucide-react';
 import axios from 'axios';
-import { Calendar, Save, AlertCircle, CheckCircle } from 'lucide-react';
 
+/**
+ * @component SettingsPage
+ * @description System settings interface for admin configuration including launch date and global system parameters
+ * @complexity MEDIUM - Form handling, date validation, system configuration management, and real-time updates
+ * @returns {JSX.Element} Complete settings management interface with configuration forms and validation
+ */
 const SettingsPage: React.FC = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);

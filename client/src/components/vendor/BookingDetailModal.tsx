@@ -1,15 +1,37 @@
+/**
+ * @file BookingDetailModal.tsx
+ * @purpose Comprehensive modal component for detailed booking information display with CRUD operations support
+ * @created 2025-01-15
+ * @modified 2025-08-05
+ */
+
 import React from 'react';
 import { X, Package, Home, Clock, CheckCircle, AlertCircle, Truck } from 'lucide-react';
 import { IBooking, IPackageData } from '../../types/booking';
 import BookingStatusBadge from './BookingStatusBadge';
 import PriceBreakdownDisplay from '../common/PriceBreakdownDisplay';
 
+/**
+ * Props interface for the BookingDetailModal component
+ * @interface BookingDetailModalProps
+ * @property {IBooking} booking - Complete booking data to display
+ * @property {boolean} isOpen - Modal visibility state
+ * @property {function} onClose - Callback function to close modal
+ */
 interface BookingDetailModalProps {
   booking: IBooking;
   isOpen: boolean;
   onClose: () => void;
 }
 
+/**
+ * Formats date objects or date strings to German locale string format
+ * @function formatDate
+ * @param {Date | string} date - Date to format (Date object or ISO string)
+ * @returns {string} Formatted date string in German format (DD.MM.YYYY HH:mm) or fallback message
+ * @example formatDate(new Date()) → "05.08.2025 14:30"
+ * @example formatDate("2025-08-05T14:30:00Z") → "05.08.2025 14:30"
+ */
 const formatDate = (date: Date | string): string => {
   if (!date) return 'Nicht verfügbar';
   const dateObj = new Date(date);
@@ -23,6 +45,14 @@ const formatDate = (date: Date | string): string => {
 };
 
 
+/**
+ * Formats numeric price values to German currency format
+ * @function formatPrice
+ * @param {number} [price] - Price value to format (optional)
+ * @returns {string} Formatted price string in EUR currency format or fallback message
+ * @example formatPrice(29.99) → "29,99 €"
+ * @example formatPrice(undefined) → "Preis nicht verfügbar"
+ */
 const formatPrice = (price?: number): string => {
   if (!price) return 'Preis nicht verfügbar';
   return new Intl.NumberFormat('de-DE', {
@@ -31,6 +61,32 @@ const formatPrice = (price?: number): string => {
   }).format(price);
 };
 
+/**
+ * BookingTimeline component displaying chronological booking progress
+ * 
+ * @component
+ * @param {object} props - Component props
+ * @param {IBooking} props.booking - Booking data containing timeline information
+ * @returns {JSX.Element} Timeline visualization of booking progress stages
+ * 
+ * @description
+ * Visual timeline component showing booking progression through different stages.
+ * Each stage displays completion status, timestamp, and descriptive information.
+ * 
+ * @features
+ * - Three-stage timeline: Requested → Confirmed → Active
+ * - Color-coded completion indicators (green for completed, gray for pending)
+ * - Lucide icons for visual stage representation
+ * - German localized stage descriptions
+ * - Dynamic date display from booking data
+ * 
+ * @timeline_stages
+ * 1. Requested: Always completed (booking exists)
+ * 2. Confirmed: Completed when confirmedAt is set
+ * 3. Active: Completed when status is 'active' or 'completed'
+ * 
+ * @complexity O(1) - Fixed 3-stage timeline rendering
+ */
 const BookingTimeline: React.FC<{ booking: IBooking }> = ({ booking }) => {
   const timelineItems = [
     {
@@ -100,6 +156,32 @@ const BookingTimeline: React.FC<{ booking: IBooking }> = ({ booking }) => {
   );
 };
 
+/**
+ * MietfachDetails component displaying assigned Mietfach information
+ * 
+ * @component
+ * @param {object} props - Component props
+ * @param {IBooking['mietfach']} props.mietfach - Mietfach data (single object or array)
+ * @returns {JSX.Element | null} Detailed Mietfach information display or null if no data
+ * 
+ * @description
+ * Renders comprehensive information about assigned Mietfächer including type, location,
+ * size, features, and descriptions. Handles both single Mietfach and multiple assignments.
+ * 
+ * @features
+ * - Support for single or multiple Mietfach assignments
+ * - German localized type labels (Regal, Kühlregal, etc.)
+ * - Detailed property display (designation, type, size, location)
+ * - Feature tags for special capabilities
+ * - Blue-themed styling consistent with Mietfach branding
+ * 
+ * @data_handling
+ * - Normalizes single object to array for consistent processing
+ * - Early return for null/empty data
+ * - Maps internal type keys to user-friendly German labels
+ * 
+ * @complexity O(n) where n = number of assigned Mietfächer
+ */
 const MietfachDetails: React.FC<{ mietfach: IBooking['mietfach'] }> = ({ mietfach }) => {
   if (!mietfach) return null;
   
@@ -182,6 +264,39 @@ const MietfachDetails: React.FC<{ mietfach: IBooking['mietfach'] }> = ({ mietfac
   );
 };
 
+/**
+ * PackageDetails component displaying comprehensive package and pricing information
+ * 
+ * @component
+ * @param {object} props - Component props
+ * @param {IPackageData} [props.packageData] - Package data containing pricing and service information
+ * @returns {JSX.Element | null} Detailed package information display or null if no data
+ * 
+ * @description
+ * Comprehensive component for displaying package details, services, Zusatzleistungen,
+ * and pricing breakdowns. Integrates with PriceBreakdownDisplay for consistent pricing.
+ * 
+ * @features
+ * - Package metadata display (name, type, duration)
+ * - Service listing with individual pricing
+ * - Zusatzleistungen display (Lagerservice, Versandservice)
+ * - Price breakdown integration with central component
+ * - Fallback total price display when breakdown unavailable
+ * - Color-coded Zusatzleistungen sections
+ * 
+ * @pricing_integration
+ * - Converts internal price breakdown to PriceBreakdownDisplay format
+ * - Handles both packageData.totalPrice and totalCost.monthly
+ * - Calculates total duration cost from monthly price
+ * - Maps Zusatzleistungen costs appropriately
+ * 
+ * @zusatzleistungen
+ * - Lagerservice: Green-themed with Package icon
+ * - Versandservice: Blue-themed with Truck icon
+ * - Monthly pricing display with fallback values
+ * 
+ * @complexity O(n) where n = number of services in package
+ */
 const PackageDetails: React.FC<{ packageData?: IPackageData }> = ({ packageData }) => {
   if (!packageData) return null;
   
@@ -311,6 +426,44 @@ const PackageDetails: React.FC<{ packageData?: IPackageData }> = ({ packageData 
   );
 };
 
+/**
+ * BookingDetailModal component providing comprehensive booking information display
+ * 
+ * @component
+ * @param {BookingDetailModalProps} props - Modal props containing booking data and state
+ * @returns {JSX.Element | null} Full-screen modal with detailed booking information or null when closed
+ * 
+ * @description
+ * Main modal component that orchestrates the display of comprehensive booking details.
+ * Combines timeline, Mietfach details, package information, and user comments in a
+ * structured, scrollable modal interface.
+ * 
+ * @features
+ * - Full-screen overlay modal with backdrop click-to-close
+ * - Structured content sections (Timeline, Mietfach, Package, Comments)
+ * - Status badge integration in header
+ * - Scrollable content area for long booking details
+ * - Accessibility support with aria-label and keyboard navigation
+ * - Responsive design for various screen sizes
+ * 
+ * @modal_structure
+ * - Header: Title, status badge, close button
+ * - Content: Timeline, Mietfach details, package details, comments
+ * - Footer: Close button for consistent UX
+ * 
+ * @accessibility
+ * - Backdrop click handling for easy dismissal
+ * - aria-label on close button
+ * - Keyboard navigation support
+ * - Focus management within modal
+ * 
+ * @data_integration
+ * - Combines booking.packageDetails and booking.packageData
+ * - Passes structured data to specialized sub-components
+ * - Handles optional sections (Mietfach assignment, comments)
+ * 
+ * @complexity O(n) where n = combined complexity of sub-components (timeline, Mietfach, package details)
+ */
 const BookingDetailModal: React.FC<BookingDetailModalProps> = ({ booking, isOpen, onClose }) => {
   if (!isOpen) return null;
   
