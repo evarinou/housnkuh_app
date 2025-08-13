@@ -31,7 +31,7 @@ const VendorReportsPage: React.FC = () => {
             <h1 className="text-3xl font-bold text-secondary">Berichte einsehen</h1>
           </div>
           <p className="text-gray-600">
-            Analysieren Sie Ihre Verkaufszahlen und Performance-Daten.
+            Analysiere Deine Verkaufszahlen und Performance-Daten.
           </p>
         </div>
 
@@ -45,8 +45,8 @@ const VendorReportsPage: React.FC = () => {
               Detaillierte Berichte kommen bald!
             </h2>
             <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
-              Wir entwickeln umfassende Analytics und Reporting-Tools für Sie. 
-              Bald erhalten Sie detaillierte Einblicke in Ihre Geschäftstätigkeit.
+              housnkuh entwickelt umfassende Analyse- und Reporting-Tools für Dich. 
+              Bald erhälst Du detaillierte Einblicke in Deine Geschäftstätigkeit.
             </p>
           </div>
 
@@ -56,7 +56,7 @@ const VendorReportsPage: React.FC = () => {
               <TrendingUp className="w-8 h-8 text-purple-600 mx-auto mb-3" />
               <h3 className="font-semibold text-secondary mb-2">Verkaufsstatistiken</h3>
               <p className="text-sm text-gray-600">
-                Detaillierte Auswertungen Ihrer Verkäufe nach Zeitraum und Produkt.
+                Detaillierte Auswertungen der Verkäufe nach Zeitraum und Produkt.
               </p>
             </div>
             
@@ -64,7 +64,7 @@ const VendorReportsPage: React.FC = () => {
               <DollarSign className="w-8 h-8 text-purple-600 mx-auto mb-3" />
               <h3 className="font-semibold text-secondary mb-2">Umsatzanalyse</h3>
               <p className="text-sm text-gray-600">
-                Übersicht über Ihre Einnahmen und Gewinnentwicklung.
+                Übersicht über Deine Einnahmen und Gewinnentwicklung.
               </p>
             </div>
             
@@ -72,7 +72,7 @@ const VendorReportsPage: React.FC = () => {
               <Users className="w-8 h-8 text-purple-600 mx-auto mb-3" />
               <h3 className="font-semibold text-secondary mb-2">Kundenanalyse</h3>
               <p className="text-sm text-gray-600">
-                Insights zu Ihren Kunden und deren Kaufverhalten.
+                Einblicke zu den Kunden und deren Kaufverhalten.
               </p>
             </div>
           </div>
@@ -80,10 +80,10 @@ const VendorReportsPage: React.FC = () => {
           {/* Contact Info */}
           <div className="bg-purple-50 rounded-lg p-6">
             <p className="text-purple-800 mb-2">
-              <strong>Benötigen Sie spezielle Reports oder Analytics?</strong>
+              <strong>Benötigst Du spezielle Reports oder Auswertungen?</strong>
             </p>
             <p className="text-purple-700">
-              Teilen Sie uns Ihre Wünsche mit unter{' '}
+              Teile Deine Wünsche mit unter{' '}
               <a href="mailto:info@housnkuh.de" className="text-purple-600 hover:underline font-medium">
                 info@housnkuh.de
               </a>

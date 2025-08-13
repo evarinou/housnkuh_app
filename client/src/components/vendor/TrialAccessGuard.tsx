@@ -67,8 +67,6 @@ export const TrialAccessGuard: React.FC<TrialAccessGuardProps> = ({
   fallbackComponent,
 }) => {
   const { user } = useVendorAuth();
-  const navigate = useNavigate();
-  const navigationHelper = createNavigationHelper(navigate);
   const { trialState, dismissModal, handleUpgrade, handleCancelTrial } = useTrialExpiration();
 
   /**

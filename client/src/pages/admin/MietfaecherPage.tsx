@@ -7,28 +7,19 @@
  */
 
 import React, { useState, useEffect, FormEvent } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
 import { 
   Package, 
   Plus, 
-  MapPin, 
-  Calendar, 
-  User, 
   Search, 
-  Filter, 
-  Eye, 
   Edit3 as Edit, 
   Trash2,
   CheckCircle,
   XCircle,
-  AlertCircle,
-  Settings,
   Save,
   X,
   Tag
 } from 'lucide-react';
 import axios from 'axios';
-import MietfachAssignmentModal from './MietfachAssignmentModal';
 
 /**
  * @interface Mietfach

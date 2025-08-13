@@ -2,10 +2,10 @@
  * @file VendorLayout.tsx
  * @purpose Layout wrapper component for vendor dashboard providing navigation, authentication state, and trial status display
  * @created 2025-01-15
- * @modified 2025-08-05
+ * @modified 2025-08-07
  */
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { User, Package, Home, LogOut, Settings, FileText, ShoppingCart, BarChart3, Receipt, Star } from 'lucide-react';
 import { useVendorAuth } from '../../contexts/VendorAuthContext';
@@ -34,15 +34,14 @@ interface VendorLayoutProps {
  * @features
  * - Vendor authentication status display
  * - Trial period countdown badge
- * - Pending bookings notification badge
+ * - Pending bookings notification badge (using centralized data)
  * - Responsive sidebar navigation
  * - Logout functionality
  */
 const VendorLayout: React.FC<VendorLayoutProps> = ({ children }) => {
-  const { user, logout } = useVendorAuth();
+  const { user, logout, bookings } = useVendorAuth();
   const location = useLocation();
   const navigate = useNavigate();
-  const [pendingCount, setPendingCount] = useState(0);
   
   /**
    * Handles vendor logout process
@@ -70,35 +69,15 @@ const VendorLayout: React.FC<VendorLayoutProps> = ({ children }) => {
   const trialDaysRemaining = calculateDaysRemaining(user?.trialEndDate);
 
   /**
-   * Effect hook to fetch and update pending bookings count
-   * Updates notification badge with count of bookings awaiting vendor action
-   * @dependency {string | undefined} user?.id - Vendor user ID
+   * Calculates pending bookings count from centralized bookings data
+   * @description Uses centralized bookings data from VendorAuthContext instead of direct API call
+   * @returns {number} Count of bookings with pending status
    */
-  useEffect(() => {
-    const fetchPendingCount = async () => {
-      if (!user?.id) return;
-      
-      try {
-        const token = localStorage.getItem('vendorToken');
-        const response = await fetch(`http://localhost:4000/api/vendor-auth/bookings/${user.id}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
+  const getPendingBookingsCount = (): number => {
+    return bookings?.filter((booking: any) => booking.status === 'pending').length || 0;
+  };
 
-        if (response.ok) {
-          const data = await response.json();
-          const pendingBookings = data.bookings?.filter((booking: any) => booking.status === 'pending') || [];
-          setPendingCount(pendingBookings.length);
-        }
-      } catch (error) {
-        console.error('Error fetching pending bookings count:', error);
-      }
-    };
-
-    fetchPendingCount();
-  }, [user?.id]);
+  const pendingCount = getPendingBookingsCount();
   
   return (
     <div className="min-h-screen bg-gray-50">
@@ -195,7 +174,6 @@ const VendorLayout: React.FC<VendorLayoutProps> = ({ children }) => {
                   )}
                 </Link>
                 
-                
                 <Link
                   to="/vendor/products"
                   className={`flex items-center px-3 py-2 rounded-md text-sm font-medium ${
@@ -269,8 +247,8 @@ const VendorLayout: React.FC<VendorLayoutProps> = ({ children }) => {
             </div>
           </div>
           
-          {/* Hauptinhalt */}
-          <div className="md:ml-8 flex-1">
+          {/* Main Content */}
+          <div className="flex-1 md:ml-6">
             {children}
           </div>
         </div>

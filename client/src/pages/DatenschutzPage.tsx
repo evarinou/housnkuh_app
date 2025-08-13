@@ -41,8 +41,8 @@ const DatenschutzPage: React.FC = () => {
               </p>
               <div className="space-y-2 text-gray-700">
                 <p><strong>housnkuh</strong></p>
-                <p>[Straße und Hausnummer]</p>
-                <p>[PLZ Ort]</p>
+                <p>Strauer Str. 15</p>
+                <p>96317 Kronach</p>
                 <p>Deutschland</p>
                 <div className="mt-4 space-y-1">
                   <div className="flex items-center">
@@ -323,9 +323,9 @@ const DatenschutzPage: React.FC = () => {
               <div className="bg-white rounded-lg p-4">
                 <h3 className="font-semibold text-secondary mb-2">Zuständige Aufsichtsbehörde</h3>
                 <p className="text-gray-700">
-                  [Name der zuständigen Landesdatenschutzbehörde]<br />
-                  [Adresse]<br />
-                  [Website]
+                  Bayerisches Landesamt für Datenschutzaufsicht (BayLDA)<br />
+                  Promenade 18, 91522 Ansbach<br />
+                  www.lda.bayern.de
                 </p>
               </div>
             </div>

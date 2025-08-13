@@ -292,17 +292,32 @@ const VendorProfilePage: React.FC = () => {
   
   // Profilbild auswählen
   const handleFileSelect = (e: ChangeEvent<HTMLInputElement>) => {
+    console.log('🚀 handleFileSelect triggered');
+    
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
+      console.log('📁 Selected file:', file.name, file.size, file.type);
+      
       setSelectedFile(file);
       
       // Vorschau erstellen
       const reader = new FileReader();
       reader.onloadend = () => {
+        console.log('🖼️ Preview created for:', file.name);
         setPreviewUrl(reader.result as string);
       };
+      
+      reader.onerror = (error) => {
+        console.error('❌ FileReader error:', error);
+      };
+      
       reader.readAsDataURL(file);
+    } else {
+      console.log('❌ No file selected');
     }
+    
+    // WICHTIG: Input zurücksetzen für erneute Auswahl
+    e.target.value = '';
   };
   
   // Banner-Bild auswählen
@@ -318,6 +333,8 @@ const VendorProfilePage: React.FC = () => {
       };
       reader.readAsDataURL(file);
     }
+    // WICHTIG: Input zurücksetzen für erneute Auswahl
+    e.target.value = '';
   };
   
   // Profilbild-Upload durchführen
@@ -421,11 +438,19 @@ const VendorProfilePage: React.FC = () => {
   };
   
   // Datei-Input-Clicks simulieren
-  const triggerFileInput = () => {
+  const triggerFileInput = (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     fileInputRef.current?.click();
   };
   
-  const triggerBannerFileInput = () => {
+  const triggerBannerFileInput = (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     bannerFileInputRef.current?.click();
   };
   
@@ -712,6 +737,23 @@ const VendorProfilePage: React.FC = () => {
             </div>
           )}
           
+          {/* File Inputs - Outside form to prevent submission */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            className="hidden"
+            accept="image/*"
+            onChange={handleFileSelect}
+          />
+          
+          <input
+            ref={bannerFileInputRef}
+            type="file"
+            className="hidden"
+            accept="image/*"
+            onChange={handleBannerFileSelect}
+          />
+
           <form onSubmit={handleSaveProfile}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
               {/* Persönliche Informationen */}
@@ -765,14 +807,6 @@ const VendorProfilePage: React.FC = () => {
                         <Upload className="w-4 h-4 mr-2" />
                         {isUploading ? 'Wird hochgeladen...' : 'Bild hochladen'}
                       </button>
-                      
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        className="hidden"
-                        accept="image/*"
-                        onChange={handleFileSelect}
-                      />
                       
                       {isUploading && (
                         <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin ml-2"></div>
@@ -832,14 +866,6 @@ const VendorProfilePage: React.FC = () => {
                         <Upload className="w-4 h-4 mr-2" />
                         {isBannerUploading ? 'Wird hochgeladen...' : 'Banner hochladen'}
                       </button>
-                      
-                      <input
-                        ref={bannerFileInputRef}
-                        type="file"
-                        className="hidden"
-                        accept="image/*"
-                        onChange={handleBannerFileSelect}
-                      />
                       
                       {isBannerUploading && (
                         <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin ml-2"></div>

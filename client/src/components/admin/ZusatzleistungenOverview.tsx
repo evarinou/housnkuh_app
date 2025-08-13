@@ -11,7 +11,6 @@ import {
   CheckCircle, 
   Clock, 
   AlertCircle, 
-  ExternalLink,
   MoreVertical,
   Edit,
   Eye

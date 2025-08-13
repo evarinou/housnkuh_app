@@ -2105,6 +2105,9 @@ async function seedEmailTemplates() {
   }
 }
 
+// Export for use in other scripts
+module.exports = { seedEmailTemplates, emailTemplates };
+
 // Run if called directly
 if (require.main === module) {
   seedEmailTemplates();

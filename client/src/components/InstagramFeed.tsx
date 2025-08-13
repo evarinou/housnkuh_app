@@ -42,7 +42,7 @@ const InstagramFeed: React.FC = () => {
         <div className="mb-8 flex items-center justify-center gap-3">
           <Instagram className="w-6 h-6 text-primary" />
           <h2 className="text-2xl md:text-3xl font-bold text-secondary">
-            Folge uns auf Instagram
+            Folge housnkuh auf Instagram
           </h2>
         </div>
         

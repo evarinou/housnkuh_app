@@ -930,6 +930,14 @@ export const updateVendorProfile = async (req: Request, res: Response): Promise<
       socialMedia
     } = req.body;
     
+    logger.info('📤 Profile update request received:', {
+      userId,
+      hasProfilBild: !!profilBild,
+      hasBannerBild: !!bannerBild,
+      profilBildUrl: profilBild,
+      bannerBildUrl: bannerBild
+    });
+    
     const user = await User.findById(userId);
     if (!user || !user.isVendor) {
       res.status(404).json({ 
@@ -971,6 +979,13 @@ export const updateVendorProfile = async (req: Request, res: Response): Promise<
     }
     
     const vendorProfile = user.vendorProfile!;
+    
+    if (profilBild !== undefined || bannerBild !== undefined) {
+      logger.info('🖼️ Image URLs being updated:', {
+        profilBild: profilBild,
+        bannerBild: bannerBild
+      });
+    }
     
     if (unternehmen !== undefined) vendorProfile.unternehmen = unternehmen;
     if (beschreibung !== undefined) vendorProfile.beschreibung = beschreibung;

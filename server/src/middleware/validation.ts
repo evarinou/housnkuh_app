@@ -11,8 +11,7 @@ import { Request, Response, NextFunction } from 'express';
 const { body, param, validationResult } = require('express-validator');
 
 /** Password validation rules */
-const PASSWORD_MIN_LENGTH = 8;
-const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$/;
+import { PASSWORD_MIN_LENGTH, PASSWORD_REGEX } from '../constants/validation';
 
 /** Email validation rules */
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

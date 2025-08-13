@@ -8,7 +8,6 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useVendorAuth } from '../../contexts/VendorAuthContext';
 import VendorLayout from '../../components/vendor/VendorLayout';
-import { TrialStatusWidget } from '../../components/vendor/TrialStatusWidget';
 import { TrialTransitionModal } from '../../components/vendor/TrialTransitionModal';
 import { ArrowLeft, CheckCircle, Star, Shield, CreditCard } from 'lucide-react';
 
@@ -61,12 +60,6 @@ const VendorUpgradePage: React.FC = () => {
           </p>
         </div>
 
-        {/* Trial Status Widget */}
-        {isTrialUser && (
-          <div className="mb-8">
-            <TrialStatusWidget showActions={false} />
-          </div>
-        )}
 
         {/* Hero Section */}
         <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-8 mb-8 text-white">

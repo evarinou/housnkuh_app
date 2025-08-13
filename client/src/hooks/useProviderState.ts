@@ -16,6 +16,8 @@ export interface VendorAuthState {
   token: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  bookings: any[];
+  isBookingsLoading: boolean;
 }
 
 /**
@@ -29,6 +31,8 @@ export interface VendorAuthActions {
   preRegisterVendor: (vendorData: any) => Promise<any>;
   getTrialStatus: () => Promise<{ success: boolean; data?: any; message?: string }>;
   cancelTrialBooking: (bookingId: string, reason?: string) => Promise<{ success: boolean; message?: string }>;
+  fetchBookings: () => Promise<void>;
+  refreshBookings: () => Promise<void>;
 }
 
 /**
@@ -42,7 +46,9 @@ export interface ProviderStateService {
     user: VendorUser | null,
     token: string | null,
     isAuthenticated: boolean,
-    isLoading: boolean
+    isLoading: boolean,
+    bookings: any[],
+    isBookingsLoading: boolean
   ) => VendorAuthState;
 
   /**
@@ -55,7 +61,9 @@ export interface ProviderStateService {
     registerWithBooking: (bookingData: any) => Promise<any>,
     preRegisterVendor: (vendorData: any) => Promise<any>,
     getTrialStatus: () => Promise<{ success: boolean; data?: any; message?: string }>,
-    cancelTrialBooking: (bookingId: string, reason?: string) => Promise<{ success: boolean; message?: string }>
+    cancelTrialBooking: (bookingId: string, reason?: string) => Promise<{ success: boolean; message?: string }>,
+    fetchBookings: () => Promise<void>,
+    refreshBookings: () => Promise<void>
   ) => VendorAuthActions;
 }
 
@@ -76,13 +84,17 @@ export const useProviderState = (): ProviderStateService => {
       user: VendorUser | null,
       token: string | null,
       isAuthenticated: boolean,
-      isLoading: boolean
+      isLoading: boolean,
+      bookings: any[],
+      isBookingsLoading: boolean
     ): VendorAuthState => {
       return {
         user,
         token,
         isAuthenticated,
-        isLoading
+        isLoading,
+        bookings,
+        isBookingsLoading
       };
     };
   }, []);
@@ -99,7 +111,9 @@ export const useProviderState = (): ProviderStateService => {
       registerWithBooking: (bookingData: any) => Promise<any>,
       preRegisterVendor: (vendorData: any) => Promise<any>,
       getTrialStatus: () => Promise<{ success: boolean; data?: any; message?: string }>,
-      cancelTrialBooking: (bookingId: string, reason?: string) => Promise<{ success: boolean; message?: string }>
+      cancelTrialBooking: (bookingId: string, reason?: string) => Promise<{ success: boolean; message?: string }>,
+      fetchBookings: () => Promise<void>,
+      refreshBookings: () => Promise<void>
     ): VendorAuthActions => {
       return {
         login,
@@ -108,7 +122,9 @@ export const useProviderState = (): ProviderStateService => {
         registerWithBooking,
         preRegisterVendor,
         getTrialStatus,
-        cancelTrialBooking
+        cancelTrialBooking,
+        fetchBookings,
+        refreshBookings
       };
     };
   }, []);
@@ -117,4 +133,4 @@ export const useProviderState = (): ProviderStateService => {
     createState,
     createActions
   }), [createState, createActions]);
-};
+};;

@@ -5,6 +5,8 @@
  * @modified 2025-08-05
  */
 import React, { useState, useCallback, useMemo } from 'react';
+import { PASSWORD_MIN_LENGTH, PASSWORD_REGEX, PASSWORD_ERROR_MESSAGES } from '../constants/validation';
+import { PasswordRequirementsChecklist } from './common/PasswordRequirementsChecklist';
 import { X, User, Mail, Phone, Lock, Package, Eye, EyeOff, AlertCircle, CheckCircle, Clock } from 'lucide-react';
 import { useVendorAuth } from '../contexts/VendorAuthContext';
 import { useVendorRegistration } from '../hooks/useVendorRegistration';
@@ -117,6 +119,9 @@ interface FormData {
  * @param props - Component props including modal state and package data
  * @returns {JSX.Element} Complete registration modal with step navigation
  */
+// Password complexity regex to match backend validation
+
+
 const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = React.memo(({
   isOpen,
   onClose,
@@ -143,6 +148,7 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = React.me
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [step, setStep] = useState(1); // 1: Login/Register, 2: Persönliche Daten, 3: Adresse, 4: Zusammenfassung
   const [isPreRegistration] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -171,6 +177,38 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = React.me
     const plzRegex = /^\d{5}$/;
     return plzRegex.test(plz);
   }, []);
+  // Password complexity validation
+  const validatePasswordComplexity = useCallback((password: string): {
+    isValid: boolean;
+    missingRequirements: string[];
+  } => {
+    const missingRequirements: string[] = [];
+    
+    if (!/[a-z]/.test(password)) {
+      missingRequirements.push(PASSWORD_ERROR_MESSAGES.missingLowercase);
+    }
+    
+    if (!/[A-Z]/.test(password)) {
+      missingRequirements.push(PASSWORD_ERROR_MESSAGES.missingUppercase);
+    }
+    
+    if (!/\d/.test(password)) {
+      missingRequirements.push(PASSWORD_ERROR_MESSAGES.missingNumber);
+    }
+    
+    if (!/[@$!%*?&]/.test(password)) {
+      missingRequirements.push(PASSWORD_ERROR_MESSAGES.missingSpecialChar);
+    }
+    
+    if (password.length < PASSWORD_MIN_LENGTH) {
+      missingRequirements.push(PASSWORD_ERROR_MESSAGES.tooShort);
+    }
+    
+    return {
+      isValid: PASSWORD_REGEX.test(password) && password.length >= PASSWORD_MIN_LENGTH,
+      missingRequirements
+    };
+  }, []);;
 
   const validateStep = useCallback((stepNumber: number): boolean => {
     switch (stepNumber) {
@@ -184,7 +222,7 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = React.me
             formData.email.trim() !== '' &&
             validateEmail(formData.email) &&
             formData.password.trim() !== '' &&
-            formData.password.length >= 6 && // Mindestlänge für sicheres Passwort
+            validatePasswordComplexity(formData.password).isValid &&
             formData.confirmPassword.trim() !== '' &&
             formData.password === formData.confirmPassword
           );
@@ -210,7 +248,7 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = React.me
       default:
         return false;
     }
-  }, [formData, isLogin, validateEmail, validatePLZ]);
+  }, [formData, isLogin, validateEmail, validatePLZ, validatePasswordComplexity]);
 
   // Memoized validation states to prevent unnecessary re-computations
   const isEmailValid = useMemo(() => 
@@ -219,8 +257,8 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = React.me
   );
 
   const isPasswordValid = useMemo(() => 
-    !isLogin ? formData.password.length >= 6 : formData.password !== '', 
-    [formData.password, isLogin]
+    !isLogin ? validatePasswordComplexity(formData.password).isValid : formData.password !== '', 
+    [formData.password, isLogin, validatePasswordComplexity]
   );
 
   const doPasswordsMatch = useMemo(() => 
@@ -239,11 +277,11 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = React.me
   // Memoized CSS classes for form inputs to prevent unnecessary re-renders
   const emailInputClasses = useMemo(() => 
     `pl-10 w-full p-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent ${
-      formData.email && !isEmailValid 
+      (formData.email && !isEmailValid) || fieldErrors.email
         ? 'border-red-300 bg-red-50' 
         : 'border-gray-300'
     }`, 
-    [formData.email, isEmailValid]
+    [formData.email, isEmailValid, fieldErrors.email]
   );
 
   const passwordInputClasses = useMemo(() => 
@@ -267,6 +305,8 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = React.me
   const handleNextStep = useCallback(() => {
     if (isStepValid) {
       setError('');
+    setFieldErrors({});
+      setFieldErrors({});
       setStep(step + 1);
     } else {
       // Detailliertere Fehlermeldungen je nach Schritt
@@ -274,7 +314,12 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = React.me
         if (!formData.email.trim() || !isEmailValid) {
           setError('Bitte gib eine gültige E-Mail-Adresse ein');
         } else if (!isLogin && !isPasswordValid) {
-          setError('Das Passwort muss mindestens 6 Zeichen lang sein');
+          const complexityResult = validatePasswordComplexity(formData.password);
+          if (complexityResult.missingRequirements.length > 0) {
+            setError(`Das Passwort muss folgende Anforderungen erfüllen: ${complexityResult.missingRequirements.join(', ')}`);
+          } else {
+            setError('Das Passwort erfüllt nicht alle Sicherheitsanforderungen');
+          }
         } else if (!isLogin && !doPasswordsMatch) {
           setError('Die Passwörter stimmen nicht überein');
         } else {
@@ -294,11 +339,12 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = React.me
         setError('Bitte fülle alle Pflichtfelder aus');
       }
     }
-  }, [step, isStepValid, formData, isLogin, isEmailValid, isPasswordValid, doPasswordsMatch, isPLZValid]);
+  }, [step, isStepValid, formData, isLogin, isEmailValid, isPasswordValid, doPasswordsMatch, isPLZValid, validatePasswordComplexity]);
 
   const handlePreviousStep = useCallback(() => {
     setStep(step - 1);
     setError('');
+    setFieldErrors({});
   }, [step]);
 
   const togglePassword = useCallback(() => {
@@ -308,6 +354,7 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = React.me
   const toggleLoginMode = useCallback(() => {
     setIsLogin(!isLogin);
     setError('');
+    setFieldErrors({});
   }, [isLogin]);
 
   const handleSubmit = useCallback(async () => {
@@ -318,6 +365,7 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = React.me
 
     setIsSubmitting(true);
     setError('');
+    setFieldErrors({});
 
     try {
       if (isLogin) {
@@ -369,7 +417,14 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = React.me
           
           setSuccessMessage(`Herzlich willkommen bei housnkuh! Deine Package-Buchung war erfolgreich. ${trialStartMessage} Du erhältst eine Bestätigungs-E-Mail an ${formData.email} mit allen Details zu deinem gebuchten Paket.`);
         } else {
-          setError(result.message || 'Ein Fehler ist aufgetreten');
+          // Handle strukturierte Validierungsfehler
+          if (result.fieldErrors) {
+            setFieldErrors(result.fieldErrors);
+            setError(result.message || 'Bitte korrigiere die markierten Felder');
+          } else {
+            setFieldErrors({});
+            setError(result.message || 'Ein Fehler ist aufgetreten');
+          }
         }
       }
     } catch (err) {
@@ -411,7 +466,6 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = React.me
                         Der Probemonat startet nach Ladeneröffnung. Innerhalb des Probemonats kannst du jederzeit kündigen.
                       </p>
                       <ul className="text-xs text-green-600 mt-2 space-y-1">
-                        <li>✓ Keine Kreditkarte erforderlich</li>
                         <li>✓ Automatische Aktivierung</li>
                         <li>✓ Voller Funktionsumfang</li>
                       </ul>
@@ -440,14 +494,11 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = React.me
                   autoComplete="email"
                 />
               </div>
-              {formData.email && !isEmailValid && (
+              {((formData.email && !isEmailValid) || fieldErrors.email) && (
                 <p className="mt-1 text-sm text-red-600">
-                  Bitte gib eine gültige E-Mail-Adresse ein
+                  {fieldErrors.email || 'Bitte gib eine gültige E-Mail-Adresse ein'}
                 </p>
               )}
-              <p className="mt-1 text-xs text-gray-500">
-                Wenn du bereits im Newsletter angemeldet bist, kannst du dieselbe E-Mail-Adresse verwenden.
-              </p>
             </div>
 
             <div>
@@ -463,7 +514,7 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = React.me
                   value={formData.password}
                   onChange={handleInputChange}
                   className={passwordInputClasses}
-                  placeholder={isLogin ? "Dein Passwort" : "Mind. 6 Zeichen"}
+                  placeholder={isLogin ? "Dein Passwort" : "8+ Zeichen, Aa, 123, !@#"}
                   required
                   autoComplete={isLogin ? "current-password" : "new-password"}
                 />
@@ -475,10 +526,11 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = React.me
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
-              {!isLogin && formData.password && !isPasswordValid && (
-                <p className="mt-1 text-sm text-red-600">
-                  Das Passwort muss mindestens 6 Zeichen lang sein
-                </p>
+              {!isLogin && formData.password && (
+                <PasswordRequirementsChecklist 
+                  password={formData.password}
+                  className="mt-2"
+                />
               )}
             </div>
 
@@ -542,11 +594,20 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = React.me
                   name="name"
                   value={formData.name}
                   onChange={handleInputChange}
-                  className="pl-10 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  className={`pl-10 w-full p-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent ${
+                    fieldErrors.name 
+                      ? 'border-red-300 bg-red-50' 
+                      : 'border-gray-300'
+                  }`}
                   placeholder="Dein vollständiger Name"
                   required
                 />
               </div>
+              {fieldErrors.name && (
+                <p className="mt-1 text-sm text-red-600">
+                  {fieldErrors.name}
+                </p>
+              )}
             </div>
 
             <div>
@@ -561,10 +622,19 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = React.me
                   name="telefon"
                   value={formData.telefon}
                   onChange={handleInputChange}
-                  className="pl-10 w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  className={`pl-10 w-full p-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent ${
+                    fieldErrors.telefon 
+                      ? 'border-red-300 bg-red-50' 
+                      : 'border-gray-300'
+                  }`}
                   placeholder="Deine Telefonnummer"
                 />
               </div>
+              {fieldErrors.telefon && (
+                <p className="mt-1 text-sm text-red-600">
+                  {fieldErrors.telefon}
+                </p>
+              )}
             </div>
 
             <div>
@@ -578,7 +648,7 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = React.me
                 value={formData.unternehmen}
                 onChange={handleInputChange}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                placeholder="Name deines Unternehmens (optional)"
+                placeholder="Name deines Unternehmens"
               />
             </div>
           </div>
@@ -603,10 +673,19 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = React.me
                   name="strasse"
                   value={formData.strasse}
                   onChange={handleInputChange}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent ${
+                    fieldErrors.strasse 
+                      ? 'border-red-300 bg-red-50' 
+                      : 'border-gray-300'
+                  }`}
                   placeholder="Straßenname"
                   required
                 />
+                {fieldErrors.strasse && (
+                  <p className="mt-1 text-sm text-red-600">
+                    {fieldErrors.strasse}
+                  </p>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="hausnummer">
@@ -618,10 +697,19 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = React.me
                   name="hausnummer"
                   value={formData.hausnummer}
                   onChange={handleInputChange}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent ${
+                    fieldErrors.hausnummer 
+                      ? 'border-red-300 bg-red-50' 
+                      : 'border-gray-300'
+                  }`}
                   placeholder="123"
                   required
                 />
+                {fieldErrors.hausnummer && (
+                  <p className="mt-1 text-sm text-red-600">
+                    {fieldErrors.hausnummer}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -637,16 +725,16 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = React.me
                   value={formData.plz}
                   onChange={handleInputChange}
                   className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent ${
-                    formData.plz && !validatePLZ(formData.plz) 
+                    (formData.plz && !validatePLZ(formData.plz)) || fieldErrors.plz
                     ? 'border-red-300 bg-red-50' 
                     : 'border-gray-300'
                   }`}
                   placeholder="12345"
                   required
                 />
-                {formData.plz && !validatePLZ(formData.plz) && (
+                {((formData.plz && !validatePLZ(formData.plz)) || fieldErrors.plz) && (
                   <p className="mt-1 text-sm text-red-600">
-                    Bitte gib eine gültige Postleitzahl ein (5 Ziffern)
+                    {fieldErrors.plz || 'Bitte gib eine gültige Postleitzahl ein (5 Ziffern)'}
                   </p>
                 )}
               </div>
@@ -660,10 +748,19 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = React.me
                   name="ort"
                   value={formData.ort}
                   onChange={handleInputChange}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  className={`w-full p-3 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent ${
+                    fieldErrors.ort 
+                      ? 'border-red-300 bg-red-50' 
+                      : 'border-gray-300'
+                  }`}
                   placeholder="Deine Stadt"
                   required
                 />
+                {fieldErrors.ort && (
+                  <p className="mt-1 text-sm text-red-600">
+                    {fieldErrors.ort}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -708,8 +805,8 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = React.me
               <div className="text-sm text-green-700 space-y-1">
                 <p>✓ Der Probemonat beginnt sofort nach Eröffnung</p>
                 <p>✓ Keine Zahlungsinformationen erforderlich</p>
-                <p>✓ Sie können jederzeit kündigen</p>
-                <p>✓ Nach 30 Tagen wird Ihr gewähltes Paket automatisch aktiviert</p>
+                <p>✓ Du kannst jederzeit kündigen</p>
+                <p>✓ Nach 30 Tagen wird das gewählte Paket automatisch aktiviert</p>
               </div>
             </div>
 
@@ -975,9 +1072,38 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = React.me
 
           {error && (
             <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-              <div className="flex items-center">
-                <AlertCircle className="w-5 h-5 text-red-600 mr-2" />
-                <span className="text-red-700">{error}</span>
+              <div className="flex items-start">
+                <AlertCircle className="w-5 h-5 text-red-600 mr-2 mt-0.5 flex-shrink-0" />
+                <div className="flex-1">
+                  <span className="text-red-700 font-medium">{error}</span>
+                  {Object.keys(fieldErrors).length > 0 && (
+                    <div className="mt-2">
+                      <ul className="text-sm text-red-600 space-y-1">
+                        {Object.entries(fieldErrors).map(([field, message]) => {
+                          const fieldLabels: Record<string, string> = {
+                            name: 'Name',
+                            email: 'E-Mail',
+                            telefon: 'Telefonnummer',
+                            strasse: 'Straße',
+                            hausnummer: 'Hausnummer', 
+                            plz: 'Postleitzahl',
+                            ort: 'Ort',
+                            unternehmen: 'Unternehmen'
+                          };
+                          const fieldLabel = fieldLabels[field] || field;
+                          
+                          return (
+                            <li key={field} className="flex items-start">
+                              <span className="font-medium mr-2">•</span>
+                              <span className="font-medium">{fieldLabel}:</span>
+                              <span className="ml-1">{message}</span>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           )}

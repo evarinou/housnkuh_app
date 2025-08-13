@@ -158,117 +158,17 @@ export const validateEmail = (email: string): boolean => {
 
 // Validate phone number format
 export const validatePhone = (phone: string): boolean => {
-  const phoneRegex = /^[\+]?[1-9][\d]{6,15}$/;
-  return phoneRegex.test(phone.replace(/[\s\-\(\)]/g, ''));
+  const phoneRegex = /^[+]?[1-9][\d]{6,15}$/;
+  return phoneRegex.test(phone.replace(/[\s\-()]/g, ''));
 };
 
-// Escape HTML entities
-export const escapeHtml = (unsafe: string): string => {
-  if (!unsafe || typeof unsafe !== 'string') {
-    return '';
-  }
-  
-  return unsafe
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-};
-
-// Unescape HTML entities
-export const unescapeHtml = (safe: string): string => {
-  if (!safe || typeof safe !== 'string') {
-    return '';
-  }
-  
-  return safe
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#039;/g, "'");
-};
-
-// Safe innerHTML replacement
-export const safeInnerHTML = (element: HTMLElement, content: string): void => {
-  if (!element || !content) {
-    return;
-  }
-  
-  const sanitizedContent = sanitizeHtml(content);
-  element.innerHTML = sanitizedContent;
-};
-
-// Create safe HTML element
-export const createSafeElement = (tagName: string, content?: string, attributes?: Record<string, string>): HTMLElement => {
-  const element = document.createElement(tagName);
-  
-  if (content) {
-    element.textContent = content; // Use textContent instead of innerHTML for safety
-  }
-  
-  if (attributes) {
-    for (const [key, value] of Object.entries(attributes)) {
-      if (key.startsWith('on')) {
-        // Don't allow event handlers
-        continue;
-      }
-      
-      if (key === 'href' || key === 'src') {
-        element.setAttribute(key, sanitizeUrl(value));
-      } else {
-        element.setAttribute(key, sanitizeText(value));
-      }
-    }
-  }
-  
-  return element;
-};
-
-// React-specific utilities
-export const createSafeProps = (props: Record<string, any>): Record<string, any> => {
-  const safeProps: Record<string, any> = {};
-  
-  for (const [key, value] of Object.entries(props)) {
-    if (key.startsWith('on') && typeof value === 'string') {
-      // Don't allow string event handlers
-      continue;
-    }
-    
-    if (key === 'dangerouslySetInnerHTML') {
-      // Always sanitize dangerouslySetInnerHTML
-      if (value && value.__html) {
-        safeProps[key] = {
-          __html: sanitizeHtml(value.__html)
-        };
-      }
-    } else if (typeof value === 'string') {
-      safeProps[key] = sanitizeText(value);
-    } else {
-      safeProps[key] = value;
-    }
-  }
-  
-  return safeProps;
-};
-
-// Hook for safe HTML content in React
-export const useSafeHtml = (htmlContent: string): string => {
-  return sanitizeHtml(htmlContent);
-};
-
-export default {
+const sanitizationUtils = {
   sanitizeHtml,
   sanitizeText,
   sanitizeUrl,
   sanitizeObject,
   validateEmail,
-  validatePhone,
-  escapeHtml,
-  unescapeHtml,
-  safeInnerHTML,
-  createSafeElement,
-  createSafeProps,
-  useSafeHtml
+  validatePhone
 };
+
+export default sanitizationUtils;

@@ -1,26 +1,29 @@
 /**
- * @file Main application component - Clean router-only structure
+ * @file Main application component - Global provider architecture
  * @description Root component that provides routing for the housnkuh marketplace.
- * Authentication providers are now mounted at the route level for better performance.
+ * Authentication providers are mounted globally to ensure context availability on all routes.
  */
 
 import React from 'react';
 import { BrowserRouter as Router } from 'react-router-dom';
 import AppContent from './components/AppContent';
+import SharedProviderWrapper from './components/providers/SharedProviderWrapper';
 
 /**
- * Root application component with clean router-only structure
+ * Root application component with global provider architecture
  * @description Sets up the foundational routing structure for the housnkuh marketplace.
- * Authentication providers are now mounted at the route level instead of globally,
- * providing better performance and cleaner separation of concerns.
+ * Authentication providers are mounted globally to ensure all routes have access to auth contexts,
+ * enabling consistent authentication state display across the entire application.
  * 
- * @returns {JSX.Element} Clean router structure with route-based providers
+ * @returns {JSX.Element} Router wrapped with global authentication providers
  * @complexity O(1) - Simple component composition
  */
 function App(): JSX.Element {
   return (
     <Router>
-      <AppContent />
+      <SharedProviderWrapper>
+        <AppContent />
+      </SharedProviderWrapper>
     </Router>
   );
 }

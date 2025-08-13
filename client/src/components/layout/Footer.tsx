@@ -34,7 +34,7 @@ const Footer: React.FC = () => {
             <div className="space-y-2">
               <p>Strauer Str. 15</p>
               <p>96317 Kronach</p>
-              <p>Tel: 0157/35711257</p>
+              <p>Tel: 0152/22035788</p>
               <p>E-Mail: eva-maria.schaller@housnkuh.de</p>
             </div>
           </div>
@@ -44,7 +44,6 @@ const Footer: React.FC = () => {
             <h3 className="text-lg font-semibold mb-4">Öffnungszeiten</h3>
             <div className="space-y-2">
               <p>Erweiterte Öffnungszeiten</p>
-              <p>7 Tage die Woche</p>
               <p className="text-sm">(Zugang mit EC- oder Kreditkarte)</p>
             </div>
           </div>

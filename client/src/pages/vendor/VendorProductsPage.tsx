@@ -31,7 +31,7 @@ const VendorProductsPage: React.FC = () => {
             <h1 className="text-3xl font-bold text-secondary">Produkte verwalten</h1>
           </div>
           <p className="text-gray-600">
-            Verwalten Sie hier Ihre Produktpalette, Preise und Verfügbarkeiten.
+            Verwalte hier Deine Produktpalette, Preise und Verfügbarkeiten.
           </p>
         </div>
 
@@ -45,8 +45,8 @@ const VendorProductsPage: React.FC = () => {
               Produktverwaltung kommt bald!
             </h2>
             <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
-              Wir arbeiten intensiv an einer umfassenden Produktverwaltung für Sie. 
-              Bald können Sie hier Ihre gesamte Produktpalette verwalten.
+              housnkuh arbeitet an einer umfassenden Produktverwaltung. 
+              Bald kannst Du hier Ihre gesamte Produktpalette verwalten.
             </p>
           </div>
 
@@ -56,7 +56,7 @@ const VendorProductsPage: React.FC = () => {
               <Package className="w-8 h-8 text-emerald-600 mx-auto mb-3" />
               <h3 className="font-semibold text-secondary mb-2">Produkte anlegen</h3>
               <p className="text-sm text-gray-600">
-                Erstellen Sie detaillierte Produktbeschreibungen mit Bildern und Preisen.
+                Erstelle detaillierte Produktbeschreibungen mit Bildern und Preisen.
               </p>
             </div>
             
@@ -64,15 +64,15 @@ const VendorProductsPage: React.FC = () => {
               <Tag className="w-8 h-8 text-emerald-600 mx-auto mb-3" />
               <h3 className="font-semibold text-secondary mb-2">Kategorien verwalten</h3>
               <p className="text-sm text-gray-600">
-                Organisieren Sie Ihre Produkte in übersichtlichen Kategorien.
+                Produkte in übersichtlichen Kategorien sortieren.
               </p>
             </div>
             
             <div className="bg-gray-50 rounded-lg p-6">
               <Plus className="w-8 h-8 text-emerald-600 mx-auto mb-3" />
-              <h3 className="font-semibold text-secondary mb-2">Verfügbarkeit setzen</h3>
+              <h3 className="font-semibold text-secondary mb-2">Verfügbarkeit verwalten</h3>
               <p className="text-sm text-gray-600">
-                Legen Sie Lagerbestände und Verfügbarkeitszeiten fest.
+                Lagerbestände einsehen  Verfügbarkeiten prüfen.
               </p>
             </div>
           </div>
@@ -80,10 +80,10 @@ const VendorProductsPage: React.FC = () => {
           {/* Contact Info */}
           <div className="bg-emerald-50 rounded-lg p-6">
             <p className="text-emerald-800 mb-2">
-              <strong>Haben Sie Fragen zur kommenden Produktverwaltung?</strong>
+              <strong>Hast Du Fragen zur kommenden Produktverwaltung?</strong>
             </p>
             <p className="text-emerald-700">
-              Kontaktieren Sie uns gerne unter{' '}
+              Kontaktiere housnkuh gerne unter{' '}
               <a href="mailto:info@housnkuh.de" className="text-emerald-600 hover:underline font-medium">
                 info@housnkuh.de
               </a>

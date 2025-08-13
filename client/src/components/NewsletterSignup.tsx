@@ -99,7 +99,7 @@ const NewsletterSignup: React.FC = () => {
     <div className="bg-secondary text-white rounded-lg p-8 text-center">
       <h2 className="text-2xl font-bold mb-4">Bleib informiert!</h2>
       <p className="mb-6">
-        Melde dich für den Newsletter an und erfahre als Erste/r von der Eröffnung.
+        Melde Dich für den Newsletter an und erfahre als Erste/r von der Eröffnung.
       </p>
       
       {status === 'success' ? (

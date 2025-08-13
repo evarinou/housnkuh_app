@@ -299,69 +299,68 @@ const DirektvermarkterDetailPage: React.FC = () => {
             </div>
           )}
           
-          {/* Overlay mit Unternehmensinformationen */}
-          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent p-6 text-white">
-            <div className="max-w-4xl relative">
-              <h1 className="text-3xl md:text-4xl font-bold mb-2">
-                {direktvermarkter.unternehmen}
-              </h1>
-              {direktvermarkter.slogan && (
-                <p className="text-lg md:text-xl italic text-white/90 mb-3">
-                  "{direktvermarkter.slogan}"
-                </p>
-              )}
-            </div>
-            
-            {/* Tags - rechts unten positioniert */}
-            {direktvermarkter.tags && direktvermarkter.tags.length > 0 && (
-              <div className="absolute bottom-6 right-6">
-                <div className="flex flex-wrap gap-2 justify-end">
-                  {direktvermarkter.tags.slice(0, 5).map(tag => (
-                    <span 
-                      key={tag.id} 
-                      className="inline-block px-3 py-1 text-sm text-white bg-primary/90 rounded-full backdrop-blur-sm border border-white/20"
-                      style={tag.color ? { backgroundColor: tag.color + 'E6' } : undefined}
-                      title={tag.description || tag.name}
-                    >
-                      {tag.icon && <span className="mr-1">{tag.icon}</span>}
-                      {tag.name}
-                    </span>
-                  ))}
-                  {direktvermarkter.tags.length > 5 && (
-                    <span 
-                      className="inline-block px-3 py-1 text-sm text-white bg-gray-500/90 rounded-full backdrop-blur-sm border border-white/20"
-                      title={`+${direktvermarkter.tags.length - 5} weitere Tags`}
-                    >
-                      +{direktvermarkter.tags.length - 5}
-                    </span>
-                  )}
-                </div>
+          {/* Overlay mit Flexbox-Layout für Profilbild und Unternehmensinformationen */}
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent p-6">
+            <div className="flex flex-col md:flex-row items-start md:items-end gap-4 md:gap-6">
+              
+              {/* Profilbild - jetzt Teil des Overlays */}
+              <div className="relative flex-shrink-0 -mt-20 md:-mt-24">
+                {direktvermarkter.profilBild ? (
+                  <img 
+                    src={resolveImageUrl(direktvermarkter.profilBild)} 
+                    alt={direktvermarkter.name} 
+                    className="w-28 h-28 md:w-32 md:h-32 rounded-full border-4 border-white shadow-lg object-cover"
+                  />
+                ) : (
+                  <div className="w-28 h-28 md:w-32 md:h-32 rounded-full border-4 border-white shadow-lg bg-gray-200 flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-14 w-14 md:h-16 md:w-16 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-        </div>
-        
-        {/* Profilbild - unten links vom Banner */}
-        <div className="relative px-6 md:px-8">
-          <div className="flex items-end -mt-16 mb-4">
-            <div className="relative">
-              {direktvermarkter.profilBild ? (
-                <img 
-                  src={resolveImageUrl(direktvermarkter.profilBild)} 
-                  alt={direktvermarkter.name} 
-                  className="w-32 h-32 rounded-full border-4 border-white shadow-lg object-cover"
-                />
-              ) : (
-                <div className="w-32 h-32 rounded-full border-4 border-white shadow-lg bg-gray-200 flex items-center justify-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
+              
+              {/* Unternehmensinformationen - flexibel wachsend */}
+              <div className="flex-grow text-white pb-2">
+                <h1 className="text-3xl md:text-4xl font-bold mb-1">
+                  {direktvermarkter.unternehmen}
+                </h1>
+                {direktvermarkter.slogan && (
+                  <p className="text-lg md:text-xl italic text-white/90 mb-2">
+                    "{direktvermarkter.slogan}"
+                  </p>
+                )}
+                <p className="text-white/80 text-sm md:text-base">
+                  {direktvermarkter.name} • Ansprechpartner
+                </p>
+              </div>
+              
+              {/* Tags - rechts positioniert, responsive */}
+              {direktvermarkter.tags && direktvermarkter.tags.length > 0 && (
+                <div className="flex-shrink-0 self-end pb-2 hidden lg:block">
+                  <div className="flex flex-wrap gap-2 justify-end max-w-xs">
+                    {direktvermarkter.tags.slice(0, 5).map(tag => (
+                      <span 
+                        key={tag.id} 
+                        className="inline-block px-3 py-1 text-sm text-white bg-primary/90 rounded-full backdrop-blur-sm border border-white/20"
+                        style={tag.color ? { backgroundColor: tag.color + 'E6' } : undefined}
+                        title={tag.description || tag.name}
+                      >
+                        {tag.icon && <span className="mr-1">{tag.icon}</span>}
+                        {tag.name}
+                      </span>
+                    ))}
+                    {direktvermarkter.tags.length > 5 && (
+                      <span 
+                        className="inline-block px-3 py-1 text-sm text-white bg-gray-500/90 rounded-full backdrop-blur-sm border border-white/20"
+                        title={`+${direktvermarkter.tags.length - 5} weitere Tags`}
+                      >
+                        +{direktvermarkter.tags.length - 5}
+                      </span>
+                    )}
+                  </div>
                 </div>
               )}
-            </div>
-            <div className="ml-6 pb-2">
-              <h2 className="text-2xl font-bold text-gray-900">{direktvermarkter.name}</h2>
-              <p className="text-gray-600">Ansprechpartner</p>
             </div>
           </div>
         </div>

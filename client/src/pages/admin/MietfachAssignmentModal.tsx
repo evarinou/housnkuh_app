@@ -132,46 +132,78 @@ const MietfachAssignmentModal: React.FC<MietfachAssignmentModalProps> = ({
 
   /**
    * Determines required Mietfach types based on package selection
-   * @description Maps package counts to Mietfach types (kühl, gefrier, lager, etc.)
+   * @description Maps package categories to Mietfach types using proper category mapping
    * @returns {string[]} Array of required Mietfach types or ['all'] if none specified
-   * @complexity Business logic mapping package types to physical Mietfach types
+   * @complexity Business logic mapping package categories to physical Mietfach types
    */
   const getRequestedMietfachTypes = useCallback(() => {
-    const types: string[] = [];
+    const types: Set<string> = new Set();
     const packageData = user.pendingBooking?.packageData;
     
+    // Direct package ID to Mietfach types mapping
+    const packageIdToTypesMap: Record<string, string[]> = {
+      'block-a': ['regal'],
+      'block-b': ['regal'],
+      'block-cold': ['kuehl'],
+      'block-frozen': ['gefrier'],
+      'block-table': ['sonstiges', 'verkaufstisch'],
+      'block-other': ['sonstiges'],
+      'window-small': ['schaufenster'],
+      'window-large': ['schaufenster']
+    };
+    
     console.log('🔍 Debug: packageData.packageCounts:', packageData?.packageCounts);
+    console.log('🔍 Debug: packageData.packageOptions:', packageData?.packageOptions);
+    
+    // CRITICAL DEBUG: Full packageData structure
+    console.log('🔍 CRITICAL DEBUG: Complete packageData structure:', JSON.stringify(packageData, null, 2));
     
     if (packageData?.packageCounts) {
       Object.entries(packageData.packageCounts).forEach(([packageId, count]) => {
         console.log(`🔍 Debug: Processing packageId: "${packageId}", count: ${count}`);
         
         if (Number(count) > 0) {
-          // Map package IDs to Mietfach types - mehr Varianten abdecken
-          const lowerPackageId = packageId.toLowerCase();
+          // Get the Mietfach types for this package ID
+          const mietfachTypes = packageIdToTypesMap[packageId];
           
-          if (lowerPackageId.includes('kühl') || lowerPackageId.includes('kuehl') || lowerPackageId.includes('cold')) {
-            types.push('kuehlregal');
-            console.log('✅ Added: kuehlregal');
-          }
-          if (lowerPackageId.includes('gefrier') || lowerPackageId.includes('tiefkühl') || lowerPackageId.includes('tiefkuehl') || lowerPackageId.includes('frozen')) {
-            types.push('gefrierregal');
-            console.log('✅ Added: gefrierregal');
-          }
-          if (lowerPackageId.includes('regal') && !lowerPackageId.includes('kühl') && !lowerPackageId.includes('gefrier')) {
-            types.push('regal');
-            console.log('✅ Added: regal');
-          }
-          if (lowerPackageId.includes('lager') || lowerPackageId.includes('storage')) {
-            types.push('lagerraum');
-            console.log('✅ Added: lagerraum');
+          if (mietfachTypes) {
+            mietfachTypes.forEach(type => {
+              types.add(type);
+              console.log(`✅ Added type: ${type} (from packageId: ${packageId})`);
+            });
+          } else {
+            console.log(`⚠️ Warning: No mapping found for packageId: "${packageId}"`);
+            // Fallback: try to guess from package name
+            const packageOption = packageData.packageOptions?.find((p: any) => p.id === packageId);
+            if (packageOption) {
+              const name = packageOption.name.toLowerCase();
+              if (name.includes('kühl') || name.includes('gekühlt')) {
+                types.add('kuehl');
+                console.log(`✅ Added type: kuehl (guessed from name: ${packageOption.name})`);
+              } else if (name.includes('gefrier') || name.includes('gefroren')) {
+                types.add('gefrier');
+                console.log(`✅ Added type: gefrier (guessed from name: ${packageOption.name})`);
+              } else if (name.includes('schaufenster')) {
+                types.add('schaufenster');
+                console.log(`✅ Added type: schaufenster (guessed from name: ${packageOption.name})`);
+              } else if (name.includes('tisch')) {
+                types.add('sonstiges');
+                console.log(`✅ Added type: sonstiges (guessed from name: ${packageOption.name})`);
+              } else {
+                types.add('regal');
+                console.log(`✅ Added type: regal (fallback for name: ${packageOption.name})`);
+              }
+            }
           }
         }
       });
+    } else {
+      console.log('⚠️ Warning: packageCounts not available in packageData');
     }
     
-    console.log('🔍 Debug: Final requested types:', types);
-    return types.length > 0 ? types : ['all'];
+    const typesArray = Array.from(types);
+    console.log('🔍 Debug: Final requested types:', typesArray);
+    return typesArray.length > 0 ? typesArray : ['all'];
   }, [user.pendingBooking?.packageData]);
 
   /**

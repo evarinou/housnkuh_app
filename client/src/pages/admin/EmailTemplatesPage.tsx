@@ -5,10 +5,10 @@
  * @modified 2025-08-04
  */
 
-import React, { useState, useEffect } from 'react';
-import { Edit3, Eye, Send, Filter, Search, Plus, Trash2 } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Edit3, Eye, Send, Search } from 'lucide-react';
 import { sanitizeHtml } from '../../utils/sanitization';
-import { tokenStorage, apiUtils } from '../../utils/auth';
+import { tokenStorage } from '../../utils/auth';
 
 /**
  * Email template data structure
@@ -91,12 +91,37 @@ const EmailTemplatesPage: React.FC = () => {
   // Template Variables
   const [templateVariables, setTemplateVariables] = useState<TemplateVariable[]>([]);
 
-  useEffect(() => {
-    fetchTemplates();
-  }, []);
+  /**
+   * Filters templates based on search term, category, and active status
+   * @description Applies multiple filter criteria to template list for enhanced searchability
+   * @returns {void} Updates filteredTemplates state
+   * @complexity Multi-field filtering with case-insensitive search
+   */
+  const filterTemplates = useCallback(() => {
+    let filtered = templates;
 
-  useEffect(() => {
-    filterTemplates();
+    // Suche
+    if (searchTerm) {
+      filtered = filtered.filter(template =>
+        template.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        template.templateId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        template.subject.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    // Kategorie Filter
+    if (categoryFilter !== 'all') {
+      filtered = filtered.filter(template => template.category === categoryFilter);
+    }
+
+    // Active Filter
+    if (activeFilter !== 'all') {
+      filtered = filtered.filter(template => 
+        activeFilter === 'active' ? template.isActive : !template.isActive
+      );
+    }
+
+    setFilteredTemplates(filtered);
   }, [templates, searchTerm, categoryFilter, activeFilter]);
 
   /**
@@ -127,38 +152,13 @@ const EmailTemplatesPage: React.FC = () => {
     }
   };
 
-  /**
-   * Filters templates based on search term, category, and active status
-   * @description Applies multiple filter criteria to template list for enhanced searchability
-   * @returns {void} Updates filteredTemplates state
-   * @complexity Multi-field filtering with case-insensitive search
-   */
-  const filterTemplates = () => {
-    let filtered = templates;
+  useEffect(() => {
+    fetchTemplates();
+  }, []);
 
-    // Suche
-    if (searchTerm) {
-      filtered = filtered.filter(template =>
-        template.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        template.templateId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        template.subject.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-
-    // Kategorie Filter
-    if (categoryFilter !== 'all') {
-      filtered = filtered.filter(template => template.category === categoryFilter);
-    }
-
-    // Active Filter
-    if (activeFilter !== 'all') {
-      filtered = filtered.filter(template => 
-        activeFilter === 'active' ? template.isActive : !template.isActive
-      );
-    }
-
-    setFilteredTemplates(filtered);
-  };
+  useEffect(() => {
+    filterTemplates();
+  }, [filterTemplates]);
 
   /**
    * Loads detailed template data for editing

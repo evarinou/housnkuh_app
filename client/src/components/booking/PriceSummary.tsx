@@ -120,10 +120,10 @@ const PriceSummary: React.FC<PriceSummaryProps> = ({
 }) => {
   return (
     <>
-      {/* Step 4: Mietdauer wählen */}
+      {/* Step 3: Mietdauer wählen */}
       <div className="mb-10">
         <h3 className="text-xl font-semibold mb-4 flex items-center">
-          <span className="bg-[#e17564] text-white rounded-full w-8 h-8 inline-flex items-center justify-center mr-2">4</span>
+          <span className="bg-[#e17564] text-white rounded-full w-8 h-8 inline-flex items-center justify-center mr-2">3</span>
           Mietdauer wählen
         </h3>
         <div className="bg-gray-50 p-4 rounded-lg">

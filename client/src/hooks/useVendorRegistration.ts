@@ -33,6 +33,19 @@ export interface RegistrationResult {
   message?: string;
   userId?: string;
   openingInfo?: any;
+  fieldErrors?: Record<string, string>; // Mapping von Feldname zu Fehlermeldung
+}
+
+// Structure der Validierungsfehler vom Backend
+export interface BackendValidationError {
+  field: string;
+  message: string;
+}
+
+export interface ErrorResponse {
+  success?: boolean;
+  message?: string;
+  errors?: BackendValidationError[];
 }
 
 /**
@@ -85,9 +98,29 @@ export const useVendorRegistration = (): UseVendorRegistration => {
       console.error('Vendor registration error:', error);
       
       let errorMessage = 'Verbindungsfehler. Bitte versuche es später erneut.';
+      let fieldErrors: Record<string, string> = {};
       
       if (axios.isAxiosError(error) && error.response) {
-        errorMessage = error.response.data.message || 'Ein Fehler ist aufgetreten bei der Registrierung';
+        const errorData = error.response.data as ErrorResponse;
+        
+        // Parse strukturierte Validierungsfehler
+        if (errorData.errors && Array.isArray(errorData.errors)) {
+          errorData.errors.forEach((err: BackendValidationError) => {
+            if (err.field && err.message) {
+              fieldErrors[err.field] = err.message;
+            }
+          });
+          
+          // Wenn wir strukturierte Fehler haben, verwende generische Meldung
+          if (Object.keys(fieldErrors).length > 0) {
+            errorMessage = 'Bitte korrigiere die markierten Felder';
+          }
+        } else if (errorData.message) {
+          // Fallback für einfache Error-Messages
+          errorMessage = errorData.message;
+        } else {
+          errorMessage = 'Ein Fehler ist aufgetreten bei der Registrierung';
+        }
       }
       
       setRegistrationError(errorMessage);
@@ -95,7 +128,8 @@ export const useVendorRegistration = (): UseVendorRegistration => {
       
       return {
         success: false,
-        message: errorMessage
+        message: errorMessage,
+        fieldErrors: Object.keys(fieldErrors).length > 0 ? fieldErrors : undefined
       };
     }
   }, []);

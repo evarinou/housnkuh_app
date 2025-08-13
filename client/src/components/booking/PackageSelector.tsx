@@ -161,7 +161,7 @@ const PackageSelector: React.FC<PackageSelectorProps> = ({
         </h3>
         
         {/* Package Categories */}
-        {['standard', 'cooled', 'premium'].map((category) => {
+        {['standard', 'cooled', 'premium', 'visibility'].map((category) => {
           const categoryPackages = packageOptions.filter(pkg => pkg.category === category);
           
           return (
@@ -176,17 +176,6 @@ const PackageSelector: React.FC<PackageSelectorProps> = ({
             </div>
           );
         })}
-      </div>
-
-      {/* Step 3: Sichtbarkeit */}
-      <div className="mb-10">
-        <h3 className="text-xl font-semibold mb-4 flex items-center">
-          <span className="bg-[#e17564] text-white rounded-full w-8 h-8 inline-flex items-center justify-center mr-2">3</span>
-          Sichtbarkeit
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {packageOptions.filter(pkg => pkg.category === 'visibility').map(renderPackageCard)}
-        </div>
       </div>
     </>
   );

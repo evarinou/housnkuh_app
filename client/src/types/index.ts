@@ -10,6 +10,8 @@
  * @description Provides a centralized import point for common types to maintain
  * clean import statements throughout the application.
  */
+import { Zusatzleistungen } from './common';
+
 export * from './common';
 
 /**
@@ -18,8 +20,6 @@ export * from './common';
  * clean import statements throughout the application.
  */
 export * from './booking';
-
-import { Zusatzleistungen } from './common';
 
 /**
  * Form data structure for booking submissions

@@ -39,7 +39,7 @@ interface User {
  * @description Separate context for authentication state to enable performance optimizations.
  * Components consuming only state won't re-render when actions change.
  */
-const AuthStateContext = createContext<AuthState | undefined>(undefined);
+export const AuthStateContext = createContext<AuthState | undefined>(undefined);
 
 /**
  * Authentication actions context - holds auth operations

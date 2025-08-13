@@ -53,6 +53,9 @@ export const VendorAuthProvider: React.FC<VendorAuthProviderProps> = React.memo(
   const [token, setToken] = useState<string | null>(tokenStorage.getToken('VENDOR'));
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [bookings, setBookings] = useState<any[]>([]);
+  const [isBookingsLoading, setIsBookingsLoading] = useState<boolean>(false);
+  const [lastAuthCheck, setLastAuthCheck] = useState<number>(Date.now());
 
   const priceCalculation = usePriceCalculation();
   const trialManagement = useTrialManagement();
@@ -62,17 +65,27 @@ export const VendorAuthProvider: React.FC<VendorAuthProviderProps> = React.memo(
   const registration = useVendorRegistration();
   const processUserData = useCallback((userData: any): VendorUser => {
     return priceCalculation.processUserData(userData);
-  }, [priceCalculation.processUserData]);
+  }, [priceCalculation]);
 
   const logout = useCallback((): void => {
+    console.log('🚨 VendorAuthContext.logout() - CALLED', new Error().stack);
     authOperationsService.logout(() => {
       setToken(null);
       setUser(null);
       setIsAuthenticated(false);
+      setBookings([]); // Clear bookings on logout
     });
-  }, [authOperationsService.logout]);
+  }, [authOperationsService]);
 
-  const checkAuth = useCallback(async (): Promise<boolean> => {
+  const checkAuth = useCallback(async (force: boolean = false): Promise<boolean> => {
+    
+    // Skip if checked recently (within 30 seconds) unless forced
+    const timeSinceLastCheck = Date.now() - lastAuthCheck;
+    if (!force && timeSinceLastCheck < 30000) {
+      console.log(`Skipping auth check, last check was ${Math.round(timeSinceLastCheck / 1000)}s ago`);
+      return true; // Assume still valid
+    }
+
     setIsLoading(true);
 
     try {
@@ -85,30 +98,114 @@ export const VendorAuthProvider: React.FC<VendorAuthProviderProps> = React.memo(
           setIsAuthenticated(true);
         }
       } else {
-        logout();
+        // Retry logic: if first attempt fails, wait and try once more
+        if (!force) {
+          setIsLoading(false);
+          await new Promise(resolve => setTimeout(resolve, 500));
+          return await checkAuth(true); // Retry with force=true
+        } else {
+          logout();
+        }
       }
 
       setIsLoading(false);
+      setLastAuthCheck(Date.now()); // Update last check timestamp
       return authResult;
     } catch (error) {
-      console.error('Vendor auth check error:', error);
-      logout();
-      setIsLoading(false);
-      return false;
+      console.error('VendorAuthContext.checkAuth() - Exception:', error);
+      // Retry logic for exceptions too
+      if (!force) {
+        setIsLoading(false);
+        await new Promise(resolve => setTimeout(resolve, 500));
+        return await checkAuth(true); // Retry with force=true
+      } else {
+        logout();
+        setIsLoading(false);
+        return false;
+      }
     }
-  }, [token, logout, processUserData, trialManagement]);
+  }, [token, logout, processUserData, trialManagement, lastAuthCheck]);
+
+  /**
+   * Fetches vendor bookings from API
+   * @description Centralized method to fetch bookings data used by multiple components
+   */
+  const fetchBookings = useCallback(async (): Promise<void> => {
+    if (!user?.id || !token) return;
+    
+    setIsBookingsLoading(true);
+    try {
+      const response = await fetch(`http://localhost:4000/api/vendor-auth/bookings/${user.id}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setBookings(data.bookings || []);
+      } else {
+        console.error('Error fetching bookings: Response not OK');
+      }
+    } catch (error) {
+      console.error('Error fetching bookings:', error);
+    } finally {
+      setIsBookingsLoading(false);
+    }
+  }, [user?.id, token]);
+
+  /**
+   * Refreshes bookings data
+   * @description Alias for fetchBookings to provide semantic clarity
+   */
+  const refreshBookings = useCallback(async (): Promise<void> => {
+    await fetchBookings();
+  }, [fetchBookings]);
 
   useEffect(() => {
     const initAuth = async () => {
       if (token) {
-        await checkAuth();
+        await checkAuth(true); // Force initial check on mount
       } else {
         setIsLoading(false);
       }
     };
 
     initAuth();
-  }, [token]);
+  }, [token]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Fetch bookings when user becomes available and authenticated
+  useEffect(() => {
+    if (user?.id && isAuthenticated && !isLoading) {
+      fetchBookings();
+    }
+  }, [user?.id, isAuthenticated, isLoading, fetchBookings]);
+
+  // Token persistence: Revalidate auth on page focus/visibility change
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && token && !isLoading) {
+        checkAuth(false); // Don't force check, respect cooldown
+      }
+    };
+
+    const handleWindowFocus = () => {
+      if (token && !isLoading) {
+        checkAuth(false); // Don't force check, respect cooldown
+      }
+    };
+
+    // Add event listeners
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleWindowFocus);
+
+    // Cleanup listeners
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleWindowFocus);
+    };
+  }, [token, checkAuth, isLoading]);
 
   const login = useCallback(async (email: string, password: string): Promise<boolean> => {
     setIsLoading(true);
@@ -140,8 +237,8 @@ export const VendorAuthProvider: React.FC<VendorAuthProviderProps> = React.memo(
     trialManagement.cancelTrialBooking(token, bookingId, reason), [trialManagement, token]);
 
   const state = useMemo<VendorAuthState>(() => 
-    providerState.createState(user, token, isAuthenticated, isLoading),
-    [providerState, user, token, isAuthenticated, isLoading]
+    providerState.createState(user, token, isAuthenticated, isLoading, bookings, isBookingsLoading),
+    [providerState, user, token, isAuthenticated, isLoading, bookings, isBookingsLoading]
   );
 
   const actions = useMemo<VendorAuthActions>(() => 
@@ -152,9 +249,11 @@ export const VendorAuthProvider: React.FC<VendorAuthProviderProps> = React.memo(
       registration.registerWithBooking,
       registration.preRegisterVendor,
       getTrialStatus,
-      cancelTrialBooking
+      cancelTrialBooking,
+      fetchBookings,
+      refreshBookings
     ),
-    [providerState, login, logout, checkAuth, registration.registerWithBooking, registration.preRegisterVendor, getTrialStatus, cancelTrialBooking]
+    [providerState, login, logout, checkAuth, registration.registerWithBooking, registration.preRegisterVendor, getTrialStatus, cancelTrialBooking, fetchBookings, refreshBookings]
   );
 
   return (

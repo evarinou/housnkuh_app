@@ -121,7 +121,7 @@ const DirektvermarkterPage: React.FC = () => {
                   <h3 className="text-2xl font-bold">Übersicht aller Direktvermarkter</h3>
                 </div>
                 <p className="text-white/90 mb-6 leading-relaxed">
-                  Durchsuche alle registrierten Direktvermarkter, filtere nach Produkten und finde genau das, was du suchst.
+                  Durchsuche alle registrierten Direktvermarkter, filtere nach Produkten und finde genau das, was Du suchst.
                 </p>
                 <div className="flex items-center text-white group-hover:translate-x-2 transition-transform duration-300">
                   <span className="font-semibold mr-2">Zur Übersicht</span>
@@ -197,10 +197,10 @@ const DirektvermarkterPage: React.FC = () => {
       <section className="py-20 bg-gradient-to-r from-secondary/10 to-primary/10">
         <div className="max-w-4xl mx-auto px-6 text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-secondary mb-6">
-            Bist du Direktvermarkter?
+            Bist Du Direktvermarkter?
           </h2>
           <p className="text-xl text-gray-600 mb-10 max-w-3xl mx-auto leading-relaxed">
-            Möchtest du deine Produkte bei housnkuh anbieten? Registriere dich als Direktvermarkter 
+            Möchtest Du Deine Produkte bei housnkuh anbieten? Registriere Dich als Direktvermarkter 
             und profitiere von unserer innovativen Plattform für regionale Vermarktung.
           </p>
           

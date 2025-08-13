@@ -17,7 +17,7 @@ interface VendorListPreviewProps {
 
 const VendorListPreview: React.FC<VendorListPreviewProps> = ({
   title = "Direktvermarkter kommen bald",
-  description = "Die housnkuh-Plattform wird gerade aufgebaut. Lokale Direktvermarkter können sich bereits registrieren und werden nach der Eröffnung für Kunden sichtbar.",
+  description = "Die housnkuh-Plattform wird gerade aufgebaut. Lokale Direktvermarkter können sich bereits registrieren und werden nach und nach für Kunden sichtbar.",
   showRegistrationLink = true,
   className = ""
 }) => {

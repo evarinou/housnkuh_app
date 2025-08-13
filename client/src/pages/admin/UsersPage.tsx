@@ -7,7 +7,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Eye, EyeOff, Edit, Trash2, Plus, Users, Search, Filter, Mail, Check, X, CheckCircle, AlertCircle, XCircle, User, UserCheck, UserX, Building } from 'lucide-react';
+import { Eye, EyeOff, Edit, Trash2, Plus, Search, Filter, CheckCircle, AlertCircle, XCircle, User, UserCheck, UserX, Building } from 'lucide-react';
 import axios from 'axios';
 import VendorDetailModal from '../../components/admin/VendorDetailModal';
 

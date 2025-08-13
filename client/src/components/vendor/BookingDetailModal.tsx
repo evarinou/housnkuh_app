@@ -95,7 +95,7 @@ const BookingTimeline: React.FC<{ booking: IBooking }> = ({ booking }) => {
       date: booking.requestedAt,
       icon: Clock,
       completed: true,
-      description: 'Ihre Buchungsanfrage wurde erfolgreich eingereicht.'
+      description: 'Deine Buchungsanfrage wurde erfolgreich eingereicht.'
     },
     {
       key: 'confirmed',
@@ -103,7 +103,7 @@ const BookingTimeline: React.FC<{ booking: IBooking }> = ({ booking }) => {
       date: booking.confirmedAt,
       icon: CheckCircle,
       completed: !!booking.confirmedAt,
-      description: 'Ihre Buchung wurde von unserem Team bestätigt.'
+      description: 'Deine Buchung wurde bestätigt.'
     },
     {
       key: 'active',
@@ -111,7 +111,7 @@ const BookingTimeline: React.FC<{ booking: IBooking }> = ({ booking }) => {
       date: booking.actualStartDate || booking.scheduledStartDate,
       icon: Home,
       completed: booking.status === 'active' || booking.status === 'completed',
-      description: 'Ihr Mietfach ist aktiv und einsatzbereit.'
+      description: 'Dein Mietfach ist aktiv und einsatzbereit.'
     }
   ];
 

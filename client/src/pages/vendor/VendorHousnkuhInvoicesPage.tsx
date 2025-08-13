@@ -31,7 +31,7 @@ const VendorHousnkuhInvoicesPage: React.FC = () => {
             <h1 className="text-3xl font-bold text-secondary">Eingangsrechnungen (housnkuh)</h1>
           </div>
           <p className="text-gray-600">
-            Übersicht über Ihre Rechnungen von housnkuh und Zahlungshistorie.
+            Übersicht über die Rechnungen von housnkuh und Zahlungshistorie.
           </p>
         </div>
 
@@ -45,8 +45,8 @@ const VendorHousnkuhInvoicesPage: React.FC = () => {
               Rechnungsübersicht kommt bald!
             </h2>
             <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
-              Hier erhalten Sie bald eine vollständige Übersicht über alle Rechnungen von housnkuh 
-              und können Ihre Zahlungshistorie einsehen.
+              Hier erhälst Du bald eine vollständige Übersicht über alle Rechnungen von housnkuh 
+              und kannst Deine Zahlungshistorie einsehen.
             </p>
           </div>
 
@@ -80,10 +80,10 @@ const VendorHousnkuhInvoicesPage: React.FC = () => {
           {/* Contact Info */}
           <div className="bg-indigo-50 rounded-lg p-6">
             <p className="text-indigo-800 mb-2">
-              <strong>Fragen zu Ihrer Abrechnung?</strong>
+              <strong>Fragen zur Abrechnung?</strong>
             </p>
             <p className="text-indigo-700">
-              Kontaktieren Sie uns jederzeit unter{' '}
+              Kontaktiere housnkuh jederzeit unter{' '}
               <a href="mailto:info@housnkuh.de" className="text-indigo-600 hover:underline font-medium">
                 info@housnkuh.de
               </a>

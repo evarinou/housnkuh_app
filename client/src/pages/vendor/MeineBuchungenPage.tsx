@@ -2,7 +2,7 @@
  * @file MeineBuchungenPage.tsx
  * @purpose Vendor dashboard page for managing bookings and package tracking. Displays vendor's active bookings with status filters and package tracking for additional services like storage and shipping.
  * @created 2025-01-15
- * @modified 2025-08-05
+ * @modified 2025-08-07
  */
 import React, { useState, useEffect, useCallback } from 'react';
 import { useVendorAuth } from '../../contexts/VendorAuthContext';
@@ -73,47 +73,13 @@ interface Contract {
  * @returns {JSX.Element} The vendor bookings management page
  */
 const MeineBuchungenPage: React.FC = () => {
-  const { user } = useVendorAuth();
-  const [bookings, setBookings] = useState<IBooking[]>([]);
+  const { user, bookings, isBookingsLoading, refreshBookings } = useVendorAuth();
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [filter, setFilter] = useState<BookingStatus | 'all'>('all');
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedBooking, setSelectedBooking] = useState<IBooking | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'bookings' | 'packages'>('bookings');
-
-  /**
-   * Fetches vendor bookings from the API
-   * @description Retrieves all bookings for the authenticated vendor with error handling
-   * @returns {Promise<void>}
-   */
-  const fetchBookings = useCallback(async () => {
-    if (!user?.id) return;
-    
-    try {
-      setLoading(true);
-      const token = localStorage.getItem('vendorToken');
-      const response = await fetch(`http://localhost:4000/api/vendor-auth/bookings/${user.id}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Fehler beim Abrufen der Buchungen');
-      }
-
-      const data = await response.json();
-      setBookings(data.bookings || []);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Ein Fehler ist aufgetreten');
-      console.error('Error fetching bookings:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, [user?.id]);
 
   /**
    * Fetches vendor contracts with package tracking information
@@ -125,7 +91,7 @@ const MeineBuchungenPage: React.FC = () => {
     
     try {
       const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
-      const response = await axios.get(`${apiUrl}/vendor-contracts/zusatzleistungen`, {
+      const response = await axios.get(`${apiUrl}/vendor/contracts/zusatzleistungen`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('vendorToken')}`
         }
@@ -140,9 +106,9 @@ const MeineBuchungenPage: React.FC = () => {
   }, [user?.id]);
 
   useEffect(() => {
-    fetchBookings();
+    // Only fetch contracts - bookings are handled by VendorAuthContext
     fetchContractsWithPackages();
-  }, [user?.id, fetchBookings, fetchContractsWithPackages]);
+  }, [user?.id, fetchContractsWithPackages]);
 
   /**
    * Calculates booking status counts for filter tabs
@@ -190,6 +156,20 @@ const MeineBuchungenPage: React.FC = () => {
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedBooking(null);
+  };
+
+  /**
+   * Handles refresh action to reload bookings data
+   */
+  const handleRefresh = async () => {
+    try {
+      setError(null);
+      await refreshBookings();
+      await fetchContractsWithPackages();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Ein Fehler ist aufgetreten');
+      console.error('Error refreshing data:', err);
+    }
   };
 
   /**
@@ -259,75 +239,104 @@ const MeineBuchungenPage: React.FC = () => {
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
             {activeTab === 'bookings' ? 'Meine Buchungen' : 'Package-Tracking'}
           </h1>
-          <p className="text-gray-600">
-            {activeTab === 'bookings' 
-              ? 'Überblick über alle Ihre Buchungen und deren aktuellen Status'
-              : 'Verfolgen Sie den Status Ihrer Lager- und Versandpakete'
-            }
-          </p>
-        </div>
-
-        {/* Tab Navigation - nur wenn Zusatzleistungen vorhanden */}
-        {hasZusatzleistungen && (
-          <div className="mb-6 border-b border-gray-200">
-            <nav className="-mb-px flex space-x-8">
-              <button
-                onClick={() => setActiveTab('bookings')}
-                className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === 'bookings'
-                    ? 'border-primary text-primary'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                Buchungen
-              </button>
-              <button
-                onClick={() => setActiveTab('packages')}
-                className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center ${
-                  activeTab === 'packages'
-                    ? 'border-primary text-primary'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                <Package className="w-4 h-4 mr-2" />
-                Package-Tracking
-                {hasPackages && (
-                  <span className="ml-2 bg-primary text-white text-xs rounded-full px-2 py-0.5">
-                    {contracts.reduce((sum, c) => sum + (c.packages?.length || 0), 0)}
-                  </span>
-                )}
-              </button>
-            </nav>
-          </div>
-        )}
-
-        {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-red-800">{error}</p>
+          <div className="flex justify-between items-center">
+            <p className="text-gray-600">
+              {activeTab === 'bookings' 
+                ? 'Verwalte Deine aktuellen und vergangenen Buchungen'
+                : 'Verfolge Deine Lagerpakete und Versandungen'
+              }
+            </p>
             <button
-              onClick={fetchBookings}
-              className="mt-2 text-red-600 hover:text-red-800 underline"
+              onClick={handleRefresh}
+              className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors"
+              disabled={isBookingsLoading}
             >
-              Erneut versuchen
+              {isBookingsLoading ? 'Aktualisiert...' : 'Aktualisieren'}
             </button>
           </div>
+        </div>
+
+        {/* Tab Navigation */}
+        <div className="flex space-x-1 mb-6">
+          <button
+            onClick={() => setActiveTab('bookings')}
+            className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+              activeTab === 'bookings'
+                ? 'bg-primary text-white'
+                : 'text-gray-700 bg-gray-100 hover:bg-gray-200'
+            }`}
+          >
+            Buchungen ({bookings.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('packages')}
+            className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+              activeTab === 'packages'
+                ? 'bg-primary text-white'
+                : 'text-gray-700 bg-gray-100 hover:bg-gray-200'
+            }`}
+            disabled={!hasZusatzleistungen}
+          >
+            Package-Tracking
+            {hasZusatzleistungen && (
+              <span className="ml-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full">
+                {contracts.reduce((sum, contract) => 
+                  sum + (contract.packages?.length || 0), 0
+                )}
+              </span>
+            )}
+          </button>
+        </div>
+
+        {error && (
+          <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-red-800">Fehler beim Laden der Daten</h3>
+                <div className="mt-2 text-sm text-red-700">
+                  <p>{error}</p>
+                </div>
+                <div className="mt-4">
+                  <div className="-mx-2 -my-1.5 flex">
+                    <button
+                      type="button"
+                      onClick={handleRefresh}
+                      className="bg-red-50 px-2 py-1.5 rounded-md text-sm font-medium text-red-800 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-red-50 focus:ring-red-600"
+                    >
+                      Erneut versuchen
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         )}
 
-        {activeTab === 'bookings' ? (
+        {activeTab === 'bookings' && (
           <>
-            {/* Status Filter Tabs */}
-            <StatusFilterTabs 
+            <StatusFilterTabs
               activeFilter={filter}
               onFilterChange={setFilter}
               counts={statusCounts}
             />
 
-            {/* Bookings List */}
-            <BookingsList 
-              bookings={filteredBookings}
-              onBookingClick={handleBookingClick}
-              loading={loading}
-            />
+            <div className="mt-6">
+              {isBookingsLoading ? (
+                <div className="flex justify-center items-center h-64">
+                  <div className="text-lg">Lade Buchungen...</div>
+                </div>
+              ) : (
+                <BookingsList
+                  bookings={filteredBookings}
+                  onBookingClick={handleBookingClick}
+                />
+              )}
+            </div>
 
             {/* Booking Detail Modal */}
             {selectedBooking && (
@@ -338,18 +347,11 @@ const MeineBuchungenPage: React.FC = () => {
               />
             )}
           </>
-        ) : (
-          /* Package Tracking Section */
+        )}
+
+        {activeTab === 'packages' && (
           <div className="space-y-6">
-            {loading ? (
-              <div className="bg-white rounded-lg shadow p-6">
-                <div className="animate-pulse space-y-4">
-                  <div className="h-4 bg-gray-200 rounded w-1/4"></div>
-                  <div className="h-20 bg-gray-100 rounded"></div>
-                  <div className="h-20 bg-gray-100 rounded"></div>
-                </div>
-              </div>
-            ) : hasPackages ? (
+            {hasPackages ? (
               contracts.map(contract => (
                 contract.packages && contract.packages.length > 0 && (
                   <div key={contract._id} className="bg-white rounded-lg shadow overflow-hidden">

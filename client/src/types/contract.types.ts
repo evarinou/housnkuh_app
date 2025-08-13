@@ -19,6 +19,8 @@
  * @property {boolean} [isAdmin] - Flag indicating admin privileges
  * @property {boolean} [isVendor] - Flag indicating vendor user type
  */
+import { ZusatzleistungenExtended, ZusatzleistungenKosten, ZusatzleistungenFilter } from './common';
+
 export interface User {
   _id: string;
   username?: string;
@@ -76,8 +78,6 @@ export interface Service {
   mietende?: string;
   monatspreis: number;
 }
-
-import { ZusatzleistungenExtended, ZusatzleistungenKosten, ZusatzleistungenFilter } from './common';
 
 /**
  * @deprecated Use ZusatzleistungenExtended from common types instead

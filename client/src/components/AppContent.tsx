@@ -1,8 +1,8 @@
 /**
  * @file AppContent.tsx
- * @purpose Main routing component that defines all application routes with lazy loading and provider wrapping
+ * @purpose Main routing component that defines all application routes with lazy loading
  * @created 2025-01-15
- * @modified 2025-08-05
+ * @modified 2025-08-12
  */
 import React, { Suspense } from 'react';
 import { Routes, Route, Outlet } from 'react-router-dom';
@@ -25,10 +25,6 @@ import ImpressumPage from '../pages/ImpressumPage';
 import DatenschutzPage from '../pages/DatenschutzPage';
 import AGBPage from '../pages/AGBPage';
 import FAQPage from '../pages/FAQPage';
-
-// Provider wrapper components
-import AdminProviderWrapper from './providers/AdminProviderWrapper';
-import VendorProviderWrapper from './providers/VendorProviderWrapper';
 
 // Admin-Komponenten - Core imports
 import ProtectedRoute from './admin/ProtectedRoute';
@@ -87,12 +83,12 @@ const PublicLayoutWithHero: React.FC = () => {
 };
 
 /**
- * Main application routing component that defines all routes with proper authentication, 
- * lazy loading, and provider context wrapping for both admin and vendor sections
+ * Main application routing component that defines all routes with proper authentication
+ * and lazy loading. Authentication providers are now globally available via SharedProviderWrapper.
  * 
  * Features:
  * - Lazy loading for performance optimization
- * - Separate authentication contexts for admin and vendor roles
+ * - Global authentication contexts available on all routes
  * - Protected routes with role-based access control
  * - Fallback loading states for all lazy-loaded components
  * - Organized route structure: admin, vendor, and public routes
@@ -104,18 +100,14 @@ const AppContent: React.FC = () => {
     <Routes>
       {/* Admin-Routen */}
       <Route path="/admin/login" element={
-        <AdminProviderWrapper>
-          <Suspense fallback={<LoadingSpinner />}>
-            <LoginPage />
-          </Suspense>
-        </AdminProviderWrapper>
+        <Suspense fallback={<LoadingSpinner />}>
+          <LoginPage />
+        </Suspense>
       } />
       <Route path="/admin/setup" element={
-        <AdminProviderWrapper>
-          <Suspense fallback={<LoadingSpinner />}>
-            <SetupPage />
-          </Suspense>
-        </AdminProviderWrapper>
+        <Suspense fallback={<LoadingSpinner />}>
+          <SetupPage />
+        </Suspense>
       } />
       <Route path="/admin/unauthorized" element={
         <Suspense fallback={<LoadingSpinner />}>
@@ -125,9 +117,7 @@ const AppContent: React.FC = () => {
       
       {/* Geschützte Admin-Routen */}
       <Route path="/admin/*" element={
-        <AdminProviderWrapper>
-          <ProtectedRoute />
-        </AdminProviderWrapper>
+        <ProtectedRoute />
       }>
         <Route index element={
           <Suspense fallback={<LoadingSpinner />}>
@@ -203,17 +193,13 @@ const AppContent: React.FC = () => {
       
       {/* Vendor-Routen */}
       <Route path="/vendor/login" element={
-        <VendorProviderWrapper>
-          <VendorLoginPage />
-        </VendorProviderWrapper>
+        <VendorLoginPage />
       } />
       <Route path="/vendor/confirm" element={<VendorConfirmPage />} />
       
       {/* Geschützte Vendor-Routen */}
       <Route path="/vendor/*" element={
-        <VendorProviderWrapper>
-          <VendorProtectedRoute />
-        </VendorProviderWrapper>
+        <VendorProtectedRoute />
       }>
         <Route path="dashboard" element={
           <Suspense fallback={<LoadingSpinner />}>

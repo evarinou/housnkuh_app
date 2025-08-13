@@ -463,5 +463,11 @@ async function seedFAQs() {
   }
 }
 
-// Run the seed function
-seedFAQs();
+// Export for use in other scripts
+module.exports = { seedFAQs, faqData };
+
+// Run directly if called from command line
+if (require.main === module) {
+  // Run the seed function
+  seedFAQs();
+}

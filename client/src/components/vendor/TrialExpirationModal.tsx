@@ -7,7 +7,6 @@
 
 import React, { useState } from 'react';
 import { X, AlertTriangle, Clock, CheckCircle } from 'lucide-react';
-import { useVendorAuth } from '../../contexts/VendorAuthContext';
 import './TrialExpirationModal.css';
 
 /**
@@ -85,7 +84,6 @@ export const TrialExpirationModal: React.FC<TrialExpirationModalProps> = ({
   expirationDate,
   daysRemaining = 0
 }) => {
-  const { user } = useVendorAuth();
   const [isProcessing, setIsProcessing] = useState(false);
   
   if (!isOpen) return null;

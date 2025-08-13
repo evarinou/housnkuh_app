@@ -48,7 +48,7 @@ const ImpressumPage: React.FC = () => {
                 <div>
                   <h3 className="font-semibold text-secondary mb-3">Geschäftsführung</h3>
                   <p className="text-gray-700">
-                    [Name des Geschäftsführers]
+                    Eva-Maria Schaller
                   </p>
                 </div>
               </div>
@@ -68,8 +68,8 @@ const ImpressumPage: React.FC = () => {
                   <div>
                     <h3 className="font-semibold text-secondary mb-2">Postanschrift</h3>
                     <div className="text-gray-700">
-                      <p>[Straße und Hausnummer]</p>
-                      <p>[PLZ Ort]</p>
+                      <p>Strauer Str. 15</p>
+                      <p>96317 Kronach</p>
                       <p>Deutschland</p>
                     </div>
                   </div>
@@ -106,15 +106,15 @@ const ImpressumPage: React.FC = () => {
               <div className="bg-gray-50 rounded-lg p-6">
                 <h3 className="font-semibold text-secondary mb-3">Handelsregister</h3>
                 <div className="text-gray-700 space-y-1">
-                  <p><strong>Registergericht:</strong> [Amtsgericht]</p>
-                  <p><strong>Registernummer:</strong> [HRB-Nummer]</p>
+                  <p><strong>Registergericht:</strong> folgt</p>
+                  <p><strong>Registernummer:</strong> folgt</p>
                 </div>
               </div>
               
               <div className="bg-gray-50 rounded-lg p-6">
                 <h3 className="font-semibold text-secondary mb-3">Umsatzsteuer-ID</h3>
                 <div className="text-gray-700">
-                  <p><strong>USt-IdNr.:</strong> [DE-Nummer]</p>
+                  <p><strong>USt-IdNr.:</strong> folgt</p>
                   <p className="text-sm text-gray-600 mt-2">
                     gemäß § 27a Umsatzsteuergesetz
                   </p>

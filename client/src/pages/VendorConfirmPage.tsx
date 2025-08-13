@@ -478,7 +478,7 @@ const VendorConfirmPage: React.FC = () => {
                 <div className="text-left space-y-3 text-blue-800">
                   <div className="flex items-start">
                     <span className="flex-shrink-0 w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold mr-3 mt-0.5">1</span>
-                    <span>Ihr Account ist jetzt aktiv und Sie können sich anmelden</span>
+                    <span>Dein Account ist jetzt aktiv und Du kannst sich anmelden</span>
                   </div>
                   <div className="flex items-start">
                     <span className="flex-shrink-0 w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold mr-3 mt-0.5">2</span>

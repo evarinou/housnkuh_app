@@ -7,13 +7,12 @@
 
 import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { User, Package, Calendar, AlertTriangle, Clock, XCircle, CheckCircle, ShoppingCart, BarChart3, FileText, Receipt } from 'lucide-react';
+import { User, Package, Calendar, AlertTriangle, Clock, XCircle, ShoppingCart, BarChart3, FileText, Receipt } from 'lucide-react';
 import { useVendorAuth } from '../contexts/VendorAuthContext';
 import { createNavigationHelper } from '../utils/navigation';
 import VendorLayout from '../components/vendor/VendorLayout';
 import DashboardMessage from '../components/vendor/DashboardMessage';
 import TrialStatusDashboard from '../components/vendor/TrialStatusDashboard';
-import { TrialStatusWidget } from '../components/vendor/TrialStatusWidget';
 import { TrialAccessGuard } from '../components/vendor/TrialAccessGuard';
 import PackageTrackingWidget from '../components/vendor/PackageTrackingWidget';
 import useDashboardMessages from '../hooks/useDashboardMessages';
@@ -186,10 +185,6 @@ const VendorDashboardPage: React.FC = () => {
           </div>
         </div>
         
-        {/* Enhanced Trial Status Widget */}
-        {user?.registrationStatus === 'trial_active' && user?.trialEndDate && (
-          <TrialStatusWidget showActions={true} />
-        )}
         
         {/* Trial Expired Banner */}
         {user?.registrationStatus === 'trial_expired' && (
@@ -291,34 +286,7 @@ const VendorDashboardPage: React.FC = () => {
         
         {/* Hauptbereich mit Dashboard-Karten */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          {/* Trial Status - Compact Card */}
-          {user?.registrationStatus === 'trial_active' && user?.trialEndDate && (
-            <div className="bg-white rounded-lg shadow-md overflow-hidden">
-              <div className="bg-blue-50 p-4 border-b border-blue-100">
-                <div className="flex items-center">
-                  <CheckCircle className="w-6 h-6 text-blue-600 mr-2" />
-                  <h2 className="text-lg font-semibold text-secondary">Testperiode Status</h2>
-                </div>
-              </div>
-              <div className="p-4">
-                <TrialStatusWidget compact={true} showActions={false} />
-                <div className="mt-4 flex gap-2">
-                  <Link
-                    to="/vendor/upgrade"
-                    className="flex-1 text-center px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
-                  >
-                    Upgraden
-                  </Link>
-                  <button
-                    onClick={() => setShowCancellationModal(true)}
-                    className="px-3 py-2 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
-                  >
-                    Kündigen
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
+          
           
           {/* Buchungen */}
           <Link to="/vendor/meine-buchungen" className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
@@ -331,12 +299,12 @@ const VendorDashboardPage: React.FC = () => {
             <div className="p-6">
               {user?.hasPendingBooking ? (
                 <div className="text-gray-600">
-                  <p>Sie haben eine ausstehende Buchungsanfrage.</p>
+                  <p>Du hast eine ausstehende Buchungsanfrage.</p>
                   <p className="mt-2 text-blue-600 font-medium">→ Alle Buchungen anzeigen</p>
                 </div>
               ) : (
                 <div className="text-gray-600">
-                  <p>Sie haben derzeit keine aktiven Buchungen.</p>
+                  <p>Du hast derzeit keine ausstehenden Buchungsanfragen.</p>
                   <p className="mt-2 text-blue-600 font-medium">→ Buchungen verwalten</p>
                 </div>
               )}
@@ -353,7 +321,7 @@ const VendorDashboardPage: React.FC = () => {
               </div>
             </div>
             <div className="p-6">
-              <p className="text-gray-600 mb-4">Hier werden in Zukunft Ihre Termine und Events angezeigt.</p>
+              <p className="text-gray-600 mb-4">Hier werden in Zukunft Termine und Events angezeigt.</p>
               <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                 <p className="text-sm text-gray-500 italic">Kommende Funktion: Kalender für Veranstaltungen, Lieferungen und Abholungen.</p>
               </div>
@@ -398,7 +366,7 @@ const VendorDashboardPage: React.FC = () => {
               </div>
             </div>
             <div className="p-6">
-              <p className="text-gray-600 mb-4">Verwalten Sie hier in Zukunft Ihre Produktpalette und Angebote.</p>
+              <p className="text-gray-600 mb-4">Verwaltee hier in Zukunft Diene Produktpalette und Preise.</p>
               <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                 <p className="text-sm text-gray-500 italic">Kommende Funktion: Produkte anlegen, bearbeiten, Preise festlegen und Verfügbarkeiten verwalten.</p>
               </div>
@@ -418,9 +386,9 @@ const VendorDashboardPage: React.FC = () => {
                 </div>
               </div>
               <div className="p-6">
-                <p className="text-gray-600 mb-4">Analysieren Sie Ihre Verkaufszahlen und Performance-Daten.</p>
+                <p className="text-gray-600 mb-4">Analysieren Deine Verkaufszahlen und Performance-Daten.</p>
                 <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                  <p className="text-sm text-gray-500 italic">Kommende Funktion: Detaillierte Verkaufsberichte, Statistiken und Analysen Ihrer Geschäftstätigkeit.</p>
+                  <p className="text-sm text-gray-500 italic">Kommende Funktion: Detaillierte Verkaufsberichte, Bestandsberichte und Statistiken.</p>
                 </div>
               </div>
             </div>
@@ -435,9 +403,9 @@ const VendorDashboardPage: React.FC = () => {
               </div>
             </div>
             <div className="p-6">
-              <p className="text-gray-600 mb-4">Verwalten Sie Rechnungen an Ihre Kunden und Endverbraucher.</p>
+              <p className="text-gray-600 mb-4">Einsehen der Rechnungen an die Endverbraucher.</p>
               <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                <p className="text-sm text-gray-500 italic">Kommende Funktion: Rechnungserstellung, Verwaltung von Kundenabrechnungen und Zahlungsverfolgung.</p>
+                <p className="text-sm text-gray-500 italic">Kommende Funktion: Rechnungseinsicht.</p>
               </div>
             </div>
           </div>
@@ -451,7 +419,7 @@ const VendorDashboardPage: React.FC = () => {
               </div>
             </div>
             <div className="p-6">
-              <p className="text-gray-600 mb-4">Übersicht über Ihre Rechnungen von housnkuh und Zahlungshistorie.</p>
+              <p className="text-gray-600 mb-4">Übersicht über Deine Rechnungen von housnkuh und Zahlungshistorie.</p>
               <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                 <p className="text-sm text-gray-500 italic">Kommende Funktion: Einsicht in Mietkosten, Servicegebühren und Zahlungsverläufe bei housnkuh.</p>
               </div>
@@ -464,11 +432,11 @@ const VendorDashboardPage: React.FC = () => {
           <h2 className="text-lg font-semibold text-secondary mb-4">Nächste Schritte</h2>
           <div className="prose prose-sm max-w-none text-gray-700">
             <p>
-              Willkommen in deinem persönlichen Vendor-Dashboard! Hier verwaltest du in Zukunft deine Verkaufsflächen,
-              Produkte und mehr. Wir arbeiten kontinuierlich daran, dir weitere nützliche Funktionen bereitzustellen.
+              Willkommen in Deinem persönlichen Vendor-Dashboard! Hier verwaltest du in Zukunft deine Verkaufsflächen,
+              Produkte und mehr. Es wird kontinuierlich daran gearbeitet, Dir weitere nützliche Funktionen bereitzustellen.
             </p>
             <p className="mt-2">
-              Bei Fragen oder Anregungen kontaktiere uns gerne unter{' '}
+              Bei Fragen oder Anregungen kontaktiere housnkuh gerne unter{' '}
               <a href="mailto:info@housnkuh.de" className="text-primary hover:underline">
                 info@housnkuh.de
               </a>.

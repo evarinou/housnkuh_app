@@ -6,7 +6,7 @@
  */
 
 import React from 'react';
-import { PriceBreakdown, PriceCalculationService } from '../../services/priceCalculationService';
+import { PriceBreakdown } from '../../services/priceCalculationService';
 
 /**
  * Additional services configuration for price breakdown display

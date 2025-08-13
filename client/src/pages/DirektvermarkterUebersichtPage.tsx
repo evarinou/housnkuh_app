@@ -349,12 +349,12 @@ const DirektvermarkterUebersichtPage: React.FC = () => {
     updateFilters({ tags: newTags });
   };
   
-  const handleStandortToggle = (standort: string) => {
-    const newStandorte = filters.standorte.includes(standort)
-      ? filters.standorte.filter(s => s !== standort)
-      : [...filters.standorte, standort];
-    updateFilters({ standorte: newStandorte });
-  };
+  // const handleStandortToggle = (standort: string) => {
+  //   const newStandorte = filters.standorte.includes(standort)
+  //     ? filters.standorte.filter(s => s !== standort)
+  //     : [...filters.standorte, standort];
+  //   updateFilters({ standorte: newStandorte });
+  // };
   
   const handleSearchChange = (value: string) => {
     setFilters(prev => ({ ...prev, search: value })); // Update immediately for UI
@@ -630,76 +630,6 @@ const DirektvermarkterUebersichtPage: React.FC = () => {
                       </span>
                     );
                   })}
-                </div>
-              )}
-            </div>
-            
-            {/* Standorte Filter */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Standorte {filters.standorte.length > 0 && `(${filters.standorte.length} ausgewählt)`}
-              </label>
-              
-              {/* Mobile: Dropdown */}
-              <div className="md:hidden">
-                <select
-                  className="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-1 focus:ring-primary"
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    if (value) {
-                      handleStandortToggle(value);
-                    }
-                  }}
-                  value=""
-                >
-                  <option value="">Standort auswählen...</option>
-                  {availableFilters?.standorte.map(standort => (
-                    <option key={standort} value={standort}>
-                      {standort} {filters.standorte.includes(standort) ? ' ✓' : ''}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              
-              {/* Desktop: Checkboxes */}
-              <div className="hidden md:block max-h-48 overflow-y-auto border border-gray-200 rounded-md p-3">
-                <div className="space-y-2">
-                  {availableFilters?.standorte.map(standort => (
-                    <div key={standort} className="flex items-center">
-                      <input
-                        type="checkbox"
-                        id={`standort-${standort}`}
-                        checked={filters.standorte.includes(standort)}
-                        onChange={() => handleStandortToggle(standort)}
-                        className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
-                      />
-                      <label htmlFor={`standort-${standort}`} className="ml-2 block text-sm text-gray-700">
-                        {standort}
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              
-              {/* Selected Locations Display */}
-              {filters.standorte.length > 0 && (
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {filters.standorte.map(standort => (
-                    <span
-                      key={standort}
-                      className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700"
-                    >
-                      {standort}
-                      <button
-                        type="button"
-                        onClick={() => handleStandortToggle(standort)}
-                        className="ml-1.5 h-3.5 w-3.5 rounded-full inline-flex items-center justify-center text-blue-400 hover:bg-blue-200 hover:text-blue-600 focus:outline-none"
-                      >
-                        <span className="sr-only">Entfernen</span>
-                        <X className="h-2.5 w-2.5" />
-                      </button>
-                    </span>
-                  ))}
                 </div>
               )}
             </div>

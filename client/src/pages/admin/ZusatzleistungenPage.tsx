@@ -6,8 +6,8 @@
  */
 
 // client/src/pages/admin/ZusatzleistungenPage.tsx
-import React, { useState, useEffect } from 'react';
-import { Package, Search, Filter, Download, RefreshCw } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Package, Search, Download, RefreshCw } from 'lucide-react';
 import ZusatzleistungenOverview from '../../components/admin/ZusatzleistungenOverview';
 import PackageManagementInterface from '../../components/admin/PackageManagementInterface';
 import { Contract, PackageTracking } from '../../types/contract.types';
@@ -48,7 +48,7 @@ const ZusatzleistungenPage: React.FC = () => {
    * @returns {Promise<void>} Updates component state with contracts and packages
    * @complexity Filters contracts and extracts package data for separate display
    */
-  const fetchContracts = async () => {
+  const fetchContracts = useCallback(async () => {
     try {
       setLoading(true);
       const queryParams = new URLSearchParams();
@@ -94,11 +94,11 @@ const ZusatzleistungenPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters]);
 
   useEffect(() => {
     fetchContracts();
-  }, [filters]);
+  }, [fetchContracts]);
 
   /**
    * Updates filter criteria for contract listing

@@ -22,13 +22,13 @@ jobs:
       run: |
         cd client
         npm ci # Empfohlen für CI statt npm install
-        npm run build
+        npm run build:ci
         
     - name: Install and build server
       run: |
         cd server
         npm ci # Empfohlen für CI statt npm install
-        npm run build
+        npm run build:ci
         
     - name: Deploy to VPS
       uses: appleboy/ssh-action@v0.1.10
@@ -106,12 +106,12 @@ jobs:
           echo "Client-Abhängigkeiten werden installiert und Client wird gebaut..."
           cd client || { echo "Fehler: Verzeichnis client nicht gefunden"; exit 1; }
           npm install --legacy-peer-deps || { echo "Fehler bei npm install im Client"; exit 1; }
-          npm run build || { echo "Fehler bei npm run build im Client"; exit 1; }
+          npm run build:ci || { echo "Fehler bei npm run build:ci im Client"; exit 1; }
           
           echo "Server-Abhängigkeiten werden installiert und Server wird gebaut..."
           cd ../server || { echo "Fehler: Verzeichnis server nicht gefunden"; exit 1; }
           npm install --legacy-peer-deps || { echo "Fehler bei npm install im Server"; exit 1; }
-          npm run build || { echo "Fehler bei npm run build im Server"; exit 1; }
+          npm run build:ci || { echo "Fehler bei npm run build:ci im Server"; exit 1; }
           
           echo "PM2-Prozess wird neu gestartet/gestartet..."
           # Stelle sicher, dass pm2 gefunden wird oder verwende den vollen Pfad

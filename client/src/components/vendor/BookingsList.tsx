@@ -94,7 +94,7 @@ const BookingsList: React.FC<BookingsListProps> = ({ bookings, onBookingClick, l
           Keine Buchungen gefunden
         </h3>
         <p className="text-gray-500 mb-6">
-          Sie haben noch keine Buchungen getätigt oder es wurden keine Buchungen mit den ausgewählten Filtern gefunden.
+          Du hast noch keine Buchungen getätigt oder es wurden keine Buchungen mit den ausgewählten Filtern gefunden.
         </p>
         <div className="space-y-2">
           <button
@@ -105,7 +105,7 @@ const BookingsList: React.FC<BookingsListProps> = ({ bookings, onBookingClick, l
             Jetzt buchen
           </button>
           <p className="text-sm text-gray-400">
-            Entdecken Sie unsere Mietfach-Pakete
+            Entdecke die Mietfach-Pakete
           </p>
         </div>
       </div>

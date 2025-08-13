@@ -628,6 +628,204 @@ export const rejectPendingBooking = async (req: Request, res: Response): Promise
     });
   }
 };
+/**
+ * Check Mietfach availability for specific types and time period
+ * @description Filters and returns Mietfächer by requested types with availability status
+ * @param req - Express request with startDate, duration, requestedTypes
+ * @param res - Express response with filtered Mietfächer and availability data
+ * @returns Promise<void> - Resolves with availability data or error message
+ * @complexity O(n*m) where n is number of Mietfächer and m is booking checks per unit
+ * @security Validates input parameters and handles error cases
+ */
+export const checkMietfachAvailability = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { startDate, duration, requestedTypes } = req.body;
+
+    // Validate required fields
+    if (!startDate || !duration || !requestedTypes) {
+      res.status(400).json({
+        success: false,
+        message: 'Fehlende Pflichtfelder: startDate, duration, requestedTypes sind erforderlich'
+      });
+      return;
+    }
+
+    // Validate requestedTypes is an array
+    if (!Array.isArray(requestedTypes)) {
+      res.status(400).json({
+        success: false,
+        message: 'requestedTypes muss ein Array sein'
+      });
+      return;
+    }
+
+    // Parse and validate dates
+    const start = new Date(startDate);
+    if (isNaN(start.getTime())) {
+      res.status(400).json({
+        success: false,
+        message: 'Ungültiges startDate Format'
+      });
+      return;
+    }
+
+    // Calculate end date from start date + duration (in months)
+    const end = new Date(start);
+    end.setMonth(end.getMonth() + duration);
+
+    logger.info('Processing Mietfach availability check:', { 
+      startDate: start.toISOString(), 
+      endDate: end.toISOString(),
+      duration, 
+      requestedTypes,
+      rawRequestBody: req.body
+    });
+
+    // Build type filter query
+    let typeQuery = {};
+    if (!requestedTypes.includes('all')) {
+      // Map frontend category names to database Mietfach types
+      const typeMapping = {
+        'regal': ['regal', 'regal-a', 'regal-b'],
+        'kuehl': ['kuehl', 'kuehlregal', 'gekuehlt'],
+        'gefrier': ['gefrier', 'gefrierregal'],  
+        'sonstiges': ['sonstiges', 'verkaufstisch', 'vitrine', 'tisch'],
+        'schaufenster': ['schaufenster']
+      };
+
+      // Build array of all database types that match requested categories
+      const dbTypes: string[] = [];
+      for (const requestedType of requestedTypes) {
+        const mappedTypes = typeMapping[requestedType as keyof typeof typeMapping];
+        if (mappedTypes) {
+          dbTypes.push(...mappedTypes);
+          logger.info(`Mapped requested type '${requestedType}' to database types:`, mappedTypes);
+        } else {
+          logger.warn(`Unknown requested type '${requestedType}' - no mapping found`);
+        }
+      }
+
+      if (dbTypes.length > 0) {
+        typeQuery = { typ: { $in: dbTypes } };
+        logger.info('Built type filter query:', { typeQuery, dbTypes });
+      } else {
+        logger.warn('No valid database types found for requested types:', requestedTypes);
+      }
+    }
+
+    // Find all Mietfächer that match the type filter
+    // Note: We do NOT filter by verfuegbar here to allow checking future availability
+    // for currently occupied Mietfächer
+    const allMietfaecher = await Mietfach.find({
+      ...typeQuery
+    }).select('bezeichnung typ beschreibung groesse standort features verfuegbar');
+
+    logger.info('TASK-026 DEBUG - All Mietfächer found (including verfuegbar status):', {
+      count: allMietfaecher.length,
+      mietfaecher: allMietfaecher.map(m => ({
+        _id: m._id,
+        bezeichnung: m.bezeichnung,
+        typ: m.typ,
+        verfuegbar: m.verfuegbar
+      }))
+    });
+
+    logger.info('Found Mietfächer matching type filter:', { 
+      count: allMietfaecher.length,
+      foundTypes: allMietfaecher.map(m => m.typ),
+      uniqueTypesFound: [...new Set(allMietfaecher.map(m => m.typ))],
+      queryUsed: { verfuegbar: true, ...typeQuery }
+    });
+
+    // Check availability for each Mietfach
+    const mietfaecherWithAvailability = await Promise.all(
+      allMietfaecher.map(async (mietfach) => {
+        try {
+          const available = await mietfach.isAvailableForPeriod(start, end);
+          
+          const result: any = {
+            _id: mietfach._id,
+            bezeichnung: mietfach.bezeichnung,
+            typ: mietfach.typ,
+            beschreibung: mietfach.beschreibung,
+            groesse: mietfach.groesse,
+            standort: mietfach.standort,
+            features: mietfach.features,
+            available: available,
+            conflicts: [],
+            nextAvailable: null
+          };
+
+          // If not available, find conflicts and next available date
+          if (!available) {
+            const Vertrag = require('../models/Vertrag').default;
+            
+            // Find overlapping contracts
+            const conflicts = await Vertrag.find({
+              'services.mietfach': mietfach._id,
+              status: { $in: ['active', 'scheduled', 'pending'] },
+              'availabilityImpact.from': { $lt: end },
+              'availabilityImpact.to': { $gt: start }
+            }).select('user availabilityImpact status').populate('user', 'kontakt.name');
+
+            result.conflicts = conflicts.map((contract: any) => ({
+              contractId: contract._id,
+              userName: contract.user?.kontakt?.name || 'Unbekannt',
+              from: contract.availabilityImpact?.from,
+              to: contract.availabilityImpact?.to,
+              status: contract.status
+            }));
+
+            // Find next available date (after all conflicts end)
+            if (conflicts.length > 0) {
+              const latestEndDate = Math.max(
+                ...conflicts.map((c: any) => new Date(c.availabilityImpact?.to || c.availabilityImpact?.from).getTime())
+              );
+              result.nextAvailable = new Date(latestEndDate);
+            }
+          }
+
+          return result;
+        } catch (error) {
+          logger.error(`Error checking availability for Mietfach ${mietfach._id}:`, error);
+          return {
+            _id: mietfach._id,
+            bezeichnung: mietfach.bezeichnung,
+            typ: mietfach.typ,
+            beschreibung: mietfach.beschreibung,
+            groesse: mietfach.groesse,
+            standort: mietfach.standort,
+            features: mietfach.features,
+            available: false,
+            conflicts: [],
+            nextAvailable: null,
+            error: 'Fehler bei der Verfügbarkeitsprüfung'
+          };
+        }
+      })
+    );
+
+    const availableCount = mietfaecherWithAvailability.filter(m => m.available).length;
+    
+    logger.info('Mietfach availability check completed:', { 
+      total: mietfaecherWithAvailability.length,
+      available: availableCount,
+      unavailable: mietfaecherWithAvailability.length - availableCount
+    });
+
+    res.json({
+      success: true,
+      mietfaecher: mietfaecherWithAvailability
+    });
+
+  } catch (err) {
+    logger.error('Fehler bei der Mietfach-Verfügbarkeitsprüfung:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Serverfehler bei der Verfügbarkeitsprüfung'
+    });
+  }
+};
 
 // Alle User abrufen (für Admin-Benutzerverwaltung)
 export const getAllUsers = async (req: Request, res: Response): Promise<void> => {

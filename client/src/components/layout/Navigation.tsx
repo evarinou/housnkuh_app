@@ -4,43 +4,25 @@
  * @created 2025-01-15
  * @modified 2025-08-05
  */
-import React, { useState, useEffect } from 'react';
-import { NavLink } from 'react-router-dom';
-import { Menu, X, User, LogIn } from 'lucide-react';
+import React, { useState, useEffect, useContext, useMemo, useCallback } from 'react';
+import { NavLink, useNavigate, useLocation } from 'react-router-dom';
+import { Menu, X, User, LogIn, Shield } from 'lucide-react';
 import logo from '../../assets/images/logo.svg';
-import { useAuth } from '../../contexts/AuthContext';
-import { useVendorAuth } from '../../contexts/VendorAuthContext';
+import { AuthStateContext } from '../../contexts/AuthContext';
+import { VendorAuthStateContext } from '../../contexts/VendorAuthContext';
 import { resolveImageUrl } from '../../utils/imageUtils';
 
 /**
- * Safe hook wrappers that handle missing context scenarios
+ * Safe context access with direct context checking
  * 
- * These wrappers prevent crashes when auth contexts are not available
- * in certain components or during testing scenarios.
+ * Uses direct context access to distinguish between "no context" and "not authenticated"
+ * This allows proper authentication state detection even on public routes
  */
 /**
- * Safe wrapper for admin authentication context
- * @returns {object} Admin authentication state or fallback values
+ * Safe wrapper for admin authentication context using direct context access
+ * @returns {object} Admin authentication state with proper null handling
  */
-const useSafeAuth = () => {
-  try {
-    return useAuth();
-  } catch {
-    return { isAuthenticated: false, user: null };
-  }
-};
 
-/**
- * Safe wrapper for vendor authentication context
- * @returns {object} Vendor authentication state or fallback values
- */
-const useSafeVendorAuth = () => {
-  try {
-    return useVendorAuth();
-  } catch {
-    return { isAuthenticated: false, user: null };
-  }
-};
 
 /**
  * Main navigation component with responsive design and authentication integration
@@ -58,15 +40,52 @@ const useSafeVendorAuth = () => {
 const Navigation: React.FC = () => {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [scrolled, setScrolled] = useState<boolean>(false);
+  const navigate = useNavigate();
+  const location = useLocation();
   
-  // Authentication contexts with safe access
-  const { isAuthenticated: isAdminAuth } = useSafeAuth();
-  const { isAuthenticated: isVendorAuth, user: vendorUser } = useSafeVendorAuth();
+  // Direct context access with null-safe checking
+  const authContext = useContext(AuthStateContext);
+  const vendorContext = useContext(VendorAuthStateContext);
   
-  // Determine if any user is authenticated and their dashboard route
+  // Null-safe authentication state logic
+  const isAdminAuth = authContext?.isAuthenticated ?? false;
+  const isVendorAuth = vendorContext?.isAuthenticated ?? false;
+  const vendorUser = vendorContext?.user;
+  
+  // Determine if any user is authenticated
   const isAuthenticated = isAdminAuth || isVendorAuth;
-  const dashboardRoute = isAdminAuth ? '/admin' : '/vendor/dashboard';
-  // const userDisplayName = adminUser?.name || vendorUser?.name || 'User';
+  
+  // Enhanced dashboard routing with better UX
+  const dashboardRoute = useMemo(() => {
+    if (isAdminAuth) return '/admin';
+    if (isVendorAuth) return '/vendor/dashboard';
+    return '/vendor/login';
+  }, [isAdminAuth, isVendorAuth]);
+  
+  // Optional auto-redirect preference for admin users
+  const shouldAutoRedirectAdmin = useMemo(() => {
+    return localStorage.getItem('adminAutoRedirect') === 'true';
+  }, []);
+  
+  // Enhanced click handler with auto-redirect capability
+  const handleDashboardClick = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    
+    // Auto-redirect admin from homepage to dashboard if preference is set
+    if (isAdminAuth && shouldAutoRedirectAdmin && location.pathname === '/') {
+      navigate('/admin');
+    } else {
+      // Normal navigation to appropriate dashboard
+      navigate(dashboardRoute);
+    }
+  }, [isAdminAuth, shouldAutoRedirectAdmin, location.pathname, dashboardRoute, navigate]);
+  
+  // Dashboard button text based on user type
+  const dashboardButtonText = useMemo(() => {
+    if (isAdminAuth) return 'Admin Panel';
+    if (isVendorAuth) return 'Dashboard';
+    return 'Login';
+  }, [isAdminAuth, isVendorAuth]);
   
   // Scroll-Handler für Hintergrundeffekt
   useEffect(() => {
@@ -133,10 +152,18 @@ const Navigation: React.FC = () => {
               Kontakt
             </NavLink>
             {isAuthenticated ? (
-              <NavLink 
-                to={dashboardRoute}
-                className="flex items-center text-secondary hover:text-primary font-medium"
+              <button 
+                onClick={handleDashboardClick}
+                className={`flex items-center font-medium transition-all ${
+                  isAdminAuth 
+                    ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-4 py-2 rounded-lg hover:from-purple-700 hover:to-indigo-700 shadow-md'
+                    : 'text-secondary hover:text-primary'
+                }`}
               >
+                {/* Admin Icon for Admin Users */}
+                {isAdminAuth && (
+                  <Shield className="w-5 h-5 mr-2" />
+                )}
                 {/* Vendor Profile Image */}
                 {isVendorAuth && vendorUser?.profilBild ? (
                   <img 
@@ -155,8 +182,8 @@ const Navigation: React.FC = () => {
                 {isVendorAuth && !vendorUser?.profilBild ? (
                   <User className="w-8 h-8 mr-2 p-1 rounded-full bg-gray-100 text-gray-600" />
                 ) : null}
-                <span>Dashboard</span>
-              </NavLink>
+                <span>{dashboardButtonText}</span>
+              </button>
             ) : (
               <NavLink 
                 to="/vendor/login"
@@ -224,11 +251,21 @@ const Navigation: React.FC = () => {
             Kontakt
           </NavLink>
           {isAuthenticated ? (
-            <NavLink
-              to={dashboardRoute}
-              className="flex items-center px-3 py-2 mt-2 rounded-md font-medium text-secondary hover:bg-gray-100"
-              onClick={() => setIsOpen(false)}
+            <button
+              onClick={(e) => {
+                handleDashboardClick(e);
+                setIsOpen(false);
+              }}
+              className={`flex items-center px-3 py-2 mt-2 rounded-md font-medium w-full text-left ${
+                isAdminAuth 
+                  ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700'
+                  : 'text-secondary hover:bg-gray-100'
+              }`}
             >
+              {/* Admin Icon for Admin Users */}
+              {isAdminAuth && (
+                <Shield className="w-5 h-5 mr-2" />
+              )}
               {/* Vendor Profile Image for Mobile */}
               {isVendorAuth && vendorUser?.profilBild ? (
                 <img 
@@ -247,8 +284,8 @@ const Navigation: React.FC = () => {
               {isVendorAuth && !vendorUser?.profilBild ? (
                 <User className="w-6 h-6 mr-2 p-1 rounded-full bg-gray-100 text-gray-600" />
               ) : null}
-              Dashboard
-            </NavLink>
+              {dashboardButtonText}
+            </button>
           ) : (
             <NavLink
               to="/vendor/login"

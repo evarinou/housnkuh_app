@@ -39,11 +39,6 @@ interface PackageSummary {
   };
 }
 
-interface PriceCalculationResult {
-  calculatedMonthlyPrice: number;
-  packageSummary: PackageSummary;
-}
-
 interface UsePriceCalculationReturn {
   calculateMonthlyPrice: (packageData: PackageData) => number;
   createPackageSummary: (packageData: PackageData) => PackageSummary;

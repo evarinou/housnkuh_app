@@ -69,7 +69,7 @@ router.post('/pending-bookings/reject/:userId',
 
 // M005 Implementation: Mietfach Availability API
 // router.get('/mietfaecher/availability', noCacheHeaders, adminController.getMietfachAvailability);
-// router.post('/check-mietfach-availability', adminController.checkMietfachAvailability);
+router.post('/check-mietfach-availability', adminController.checkMietfachAvailability);
 
 // M005 Implementation: Booking Schedule Management API
 // router.put('/bookings/:bookingId/schedule', adminController.updateBookingSchedule);

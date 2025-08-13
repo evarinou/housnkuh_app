@@ -77,7 +77,7 @@ const FAQPage: React.FC = () => {
       _id: 'general-1',
       category: 'Allgemein',
       question: 'Was ist housnkuh und wie funktioniert die Plattform?',
-      answer: 'housnkuh ist eine Online-Plattform, die regionale Direktvermarkter mit Endkunden verbindet. Direktvermarkter können sich registrieren, ihr Profil erstellen und Verkaufsflächen an verschiedenen Standorten buchen. Kunden finden über die Plattform lokale Anbieter und deren Produkte in ihrer Nähe.',
+      answer: 'housnkuh ist eine Plattform, die regionale Direktvermarkter mit Endkunden verbindet. Direktvermarkter können sich registrieren, ihr Profil erstellen und Verkaufsflächen an verschiedenen Standorten buchen. Kunden finden über die Plattform lokale Anbieter und deren Produkte in ihrer Nähe.',
       keywords: ['plattform', 'funktionsweise', 'direktvermarkter', 'kunden']
     },
     {
@@ -279,7 +279,7 @@ const FAQPage: React.FC = () => {
             Häufig gestellte Fragen
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Finde schnell Antworten auf deine Fragen oder kontaktiere Eva-Maria Schaller persönlich
+            Finde schnell Antworten auf Deine Fragen oder kontaktiere housnkuh persönlich
           </p>
         </motion.div>
 
@@ -504,7 +504,7 @@ const FAQPage: React.FC = () => {
             <Sparkles className="w-12 h-12 mx-auto mb-4 text-white/80" />
             <h2 className="text-3xl font-bold mb-4">Deine Frage war nicht dabei?</h2>
             <p className="text-xl mb-8 opacity-90 max-w-2xl mx-auto">
-              housnkuh hilft dir gerne persönlich weiter und beantwortet alle deine Fragen.
+              housnkuh hilft Dir gerne persönlich weiter und beantwortet alle Deine Fragen.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <motion.a

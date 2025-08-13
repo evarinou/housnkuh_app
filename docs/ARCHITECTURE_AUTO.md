@@ -1,26 +1,26 @@
 # Architecture Statistics (Auto-Generated)
 
-**Generated**: 2025-08-05 20:29:06
+**Generated**: 2025-08-13 14:54:20
 **Generator**: scripts/update-architecture.sh
 
 ## File Counts
 
 ### Frontend (Client)
-- Components: 65
-- Pages: 47
-- Hooks: 11
-- Tests: 2
+- Components: 72
+- Pages: 50
+- Hooks: 14
+- Tests: 16
 
 ### Backend (Server)
-- Controllers: 15
+- Controllers: 16
 - Models: 14
-- Services: 13
+- Services: 16
 - Routes: 17
-- Tests: 0
+- Tests: 4
 
 ### Overall
-- Total TypeScript Files: 241
-- Total Tests: 2
+- Total TypeScript Files: 266
+- Total Tests: 20
 
 ## Component Breakdown
 
@@ -39,6 +39,7 @@ PackageBuilder.tsx
 SimpleMapComponent.tsx
 VendorContest.tsx
 VendorListPreview.tsx
+VendorRegistrationModal.test.tsx
 VendorRegistrationModal.tsx
 ZusatzleistungenSelector.tsx
 ```
@@ -68,15 +69,17 @@ BookingStatusBadge.tsx
 BookingsList.tsx
 DashboardMessage.tsx
 MietfachCard.tsx
+PackageTrackingWidget.test.tsx
 PackageTrackingWidget.tsx
 StatusFilterTabs.tsx
+TrialAccessGuard.test.tsx
 TrialAccessGuard.tsx
 TrialBookingConfirmation.tsx
 TrialCancellationModal.tsx
 TrialExpirationModal.tsx
 TrialStatusDashboard.tsx
-TrialStatusWidget.tsx
 TrialTransitionModal.tsx
+VendorLayout.test.tsx
 VendorLayout.tsx
 VendorProtectedRoute.tsx
 ```

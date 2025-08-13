@@ -127,7 +127,7 @@ const PackageTrackingWidget: React.FC = () => {
         return;
       }
 
-      const response = await axios.get(`${apiUrl}/vendor-contracts/zusatzleistungen`, {
+      const response = await axios.get(`${apiUrl}/vendor/contracts/zusatzleistungen`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }

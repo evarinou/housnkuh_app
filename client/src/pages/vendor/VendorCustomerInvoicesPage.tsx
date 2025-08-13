@@ -31,7 +31,7 @@ const VendorCustomerInvoicesPage: React.FC = () => {
             <h1 className="text-3xl font-bold text-secondary">Ausgangsrechnungen (Endkunde)</h1>
           </div>
           <p className="text-gray-600">
-            Verwalten Sie Rechnungen an Ihre Kunden und Endverbraucher.
+            Verwalte Rechnungen an die Endverbraucher.
           </p>
         </div>
 
@@ -45,8 +45,8 @@ const VendorCustomerInvoicesPage: React.FC = () => {
               Rechnungsmanagement kommt bald!
             </h2>
             <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
-              Wir entwickeln ein vollständiges Rechnungssystem für Sie. 
-              Bald können Sie Kundenrechnungen direkt über housnkuh erstellen und verwalten.
+              housnkuh entwickelt eine Übersicht aller Belege an die Endkunden. 
+              Bald können die Kundenrechnungen direkt über die housnkuh-Website eingesehen werden.
             </p>
           </div>
 
@@ -54,17 +54,17 @@ const VendorCustomerInvoicesPage: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <div className="bg-gray-50 rounded-lg p-6">
               <Send className="w-8 h-8 text-orange-600 mx-auto mb-3" />
-              <h3 className="font-semibold text-secondary mb-2">Rechnungen erstellen</h3>
+              <h3 className="font-semibold text-secondary mb-2">Rechnungen einsehen</h3>
               <p className="text-sm text-gray-600">
-                Professionelle Rechnungen mit Ihrem Branding automatisch generieren.
+                Rechnungen an die Endkunden einsehen.
               </p>
             </div>
             
             <div className="bg-gray-50 rounded-lg p-6">
               <Eye className="w-8 h-8 text-orange-600 mx-auto mb-3" />
-              <h3 className="font-semibold text-secondary mb-2">Zahlungsverfolgung</h3>
+              <h3 className="font-semibold text-secondary mb-2">Übersichten</h3>
               <p className="text-sm text-gray-600">
-                Übersicht über offene, bezahlte und überfällige Rechnungen.
+                Übersichten über sämtliche erstellte Rechnungen.
               </p>
             </div>
             
@@ -72,7 +72,7 @@ const VendorCustomerInvoicesPage: React.FC = () => {
               <Download className="w-8 h-8 text-orange-600 mx-auto mb-3" />
               <h3 className="font-semibold text-secondary mb-2">Export & Archiv</h3>
               <p className="text-sm text-gray-600">
-                Alle Rechnungen als PDF exportieren oder für die Steuer archivieren.
+                Alle Rechnungen als PDF exportieren und für die Steuer archivieren.
               </p>
             </div>
           </div>
@@ -83,7 +83,7 @@ const VendorCustomerInvoicesPage: React.FC = () => {
               <strong>Fragen zum Rechnungsmanagement?</strong>
             </p>
             <p className="text-orange-700">
-              Wir beraten Sie gerne unter{' '}
+              housnkuh berät Dich gerne unter{' '}
               <a href="mailto:info@housnkuh.de" className="text-orange-600 hover:underline font-medium">
                 info@housnkuh.de
               </a>

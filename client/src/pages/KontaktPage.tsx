@@ -55,8 +55,7 @@ const KontaktPage: React.FC = () => {
             
             <div className="mb-4">
               <h3 className="text-lg font-semibold text-primary-800 mb-2">Öffnungszeiten:</h3>
-              <p className="text-gray-700">Montag - Freitag: 9:00 - 18:00 Uhr</p>
-              <p className="text-gray-700">Samstag: 9:00 - 13:00 Uhr</p>
+              <p className="text-gray-700">Folgen!</p>
             </div>
           </div>
           

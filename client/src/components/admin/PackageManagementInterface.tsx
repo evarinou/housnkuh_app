@@ -13,9 +13,7 @@ import {
   MapPin,
   Calendar,
   User,
-  MessageSquare,
-  AlertTriangle,
-  MoreHorizontal
+  MessageSquare
 } from 'lucide-react';
 import { PackageTracking } from '../../types/contract.types';
 

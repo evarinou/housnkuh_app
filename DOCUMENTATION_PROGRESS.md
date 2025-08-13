@@ -750,7 +750,7 @@ The client-side core architecture demonstrates excellent modern React patterns w
 This batch focused on vendor-specific components with emphasis on Trial Management and Zusatzleistungen business logic. All 17 components have been comprehensively documented with JSDoc standards, including detailed business logic explanations, accessibility features, and performance optimizations.
 
 **Key Features Documented:**
-- **Trial Management System**: 6 components (TrialStatusDashboard, TrialStatusWidget, TrialBookingConfirmation, TrialCancellationModal, TrialExpirationModal, TrialTransitionModal, TrialAccessGuard) with real-time countdown, automatic transitions, and comprehensive modal workflows
+- **Trial Management System**: 5 components (TrialStatusDashboard, TrialBookingConfirmation, TrialCancellationModal, TrialExpirationModal, TrialTransitionModal, TrialAccessGuard) with real-time countdown, automatic transitions, and comprehensive modal workflows
 - **Zusatzleistungen Logic**: PackageTrackingWidget with complex status transitions (erwartet → angekommen → eingelagert → versandt → zugestellt) and service integration (Lagerservice, Versandservice)
 - **CRUD Operations**: BookingDetailModal with comprehensive booking information display including sub-components for timeline, Mietfach details, and package information
 - **Performance Optimizations**: React.memo, useMemo, useCallback extensively used throughout components
@@ -805,37 +805,32 @@ This batch focused on vendor-specific components with emphasis on Trial Manageme
    - Features documented: Real-time countdown, trial booking management, benefit display, navigation integration
    - Added: Comprehensive trial management with auto-refresh and business logic integration
 
-119. **client/src/components/vendor/TrialStatusWidget.tsx** - Compact trial status widget (HIGH PRIORITY)
-   - Status: ✅ COMPLETE
-   - Features documented: Real-time countdown, progress visualization, contextual styling, compact/full modes
-   - Added: Compact trial widget with urgency-based styling and navigation integration
-
-120. **client/src/components/vendor/TrialBookingConfirmation.tsx** - Trial booking confirmation workflow (HIGH PRIORITY)
+119. **client/src/components/vendor/TrialBookingConfirmation.tsx** - Trial booking confirmation workflow (HIGH PRIORITY)
    - Status: ✅ COMPLETE
    - Features documented: Terms acceptance, booking confirmation API, success states, comprehensive form validation
    - Added: Complete trial booking workflow with terms acceptance and success transition
 
-121. **client/src/components/vendor/TrialCancellationModal.tsx** - Trial cancellation modal (HIGH PRIORITY)
+120. **client/src/components/vendor/TrialCancellationModal.tsx** - Trial cancellation modal (HIGH PRIORITY)
    - Status: ✅ COMPLETE
    - Features documented: Cancellation workflow, reason collection, confirmation process, impact information
    - Added: Comprehensive cancellation modal with reason tracking and user confirmation
 
-122. **client/src/components/vendor/TrialExpirationModal.tsx** - Trial expiration warnings (HIGH PRIORITY)
+121. **client/src/components/vendor/TrialExpirationModal.tsx** - Trial expiration warnings (HIGH PRIORITY)
    - Status: ✅ COMPLETE
    - Features documented: Contextual expiration warnings, urgency-based styling, feature benefits, optional extension
    - Added: Dynamic expiration modal with contextual messaging and upgrade prompts
 
-123. **client/src/components/vendor/TrialTransitionModal.tsx** - Trial-to-paid transition information (HIGH PRIORITY)
+122. **client/src/components/vendor/TrialTransitionModal.tsx** - Trial-to-paid transition information (HIGH PRIORITY)
    - Status: ✅ COMPLETE
    - Features documented: Automatic transition information, package breakdown, pricing details, cancellation options
    - Added: Comprehensive transition modal with package pricing and user education
 
-124. **client/src/components/vendor/TrialAccessGuard.tsx** - Critical trial access control (HIGH PRIORITY)
+123. **client/src/components/vendor/TrialAccessGuard.tsx** - Critical trial access control (HIGH PRIORITY)
    - Status: ✅ COMPLETE
    - Features documented: Trial access validation, modal integration, expiration handling, conditional rendering
    - Added: Critical access control component with comprehensive trial status checking
 
-125. **client/src/components/vendor/BookingDetailModal.tsx** - CRUD operations booking modal (HIGH PRIORITY)
+124. **client/src/components/vendor/BookingDetailModal.tsx** - CRUD operations booking modal (HIGH PRIORITY)
    - Status: ✅ COMPLETE
    - Features documented: Comprehensive booking display, sub-components (Timeline, Mietfach, Package details), modal structure
    - Added: Complex modal with detailed booking information and multiple sub-component integrations

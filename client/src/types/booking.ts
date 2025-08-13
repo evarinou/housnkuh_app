@@ -1,5 +1,7 @@
 import { BookingStatus } from '../components/vendor/BookingStatusBadge';
 
+import { ZusatzleistungenExtended } from './common';
+
 export interface IMietfach {
   _id: string;
   bezeichnung: string;
@@ -23,8 +25,6 @@ export interface IPriceBreakdown {
   discountAmount: number;
   subtotal: number;
 }
-
-import { ZusatzleistungenExtended } from './common';
 
 /**
  * @deprecated Use ZusatzleistungenExtended from common types instead
