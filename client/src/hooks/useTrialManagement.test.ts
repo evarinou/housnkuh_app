@@ -624,7 +624,7 @@ describe('useTrialManagement', () => {
         expect(mockedAxios.get).toHaveBeenCalledTimes(2);
         
         // But immediate second call should be rate limited
-        const result2 = await newResult.current.getTrialStatus('test-token');
+        await newResult.current.getTrialStatus('test-token');
         expect(consoleWarnSpy).toHaveBeenCalled();
         
         consoleWarnSpy.mockRestore();

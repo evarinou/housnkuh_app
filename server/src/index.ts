@@ -199,6 +199,26 @@ app.use('/api', apiLimiter);
   try {
     await connectDB();
     logger.info('Database connection initialized');
+    
+    // Initialize services directly after connection (don't wait for 'open' event)
+    logger.info('MongoDB connected');
+    
+    // Seed tags (adds missing tags, skips existing ones)
+    try {
+      logger.info('Checking and seeding tags...');
+      const { seedTags } = await import('./utils/seedTags');
+      await seedTags();
+    } catch (error) {
+      logger.error('Failed to seed tags', { error: error instanceof Error ? error.message : error });
+    }
+    
+    // Initialize all scheduled jobs (including monitoring)
+    try {
+      await ScheduledJobs.initialize();
+      logger.info('All scheduled jobs initialized (trials + monitoring)');
+    } catch (error) {
+      logger.error('Failed to initialize scheduled jobs', { error: error instanceof Error ? error.message : error });
+    }
   } catch (error) {
     logger.error('Failed to connect to database:', error);
     process.exit(1);
@@ -257,31 +277,6 @@ app.get('/', (_req, res) => {
   res.json({ message: 'Willkommen bei der housnkuh API!' });
 });
 
-/**
- * Database connection event handler
- * @description Initializes application services once MongoDB connection is established
- * Handles tag seeding and scheduled job initialization
- */
-mongoose.connection.once('open', async () => {
-  logger.info('MongoDB connected');
-  
-  // Seed tags (adds missing tags, skips existing ones)
-  try {
-    logger.info('Checking and seeding tags...');
-    const { seedTags } = await import('./utils/seedTags');
-    await seedTags();
-  } catch (error) {
-    logger.error('Failed to seed tags', { error: error instanceof Error ? error.message : error });
-  }
-  
-  // Initialize all scheduled jobs (including monitoring)
-  try {
-    await ScheduledJobs.initialize();
-    logger.info('All scheduled jobs initialized (trials + monitoring)');
-  } catch (error) {
-    logger.error('Failed to initialize scheduled jobs', { error: error instanceof Error ? error.message : error });
-  }
-});
 
 /**
  * Graceful shutdown handler for SIGTERM

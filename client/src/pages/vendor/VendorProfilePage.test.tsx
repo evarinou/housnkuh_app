@@ -106,7 +106,7 @@ describe('VendorProfilePage', () => {
       });
 
       // Find the file input for profile image
-      const fileInput = document.querySelector('input[type="file"][accept*="image"]') as HTMLInputElement;
+      const fileInput = screen.getByLabelText(/profilbild/i) as HTMLInputElement;
       expect(fileInput).toBeInTheDocument();
 
       // Create a mock file
@@ -128,7 +128,7 @@ describe('VendorProfilePage', () => {
         expect(screen.getByText(/Profilbild/i)).toBeInTheDocument();
       });
 
-      const fileInput = document.querySelector('input[type="file"][accept*="image"]') as HTMLInputElement;
+      const fileInput = screen.getByLabelText(/profilbild/i) as HTMLInputElement;
       const file = new File(['test'], 'test.png', { type: 'image/png' });
       
       // Mock console.log to verify the handler is called
@@ -165,7 +165,7 @@ describe('VendorProfilePage', () => {
       });
 
       // Find all file inputs and get the second one (banner)
-      const fileInputs = document.querySelectorAll('input[type="file"][accept*="image"]');
+      const fileInputs = screen.getAllByLabelText(/profilbild|banner/i);
       expect(fileInputs.length).toBeGreaterThan(1);
       const bannerInput = fileInputs[1] as HTMLInputElement;
 
@@ -187,7 +187,7 @@ describe('VendorProfilePage', () => {
         expect(screen.getByText(/Banner-Bild/i)).toBeInTheDocument();
       });
 
-      const fileInputs = document.querySelectorAll('input[type="file"][accept*="image"]');
+      const fileInputs = screen.getAllByLabelText(/profilbild|banner/i);
       const bannerInput = fileInputs[1] as HTMLInputElement;
       const file = new File(['banner'], 'banner.jpg', { type: 'image/jpeg' });
       
@@ -223,7 +223,7 @@ describe('VendorProfilePage', () => {
         expect(screen.getByText(/Profilbild/i)).toBeInTheDocument();
       });
 
-      const fileInput = document.querySelector('input[type="file"][accept*="image"]') as HTMLInputElement;
+      const fileInput = screen.getByLabelText(/profilbild/i) as HTMLInputElement;
       const consoleSpy = jest.spyOn(console, 'log');
       
       // Simulate change event with no files
@@ -244,7 +244,7 @@ describe('VendorProfilePage', () => {
         expect(screen.getByText(/Profilbild/i)).toBeInTheDocument();
       });
 
-      const fileInput = document.querySelector('input[type="file"][accept*="image"]') as HTMLInputElement;
+      const fileInput = screen.getByLabelText(/profilbild/i) as HTMLInputElement;
       const file = new File(['test'], 'test.png', { type: 'image/png' });
       
       // Mock FileReader

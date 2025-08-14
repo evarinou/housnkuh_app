@@ -103,8 +103,8 @@ describe('VendorLayout', () => {
         ],
       });
 
-      const buchungenLink = screen.getByText('Meine Buchungen').closest('a');
-      expect(buchungenLink).not.toContainHTML('bg-red-500');
+      const buchungenLink = screen.getByRole('link', { name: /meine buchungen/i });
+      expect(buchungenLink).not.toHaveClass('bg-red-500');
     });
 
     it('should display correct count badge for pending bookings from centralized data', () => {
@@ -138,8 +138,8 @@ describe('VendorLayout', () => {
         bookings: [],
       });
 
-      const buchungenLink = screen.getByText('Meine Buchungen').closest('a');
-      expect(buchungenLink).not.toContainHTML('bg-red-500');
+      const buchungenLink = screen.getByRole('link', { name: /meine buchungen/i });
+      expect(buchungenLink).not.toHaveClass('bg-red-500');
     });
 
     it('should handle undefined bookings', () => {
@@ -147,8 +147,8 @@ describe('VendorLayout', () => {
         bookings: undefined,
       });
 
-      const buchungenLink = screen.getByText('Meine Buchungen').closest('a');
-      expect(buchungenLink).not.toContainHTML('bg-red-500');
+      const buchungenLink = screen.getByRole('link', { name: /meine buchungen/i });
+      expect(buchungenLink).not.toHaveClass('bg-red-500');
     });
   });
 
@@ -208,9 +208,9 @@ describe('VendorLayout', () => {
     it('should render navigation links correctly', () => {
       renderVendorLayout();
 
-      const dashboardLink = screen.getByText('Dashboard').closest('a');
-      const profileLink = screen.getByText('Mein Profil').closest('a');
-      const buchungenLink = screen.getByText('Meine Buchungen').closest('a');
+      const dashboardLink = screen.getByRole('link', { name: /dashboard/i });
+      const profileLink = screen.getByRole('link', { name: /mein profil/i });
+      const buchungenLink = screen.getByRole('link', { name: /meine buchungen/i });
 
       expect(dashboardLink).toHaveAttribute('href', '/vendor/dashboard');
       expect(profileLink).toHaveAttribute('href', '/vendor/profile');

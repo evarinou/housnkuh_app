@@ -122,11 +122,11 @@ describe('PasswordRequirementsChecklist', () => {
 
   describe('Styling', () => {
     it('should apply custom className', () => {
-      const { container } = render(
+      render(
         <PasswordRequirementsChecklist password="test" className="custom-class" />
       );
       
-      expect(container.firstChild).toHaveClass('custom-class');
+      expect(screen.getByRole('list')).toHaveClass('custom-class');
     });
 
     it('should apply correct text colors based on requirement state', () => {

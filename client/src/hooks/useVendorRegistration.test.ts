@@ -5,8 +5,8 @@
  * @modified 2025-08-06
  */
 
-import { renderHook, act, waitFor } from '@testing-library/react';
-import axios, { AxiosError } from 'axios';
+import { renderHook, act } from '@testing-library/react';
+import axios from 'axios';
 import { useVendorRegistration } from './useVendorRegistration';
 import * as authUtils from '../utils/auth';
 

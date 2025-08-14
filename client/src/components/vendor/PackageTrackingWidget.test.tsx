@@ -206,8 +206,9 @@ describe('PackageTrackingWidget', () => {
 
     await waitFor(() => {
       expect(screen.getByText(/Lagerservice/i)).toBeInTheDocument();
-      expect(screen.getByText(/Paket ist eingelagert/i)).toBeInTheDocument();
     });
+
+    expect(screen.getByText(/Paket ist eingelagert/i)).toBeInTheDocument();
   });
 
   it('should show error when authentication token is missing', async () => {

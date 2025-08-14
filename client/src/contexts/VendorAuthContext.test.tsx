@@ -5,7 +5,7 @@
  */
 
 import React from 'react';
-import { render, screen, waitFor, act } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { VendorAuthProvider, useVendorAuth } from './VendorAuthContext';
 import { tokenStorage, userStorage } from '../utils/auth';
 
@@ -149,7 +149,7 @@ describe('VendorAuthContext', () => {
 
     const CountingTestComponent: React.FC = () => {
       renderCount++;
-      const auth = useVendorAuth();
+      useVendorAuth();
       return <div data-testid="render-count">{renderCount}</div>;
     };
 
@@ -185,8 +185,9 @@ describe('VendorAuthContext', () => {
 
     await waitFor(() => {
       expect(screen.getByTestId('loading')).toHaveTextContent('not-loading');
-      expect(screen.getByTestId('token')).toHaveTextContent('no-token');
     });
+    
+    expect(screen.getByTestId('token')).toHaveTextContent('no-token');
 
     unmount();
 

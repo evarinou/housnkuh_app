@@ -368,11 +368,13 @@ describe('VendorRegistrationModal Password Complexity Validation', () => {
     await waitFor(() => {
       const errorText = screen.getByText(/Fehlend:/i);
       expect(errorText).toBeInTheDocument();
-      expect(errorText.textContent).toContain('Großbuchstabe');
-      expect(errorText.textContent).toContain('Zahl');
-      expect(errorText.textContent).toContain('Sonderzeichen');
-      expect(errorText.textContent).toContain('Mindestens 8 Zeichen');
     });
+
+    const errorText = screen.getByText(/Fehlend:/i);
+    expect(errorText.textContent).toContain('Großbuchstabe');
+    expect(errorText.textContent).toContain('Zahl');
+    expect(errorText.textContent).toContain('Sonderzeichen');
+    expect(errorText.textContent).toContain('Mindestens 8 Zeichen');
   });
 
   test('should accept password with all allowed special characters', async () => {
