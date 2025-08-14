@@ -193,9 +193,17 @@ app.use('/api', apiLimiter);
 
 /**
  * Database connection initialization
- * @description Establishes connection to MongoDB database
+ * @description Establishes connection to MongoDB database with proper async handling
  */
-connectDB();
+(async () => {
+  try {
+    await connectDB();
+    logger.info('Database connection initialized');
+  } catch (error) {
+    logger.error('Failed to connect to database:', error);
+    process.exit(1);
+  }
+})();
 
 /**
  * Static file serving with caching and CORS
