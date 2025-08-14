@@ -128,6 +128,9 @@ const vendorDashboardLimiter = rateLimit({
  */
 app.use(express.json({ limit: '10mb' }));
 
+// Configure Express to trust proxy headers from Nginx
+app.set('trust proxy', 1);
+
 // Debug middleware for setup requests
 app.use((req, res, next) => {
   if (req.path.includes('setup')) {
