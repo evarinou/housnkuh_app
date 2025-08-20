@@ -19,6 +19,26 @@ import logger from './logger';
 dotenv.config();
 
 /**
+ * Helper function to get the frontend URL with environment-aware fallbacks
+ * @returns The appropriate frontend URL based on environment configuration
+ */
+const getFrontendUrl = (): string => {
+  if (process.env.FRONTEND_URL) {
+    return process.env.FRONTEND_URL;
+  }
+  
+  // Environment-specific fallbacks
+  switch (process.env.NODE_ENV) {
+    case 'production':
+      return 'https://housnkuh.de';
+    case 'staging':
+      return 'https://staging.housnkuh.de';
+    default: // development
+      return 'http://localhost:3000';
+  }
+};
+
+/**
  * Interface for contact form data structure
  * @interface ContactFormData
  */
@@ -135,16 +155,17 @@ export const sendNewsletterConfirmation = async (to: string, token: string, type
   try {
     logger.info(`Sending newsletter confirmation to: ${to}, type: ${type}`);
     
+    const baseUrl = getFrontendUrl();
+
     // Fake success in development mode if email settings are not available
     if (process.env.NODE_ENV === 'development' && 
         (!process.env.EMAIL_HOST || !process.env.EMAIL_USER || !process.env.EMAIL_PASS)) {
       logger.warn('⚠️ Running in development mode without email configuration');
-      logger.info('🔗 Confirmation URL would be:', `${process.env.FRONTEND_URL || 'http://localhost:3000'}/newsletter/confirm?token=${token}&type=${type}`);
+      logger.info('🔗 Confirmation URL would be:', `${baseUrl}/newsletter/confirm?token=${token}&type=${type}`);
       return true; // Return success in development mode
     }
 
     // Prepare template data
-    const baseUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
     const confirmUrl = `${baseUrl}/newsletter/confirm?token=${token}&type=${type}`;
     const typeText = type === 'vendor' ? 'als Direktvermarkter' : 'als Kunde';
 
@@ -196,7 +217,7 @@ export const sendNewsletterConfirmation = async (to: string, token: string, type
 const sendNewsletterConfirmationHardcoded = async (to: string, token: string, type: string): Promise<boolean> => {
   try {
     const transporter = createTransporter();
-    const baseUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const baseUrl = getFrontendUrl();
     const confirmUrl = `${baseUrl}/newsletter/confirm?token=${token}&type=${type}`;
     
     const subject = 'Bestätige deinen Newsletter bei housnkuh';
@@ -409,8 +430,8 @@ export const sendVendorConfirmationEmail = async (to: string, data: { name: stri
       monthlyCost: data.packageData.totalCost?.monthly?.toFixed(2) || 'N/A',
       provision: data.packageData.totalCost?.provision || 'N/A',
       currentDate: new Date().toLocaleDateString('de-DE'),
-      dashboardUrl: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/vendor/dashboard`,
-      frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
+      dashboardUrl: `${getFrontendUrl()}/vendor/dashboard`,
+      frontendUrl: getFrontendUrl(),
       phone: '015222035788',
       adminEmail: 'eva-maria.schaller@housnkuh.de',
       adminName: 'Eva-Maria Schaller',
@@ -505,7 +526,7 @@ const sendVendorConfirmationEmailHardcoded = async (to: string, data: { name: st
           </div>
           
           <div style="text-align: center; margin: 30px 0;">
-            <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/vendor/dashboard" style="background-color: #e17564; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block; font-size: 16px;">
+            <a href="${getFrontendUrl()}/vendor/dashboard" style="background-color: #e17564; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block; font-size: 16px;">
               Zu deinem Vendor-Dashboard
             </a>
           </div>
@@ -1088,8 +1109,8 @@ export const sendTrialActivationEmail = async (
       vendorName: name,
       trialStartDate: formatDate(trialStartDate),
       trialEndDate: formatDate(trialEndDate),
-      dashboardUrl: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/vendor/dashboard`,
-      frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
+      dashboardUrl: `${getFrontendUrl()}/vendor/dashboard`,
+      frontendUrl: getFrontendUrl(),
       phone: '015222035788',
       adminEmail: 'eva-maria.schaller@housnkuh.de',
       adminName: 'Eva-Maria Schaller',
@@ -1186,7 +1207,7 @@ const sendTrialActivationEmailHardcoded = async (
           </div>
           
           <div style="text-align: center; margin: 30px 0;">
-            <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/vendor/dashboard" style="background-color: #e17564; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block; font-size: 16px;">
+            <a href="${getFrontendUrl()}/vendor/dashboard" style="background-color: #e17564; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block; font-size: 16px;">
               Zu deinem Dashboard
             </a>
           </div>
@@ -1269,7 +1290,7 @@ export const sendTrialExpirationWarning = async (
       vendorName: name,
       trialEndDate: formatDate(trialEndDate),
       provisionRate: '4',
-      dashboardUrl: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/vendor/dashboard`,
+      dashboardUrl: `${getFrontendUrl()}/vendor/dashboard`,
       phone: '015222035788',
       adminEmail: 'eva-maria.schaller@housnkuh.de',
       address: 'Strauer Str. 15, 96317 Kronach',
@@ -1347,7 +1368,7 @@ const sendTrialExpirationWarningHardcoded = async (
           <p style="color: #333; line-height: 1.6;">dein kostenloser Probemonat bei housnkuh neigt sich dem Ende zu. Am <strong>${formatDate(trialEndDate)}</strong> endet deine Testphase.</p>
           
           <div style="text-align: center; margin: 30px 0;">
-            <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/vendor/dashboard" style="background-color: #e17564; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block; font-size: 16px; margin: 10px;">
+            <a href="${getFrontendUrl()}/vendor/dashboard" style="background-color: #e17564; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block; font-size: 16px; margin: 10px;">
               Dashboard aufrufen
             </a>
           </div>
@@ -1744,6 +1765,14 @@ export const sendBookingConfirmation = async (bookingData: PackageBookingData): 
   try {
     logger.info(`Sending booking confirmation to: ${bookingData.email}`);
     
+    // Development mode fallback
+    if (process.env.NODE_ENV === 'development' && 
+        (!process.env.EMAIL_HOST || !process.env.EMAIL_USER || !process.env.EMAIL_PASS)) {
+      logger.warn('⚠️ Running in development mode without email configuration');
+      logger.info('📧 Booking confirmation would be sent with data:', bookingData);
+      return true; // Return success in development mode
+    }
+    
     // Check if email settings are available
     if (!process.env.EMAIL_HOST || !process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
       logger.error('❌ Email configuration missing. Required: EMAIL_HOST, EMAIL_USER, EMAIL_PASS');
@@ -1784,7 +1813,7 @@ export const sendBookingConfirmation = async (bookingData: PackageBookingData): 
       trialEndDate: trialEndDate.toLocaleDateString('de-DE'),
       selectedPackages,
       confirmationToken: bookingData.confirmationToken,
-      frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
+      frontendUrl: getFrontendUrl(),
       zusatzleistungen: bookingData.zusatzleistungen || bookingData.packageData.zusatzleistungen
     };
 
@@ -1953,7 +1982,7 @@ ${bookingData.confirmationToken ? `
               Bitte bestätige zuerst deine E-Mail-Adresse, um deine Buchung zu aktivieren:
             </p>
             <div style="text-align: center; margin: 15px 0;">
-              <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/vendor/confirm?token=${bookingData.confirmationToken}" 
+              <a href="${getFrontendUrl()}/vendor/confirm?token=${bookingData.confirmationToken}" 
                  style="background-color: #e17564; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">
                 E-Mail-Adresse bestätigen
               </a>
@@ -2361,7 +2390,7 @@ export const sendLaunchDayActivationNotification = async (
           </div>
           
           <div style="text-align: center; margin-top: 30px;">
-            <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/admin/dashboard" 
+            <a href="${getFrontendUrl()}/admin/dashboard" 
                style="display: inline-block; padding: 12px 30px; background-color: #09122c; color: white; text-decoration: none; border-radius: 5px;">
               View Admin Dashboard
             </a>
@@ -2514,11 +2543,11 @@ export const sendMonitoringAlert = async (to: string, alertData: MonitoringAlert
           </div>
           
           <div style="text-align: center; margin: 30px 0;">
-            <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/admin/dashboard" 
+            <a href="${getFrontendUrl()}/admin/dashboard" 
                style="display: inline-block; padding: 12px 30px; background-color: #09122c; color: white; text-decoration: none; border-radius: 5px; margin-right: 10px;">
               View Dashboard
             </a>
-            <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/admin/health" 
+            <a href="${getFrontendUrl()}/admin/health" 
                style="display: inline-block; padding: 12px 30px; background-color: ${config.color}; color: white; text-decoration: none; border-radius: 5px;">
               Check System Health
             </a>
@@ -2775,7 +2804,7 @@ export const sendBookingConfirmationWithSchedule = async (data: BookingConfirmat
           
           <!-- CTA Button -->
           <div style="text-align: center; margin: 30px 0;">
-            <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/vendor/dashboard" 
+            <a href="${getFrontendUrl()}/vendor/dashboard" 
                style="display: inline-block; background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); color: white; 
                       padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; 
                       font-size: 16px; box-shadow: 0 4px 10px rgba(245, 158, 11, 0.3);">
@@ -3007,7 +3036,7 @@ export const sendAdminZusatzleistungenNotification = async (data: Zusatzleistung
           
           <!-- Admin Dashboard Link -->
           <div style="text-align: center; margin: 25px 0;">
-            <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/admin/zusatzleistungen" 
+            <a href="${getFrontendUrl()}/admin/zusatzleistungen" 
                style="display: inline-block; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; 
                       padding: 12px 25px; text-decoration: none; border-radius: 6px; font-weight: bold;">
               🔧 Zum Admin-Dashboard
@@ -3144,7 +3173,7 @@ export const sendPackageArrivalConfirmation = async (data: PackageArrivalNotific
           
           <!-- Dashboard Link -->
           <div style="text-align: center; margin: 25px 0;">
-            <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/vendor/dashboard" 
+            <a href="${getFrontendUrl()}/vendor/dashboard" 
                style="display: inline-block; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; 
                       padding: 12px 25px; text-decoration: none; border-radius: 6px; font-weight: bold;">
               📊 Zum Dashboard
@@ -3290,7 +3319,7 @@ export const sendLagerserviceActivationNotification = async (data: LagerserviceA
           
           <!-- Dashboard Link -->
           <div style="text-align: center; margin: 30px 0;">
-            <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/vendor/dashboard" 
+            <a href="${getFrontendUrl()}/vendor/dashboard" 
                style="display: inline-block; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; 
                       padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; 
                       font-size: 16px; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);">
@@ -3876,3 +3905,6 @@ export const sendTrialConversionEmail = async (user: any): Promise<void> => {
     throw error;
   }
 };
+
+// Export getFrontendUrl for testing
+export { getFrontendUrl };

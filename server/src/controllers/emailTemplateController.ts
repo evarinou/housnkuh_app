@@ -124,7 +124,7 @@ export const previewEmailTemplate = async (req: Request, res: Response) => {
     const defaultTemplateData = {
       vendorName: 'Max Mustermann',
       siteName: 'Housnkuh',
-      siteUrl: process.env.CLIENT_URL || 'http://localhost:3000',
+      siteUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
       currentYear: new Date().getFullYear().toString(),
       trialEndDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('de-DE'),
       contractNumber: 'K-2024-001',
@@ -177,7 +177,7 @@ export const sendTestEmail = async (req: Request, res: Response) => {
     const defaultTemplateData = {
       vendorName: 'Test Vendor',
       siteName: 'Housnkuh',
-      siteUrl: process.env.CLIENT_URL || 'http://localhost:3000',
+      siteUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
       currentYear: new Date().getFullYear().toString(),
       trialEndDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('de-DE'),
       contractNumber: 'TEST-2024-001',
