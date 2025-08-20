@@ -1,6 +1,6 @@
 # Architecture Statistics (Auto-Generated)
 
-**Generated**: 2025-08-20 11:15:45
+**Generated**: 2025-08-20 16:13:43
 **Generator**: scripts/update-architecture.sh
 
 ## File Counts
@@ -16,11 +16,11 @@
 - Models: 14
 - Services: 16
 - Routes: 17
-- Tests: 7
+- Tests: 8
 
 ### Overall
-- Total TypeScript Files: 268
-- Total Tests: 22
+- Total TypeScript Files: 269
+- Total Tests: 23
 
 ## Component Breakdown
 

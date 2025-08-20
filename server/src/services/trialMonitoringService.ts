@@ -315,6 +315,8 @@ class TrialMonitoringService {
    * @returns {Promise<void>}
    */
   async monitorTrialConversions(): Promise<void> {
+    const startTime = Date.now();
+    
     try {
       const metrics = await this.getTrialMetrics();
       
@@ -351,7 +353,7 @@ class TrialMonitoringService {
       performanceMonitor.recordDatabaseOperation({
         operation: 'trial_monitoring',
         collection: 'users',
-        duration: Date.now(),
+        duration: Date.now() - startTime,
         success: true
       });
 

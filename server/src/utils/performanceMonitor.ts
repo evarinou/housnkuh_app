@@ -258,7 +258,8 @@ export class PerformanceMonitor {
       ? this.requestMetrics.reduce((sum, r) => sum + r.responseTime, 0) / this.requestMetrics.length
       : 0;
 
-    // Database metrics
+    // Database metrics - also filter by recent time window
+    const recentDbMetrics = this.databaseMetrics.filter(d => d.timestamp >= fiveMinutesAgo);
     const dbErrors = this.databaseMetrics.filter(d => !d.success);
     const slowQueries = this.databaseMetrics.filter(d => d.duration > 1000);
     
@@ -278,16 +279,18 @@ export class PerformanceMonitor {
         total: this.requestMetrics.length,
         averageResponseTime: Math.round(avgResponseTime),
         last5Minutes: recentRequests.length,
-        errorRate: this.requestMetrics.length > 0 
-          ? Math.round((errorRequests.length / this.requestMetrics.length) * 100 * 100) / 100
+        // FIX: Calculate error rate only from recent requests (last 5 minutes)
+        errorRate: recentRequests.length > 0 
+          ? Math.round((recentRequests.filter(r => r.statusCode >= 400).length / recentRequests.length) * 100 * 100) / 100
           : 0,
         slowRequests: slowRequests.length
       },
       database: {
         totalOperations: this.databaseMetrics.length,
         averageResponseTime: Math.round(avgDbResponseTime),
-        errorRate: this.databaseMetrics.length > 0
-          ? Math.round((dbErrors.length / this.databaseMetrics.length) * 100 * 100) / 100
+        // FIX: Calculate database error rate only from recent operations (last 5 minutes)
+        errorRate: recentDbMetrics.length > 0
+          ? Math.round((recentDbMetrics.filter(d => !d.success).length / recentDbMetrics.length) * 100 * 100) / 100
           : 0,
         slowQueries: slowQueries.length
       },
