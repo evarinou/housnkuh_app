@@ -84,28 +84,23 @@ describe('VendorRegistrationModal Password Complexity Validation', () => {
       />
     );
 
-    // Fill email field
-    const emailInput = screen.getByLabelText(/E-Mail-Adresse/i);
-    fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
-
-    // Fill password with 7 characters
+    // Fill password with 7 characters to trigger the length requirement
     const passwordInput = screen.getByLabelText(/^Passwort \*/);
-    fireEvent.change(passwordInput, { target: { value: '1234567' } });
+    fireEvent.change(passwordInput, { target: { value: 'Test12!' } }); // 7 characters: fails length requirement
 
-    // Fill confirm password
-    const confirmPasswordInput = screen.getByLabelText(/Passwort bestätigen/i);
-    fireEvent.change(confirmPasswordInput, { target: { value: '1234567' } });
-
-    // Try to proceed to next step
-    const nextButton = screen.getByRole('button', { name: /weiter/i });
-    
-    // Button should be disabled for 7-character password
-    expect(nextButton).toBeDisabled();
-
-    // Check error message appears
+    // Check that the password requirements checklist shows the length requirement as unmet
     await waitFor(() => {
-      expect(screen.getByText(/Fehlend:.*Mindestens 8 Zeichen/i)).toBeInTheDocument();
+      const lengthRequirement = screen.getByText(/Mindestens 8 Zeichen/i);
+      expect(lengthRequirement).toBeInTheDocument();
     });
+    
+    // The requirement should be styled as unmet (gray text for unmet requirement)
+    const lengthRequirement = screen.getByText(/Mindestens 8 Zeichen/i);
+    expect(lengthRequirement).toHaveClass('text-gray-500');
+
+    // Button should be disabled for invalid password
+    const nextButton = screen.getByRole('button', { name: /weiter/i });
+    expect(nextButton).toBeDisabled();
   });
 
   test('should accept passwords with 8 characters', async () => {
@@ -178,14 +173,23 @@ describe('VendorRegistrationModal Password Complexity Validation', () => {
       />
     );
 
-    // Fill password with less than 8 characters
+    // Fill password with less than 8 characters to trigger live validation
     const passwordInput = screen.getByLabelText(/^Passwort \*/);
     fireEvent.change(passwordInput, { target: { value: '123' } });
 
-    // Error message should appear
+    // Check that multiple requirements appear as unmet (live validation)
     await waitFor(() => {
-      expect(screen.getByText(/Fehlend:/i)).toBeInTheDocument();
+      const lengthRequirement = screen.getByText(/Mindestens 8 Zeichen/i);
+      expect(lengthRequirement).toBeInTheDocument();
     });
+    
+    // Length requirement should be unmet (gray)
+    const lengthRequirement = screen.getByText(/Mindestens 8 Zeichen/i);
+    expect(lengthRequirement).toHaveClass('text-gray-500');
+
+    // Other requirements should also be unmet due to missing complexity
+    const uppercaseRequirement = screen.getByText(/Mindestens ein Großbuchstabe/i);
+    expect(uppercaseRequirement).toHaveClass('text-gray-500');
   });
 
   test('should not show password validation in login mode', async () => {
@@ -220,21 +224,26 @@ describe('VendorRegistrationModal Password Complexity Validation', () => {
       />
     );
 
-    const emailInput = screen.getByLabelText(/E-Mail-Adresse/i);
-    fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
-
+    // Fill password that meets most requirements but lacks uppercase
     const passwordInput = screen.getByLabelText(/^Passwort \*/);
-    fireEvent.change(passwordInput, { target: { value: 'password123!' } });
+    fireEvent.change(passwordInput, { target: { value: 'password123!' } }); // 12 chars, has lower, number, special - missing upper
 
-    const confirmPasswordInput = screen.getByLabelText(/Passwort bestätigen/i);
-    fireEvent.change(confirmPasswordInput, { target: { value: 'password123!' } });
+    // Check that uppercase requirement shows as unmet in live validation
+    await waitFor(() => {
+      const uppercaseRequirement = screen.getByText(/Mindestens ein Großbuchstabe/i);
+      expect(uppercaseRequirement).toBeInTheDocument();
+    });
+    
+    const uppercaseRequirement = screen.getByText(/Mindestens ein Großbuchstabe/i);
+    expect(uppercaseRequirement).toHaveClass('text-gray-500');
 
+    // Length should be met (green)
+    const lengthRequirement = screen.getByText(/Mindestens 8 Zeichen/i);
+    expect(lengthRequirement).toHaveClass('text-green-700');
+
+    // Button should be disabled due to missing uppercase
     const nextButton = screen.getByRole('button', { name: /weiter/i });
     expect(nextButton).toBeDisabled();
-
-    await waitFor(() => {
-      expect(screen.getByText(/Fehlend:.*Großbuchstabe/i)).toBeInTheDocument();
-    });
   });
 
   test('should reject password without lowercase letter', async () => {
@@ -247,21 +256,26 @@ describe('VendorRegistrationModal Password Complexity Validation', () => {
       />
     );
 
-    const emailInput = screen.getByLabelText(/E-Mail-Adresse/i);
-    fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
-
+    // Fill password that meets most requirements but lacks lowercase
     const passwordInput = screen.getByLabelText(/^Passwort \*/);
-    fireEvent.change(passwordInput, { target: { value: 'PASSWORD123!' } });
+    fireEvent.change(passwordInput, { target: { value: 'PASSWORD123!' } }); // has upper, number, special - missing lower
 
-    const confirmPasswordInput = screen.getByLabelText(/Passwort bestätigen/i);
-    fireEvent.change(confirmPasswordInput, { target: { value: 'PASSWORD123!' } });
+    // Check that lowercase requirement shows as unmet in live validation
+    await waitFor(() => {
+      const lowercaseRequirement = screen.getByText(/Mindestens ein Kleinbuchstabe/i);
+      expect(lowercaseRequirement).toBeInTheDocument();
+    });
+    
+    const lowercaseRequirement = screen.getByText(/Mindestens ein Kleinbuchstabe/i);
+    expect(lowercaseRequirement).toHaveClass('text-gray-500');
 
+    // Length should be met (green)
+    const lengthRequirement2 = screen.getByText(/Mindestens 8 Zeichen/i);
+    expect(lengthRequirement2).toHaveClass('text-green-700');
+
+    // Button should be disabled due to missing lowercase
     const nextButton = screen.getByRole('button', { name: /weiter/i });
     expect(nextButton).toBeDisabled();
-
-    await waitFor(() => {
-      expect(screen.getByText(/Fehlend:.*Kleinbuchstabe/i)).toBeInTheDocument();
-    });
   });
 
   test('should reject password without number', async () => {
@@ -274,21 +288,26 @@ describe('VendorRegistrationModal Password Complexity Validation', () => {
       />
     );
 
-    const emailInput = screen.getByLabelText(/E-Mail-Adresse/i);
-    fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
-
+    // Fill password that meets most requirements but lacks number
     const passwordInput = screen.getByLabelText(/^Passwort \*/);
-    fireEvent.change(passwordInput, { target: { value: 'Password!' } });
+    fireEvent.change(passwordInput, { target: { value: 'Password!' } }); // has upper, lower, special - missing number
 
-    const confirmPasswordInput = screen.getByLabelText(/Passwort bestätigen/i);
-    fireEvent.change(confirmPasswordInput, { target: { value: 'Password!' } });
+    // Check that number requirement shows as unmet in live validation
+    await waitFor(() => {
+      const numberRequirement = screen.getByText(/Mindestens eine Zahl/i);
+      expect(numberRequirement).toBeInTheDocument();
+    });
+    
+    const numberRequirement = screen.getByText(/Mindestens eine Zahl/i);
+    expect(numberRequirement).toHaveClass('text-gray-500');
 
+    // Length should be met (green)
+    const lengthRequirement3 = screen.getByText(/Mindestens 8 Zeichen/i);
+    expect(lengthRequirement3).toHaveClass('text-green-700');
+
+    // Button should be disabled due to missing number
     const nextButton = screen.getByRole('button', { name: /weiter/i });
     expect(nextButton).toBeDisabled();
-
-    await waitFor(() => {
-      expect(screen.getByText(/Fehlend:.*Zahl/i)).toBeInTheDocument();
-    });
   });
 
   test('should reject password without special character', async () => {
@@ -301,21 +320,26 @@ describe('VendorRegistrationModal Password Complexity Validation', () => {
       />
     );
 
-    const emailInput = screen.getByLabelText(/E-Mail-Adresse/i);
-    fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
-
+    // Fill password that meets most requirements but lacks special character
     const passwordInput = screen.getByLabelText(/^Passwort \*/);
-    fireEvent.change(passwordInput, { target: { value: 'Password123' } });
+    fireEvent.change(passwordInput, { target: { value: 'Password123' } }); // has upper, lower, number - missing special
 
-    const confirmPasswordInput = screen.getByLabelText(/Passwort bestätigen/i);
-    fireEvent.change(confirmPasswordInput, { target: { value: 'Password123' } });
+    // Check that special character requirement shows as unmet in live validation
+    await waitFor(() => {
+      const specialRequirement = screen.getByText(/Mindestens ein Sonderzeichen/i);
+      expect(specialRequirement).toBeInTheDocument();
+    });
+    
+    const specialRequirement = screen.getByText(/Mindestens ein Sonderzeichen/i);
+    expect(specialRequirement).toHaveClass('text-gray-500');
 
+    // Length should be met (green)
+    const lengthRequirement4 = screen.getByText(/Mindestens 8 Zeichen/i);
+    expect(lengthRequirement4).toHaveClass('text-green-700');
+
+    // Button should be disabled due to missing special character
     const nextButton = screen.getByRole('button', { name: /weiter/i });
     expect(nextButton).toBeDisabled();
-
-    await waitFor(() => {
-      expect(screen.getByText(/Fehlend:.*Sonderzeichen/i)).toBeInTheDocument();
-    });
   });
 
   test('should accept valid complex password', async () => {
@@ -353,28 +377,36 @@ describe('VendorRegistrationModal Password Complexity Validation', () => {
       />
     );
 
-    const emailInput = screen.getByLabelText(/E-Mail-Adresse/i);
-    fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
-
+    // Fill password that fails multiple requirements
     const passwordInput = screen.getByLabelText(/^Passwort \*/);
     fireEvent.change(passwordInput, { target: { value: 'pass' } }); // Missing: uppercase, number, special char, length
 
-    const confirmPasswordInput = screen.getByLabelText(/Passwort bestätigen/i);
-    fireEvent.change(confirmPasswordInput, { target: { value: 'pass' } });
+    // Check that multiple requirements show as unmet in live validation
+    await waitFor(() => {
+      const lengthRequirement = screen.getByText(/Mindestens 8 Zeichen/i);
+      expect(lengthRequirement).toBeInTheDocument();
+    });
+    
+    // All requirements should be unmet (gray)
+    const lengthRequirement5 = screen.getByText(/Mindestens 8 Zeichen/i);
+    expect(lengthRequirement5).toHaveClass('text-gray-500');
 
+    const uppercaseRequirement2 = screen.getByText(/Mindestens ein Großbuchstabe/i);
+    expect(uppercaseRequirement2).toHaveClass('text-gray-500');
+
+    const numberRequirement2 = screen.getByText(/Mindestens eine Zahl/i);
+    expect(numberRequirement2).toHaveClass('text-gray-500');
+
+    const specialRequirement2 = screen.getByText(/Mindestens ein Sonderzeichen/i);
+    expect(specialRequirement2).toHaveClass('text-gray-500');
+
+    // Only lowercase should be met (green) since 'pass' has lowercase letters
+    const lowercaseRequirement2 = screen.getByText(/Mindestens ein Kleinbuchstabe/i);
+    expect(lowercaseRequirement2).toHaveClass('text-green-700');
+
+    // Button should be disabled due to multiple missing requirements
     const nextButton = screen.getByRole('button', { name: /weiter/i });
     expect(nextButton).toBeDisabled();
-
-    await waitFor(() => {
-      const errorText = screen.getByText(/Fehlend:/i);
-      expect(errorText).toBeInTheDocument();
-    });
-
-    const errorText = screen.getByText(/Fehlend:/i);
-    expect(errorText.textContent).toContain('Großbuchstabe');
-    expect(errorText.textContent).toContain('Zahl');
-    expect(errorText.textContent).toContain('Sonderzeichen');
-    expect(errorText.textContent).toContain('Mindestens 8 Zeichen');
   });
 
   test('should accept password with all allowed special characters', async () => {

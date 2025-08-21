@@ -40,9 +40,8 @@ describe('Navigation Component', () => {
         </AuthStateContext.Provider>
       );
       
-      // Check for Dashboard link (there might be multiple Dashboard texts in nav)
-      const dashboardLinks = screen.getAllByText('Dashboard');
-      expect(dashboardLinks.length).toBeGreaterThan(0);
+      // Check for Admin Panel link when admin is authenticated  
+      expect(screen.getAllByText('Admin Panel')[0]).toBeInTheDocument();
       expect(screen.queryByText('Login')).not.toBeInTheDocument();
     });
 
@@ -156,9 +155,8 @@ describe('Navigation Component', () => {
         </AuthStateContext.Provider>
       );
       
-      // Check for Dashboard link (there might be multiple Dashboard texts in nav)
-      const dashboardLinks = screen.getAllByText('Dashboard');
-      expect(dashboardLinks.length).toBeGreaterThan(0);
+      // Check for Admin Panel link when admin is authenticated (admin takes precedence)
+      expect(screen.getAllByText('Admin Panel')[0]).toBeInTheDocument();
       expect(screen.queryByText('Login')).not.toBeInTheDocument();
     });
 

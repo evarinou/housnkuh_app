@@ -322,8 +322,12 @@ const VendorProfilePage: React.FC = () => {
   
   // Banner-Bild auswählen
   const handleBannerFileSelect = (e: ChangeEvent<HTMLInputElement>) => {
+    console.log('🚀 handleBannerFileSelect triggered');
+    
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
+      console.log('📁 Selected banner file:', file.name, file.size, file.type);
+      
       setSelectedBannerFile(file);
       
       // Vorschau erstellen
@@ -332,6 +336,8 @@ const VendorProfilePage: React.FC = () => {
         setBannerPreviewUrl(reader.result as string);
       };
       reader.readAsDataURL(file);
+    } else {
+      console.log('❌ No file selected');
     }
     // WICHTIG: Input zurücksetzen für erneute Auswahl
     e.target.value = '';
@@ -741,6 +747,7 @@ const VendorProfilePage: React.FC = () => {
           <input
             ref={fileInputRef}
             type="file"
+            id="profile-image-input"
             className="hidden"
             accept="image/*"
             onChange={handleFileSelect}
@@ -749,6 +756,7 @@ const VendorProfilePage: React.FC = () => {
           <input
             ref={bannerFileInputRef}
             type="file"
+            id="banner-image-input"
             className="hidden"
             accept="image/*"
             onChange={handleBannerFileSelect}
@@ -765,7 +773,7 @@ const VendorProfilePage: React.FC = () => {
               
               {/* Profilbild-Upload */}
               <div className="col-span-2 mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="profile-image-input">
                   Profilbild
                 </label>
                 <div className="flex items-start space-x-6">
@@ -824,7 +832,7 @@ const VendorProfilePage: React.FC = () => {
               
               {/* Banner-Bild-Upload */}
               <div className="col-span-2 mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="banner-image-input">
                   Banner-Bild
                 </label>
                 <div className="flex items-start space-x-6">

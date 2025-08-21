@@ -91,7 +91,6 @@ const PackageSelector: React.FC<PackageSelectorProps> = ({
     visibility: '👁️'
   };
 
-
   /**
    * Renders individual package selection card with quantity controls
    * @param {PackageOption} pkg - Package data to render
@@ -132,6 +131,8 @@ const PackageSelector: React.FC<PackageSelectorProps> = ({
                 onTogglePackage(pkg.id, false);
               }}
               className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-300 hover:bg-gray-100"
+              aria-label={pkg.category === 'visibility' ? 'entfernen' : 'reduzieren'}
+              data-testid={`decrement-${pkg.id}`}
             >
               <span className="text-gray-700 font-bold">-</span>
             </button>
@@ -143,6 +144,8 @@ const PackageSelector: React.FC<PackageSelectorProps> = ({
               onTogglePackage(pkg.id, true);
             }}
             className="w-8 h-8 flex items-center justify-center rounded-full bg-[#e17564] text-white hover:bg-[#e17564]/90"
+            aria-label={pkg.category === 'visibility' ? 'hinzufügen' : 'erweitern'}
+            data-testid={`increment-${pkg.id}`}
           >
             <span className="font-bold">+</span>
           </button>

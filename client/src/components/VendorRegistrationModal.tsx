@@ -316,7 +316,7 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = React.me
         } else if (!isLogin && !isPasswordValid) {
           const complexityResult = validatePasswordComplexity(formData.password);
           if (complexityResult.missingRequirements.length > 0) {
-            setError(`Das Passwort muss folgende Anforderungen erfüllen: ${complexityResult.missingRequirements.join(', ')}`);
+            setError(`Fehlend: ${complexityResult.missingRequirements.join(', ')}`);
           } else {
             setError('Das Passwort erfüllt nicht alle Sicherheitsanforderungen');
           }

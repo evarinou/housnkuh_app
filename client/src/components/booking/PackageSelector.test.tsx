@@ -125,13 +125,13 @@ describe('PackageSelector', () => {
       />
     );
 
-    // Find the add button for a visibility package using testing library methods
-    const addButton = screen.getByRole('button', { name: /hinzufügen/i });
+    // Find the add button for the Banner Werbung (vis-1) visibility package using data-testid
+    const addButton = screen.getByTestId('increment-vis-1');
     
     expect(addButton).toBeInTheDocument();
     
     // Click the add button
-    fireEvent.click(addButton!);
+    fireEvent.click(addButton);
     
     // Check that the toggle function was called with correct parameters
     expect(mockOnTogglePackage).toHaveBeenCalledWith('vis-1', true);
@@ -205,15 +205,12 @@ describe('PackageSelector', () => {
       />
     );
 
-    // Find the Social Media package decrement and increment buttons
-    const decrementButtons = screen.getAllByRole('button', { name: /-/i });
-    const incrementButtons = screen.getAllByRole('button', { name: /\+/i });
-    
-    // Find the specific buttons for Social Media package (assuming it's the second visibility package)
-    const socialMediaDecrementButton = decrementButtons[1]; // Assuming social media is second visibility package
-    const socialMediaIncrementButton = incrementButtons[1];
+    // Find the Social Media package buttons using specific data-testid
+    const socialMediaDecrementButton = screen.getByTestId('decrement-vis-2');
+    const socialMediaIncrementButton = screen.getByTestId('increment-vis-2');
     
     expect(socialMediaDecrementButton).toBeInTheDocument();
+    expect(socialMediaIncrementButton).toBeInTheDocument();
     
     // Click decrement button
     fireEvent.click(socialMediaDecrementButton);

@@ -448,6 +448,13 @@ export const useTrialManagement = (): UseTrialManagementReturn => {
     return requestPromise;
   }, []);
 
+  // Reset function for testing
+  const resetCaches = useCallback(() => {
+    requestCacheRef.current.clear();
+    lastRequestTimesRef.current.clear();
+    lastResultCacheRef.current.clear();
+  }, []);
+
   return {
     checkAuth,
     validateTrialStatus,
@@ -455,6 +462,8 @@ export const useTrialManagement = (): UseTrialManagementReturn => {
     getTrialStatus,
     cancelTrialBooking,
     isCheckingAuth,
-    authError
+    authError,
+    // Only expose in development/test environment
+    ...(process.env.NODE_ENV === 'test' && { resetCaches })
   };
 };
