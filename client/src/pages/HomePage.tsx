@@ -93,7 +93,7 @@ const HomePage: React.FC = () => {
 
       {/* Newsletter Signup mit Glaseffekt - behalte hier den dunkleren Effekt für mehr Kontrast */}
       <section className="max-w-3xl mx-auto px-6 pt-8">
-        <div className="backdrop-blur-lg bg-gradient-to-r from-secondary/95 to-primary/95 text-white rounded-3xl p-10 border border-white/20 shadow-2xl transform transition-all duration-500 hover:shadow-3xl hover:scale-[1.02]">
+        <div className="backdrop-blur-lg bg-secondary/95 text-white rounded-3xl p-10 border border-white/20 shadow-2xl transform transition-all duration-500 hover:shadow-3xl hover:scale-[1.02]">
           <NewsletterSignup />
         </div>
       </section>
