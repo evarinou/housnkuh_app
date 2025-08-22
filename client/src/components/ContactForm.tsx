@@ -145,9 +145,16 @@ const ContactForm: React.FC<ContactFormProps> = ({ className }) => {
         // Server-Fehler verwenden, falls vorhanden
         errorMessage = error.response.data.message || errorMessage;
         
-        // Validierungsfehler vom Server
+        // Validierungsfehler vom Server feldspezifisch zuordnen
         if (error.response.data.errors && Array.isArray(error.response.data.errors)) {
-          errorMessage = error.response.data.errors.join('. ');
+          const serverErrors: any = {};
+          error.response.data.errors.forEach((err: any) => {
+            if (err.path && err.msg) {
+              serverErrors[err.path] = err.msg;
+            }
+          });
+          setErrors(serverErrors);
+          errorMessage = 'Bitte korrigiere die markierten Felder.';
         }
       }
       

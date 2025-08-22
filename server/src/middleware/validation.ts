@@ -284,8 +284,8 @@ export const validateContactForm = [
   
   body('message')
     .trim()
-    .isLength({ min: 10, max: 1000 })
-    .withMessage('Nachricht muss zwischen 10 und 1000 Zeichen lang sein')
+    .isLength({ min: 5, max: 1000 })
+    .withMessage('Nachricht muss zwischen 5 und 1000 Zeichen lang sein')
     .escape(),
   
   handleValidationErrors
