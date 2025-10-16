@@ -147,6 +147,7 @@ npm run update:architecture
 - `npm run build` - Compile TypeScript
 - `npm test` - Run tests
 - `npm run seed` - Seed database
+- `npm run generate:flourio-types` - Generate TypeScript types from Flourio API
 
 ## Git Workflow
 
@@ -267,12 +268,46 @@ Ensure all required environment variables are set in production:
 - Strong `JWT_SECRET`
 - Email configuration
 
+## FlourIO API Integration
+
+### TypeScript Types
+The project uses TypeScript types for type-safe FlourIO API access:
+
+```bash
+# Generate/update FlourIO types
+cd server && npm run generate:flourio-types
+```
+
+**Note:** Due to a broken `$ref` in FlourIO's OpenAPI schema, types are currently maintained manually in:
+- `server/src/services/flourio/generated/api-types.d.ts`
+
+### Core Types Available
+```typescript
+import {
+  Article,
+  Stock,
+  BusinessPartner,
+  Document
+} from '@/services/flourio/generated';
+```
+
+### FlourIO Client Usage
+```typescript
+import { FlourioClient } from '@/services/flourio/client';
+
+const client = new FlourioClient(config);
+const articles = await client.get<Article[]>('/articles');
+```
+
+See `docs/flourio-api-v3/` for full API documentation.
+
 ## Additional Resources
 
 - [Architecture Overview](./ARCHITECTURE.md)
 - [Git Hooks Documentation](./GIT_HOOKS.md)
 - [Task Management](./../.task/README.md)
 - [API Documentation](./API.md) *(TODO)*
+- [FlourIO API v3 Docs](./flourio-api-v3/)
 
 ---
 *For project-specific rules and guidelines, see [CLAUDE.md](../CLAUDE.md)*
