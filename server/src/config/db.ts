@@ -17,7 +17,7 @@ import logger from '../utils/logger';
  */
 async function connectDB(): Promise<void> {
   try {
-    console.log('DEBUG: connectDB starting...');
+    logger.debug('connectDB starting...');
     
     // Enhanced connection options for performance
     await mongoose.connect(config.mongoURI, {
@@ -26,16 +26,16 @@ async function connectDB(): Promise<void> {
       socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
     });
     
-    console.log('DEBUG: MongoDB connected successfully');
+    logger.debug('MongoDB connected successfully');
     logger.info('MongoDB verbunden mit optimierten Einstellungen');
     
     // Create performance indexes after connection
-    console.log('DEBUG: Creating performance indexes...');
+    logger.debug('Creating performance indexes...');
     await createPerformanceIndexes();
-    console.log('DEBUG: Performance indexes created');
+    logger.debug('Performance indexes created');
     
   } catch (error) {
-    console.error('DEBUG: connectDB error:', error);
+    logger.error('connectDB error', { error });
     logger.error('Fehler bei der Verbindung zur MongoDB:', error);
     process.exit(1);
   }

@@ -5,6 +5,7 @@
  */
 
 import mongoose, { Schema, Document, Model } from 'mongoose';
+import logger from '../utils/logger';
 
 /**
  * Interface for bulk pricing tiers
@@ -41,8 +42,6 @@ export interface IProduct extends Document {
   
   // Classification
   tags: mongoose.Types.ObjectId[];
-  category: string;
-  subcategory?: string;
   
   // Pricing & Units
   price?: number;
@@ -69,6 +68,14 @@ export interface IProduct extends Document {
   sortOrder: number;
   createdAt: Date;
   updatedAt: Date;
+
+  // FlourIO Sync
+  flourioSync?: {
+    articleId?: string;
+    status: 'synced' | 'pending' | 'error' | 'never';
+    lastSyncedAt?: Date;
+    error?: string;
+  };
 }
 
 /**
@@ -147,15 +154,6 @@ const ProductSchema: Schema<IProduct> = new Schema({
     type: Schema.Types.ObjectId,
     ref: 'Tag'
   }],
-  category: {
-    type: String,
-    required: true,
-    trim: true
-  },
-  subcategory: {
-    type: String,
-    trim: true
-  },
   
   // Pricing & Units
   price: {
@@ -223,6 +221,26 @@ const ProductSchema: Schema<IProduct> = new Schema({
   sortOrder: {
     type: Number,
     default: 0
+  },
+
+  // FlourIO Sync
+  flourioSync: {
+    articleId: {
+      type: String,
+      trim: true
+    },
+    status: {
+      type: String,
+      enum: ['synced', 'pending', 'error', 'never'],
+      default: 'never'
+    },
+    lastSyncedAt: {
+      type: Date
+    },
+    error: {
+      type: String,
+      trim: true
+    }
   }
 }, {
   timestamps: true
@@ -235,7 +253,6 @@ const ProductSchema: Schema<IProduct> = new Schema({
  */
 ProductSchema.index({ vendorId: 1, isActive: 1 });
 ProductSchema.index({ tags: 1, availability: 1 });
-ProductSchema.index({ category: 1, subcategory: 1 });
 ProductSchema.index({ slug: 1, vendorId: 1 }, { unique: true });
 ProductSchema.index({ name: 'text', description: 'text', keywords: 'text' });
 ProductSchema.index({ featured: 1, sortOrder: 1 });
@@ -275,6 +292,55 @@ ProductSchema.pre('save', function(next) {
 });
 
 /**
+ * Post-save hook: Auto-sync product to FlourIO when relevant fields change
+ * @description Automatically syncs product to FlourIO Article API when:
+ * - Product is newly created (isNew)
+ * - Relevant fields change (name, description, price, tags, images)
+ *
+ * Sync runs asynchronously via setImmediate() to avoid blocking save operation.
+ * Errors are logged but do not prevent product save from completing.
+ *
+ * @complexity O(1) for change detection, O(n) for sync operation where n is API latency
+ */
+ProductSchema.post('save', async function(doc) {
+  // Check if sync is needed based on modified fields
+  const shouldSync =
+    this.isNew || // New product
+    this.isModified('name') ||
+    this.isModified('description') ||
+    this.isModified('price') ||
+    this.isModified('tags') ||
+    this.isModified('images');
+
+  if (!shouldSync) {
+    return; // Skip sync if no relevant changes
+  }
+
+  // Async sync (don't block save operation)
+  setImmediate(async () => {
+    try {
+      // Dynamic imports to avoid circular dependency
+      const { ArticleService } = await import('../services/flourio/services/ArticleService');
+      const { FlourioClient } = await import('../services/flourio/client/FlourioClient');
+      const { flourioConfig } = await import('../services/flourio/client/config');
+
+      logger.info('[Product Hook] Auto-syncing product to FlourIO', { productId: doc._id });
+
+      const client = new FlourioClient(flourioConfig);
+      const articleService = new ArticleService(client);
+
+      await articleService.syncProduct(doc);
+
+      logger.info('[Product Hook] Successfully synced product', { productId: doc._id });
+    } catch (error: any) {
+      logger.error('[Product Hook] Failed to sync product', { productId: doc._id, error: error.message });
+      // Don't throw - sync errors should not break save operation
+      // TODO: Implement retry queue or alerting system
+    }
+  });
+});
+
+/**
  * Virtual field for primary image URL
  * @description Returns the primary image URL based on primaryImageIndex
  * @returns string|null - Primary image URL or null if no images
@@ -285,6 +351,20 @@ ProductSchema.virtual('primaryImage').get(function() {
     return this.images[this.primaryImageIndex] || this.images[0];
   }
   return null;
+});
+
+/**
+ * Virtual field for FlourIO category from tags
+ * @description Returns the first tag with flourioId (FlourIO category tag)
+ * @returns Tag|null - FlourIO category tag or null if not found
+ * @complexity O(1) with proper population
+ */
+ProductSchema.virtual('flourioCategory', {
+  ref: 'Tag',
+  localField: 'tags',
+  foreignField: '_id',
+  justOne: true,
+  match: { flourioId: { $exists: true, $ne: null } }
 });
 
 /**

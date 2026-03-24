@@ -9,6 +9,7 @@
 
 import fetch from 'node-fetch';
 import * as cheerio from 'cheerio';
+import logger from './logger';
 
 /**
  * Interface representing a Mailpit email message
@@ -86,7 +87,7 @@ export class EmailTestHelper {
           return await emailResponse.json() as MailpitEmail;
         }
       } catch (error) {
-        console.error('Error checking for email:', error);
+        logger.error('Error checking for email', { error });
       }
 
       // Wait 1 second before checking again
@@ -119,7 +120,7 @@ export class EmailTestHelper {
       
       return null;
     } catch (error) {
-      console.error('Error fetching latest email:', error);
+      logger.error('Error fetching latest email', { error });
       return null;
     }
   }
@@ -188,7 +189,7 @@ export class EmailTestHelper {
         method: 'DELETE'
       });
     } catch (error) {
-      console.error('Error deleting emails:', error);
+      logger.error('Error deleting emails', { error });
     }
   }
 
@@ -203,7 +204,7 @@ export class EmailTestHelper {
       const data = await response.json() as { total: number };
       return data.total;
     } catch (error) {
-      console.error('Error getting email count:', error);
+      logger.error('Error getting email count', { error });
       return 0;
     }
   }

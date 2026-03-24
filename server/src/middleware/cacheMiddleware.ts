@@ -8,6 +8,7 @@
 
 import { Request, Response, NextFunction } from 'express';
 import { cache } from '../utils/cache';
+import logger from '../utils/logger';
 
 /**
  * Cache middleware factory for API endpoints
@@ -55,7 +56,7 @@ export const cacheMiddleware = (ttlSeconds: number = 300) => {
 
       next();
     } catch (error) {
-      console.error('Cache middleware error:', error);
+      logger.error('Cache middleware error', { error });
       // If caching fails, continue without caching
       next();
     }
@@ -74,7 +75,7 @@ export const invalidateCache = (pattern: string): number => {
   
   keysToDelete.forEach(key => cache.delete(key));
   
-  console.log(`Cache invalidation: Removed ${keysToDelete.length} entries matching pattern: ${pattern}`);
+  logger.debug('Cache invalidation', { removedCount: keysToDelete.length, pattern });
   return keysToDelete.length;
 };
 

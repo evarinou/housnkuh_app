@@ -9,6 +9,7 @@
 
 import User from '../models/User';
 import { Tag } from '../models/Tag';
+import logger from './logger';
 
 /**
  * Assigns demo tags to a test vendor for demonstration purposes
@@ -20,16 +21,16 @@ import { Tag } from '../models/Tag';
  */
 export const assignDemoTags = async (): Promise<void> => {
   try {
-    console.log('🏷️  Assigning demo tags to test vendor...');
+    logger.info('Assigning demo tags to test vendor...');
     
     // Find the test vendor
     const vendor = await User.findOne({ 'kontakt.email': 'yoj84229@toaik.com' });
     if (!vendor) {
-      console.log('   Test vendor not found');
+      logger.info('Test vendor not found');
       return;
     }
 
-    console.log(`   Found vendor: ${vendor.kontakt.name} (${vendor.vendorProfile?.unternehmen})`);
+    logger.info('Found vendor', { name: vendor.kontakt.name, unternehmen: vendor.vendorProfile?.unternehmen });
 
     // Get some product tags
     const productTags = await Tag.find({ 
@@ -37,7 +38,7 @@ export const assignDemoTags = async (): Promise<void> => {
       isActive: true 
     }).limit(5);
 
-    console.log(`   Found ${productTags.length} product tags`);
+    logger.info('Found product tags', { count: productTags.length });
 
     // Assign tags to vendor
     if (!vendor.vendorProfile) {
@@ -49,15 +50,12 @@ export const assignDemoTags = async (): Promise<void> => {
     // Save vendor
     await vendor.save();
     
-    console.log(`   Assigned ${productTags.length} tags to vendor:`);
-    productTags.forEach(tag => {
-      console.log(`     - ${tag.name} (${tag.slug})`);
-    });
+    logger.info('Assigned tags to vendor', { count: productTags.length, tags: productTags.map(t => t.name) });
 
-    console.log('✅ Demo tags assigned successfully');
+    logger.info('Demo tags assigned successfully');
 
   } catch (error) {
-    console.error('❌ Error assigning demo tags:', error);
+    logger.error('Error assigning demo tags', { error });
     throw error;
   }
 };

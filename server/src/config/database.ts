@@ -5,6 +5,7 @@
  */
 
 import mongoose from 'mongoose';
+import logger from '../utils/logger';
 
 /**
  * Database configuration object with performance optimizations
@@ -64,12 +65,12 @@ export async function connectToDatabase(mongoUri: string): Promise<void> {
     if (process.env.NODE_ENV === 'development') {
       mongoose.set('debug', (collectionName: string, method: string, query: any, doc: any) => {
         const startTime = Date.now();
-        console.log(`🔍 MongoDB Query: ${collectionName}.${method}`, JSON.stringify(query, null, 2));
+        logger.debug('MongoDB Query', { collection: collectionName, method, query });
         
         // Log slow queries
         const duration = Date.now() - startTime;
         if (duration > DATABASE_CONFIG.monitoring.slowQueryThreshold) {
-          console.warn(`🐌 Slow query detected: ${duration}ms`);
+          logger.warn('Slow query detected', { durationMs: duration });
         }
       });
     }
@@ -77,23 +78,23 @@ export async function connectToDatabase(mongoUri: string): Promise<void> {
     // Connect with optimized options
     await mongoose.connect(mongoUri, DATABASE_CONFIG.connectionOptions);
     
-    console.log('✅ Connected to MongoDB with optimized settings');
+    logger.info('Connected to MongoDB with optimized settings');
     
     // Setup connection event listeners
     mongoose.connection.on('error', (err) => {
-      console.error('❌ MongoDB connection error:', err);
+      logger.error('MongoDB connection error', { error: err });
     });
     
     mongoose.connection.on('disconnected', () => {
-      console.log('🔌 MongoDB disconnected');
+      logger.info('MongoDB disconnected');
     });
     
     mongoose.connection.on('reconnected', () => {
-      console.log('🔄 MongoDB reconnected');
+      logger.info('MongoDB reconnected');
     });
     
   } catch (error) {
-    console.error('❌ Failed to connect to MongoDB:', error);
+    logger.error('Failed to connect to MongoDB', { error });
     throw error;
   }
 }
@@ -123,15 +124,15 @@ export class QueryPerformance {
       const duration = Date.now() - startTime;
       
       if (duration > DATABASE_CONFIG.monitoring.slowQueryThreshold) {
-        console.warn(`🐌 Slow query: ${queryName} took ${duration}ms`);
+        logger.warn('Slow query', { queryName, durationMs: duration });
       } else {
-        console.log(`⚡ Query: ${queryName} completed in ${duration}ms`);
+        logger.debug('Query completed', { queryName, durationMs: duration });
       }
       
       return result;
     } catch (error) {
       const duration = Date.now() - startTime;
-      console.error(`❌ Query failed: ${queryName} after ${duration}ms`, error);
+      logger.error('Query failed', { queryName, durationMs: duration, error });
       throw error;
     }
   }
@@ -151,10 +152,10 @@ export class QueryPerformance {
     
     try {
       const explanation = await model.find(query).explain('executionStats');
-      console.log('📊 Query explanation:', JSON.stringify(explanation, null, 2));
+      logger.debug('Query explanation', { explanation });
       return explanation;
     } catch (error) {
-      console.error('❌ Failed to explain query:', error);
+      logger.error('Failed to explain query', { error });
       return null;
     }
   }

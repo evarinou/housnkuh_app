@@ -7,6 +7,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { IDashboardMessage } from '../types/booking';
+import { apiUtils } from '../utils/auth';
 
 interface UseDashboardMessagesOptions {
   userId: string;
@@ -37,7 +38,7 @@ export const useDashboardMessages = ({ userId }: UseDashboardMessagesOptions) =>
       setError(null);
       
       const token = localStorage.getItem('vendorToken');
-      const response = await fetch(`http://localhost:4000/api/vendor-auth/dashboard/messages/${userId}`, {
+      const response = await fetch(`${apiUtils.getApiUrl()}/vendor-auth/dashboard/messages/${userId}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -66,7 +67,7 @@ export const useDashboardMessages = ({ userId }: UseDashboardMessagesOptions) =>
   const dismissMessage = useCallback(async (messageId: string) => {
     try {
       const token = localStorage.getItem('vendorToken');
-      const response = await fetch(`http://localhost:4000/api/vendor-auth/dashboard/messages/${messageId}`, {
+      const response = await fetch(`${apiUtils.getApiUrl()}/vendor-auth/dashboard/messages/${messageId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,

@@ -7,6 +7,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useVendorAuth } from '../../contexts/VendorAuthContext';
+import { apiUtils } from '../../utils/auth';
 import VendorLayout from '../../components/vendor/VendorLayout';
 
 /**
@@ -69,7 +70,7 @@ const VendorContractsPage: React.FC = () => {
   const fetchContracts = async () => {
     try {
       const token = localStorage.getItem('vendorToken');
-      const response = await fetch(`http://localhost:4000/api/vendor-auth/contracts/${user?.id}`, {
+      const response = await fetch(`${apiUtils.getApiUrl()}/vendor-auth/contracts/${user?.id}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -92,7 +93,7 @@ const VendorContractsPage: React.FC = () => {
     if (user?.id) {
       fetchContracts();
     }
-  }, [user?.id]);
+  }, [user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /**
    * Formats date string for German locale display

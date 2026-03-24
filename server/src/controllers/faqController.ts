@@ -6,6 +6,7 @@
 
 import { Request, Response } from 'express';
 import FAQ, { IFAQ } from '../models/FAQ';
+import logger from '../utils/logger';
 
 /**
  * FAQ controller object with all FAQ management methods
@@ -32,7 +33,7 @@ export const faqController = {
         faqs
       });
     } catch (error) {
-      console.error('Error fetching public FAQs:', error);
+      logger.error('Error fetching public FAQs:', error);
       res.status(500).json({
         success: false,
         message: 'Fehler beim Abrufen der FAQs'
@@ -60,7 +61,7 @@ export const faqController = {
         faqs
       });
     } catch (error) {
-      console.error('Error fetching admin FAQs:', error);
+      logger.error('Error fetching admin FAQs:', error);
       res.status(500).json({
         success: false,
         message: 'Fehler beim Abrufen der FAQs'
@@ -94,7 +95,7 @@ export const faqController = {
         faq
       });
     } catch (error) {
-      console.error('Error fetching FAQ:', error);
+      logger.error('Error fetching FAQ:', error);
       res.status(500).json({
         success: false,
         message: 'Fehler beim Abrufen der FAQ'
@@ -141,7 +142,7 @@ export const faqController = {
         faq: newFAQ
       });
     } catch (error: any) {
-      console.error('Error creating FAQ:', error);
+      logger.error('Error creating FAQ:', error);
       
       // Handle validation errors
       if (error.name === 'ValidationError') {
@@ -192,7 +193,7 @@ export const faqController = {
         faq: updatedFAQ
       });
     } catch (error: any) {
-      console.error('Error updating FAQ:', error);
+      logger.error('Error updating FAQ:', error);
       
       // Handle validation errors
       if (error.name === 'ValidationError') {
@@ -237,7 +238,7 @@ export const faqController = {
         message: 'FAQ erfolgreich gelöscht'
       });
     } catch (error) {
-      console.error('Error deleting FAQ:', error);
+      logger.error('Error deleting FAQ:', error);
       res.status(500).json({
         success: false,
         message: 'Fehler beim Löschen der FAQ'
@@ -276,7 +277,7 @@ export const faqController = {
         faq
       });
     } catch (error) {
-      console.error('Error toggling FAQ status:', error);
+      logger.error('Error toggling FAQ status:', error);
       res.status(500).json({
         success: false,
         message: 'Fehler beim Ändern des FAQ-Status'
@@ -316,7 +317,7 @@ export const faqController = {
         message: 'FAQ-Reihenfolge erfolgreich aktualisiert'
       });
     } catch (error) {
-      console.error('Error reordering FAQs:', error);
+      logger.error('Error reordering FAQs:', error);
       res.status(500).json({
         success: false,
         message: 'Fehler beim Aktualisieren der FAQ-Reihenfolge'

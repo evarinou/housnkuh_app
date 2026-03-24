@@ -5,6 +5,7 @@
  */
 
 import mongoose, { Schema, Document } from 'mongoose';
+import logger from '../utils/logger';
 
 /**
  * Interface for PackageTracking document
@@ -102,7 +103,7 @@ PackageTrackingSchema.pre('save', function(next) {
  */
 PackageTrackingSchema.post('save', function(doc) {
   // TODO: Trigger email notifications based on status changes
-  console.log(`Package tracking updated: ${doc.vertrag_id} - ${doc.status}`);
+  logger.info('Package tracking updated', { vertragId: doc.vertrag_id, status: doc.status });
 });
 
 /**

@@ -10,6 +10,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import config from '../config/config';
 import securityLogger from '../utils/securityLogger';
+import logger from '../utils/logger';
 
 /**
  * Authenticates admin users and generates JWT tokens
@@ -106,7 +107,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       }
     });
   } catch (err) {
-    console.error('Login-Fehler:', err);
+    logger.error('Login-Fehler:', err);
     securityLogger.logLoginAttempt(req, req.body.username || 'unknown', false, { 
       reason: 'server_error',
       error: err instanceof Error ? err.message : 'Unknown error' 
@@ -128,20 +129,19 @@ export const login = async (req: Request, res: Response): Promise<void> => {
  * @security Requires valid setup key, prevents multiple admin creation, includes security logging
  */
 export const setupAdmin = async (req: Request, res: Response): Promise<void> => {
-  console.log('=== CONTROLLER REACHED ===');
-  console.log('Setup request body:', JSON.stringify(req.body, null, 2));
-  console.log('Email from body:', req.body.email);
-  console.log('All fields:', Object.keys(req.body));
-  console.log('========================');
+  logger.debug('Admin setup controller reached', {
+    fields: Object.keys(req.body),
+    email: req.body.email
+  });
   
   try {
     
     // Try to drop the index temporarily
     try {
       await User.collection.dropIndex('email_unique');
-      console.log('Dropped email_unique index');
+      logger.debug('Dropped email_unique index');
     } catch (indexError) {
-      console.log('Could not drop index:', indexError);
+      logger.debug('Could not drop index:', indexError);
     }
     
     // Überprüfe, ob bereits ein Admin existiert
@@ -221,7 +221,7 @@ export const setupAdmin = async (req: Request, res: Response): Promise<void> => 
       }
     });
   } catch (err) {
-    console.error('Fehler bei der Admin-Erstellung:', err);
+    logger.error('Fehler bei der Admin-Erstellung:', err);
     securityLogger.logAdminSetup(req, req.body.username || 'unknown', false, { 
       reason: 'server_error',
       error: err instanceof Error ? err.message : 'Unknown error' 

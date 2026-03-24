@@ -8,6 +8,7 @@
 
 // server/src/services/priceValidationService.ts
 import { ZUSATZLEISTUNGEN_PRICING } from '../types/zusatzleistungenTypes';
+import logger from '../utils/logger';
 
 /**
  * @interface BackendPriceCalculation
@@ -120,7 +121,7 @@ export class PriceValidationService {
       source: 'booking' | 'assignment' | 'update';
     }
   ): void {
-    console.log(`[PRICE_AUDIT] ${new Date().toISOString()}`, {
+    logger.info('[PRICE_AUDIT]', {
       ...context,
       calculation,
       timestamp: Date.now()

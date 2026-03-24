@@ -7,6 +7,7 @@
 import { Request, Response } from 'express';
 import VendorContest from '../models/VendorContest';
 import { sendVendorContestEmail } from '../utils/emailService';
+import logger from '../utils/logger';
 
 /**
  * Validiert die Eingaben des Vendor Contest Formulars
@@ -60,7 +61,7 @@ const validateVendorContestForm = (data: any): { valid: boolean; errors?: string
  */
 export const submitVendorContest = async (req: Request, res: Response): Promise<void> => {
   try {
-    console.log('Vendor Contest Formular erhalten:', req.body);
+    logger.debug('Vendor Contest Formular erhalten', { body: req.body });
     
     // Validierung der Formularfelder
     const validation = validateVendorContestForm(req.body);
@@ -91,7 +92,7 @@ export const submitVendorContest = async (req: Request, res: Response): Promise<
         phone: contestData.phone
       });
     } catch (emailError) {
-      console.error('Fehler beim Versenden der E-Mail:', emailError);
+      logger.error('Fehler beim Versenden der E-Mail:', emailError);
       // Fortsetzung trotz E-Mail-Fehler, da die Daten gespeichert wurden
     }
     
@@ -101,7 +102,7 @@ export const submitVendorContest = async (req: Request, res: Response): Promise<
     });
     
   } catch (error) {
-    console.error('Fehler bei der Verarbeitung des Vendor Contest Formulars:', error);
+    logger.error('Fehler bei der Verarbeitung des Vendor Contest Formulars:', error);
     res.status(500).json({ 
       success: false, 
       message: 'Es ist ein Fehler aufgetreten. Bitte versuche es später noch einmal.'
@@ -121,7 +122,7 @@ export const getVendorContests = async (req: Request, res: Response): Promise<vo
       data: contests
     });
   } catch (error) {
-    console.error('Fehler beim Abrufen der Vendor Contest Einträge:', error);
+    logger.error('Fehler beim Abrufen der Vendor Contest Einträge:', error);
     res.status(500).json({
       success: false,
       message: 'Fehler beim Abrufen der Vendor Contest Einträge'
@@ -155,7 +156,7 @@ export const getVendorContest = async (req: Request, res: Response): Promise<voi
       data: contest
     });
   } catch (error) {
-    console.error('Fehler beim Abrufen des Vendor Contest Eintrags:', error);
+    logger.error('Fehler beim Abrufen des Vendor Contest Eintrags:', error);
     res.status(500).json({
       success: false,
       message: 'Fehler beim Abrufen des Vendor Contest Eintrags'
@@ -192,7 +193,7 @@ export const updateVendorContest = async (req: Request, res: Response): Promise<
       data: contest
     });
   } catch (error) {
-    console.error('Fehler beim Aktualisieren des Vendor Contest Eintrags:', error);
+    logger.error('Fehler beim Aktualisieren des Vendor Contest Eintrags:', error);
     res.status(500).json({
       success: false,
       message: 'Fehler beim Aktualisieren des Vendor Contest Eintrags'
@@ -220,7 +221,7 @@ export const deleteVendorContest = async (req: Request, res: Response): Promise<
       message: 'Vendor Contest Eintrag erfolgreich gelöscht'
     });
   } catch (error) {
-    console.error('Fehler beim Löschen des Vendor Contest Eintrags:', error);
+    logger.error('Fehler beim Löschen des Vendor Contest Eintrags:', error);
     res.status(500).json({
       success: false,
       message: 'Fehler beim Löschen des Vendor Contest Eintrags'
@@ -260,7 +261,7 @@ export const getVendorContestStats = async (req: Request, res: Response): Promis
       }
     });
   } catch (error) {
-    console.error('Fehler beim Abrufen der Vendor Contest Statistiken:', error);
+    logger.error('Fehler beim Abrufen der Vendor Contest Statistiken:', error);
     res.status(500).json({
       success: false,
       message: 'Fehler beim Abrufen der Vendor Contest Statistiken'

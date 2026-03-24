@@ -8,6 +8,7 @@
  */
 
 import { Request } from 'express';
+import logger from './logger';
 
 /**
  * Interface representing a security event in the system
@@ -82,7 +83,7 @@ class SecurityLogger {
    * @security Logs sensitive security events
    */
   private log(event: SecurityEvent) {
-    console.log(`[SECURITY] ${event.severity.toUpperCase()}: ${event.event}`, {
+    logger.info(`[SECURITY] ${event.severity.toUpperCase()}: ${event.event}`, {
       timestamp: event.timestamp,
       userId: event.userId,
       email: event.email,

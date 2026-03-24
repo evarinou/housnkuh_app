@@ -8,6 +8,7 @@
 
 import { EventEmitter } from 'events';
 import { BookingStatus } from '../types/modelTypes';
+import logger from './logger';
 
 /**
  * Interface for booking event data
@@ -54,7 +55,7 @@ class BookingEventEmitter extends EventEmitter {
    * @complexity O(n) where n is number of listeners
    */
   emitStatusChange(bookingEvent: BookingEvent): void {
-    console.log(`Booking status changed: ${bookingEvent.bookingId} -> ${bookingEvent.status}`);
+    logger.info('Booking status changed', { bookingId: bookingEvent.bookingId, status: bookingEvent.status });
     this.emit('statusChanged', bookingEvent);
   }
 
@@ -81,20 +82,14 @@ const bookingEvents = new BookingEventEmitter();
 // Set up default event handlers
 bookingEvents.onStatusChanged(async (booking: BookingEvent) => {
   try {
-    console.log(`Processing status change for booking ${booking.bookingId}:`);
-    console.log(`- User: ${booking.userId}`);
-    console.log(`- New Status: ${booking.status}`);
-    console.log(`- Timestamp: ${booking.timestamp}`);
+    logger.info('Processing status change for booking', { bookingId: booking.bookingId, userId: booking.userId, status: booking.status, timestamp: booking.timestamp });
     
     // Update dashboard notifications (placeholder)
     await updateDashboardNotifications(booking.userId, booking.status);
     
     // Queue email notifications for confirmed bookings
     if (booking.status === BookingStatus.CONFIRMED) {
-      console.log(`Queueing confirmation email for user ${booking.userId}`);
-      // Note: This is handled by the admin controller now with enhanced emails
-      // The booking confirmation is triggered by the admin assignment process
-      console.log(`Booking ${booking.bookingId} confirmed - email handled by admin flow`);
+      logger.info('Booking confirmed - email handled by admin flow', { bookingId: booking.bookingId, userId: booking.userId });
     }
     
     // Log the transition for audit purposes
@@ -107,7 +102,7 @@ bookingEvents.onStatusChanged(async (booking: BookingEvent) => {
     });
     
   } catch (error) {
-    console.error('Error processing booking status change:', error);
+    logger.error('Error processing booking status change', { error });
   }
 });
 
@@ -123,7 +118,7 @@ bookingEvents.onStatusChanged(async (booking: BookingEvent) => {
 async function updateDashboardNotifications(userId: string, status: BookingStatus): Promise<void> {
   // This would integrate with the dashboard notification system
   // For now, just log the action
-  console.log(`Dashboard notification updated for user ${userId}: status = ${status}`);
+  logger.debug('Dashboard notification updated', { userId, status });
   
   // In a full implementation, this might:
   // 1. Update a notifications collection in the database
@@ -154,7 +149,7 @@ async function auditLog(entry: {
 }): Promise<void> {
   // This would write to an audit log table/collection
   // For now, just log to console
-  console.log('AUDIT LOG:', JSON.stringify(entry, null, 2));
+  logger.info('AUDIT LOG', entry);
   
   // In a full implementation, this might:
   // 1. Write to a dedicated audit collection

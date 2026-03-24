@@ -10,6 +10,7 @@
 
 import Bull from 'bull';
 import { sendBookingConfirmationWithSchedule } from './emailService';
+import logger from './logger';
 
 /**
  * Enhanced email job data interfaces for type safety and structure
@@ -84,6 +85,18 @@ interface StatusUpdateJobData extends BaseEmailJobData {
   details?: any;
 }
 
+/** Invoice notification job data */
+interface InvoiceNotificationJobData extends BaseEmailJobData {
+  type: 'invoiceNotification';
+  invoiceId: string;
+  email: string;
+  vendorId: string;
+  invoiceNumber: string;
+  totalAmount: number;
+  dueDate: Date;
+  pdfBuffer?: Buffer; // PDF attachment data
+}
+
 // Remove unused type - keeping interfaces for export
 // type EmailJobData = BookingConfirmationJobData | TrialActivationJobData | StatusUpdateJobData;
 
@@ -125,9 +138,9 @@ class EmailQueueService {
       this.setupEventHandlers();
       this.isInitialized = true;
       
-      console.log('✅ Email queue initialized with Redis/Bull');
+      logger.info('Email queue initialized with Redis/Bull');
     } catch (error) {
-      console.error('❌ Failed to initialize email queue with Redis, falling back to in-memory queue:', error);
+      logger.error('Failed to initialize email queue with Redis, falling back to in-memory queue', { error });
       this.initializeFallbackQueue();
     }
   }
@@ -139,7 +152,7 @@ class EmailQueueService {
     // Process booking confirmation emails
     this.queue.process('booking-confirmation', QUEUE_CONFIG.concurrency, async (job: Bull.Job<BookingConfirmationJobData>) => {
       const data = job.data as BookingConfirmationJobData;
-      console.log(`📧 Processing booking confirmation email for user ${data.userId} (Job ID: ${job.id})`);
+      logger.info('Processing booking confirmation email', { userId: data.userId, jobId: job.id });
       
       try {
         await this.processBookingConfirmation(data);
@@ -154,7 +167,7 @@ class EmailQueueService {
           jobId: job.id
         };
       } catch (error) {
-        console.error(`❌ Booking confirmation email failed for user ${data.userId}:`, error);
+        logger.error('Booking confirmation email failed', { userId: data.userId, error });
         throw error; // Will trigger Bull's retry mechanism
       }
     });
@@ -162,13 +175,13 @@ class EmailQueueService {
     // Process trial activation emails
     this.queue.process('trial-activation', QUEUE_CONFIG.concurrency, async (job: Bull.Job<TrialActivationJobData>) => {
       const data = job.data as TrialActivationJobData;
-      console.log(`📧 Processing trial activation email for user ${data.userId} (Job ID: ${job.id})`);
+      logger.info('Processing trial activation email', { userId: data.userId, jobId: job.id });
       
       try {
         await this.processTrialActivation(data);
         return { success: true, sentAt: new Date() };
       } catch (error) {
-        console.error(`❌ Trial activation email failed for user ${data.userId}:`, error);
+        logger.error('Trial activation email failed', { userId: data.userId, error });
         throw error;
       }
     });
@@ -176,14 +189,42 @@ class EmailQueueService {
     // Process status update emails
     this.queue.process('status-update', QUEUE_CONFIG.concurrency, async (job: Bull.Job<StatusUpdateJobData>) => {
       const data = job.data as StatusUpdateJobData;
-      console.log(`📧 Processing status update email for user ${data.userId} (Job ID: ${job.id})`);
+      logger.info('Processing status update email', { userId: data.userId, jobId: job.id });
       
       try {
         await this.processStatusUpdate(data);
         return { success: true, sentAt: new Date() };
       } catch (error) {
-        console.error(`❌ Status update email failed for user ${data.userId}:`, error);
+        logger.error('Status update email failed', { userId: data.userId, error });
         throw error;
+      }
+    });
+
+    // Process invoice notification emails
+    this.queue.process('invoice-notification', QUEUE_CONFIG.concurrency, async (job: Bull.Job<InvoiceNotificationJobData>) => {
+      const data = job.data as InvoiceNotificationJobData;
+      logger.info('Processing invoice notification email', { email: data.email, jobId: job.id });
+      
+      try {
+        await this.processInvoiceNotification(data);
+        
+        // Update invoice email status to indicate email sent
+        await this.updateInvoiceEmailStatus(data.invoiceId, 'sent', new Date(), job.id?.toString());
+        
+        return { 
+          success: true, 
+          sentAt: new Date(),
+          emailSent: data.email,
+          invoiceNumber: data.invoiceNumber,
+          jobId: job.id
+        };
+      } catch (error) {
+        logger.error('Invoice notification email failed', { email: data.email, error });
+        
+        // Update invoice email status to indicate failure
+        await this.updateInvoiceEmailStatus(data.invoiceId, 'failed', new Date(), job.id?.toString());
+        
+        throw error; // Will trigger Bull's retry mechanism
       }
     });
   }
@@ -193,11 +234,11 @@ class EmailQueueService {
     if (!this.queue) return;
     
     this.queue.on('completed', (job: Bull.Job, result: any) => {
-      console.log(`✅ Email job ${job.id} completed successfully:`, result);
+      logger.info('Email job completed successfully', { jobId: job.id, result });
     });
 
     this.queue.on('failed', (job: Bull.Job, err: Error) => {
-      console.error(`❌ Email job ${job.id} failed after ${job.attemptsMade} attempts:`, err.message);
+      logger.error('Email job failed', { jobId: job.id, attempts: job.attemptsMade, error: err.message });
       
       // Alert admin after all retries exhausted
       if (job.attemptsMade >= (job.opts.attempts || 3)) {
@@ -206,11 +247,11 @@ class EmailQueueService {
     });
 
     this.queue.on('stalled', (job: Bull.Job) => {
-      console.warn(`⚠️ Email job ${job.id} stalled`);
+      logger.warn('Email job stalled', { jobId: job.id });
     });
 
     this.queue.on('active', (job: Bull.Job) => {
-      console.log(`🔄 Email job ${job.id} started processing`);
+      logger.debug('Email job started processing', { jobId: job.id });
     });
   }
 
@@ -218,7 +259,7 @@ class EmailQueueService {
   async addBookingConfirmationEmail(data: Omit<BookingConfirmationJobData, 'type'>): Promise<string> {
     try {
       if (!this.queue || !this.isInitialized) {
-        console.warn('Email queue not available, processing email immediately');
+        logger.warn('Email queue not available, processing email immediately');
         // Process immediately as fallback
         await this.processBookingConfirmation({
           ...data,
@@ -242,10 +283,10 @@ class EmailQueueService {
         }
       });
 
-      console.log(`📬 Booking confirmation email queued for ${data.email} (Job ID: ${job.id})`);
+      logger.info('Booking confirmation email queued', { email: data.email, jobId: job.id });
       return job.id.toString();
     } catch (error) {
-      console.error('Failed to queue booking confirmation email:', error);
+      logger.error('Failed to queue booking confirmation email', { error });
       throw error;
     }
   }
@@ -254,7 +295,7 @@ class EmailQueueService {
   async addTrialActivationEmail(data: Omit<TrialActivationJobData, 'type'>): Promise<string> {
     try {
       if (!this.queue || !this.isInitialized) {
-        console.warn('Email queue not available, processing trial activation immediately');
+        logger.warn('Email queue not available, processing trial activation immediately');
         await this.processTrialActivation({
           ...data,
           type: 'trialActivation',
@@ -270,10 +311,10 @@ class EmailQueueService {
       };
 
       const job = await this.queue.add('trial-activation', jobData);
-      console.log(`📬 Trial activation email queued for user ${data.userId} (Job ID: ${job.id})`);
+      logger.info('Trial activation email queued', { userId: data.userId, jobId: job.id });
       return job.id.toString();
     } catch (error) {
-      console.error('Failed to queue trial activation email:', error);
+      logger.error('Failed to queue trial activation email', { error });
       throw error;
     }
   }
@@ -282,7 +323,7 @@ class EmailQueueService {
   async addStatusUpdateEmail(data: Omit<StatusUpdateJobData, 'type'>): Promise<string> {
     try {
       if (!this.queue || !this.isInitialized) {
-        console.warn('Email queue not available, processing status update immediately');
+        logger.warn('Email queue not available, processing status update immediately');
         await this.processStatusUpdate({
           ...data,
           type: 'statusUpdate',
@@ -298,10 +339,46 @@ class EmailQueueService {
       };
 
       const job = await this.queue.add('status-update', jobData);
-      console.log(`📬 Status update email queued for user ${data.userId} (Job ID: ${job.id})`);
+      logger.info('Status update email queued', { userId: data.userId, jobId: job.id });
       return job.id.toString();
     } catch (error) {
-      console.error('Failed to queue status update email:', error);
+      logger.error('Failed to queue status update email', { error });
+      throw error;
+    }
+  }
+
+  // Add invoice notification email to queue
+  async addInvoiceNotificationEmail(data: Omit<InvoiceNotificationJobData, 'type' | 'createdAt'>): Promise<string> {
+    try {
+      if (!this.queue || !this.isInitialized) {
+        logger.warn('Email queue not available, processing invoice notification immediately');
+        await this.processInvoiceNotification({
+          ...data,
+          type: 'invoiceNotification',
+          createdAt: new Date()
+        });
+        return 'immediate-' + Date.now();
+      }
+
+      const jobData: InvoiceNotificationJobData = {
+        ...data,
+        type: 'invoiceNotification',
+        createdAt: new Date()
+      };
+
+      const job = await this.queue.add('invoice-notification', jobData, {
+        attempts: 3,
+        backoff: {
+          type: 'exponential',
+          delay: 2000
+        },
+        delay: 5000 // 5 second delay to allow PDF generation to complete
+      });
+
+      logger.info('Invoice notification email queued', { email: data.email, jobId: job.id });
+      return job.id.toString();
+    } catch (error) {
+      logger.error('Failed to queue invoice notification email', { error });
       throw error;
     }
   }
@@ -321,9 +398,9 @@ class EmailQueueService {
         totalMonthlyPrice: data.mietfachDetails.reduce((sum, mf) => sum + mf.adjustedPrice, 0)
       });
 
-      console.log(`📧 Enhanced booking confirmation email sent to ${data.email}`);
+      logger.info('Enhanced booking confirmation email sent', { email: data.email });
     } catch (error) {
-      console.error('Error processing booking confirmation:', error);
+      logger.error('Error processing booking confirmation', { error });
       throw error;
     }
   }
@@ -331,13 +408,100 @@ class EmailQueueService {
   // Process trial activation email
   private async processTrialActivation(data: TrialActivationJobData): Promise<void> {
     // TODO: Implement trial activation email logic
-    console.log(`📧 Trial activation email processed for user: ${data.userId}`);
+    logger.info('Trial activation email processed', { userId: data.userId });
   }
 
   // Process status update email
   private async processStatusUpdate(data: StatusUpdateJobData): Promise<void> {
     // TODO: Implement status update email logic
-    console.log(`📧 Status update email processed for user: ${data.userId}, status: ${data.status}`);
+    logger.info('Status update email processed', { userId: data.userId, status: data.status });
+  }
+
+  // Process invoice notification email
+  private async processInvoiceNotification(data: InvoiceNotificationJobData): Promise<void> {
+    try {
+      const { sendInvoiceNotification } = require('./emailService');
+      const Invoice = require('../models/Invoice').default;
+      const User = require('../models/User').default;
+      
+      // Get invoice and vendor details
+      const invoice = await Invoice.findById(data.invoiceId).populate('vendor');
+      if (!invoice) {
+        throw new Error(`Invoice not found: ${data.invoiceId}`);
+      }
+      
+      const vendor = invoice.vendor;
+      if (!vendor) {
+        throw new Error(`Vendor not found for invoice: ${data.invoiceId}`);
+      }
+      
+      // Generate PDF if not provided
+      let pdfBuffer = data.pdfBuffer;
+      if (!pdfBuffer) {
+        const { generateInvoicePDF } = require('../services/invoiceGenerationService');
+        pdfBuffer = await generateInvoicePDF(invoice);
+      }
+      
+      // Company info for template
+      const companyInfo = {
+        name: process.env.COMPANY_NAME || 'housnkuh',
+        address: process.env.COMPANY_ADDRESS || 'Musterstraße 1, 12345 Musterstadt',
+        email: process.env.COMPANY_EMAIL || process.env.EMAIL_FROM,
+        phone: process.env.COMPANY_PHONE,
+        website: process.env.COMPANY_WEBSITE,
+        taxId: process.env.COMPANY_TAX_ID
+      };
+      
+      // Send invoice notification
+      await sendInvoiceNotification({
+        invoice: invoice.toObject(),
+        vendor: vendor.toObject(),
+        pdfBuffer,
+        companyInfo
+      });
+      
+      logger.info('Invoice notification email sent', { email: vendor.email, invoiceNumber: invoice.invoiceNumber });
+    } catch (error) {
+      logger.error('Error processing invoice notification', { error });
+      throw error;
+    }
+  }
+
+  // Update invoice email status in database
+  private async updateInvoiceEmailStatus(
+    invoiceId: string, 
+    status: 'pending' | 'sent' | 'failed' | 'retrying', 
+    timestamp: Date,
+    jobId?: string
+  ): Promise<void> {
+    try {
+      const Invoice = require('../models/Invoice').default;
+      const updateData: any = {
+        emailStatus: status,
+        lastEmailAttempt: timestamp
+      };
+      
+      if (status === 'sent') {
+        updateData.emailSentAt = timestamp;
+      }
+      
+      if (jobId) {
+        updateData.emailJobId = jobId;
+      }
+      
+      // Increment attempt counter
+      await Invoice.updateOne(
+        { _id: invoiceId },
+        { 
+          $set: updateData,
+          $inc: { emailAttempts: 1 }
+        }
+      );
+      
+      logger.info('Invoice email status updated', { invoiceId, status });
+    } catch (error) {
+      logger.error('Failed to update invoice email status', { error });
+    }
   }
 
   // Update booking email status in database
@@ -354,18 +518,17 @@ class EmailQueueService {
         }
       );
     } catch (error) {
-      console.error('Failed to update booking email status:', error);
+      logger.error('Failed to update booking email status', { error });
     }
   }
 
   // Alert admin of email failure
   private alertAdminOfEmailFailure(jobData: any, error: Error): void {
-    console.error('🚨 ADMIN ALERT: Email delivery failed permanently:', {
+    logger.error('ADMIN ALERT: Email delivery failed permanently', {
       userId: jobData.userId,
       email: jobData.email,
       type: jobData.type,
-      error: error.message,
-      timestamp: new Date()
+      error: error.message
     });
     
     // TODO: Implement admin notification system (Slack, Discord, email to admin)
@@ -394,7 +557,7 @@ class EmailQueueService {
 
       return { waiting, active, completed, failed, delayed };
     } catch (error) {
-      console.error('Failed to get queue stats:', error);
+      logger.error('Failed to get queue stats', { error });
       return { waiting: 0, active: 0, completed: 0, failed: 0, delayed: 0 };
     }
   }
@@ -408,7 +571,7 @@ class EmailQueueService {
       const jobs = await this.queue.getJobs(['completed', 'failed', 'active', 'waiting'], 0, limit);
       return jobs;
     } catch (error) {
-      console.error('Failed to get recent jobs:', error);
+      logger.error('Failed to get recent jobs', { error });
       return [];
     }
   }
@@ -427,16 +590,16 @@ class EmailQueueService {
         try {
           await job.retry();
           retriedCount++;
-          console.log(`🔄 Retrying failed email job ${job.id}`);
+          logger.info('Retrying failed email job', { jobId: job.id });
         } catch (error) {
-          console.error(`Failed to retry job ${job.id}:`, error);
+          logger.error('Failed to retry job', { jobId: job.id, error });
         }
       }
 
-      console.log(`🔄 Retried ${retriedCount} failed email jobs`);
+      logger.info('Retried failed email jobs', { count: retriedCount });
       return retriedCount;
     } catch (error) {
-      console.error('Failed to retry failed jobs:', error);
+      logger.error('Failed to retry failed jobs', { error });
       return 0;
     }
   }
@@ -446,17 +609,17 @@ class EmailQueueService {
     try {
       if (!this.queue) return;
       
-      console.log('🔄 Shutting down email queue...');
+      logger.info('Shutting down email queue...');
       await this.queue.close();
-      console.log('✅ Email queue shutdown complete');
+      logger.info('Email queue shutdown complete');
     } catch (error) {
-      console.error('Error during email queue shutdown:', error);
+      logger.error('Error during email queue shutdown', { error });
     }
   }
 
   // Fallback to in-memory queue if Redis is not available
   private initializeFallbackQueue(): void {
-    console.warn('⚠️ Using in-memory email queue fallback');
+    logger.warn('Using in-memory email queue fallback');
     // Keep the existing in-memory logic as fallback
     this.isInitialized = false;
   }
@@ -470,7 +633,7 @@ class EmailQueueService {
       await this.queue.getWaitingCount();
       return true;
     } catch (error) {
-      console.error('Email queue health check failed:', error);
+      logger.error('Email queue health check failed', { error });
       return false;
     }
   }
@@ -480,5 +643,5 @@ class EmailQueueService {
 const emailQueue = new EmailQueueService();
 
 export { emailQueue, EmailQueueService };
-export type { BookingConfirmationJobData, TrialActivationJobData, StatusUpdateJobData };
+export type { BookingConfirmationJobData, TrialActivationJobData, StatusUpdateJobData, InvoiceNotificationJobData };
 export default emailQueue;

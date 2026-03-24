@@ -3,9 +3,10 @@
  */
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useMemo } from 'react';
-import { 
-  tokenStorage, 
-  userStorage
+import {
+  tokenStorage,
+  userStorage,
+  apiUtils
 } from '../utils/auth';
 import { useVendorRegistration } from '../hooks/useVendorRegistration';
 import { usePriceCalculation } from '../hooks/usePriceCalculation';
@@ -68,7 +69,6 @@ export const VendorAuthProvider: React.FC<VendorAuthProviderProps> = React.memo(
   }, [priceCalculation]);
 
   const logout = useCallback((): void => {
-    console.log('🚨 VendorAuthContext.logout() - CALLED', new Error().stack);
     authOperationsService.logout(() => {
       setToken(null);
       setUser(null);
@@ -82,7 +82,7 @@ export const VendorAuthProvider: React.FC<VendorAuthProviderProps> = React.memo(
     // Skip if checked recently (within 30 seconds) unless forced
     const timeSinceLastCheck = Date.now() - lastAuthCheck;
     if (!force && timeSinceLastCheck < 30000) {
-      console.log(`Skipping auth check, last check was ${Math.round(timeSinceLastCheck / 1000)}s ago`);
+      // Auth check skipped — within 30s cooldown
       return true; // Assume still valid
     }
 
@@ -135,7 +135,7 @@ export const VendorAuthProvider: React.FC<VendorAuthProviderProps> = React.memo(
     
     setIsBookingsLoading(true);
     try {
-      const response = await fetch(`http://localhost:4000/api/vendor-auth/bookings/${user.id}`, {
+      const response = await fetch(`${apiUtils.getApiUrl()}/vendor-auth/bookings/${user.id}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'

@@ -1,5 +1,6 @@
 import * as cron from 'node-cron';
 import { revenueService } from '../services/revenueService';
+import logger from '../utils/logger';
 
 export class RevenueCalculationJob {
   private static task: cron.ScheduledTask | null = null;
@@ -11,7 +12,7 @@ export class RevenueCalculationJob {
    * Run the monthly revenue calculation
    */
   static async run(): Promise<void> {
-    console.log('🔢 Starting monthly revenue calculation...');
+    logger.info('Starting monthly revenue calculation...');
     
     try {
       const now = new Date();
@@ -29,31 +30,31 @@ export class RevenueCalculationJob {
         now.getMonth() + 1
       );
       
-      console.log('✅ Revenue calculation completed successfully');
+      logger.info('Revenue calculation completed successfully');
       
       // Optional: Send notification to admin (if available)
       try {
-        console.log(`✅ Revenue calculation completed for ${lastMonth.toLocaleDateString('de-DE', { month: 'long', year: 'numeric' })}`);
+        logger.info('Revenue calculation completed', { period: lastMonth.toLocaleDateString('de-DE', { month: 'long', year: 'numeric' }) });
         // Email notification would be implemented here if needed
       } catch (emailError) {
-        console.warn('⚠️ Failed to send admin notification:', emailError);
+        logger.warn('Failed to send admin notification', { error: emailError });
         // Don't fail the entire job if email fails
       }
       
     } catch (error) {
-      console.error('❌ Revenue calculation failed:', error);
+      logger.error('Revenue calculation failed', { error });
       
       try {
-        console.error(`❌ Revenue calculation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        logger.error('Revenue calculation failed', { error: error instanceof Error ? error.message : 'Unknown error' });
         // Email alert would be implemented here if needed
       } catch (emailError) {
-        console.error('❌ Failed to send failure alert:', emailError);
+        logger.error('Failed to send failure alert', { error: emailError });
       }
       
       // Retry in 1 hour
-      console.log('⏰ Scheduling retry in 1 hour...');
+      logger.info('Scheduling retry in 1 hour...');
       setTimeout(() => {
-        console.log('🔄 Retrying revenue calculation...');
+        logger.info('Retrying revenue calculation...');
         this.run();
       }, 3600000);
     }
@@ -63,13 +64,13 @@ export class RevenueCalculationJob {
    * Manual trigger for revenue calculation
    */
   static async calculateForMonth(year: number, month: number): Promise<void> {
-    console.log(`🔢 Manual revenue calculation for ${month}/${year}...`);
+    logger.info('Manual revenue calculation started', { month, year });
     
     try {
       await revenueService.calculateMonthlyRevenue(year, month);
-      console.log(`✅ Revenue calculation for ${month}/${year} completed successfully`);
+      logger.info('Revenue calculation completed successfully', { month, year });
     } catch (error) {
-      console.error(`❌ Revenue calculation for ${month}/${year} failed:`, error);
+      logger.error('Revenue calculation failed', { month, year, error });
       throw error;
     }
   }
@@ -79,7 +80,7 @@ export class RevenueCalculationJob {
    */
   static init(): void {
     if (this.task) {
-      console.log('⚠️ Revenue calculation job already scheduled');
+      logger.warn('Revenue calculation job already scheduled');
       return;
     }
     
@@ -88,7 +89,7 @@ export class RevenueCalculationJob {
     });
     
     this.task.start();
-    console.log('📅 Revenue calculation job scheduled for 1st of each month at 02:00');
+    logger.info('Revenue calculation job scheduled for 1st of each month at 02:00');
   }
   
   /**
@@ -99,7 +100,7 @@ export class RevenueCalculationJob {
       this.task.stop();
       this.task.destroy();
       this.task = null;
-      console.log('🛑 Revenue calculation job stopped');
+      logger.info('Revenue calculation job stopped');
     }
   }
   

@@ -7,6 +7,7 @@
 import { Request, Response } from 'express';
 import EmailTemplate, { IEmailTemplate } from '../models/EmailTemplate';
 import { emailService } from '../utils/emailService';
+import logger from '../utils/logger';
 
 // GET /api/admin/email-templates - Alle Templates auflisten
 export const getAllEmailTemplates = async (req: Request, res: Response) => {
@@ -27,7 +28,7 @@ export const getAllEmailTemplates = async (req: Request, res: Response) => {
       count: templates.length
     });
   } catch (error) {
-    console.error('Error fetching email templates:', error);
+    logger.error('Error fetching email templates:', error);
     res.status(500).json({
       success: false,
       message: 'Fehler beim Laden der Email-Templates'
@@ -53,7 +54,7 @@ export const getEmailTemplate = async (req: Request, res: Response) => {
       data: template
     });
   } catch (error) {
-    console.error('Error fetching email template:', error);
+    logger.error('Error fetching email template:', error);
     res.status(500).json({
       success: false,
       message: 'Fehler beim Laden des Email-Templates'
@@ -100,7 +101,7 @@ export const updateEmailTemplate = async (req: Request, res: Response) => {
       message: 'Email-Template erfolgreich aktualisiert'
     });
   } catch (error) {
-    console.error('Error updating email template:', error);
+    logger.error('Error updating email template:', error);
     res.status(500).json({
       success: false,
       message: 'Fehler beim Aktualisieren des Email-Templates'
@@ -144,7 +145,7 @@ export const previewEmailTemplate = async (req: Request, res: Response) => {
       }
     });
   } catch (error) {
-    console.error('Error generating email preview:', error);
+    logger.error('Error generating email preview:', error);
     res.status(500).json({
       success: false,
       message: 'Fehler beim Generieren der Template-Vorschau',
@@ -197,7 +198,7 @@ export const sendTestEmail = async (req: Request, res: Response) => {
       message: `Test-Email erfolgreich an ${testEmail} gesendet`
     });
   } catch (error) {
-    console.error('Error sending test email:', error);
+    logger.error('Error sending test email:', error);
     res.status(500).json({
       success: false,
       message: 'Fehler beim Versenden der Test-Email',
@@ -249,7 +250,7 @@ export const getTemplateVariables = async (req: Request, res: Response) => {
       }
     });
   } catch (error) {
-    console.error('Error fetching template variables:', error);
+    logger.error('Error fetching template variables:', error);
     res.status(500).json({
       success: false,
       message: 'Fehler beim Laden der Template-Variablen'

@@ -8,6 +8,7 @@
  */
 
 import { createHash } from 'crypto';
+import logger from './logger';
 
 /**
  * Interface for cache entry with TTL
@@ -205,12 +206,12 @@ export function cached(namespace: string, ttlSeconds?: number) {
       // Try to get from cache
       const cached = await queryCache.get(namespace, cacheParams);
       if (cached !== null) {
-        console.log(`🎯 Cache hit: ${namespace}:${propertyName}`);
+        logger.debug('Cache hit', { namespace, method: propertyName });
         return cached;
       }
 
       // Execute method and cache result
-      console.log(`🔄 Cache miss: ${namespace}:${propertyName}`);
+      logger.debug('Cache miss', { namespace, method: propertyName });
       const result = await method.apply(this, args);
       
       await queryCache.set(namespace, cacheParams, result, ttlSeconds);
@@ -284,7 +285,7 @@ export class CacheInvalidator {
 setInterval(() => {
   const deleted = queryCache.cleanup();
   if (deleted > 0) {
-    console.log(`🧹 Cleaned up ${deleted} expired cache entries`);
+    logger.debug('Cleaned up expired cache entries', { count: deleted });
   }
 }, 10 * 60 * 1000);
 

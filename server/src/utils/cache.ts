@@ -7,6 +7,8 @@
  * @since 2024-01-01
  */
 
+import logger from './logger';
+
 /**
  * Interface for cache items with expiry
  * @interface CacheItem
@@ -137,7 +139,7 @@ class InMemoryCache {
     expiredKeys.forEach(key => this.cache.delete(key));
     
     if (expiredKeys.length > 0) {
-      console.log(`Cache cleanup: Removed ${expiredKeys.length} expired entries`);
+      logger.debug('Cache cleanup: Removed expired entries', { count: expiredKeys.length });
     }
   }
 

@@ -8,6 +8,7 @@
  */
 
 import { Tag } from '../models/Tag';
+import logger from './logger';
 
 /** Default tag data for the application */
 const defaultTags = [
@@ -219,7 +220,7 @@ const defaultTags = [
  */
 export const seedTags = async (): Promise<void> => {
   try {
-    console.log('🏷️  Seeding tags...');
+    logger.info('Seeding tags...');
     
     let createdCount = 0;
     let skippedCount = 0;
@@ -259,16 +260,15 @@ export const seedTags = async (): Promise<void> => {
           skippedCount++;
         }
       } catch (error) {
-        console.error(`   Error creating tag "${tagData.name}":`, error);
+        logger.error('Error creating tag', { tagName: tagData.name, error });
       }
     }
     
-    console.log(`   Created ${createdCount} new tags`);
-    console.log(`   Skipped ${skippedCount} existing tags`);
+    logger.info('Tag seeding progress', { created: createdCount, skipped: skippedCount });
     
     // Show final count
     const totalTagCount = await Tag.countDocuments();
-    console.log(`   Total tags in system: ${totalTagCount}`);
+    logger.info('Total tags in system', { count: totalTagCount });
     
     if (createdCount > 0) {
       // Group by category for summary
@@ -279,15 +279,12 @@ export const seedTags = async (): Promise<void> => {
         return acc;
       }, {});
       
-      console.log('   Tags by category:');
-      Object.entries(tagsByCategory).forEach(([category, count]) => {
-        console.log(`     ${category}: ${count} tags`);
-      });
+      logger.info('Tags by category', { tagsByCategory });
     }
     
-    console.log('✅ Tags seeded successfully');
+    logger.info('Tags seeded successfully');
   } catch (error) {
-    console.error('❌ Error seeding tags:', error);
+    logger.error('Error seeding tags', { error });
     throw error;
   }
 };

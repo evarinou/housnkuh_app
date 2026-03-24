@@ -906,7 +906,7 @@ export class RevenueService {
           }
           result.push(monthlyRevenue);
         } catch (error) {
-          console.warn(`Failed to get historical revenue for ${year}-${month}:`, error);
+          logger.warn('Failed to get historical revenue', { year, month, error });
         }
       } else {
         // Get future projection
@@ -914,7 +914,7 @@ export class RevenueService {
           const projection = await this.calculateFutureRevenue(year, month, includeTrialRevenue);
           result.push(projection);
         } catch (error) {
-          console.warn(`Failed to calculate future revenue for ${year}-${month}:`, error);
+          logger.warn('Failed to calculate future revenue', { year, month, error });
         }
       }
       

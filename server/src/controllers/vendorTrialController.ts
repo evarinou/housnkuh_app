@@ -7,6 +7,7 @@
 import { Request, Response } from 'express';
 import User from '../models/User';
 import Vertrag from '../models/Vertrag';
+import logger from '../utils/logger';
 import { TrialService } from '../services/trialService';
 import { VertragService } from '../services/vertragService';
 import { sendTrialStatusEmail, sendTrialConversionEmail } from '../utils/emailService';
@@ -71,7 +72,7 @@ export const getTrialStatus = async (req: VendorRequest, res: Response): Promise
       }
     });
   } catch (error) {
-    console.error('Error getting trial status:', error);
+    logger.error('Error getting trial status:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error'
@@ -145,7 +146,7 @@ export const convertTrialToRegular = async (req: VendorRequest, res: Response): 
       }
     });
   } catch (error) {
-    console.error('Error converting trial:', error);
+    logger.error('Error converting trial:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error'
@@ -213,7 +214,7 @@ export const extendTrial = async (req: VendorRequest, res: Response): Promise<vo
       }
     });
   } catch (error) {
-    console.error('Error extending trial:', error);
+    logger.error('Error extending trial:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error'
@@ -273,7 +274,7 @@ export const cancelTrial = async (req: VendorRequest, res: Response): Promise<vo
       }
     });
   } catch (error) {
-    console.error('Error cancelling trial:', error);
+    logger.error('Error cancelling trial:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error'
@@ -325,7 +326,7 @@ export const getTrialHistory = async (req: VendorRequest, res: Response): Promis
       }
     });
   } catch (error) {
-    console.error('Error getting trial history:', error);
+    logger.error('Error getting trial history:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error'

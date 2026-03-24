@@ -116,6 +116,8 @@ export interface PerformanceSummary {
  * @class PerformanceMonitor
  * @description Singleton class for comprehensive performance monitoring with automatic cleanup
  */
+import logger from './logger';
+
 export class PerformanceMonitor {
   private static instance: PerformanceMonitor;
   private requestMetrics: RequestMetrics[] = [];
@@ -140,7 +142,7 @@ export class PerformanceMonitor {
       this.cleanupOldMetrics();
     }, 60 * 60 * 1000);
 
-    console.log('🔍 Performance Monitor initialized');
+    logger.info('Performance Monitor initialized');
   }
 
   /**
@@ -174,12 +176,12 @@ export class PerformanceMonitor {
 
     // Log slow requests
     if (metrics.responseTime > 2000) {
-      console.warn(`🐌 Slow request detected: ${metrics.method} ${metrics.path} - ${metrics.responseTime}ms`);
+      logger.warn('Slow request detected', { method: metrics.method, path: metrics.path, responseTimeMs: metrics.responseTime });
     }
 
     // Log errors
     if (metrics.statusCode >= 400) {
-      console.warn(`❌ Error response: ${metrics.method} ${metrics.path} - ${metrics.statusCode}`);
+      logger.warn('Error response', { method: metrics.method, path: metrics.path, statusCode: metrics.statusCode });
     }
 
     this.enforceRetentionLimits();
@@ -202,12 +204,12 @@ export class PerformanceMonitor {
 
     // Log slow queries
     if (metrics.duration > 1000) {
-      console.warn(`🐌 Slow database query: ${metrics.operation} on ${metrics.collection} - ${metrics.duration}ms`);
+      logger.warn('Slow database query', { operation: metrics.operation, collection: metrics.collection, durationMs: metrics.duration });
     }
 
     // Log database errors
     if (!metrics.success) {
-      console.error(`❌ Database operation failed: ${metrics.operation} on ${metrics.collection} - ${metrics.error}`);
+      logger.error('Database operation failed', { operation: metrics.operation, collection: metrics.collection, error: metrics.error });
     }
 
     this.enforceRetentionLimits();
@@ -230,7 +232,7 @@ export class PerformanceMonitor {
       stack
     });
 
-    console.error(`🚨 Application error recorded: ${message}`);
+    logger.error('Application error recorded', { message });
     
     // Keep only last 1000 errors
     if (this.errorLog.length > 1000) {
@@ -439,7 +441,7 @@ export class PerformanceMonitor {
     this.databaseMetrics = [];
     this.errorLog = [];
     this.cpuUsageStart = process.cpuUsage();
-    console.log('🔄 Performance Monitor metrics reset');
+    logger.info('Performance Monitor metrics reset');
   }
 
   /**
@@ -468,7 +470,7 @@ export class PerformanceMonitor {
     const cleanedErrors = initialErrorCount - this.errorLog.length;
 
     if (cleanedRequests > 0 || cleanedDb > 0 || cleanedErrors > 0) {
-      console.log(`🧹 Cleaned up old metrics: ${cleanedRequests} requests, ${cleanedDb} db ops, ${cleanedErrors} errors`);
+      logger.info('Cleaned up old metrics', { requests: cleanedRequests, dbOps: cleanedDb, errors: cleanedErrors });
     }
   }
 

@@ -9,6 +9,7 @@
 // server/src/services/featureFlagService.ts
 import Settings from '../models/Settings';
 import { ISettings } from '../models/Settings';
+import logger from '../utils/logger';
 
 /**
  * @class FeatureFlagService
@@ -66,7 +67,7 @@ class FeatureFlagService {
       const settings = await this.getSettings();
       return settings.isFeatureEnabled(category, feature);
     } catch (error) {
-      console.error('Error checking feature flag:', error);
+      logger.error('Error checking feature flag', { error });
       // Default to enabled in case of error to prevent system lockout
       return true;
     }
@@ -178,7 +179,7 @@ class FeatureFlagService {
       
       return userPercentile < rolloutPercentage;
     } catch (error) {
-      console.error('Error checking user rollout:', error);
+      logger.error('Error checking user rollout', { error });
       return true; // Default to enabled
     }
   }
@@ -194,7 +195,7 @@ class FeatureFlagService {
       const settings = await this.getSettings();
       return settings.featureFlags || {};
     } catch (error) {
-      console.error('Error getting feature flags:', error);
+      logger.error('Error getting feature flags', { error });
       return {};
     }
   }
@@ -218,7 +219,7 @@ class FeatureFlagService {
       
       return updatedSettings;
     } catch (error) {
-      console.error('Error updating feature flags:', error);
+      logger.error('Error updating feature flags', { error });
       throw error;
     }
   }
@@ -279,7 +280,7 @@ class FeatureFlagService {
         }
       };
     } catch (error) {
-      console.error('Error getting trial automation status:', error);
+      logger.error('Error getting trial automation status', { error });
       return {
         enabled: false,
         rolloutPercentage: 0,

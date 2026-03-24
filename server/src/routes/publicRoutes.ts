@@ -18,6 +18,7 @@ import express from 'express';
 import VendorService from '../services/vendorService';
 import { Request, Response } from 'express';
 import { cacheMiddleware } from '../middleware/cacheMiddleware';
+import logger from '../utils/logger';
 
 const router = express.Router();
 
@@ -45,7 +46,7 @@ router.get('/vendors', cacheMiddleware(300), async (req: Request, res: Response)
       ...result
     });
   } catch (error) {
-    console.error('Error getting public vendors:', error);
+    logger.error('Error getting public vendors', { error });
     res.status(500).json({
       success: false,
       message: 'Fehler beim Abrufen der Direktvermarkter'
@@ -73,7 +74,7 @@ router.get('/vendors/:id', cacheMiddleware(600), async (req: Request, res: Respo
       vendor
     });
   } catch (error) {
-    console.error('Error getting vendor details:', error);
+    logger.error('Error getting vendor details', { error });
     res.status(500).json({
       success: false,
       message: 'Fehler beim Abrufen der Direktvermarkter-Details'
@@ -96,7 +97,7 @@ router.get('/stats', cacheMiddleware(300), async (req: Request, res: Response): 
       }
     });
   } catch (error) {
-    console.error('Error getting public vendor stats:', error);
+    logger.error('Error getting public vendor stats', { error });
     res.status(500).json({
       success: false,
       message: 'Fehler beim Abrufen der Statistiken'

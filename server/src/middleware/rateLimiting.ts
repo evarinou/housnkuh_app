@@ -153,6 +153,24 @@ export const apiRateLimit = rateLimit({
 });
 
 /**
+ * Rate limiting for vendor dashboard operations
+ * @description More lenient rate limiting for authenticated vendor operations
+ * @security 2000 requests per 15 minutes per IP, only counting failed requests
+ */
+export const vendorDashboardRateLimit = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 2000, // Allow 2000 requests per 15 minutes for vendor operations
+  message: {
+    success: false,
+    message: 'Zu viele Dashboard-Anfragen. Bitte versuchen Sie es in wenigen Minuten erneut.',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skipSuccessfulRequests: true,
+  handler: rateLimitHandler
+});
+
+/**
  * Very strict rate limiting for admin setup
  * @description Prevents unauthorized admin account creation
  * @security 3 admin setup attempts per hour per IP
@@ -172,6 +190,7 @@ export const adminSetupRateLimit = rateLimit({
 export default {
   authRateLimit,
   vendorRegistrationRateLimit,
+  vendorDashboardRateLimit,
   emailConfirmationRateLimit,
   passwordResetRateLimit,
   newsletterRateLimit,

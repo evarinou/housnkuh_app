@@ -9,6 +9,7 @@ import { vertragService } from '../services/vertragService';
 import { sendCancellationConfirmationEmail } from '../utils/emailService';
 import Vertrag from '../models/Vertrag';
 import User from '../models/User';
+import logger from '../utils/logger';
 
 export class VendorContractController {
   /**
@@ -67,7 +68,7 @@ export class VendorContractController {
           user.trialEndDate || null
         );
       } catch (emailError) {
-        console.error('Failed to send cancellation email:', emailError);
+        logger.error('Failed to send cancellation email:', emailError);
         // Continue with success response even if email fails
       }
       
@@ -76,7 +77,7 @@ export class VendorContractController {
         message: 'Probemonat-Buchung erfolgreich storniert'
       });
     } catch (error) {
-      console.error('Error cancelling trial booking:', error);
+      logger.error('Error cancelling trial booking:', error);
       res.status(400).json({
         success: false,
         error: error instanceof Error ? error.message : 'Fehler beim Stornieren der Probemonat-Buchung'
@@ -144,7 +145,7 @@ export class VendorContractController {
         }
       });
     } catch (error) {
-      console.error('Error getting trial status:', error);
+      logger.error('Error getting trial status:', error);
       res.status(500).json({
         success: false,
         error: 'Fehler beim Abrufen des Probemonat-Status'
@@ -205,7 +206,7 @@ export class VendorContractController {
         }
       });
     } catch (error) {
-      console.error('Error getting vendor bookings:', error);
+      logger.error('Error getting vendor bookings:', error);
       res.status(500).json({
         success: false,
         error: 'Fehler beim Abrufen der Buchungen'
@@ -228,7 +229,7 @@ export class VendorContractController {
         data: result
       });
     } catch (error) {
-      console.error('Error validating trial booking:', error);
+      logger.error('Error validating trial booking:', error);
       res.status(500).json({
         success: false,
         error: 'Fehler bei der Validierung der Probemonat-Buchung'
@@ -300,7 +301,7 @@ export class VendorContractController {
         data: transformedContract
       });
     } catch (error) {
-      console.error('Error getting contract details:', error);
+      logger.error('Error getting contract details:', error);
       res.status(500).json({
         success: false,
         error: 'Fehler beim Abrufen der Vertragsdetails'
@@ -346,7 +347,7 @@ export class VendorContractController {
         contracts: contractsWithPackages
       });
     } catch (error) {
-      console.error('Error getting contracts with zusatzleistungen:', error);
+      logger.error('Error getting contracts with zusatzleistungen:', error);
       res.status(500).json({
         success: false,
         error: 'Fehler beim Abrufen der Verträge mit Zusatzleistungen'

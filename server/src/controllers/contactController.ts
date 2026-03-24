@@ -7,6 +7,7 @@
 import { Request, Response } from 'express';
 import { ContactFormData, sendContactFormEmail } from '../utils/emailService';
 import Contact from '../models/Contact';
+import logger from '../utils/logger';
 
 /**
  * Validiert die Eingaben des Kontaktformulars
@@ -57,7 +58,7 @@ const validateContactForm = (data: any): { valid: boolean; errors?: string[] } =
  */
 export const submitContactForm = async (req: Request, res: Response): Promise<void> => {
   try {
-    console.log('Kontaktformular erhalten:', req.body);
+    logger.debug('Kontaktformular erhalten', { body: req.body });
     
     // Validierung der Formularfelder
     const validation = validateContactForm(req.body);
@@ -109,7 +110,7 @@ export const submitContactForm = async (req: Request, res: Response): Promise<vo
     }
     
   } catch (error) {
-    console.error('Fehler bei der Verarbeitung des Kontaktformulars:', error);
+    logger.error('Fehler bei der Verarbeitung des Kontaktformulars:', error);
     res.status(500).json({ 
       success: false, 
       message: 'Es ist ein Fehler aufgetreten. Bitte versuche es später noch einmal oder kontaktiere uns direkt telefonisch.'
@@ -129,7 +130,7 @@ export const getContacts = async (req: Request, res: Response): Promise<void> =>
       data: contacts
     });
   } catch (error) {
-    console.error('Fehler beim Abrufen der Kontaktanfragen:', error);
+    logger.error('Fehler beim Abrufen der Kontaktanfragen:', error);
     res.status(500).json({
       success: false,
       message: 'Fehler beim Abrufen der Kontaktanfragen'
@@ -163,7 +164,7 @@ export const getContact = async (req: Request, res: Response): Promise<void> => 
       data: contact
     });
   } catch (error) {
-    console.error('Fehler beim Abrufen der Kontaktanfrage:', error);
+    logger.error('Fehler beim Abrufen der Kontaktanfrage:', error);
     res.status(500).json({
       success: false,
       message: 'Fehler beim Abrufen der Kontaktanfrage'
@@ -202,7 +203,7 @@ export const updateContact = async (req: Request, res: Response): Promise<void> 
       data: contact
     });
   } catch (error) {
-    console.error('Fehler beim Aktualisieren der Kontaktanfrage:', error);
+    logger.error('Fehler beim Aktualisieren der Kontaktanfrage:', error);
     res.status(500).json({
       success: false,
       message: 'Fehler beim Aktualisieren der Kontaktanfrage'
@@ -230,7 +231,7 @@ export const deleteContact = async (req: Request, res: Response): Promise<void> 
       message: 'Kontaktanfrage erfolgreich gelöscht'
     });
   } catch (error) {
-    console.error('Fehler beim Löschen der Kontaktanfrage:', error);
+    logger.error('Fehler beim Löschen der Kontaktanfrage:', error);
     res.status(500).json({
       success: false,
       message: 'Fehler beim Löschen der Kontaktanfrage'
@@ -252,7 +253,7 @@ export const submitVendorContest = async (req: Request, res: Response): Promise<
       message: 'Diese Funktion ist noch nicht implementiert.'
     });
   } catch (error) {
-    console.error('Fehler bei der Verarbeitung des Vendor-Contest-Formulars:', error);
+    logger.error('Fehler bei der Verarbeitung des Vendor-Contest-Formulars:', error);
     res.status(500).json({
       success: false,
       message: 'Es ist ein Fehler aufgetreten. Bitte versuche es später noch einmal.'

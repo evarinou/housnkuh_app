@@ -9,6 +9,7 @@
 // server/src/services/vendorService.ts
 import User from '../models/User';
 import { IUser } from '../types/modelTypes';
+import logger from '../utils/logger';
 
 /**
  * @interface CacheEntry
@@ -151,7 +152,7 @@ export class VendorService {
       currentPage: number;
     }>(cacheKey);
     if (cached) {
-      console.log('Cache hit for public vendors');
+      logger.debug('Cache hit for public vendors');
       return cached;
     }
     
@@ -259,7 +260,7 @@ export class VendorService {
     const cacheKey = `vendor_details_${vendorId}`;
     const cached = cache.get<IUser>(cacheKey);
     if (cached) {
-      console.log('Cache hit for vendor details');
+      logger.debug('Cache hit for vendor details');
       return cached;
     }
     
@@ -305,7 +306,7 @@ export class VendorService {
       verified: number;
     }>(cacheKey);
     if (cached) {
-      console.log('Cache hit for vendor statistics');
+      logger.debug('Cache hit for vendor statistics');
       return cached;
     }
     
@@ -407,7 +408,7 @@ export class VendorService {
         modifiedCount: result.modifiedCount
       };
     } catch (error) {
-      console.error('Error in bulk update visibility:', error);
+      logger.error('Error in bulk update visibility', { error });
       return {
         success: false,
         modifiedCount: 0

@@ -7,6 +7,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { IBooking } from '../types/booking';
+import { apiUtils } from '../utils/auth';
 
 /**
  * Configuration options for useBookingUpdates hook
@@ -63,7 +64,7 @@ export const useBookingUpdates = ({ userId, onStatusUpdate }: UseBookingUpdatesO
       setError(null);
       
       const token = localStorage.getItem('vendorToken');
-      const response = await fetch(`http://localhost:4000/api/vendor-auth/bookings/${userId}`, {
+      const response = await fetch(`${apiUtils.getApiUrl()}/vendor-auth/bookings/${userId}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'

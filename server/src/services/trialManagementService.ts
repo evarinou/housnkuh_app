@@ -12,6 +12,7 @@ import Vertrag from '../models/Vertrag';
 import { IUser } from '../types/modelTypes';
 import { sendTrialStatusEmail } from '../utils/emailService';
 import { performanceMonitor } from '../utils/performanceMonitor';
+import logger from '../utils/logger';
 
 /**
  * @interface TrialExtensionResult
@@ -179,13 +180,13 @@ class TrialManagementService {
       // Send notification email to vendor
       try {
         // TODO: Fix email implementation after test cleanup
-        console.log(`Trial extended for user ${user.username || 'unknown'} until ${newEndDate.toISOString()}`);
+        logger.info('Trial extended for user', { username: user.username || 'unknown', until: newEndDate.toISOString() });
         // await sendTrialStatusEmail(user, { 
         //   trialEndDate: newEndDate,
         //   status: 'extended' 
         // });
       } catch (emailError) {
-        console.error('Failed to send trial extension email:', emailError);
+        logger.error('Failed to send trial extension email', { error: emailError });
       }
 
       // Log audit entry
@@ -212,7 +213,7 @@ class TrialManagementService {
         message: `Trial extended successfully by ${extensionDays} days`
       };
     } catch (error) {
-      console.error('Error extending trial:', error);
+      logger.error('Error extending trial', { error });
       return {
         success: false,
         userId,
@@ -468,7 +469,7 @@ class TrialManagementService {
     }
 
     // Also log to console for monitoring
-    console.log(`[TRIAL AUDIT] ${entry.action} by ${entry.performedBy} for ${entry.username}`);
+    logger.info('[TRIAL AUDIT]', { action: entry.action, performedBy: entry.performedBy, username: entry.username });
   }
 
   /**

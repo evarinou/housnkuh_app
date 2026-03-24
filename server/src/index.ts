@@ -11,27 +11,27 @@ import dotenv from 'dotenv';
 
 // Konfigurationsdatei laden - BEFORE any other imports
 const envPath = path.join(__dirname, '../.env');
+const envLocalPath = path.join(__dirname, '../.env.local');
 
-// Try loading from parent directory first
+// Load .env.local first (takes precedence)
+dotenv.config({ path: envLocalPath });
+
+// Then load .env as fallback for non-sensitive defaults
 dotenv.config({ path: envPath });
 
 // Also try from current directory as fallback
 dotenv.config();
 
-// Override with explicit connection string if needed
-if (!process.env.MONGO_URI || process.env.MONGO_URI.includes('localhost')) {
-  process.env.MONGO_URI = 'mongodb://192.168.178.99:27017/housnkuh';
-}
-
 // NOW import everything else
 import express from 'express';
-import mongoose from 'mongoose';
 import cors from 'cors';
-import helmet from 'helmet';
-import morgan from 'morgan';
 import compression from 'compression';
-import rateLimit from 'express-rate-limit';
 import connectDB from './config/db';
+import {
+  vendorRegistrationRateLimit,
+  vendorDashboardRateLimit,
+  apiRateLimit
+} from './middleware/rateLimiting';
 import routes from './routes';
 import ScheduledJobs from './services/scheduledJobs';
 import { performanceMiddleware } from './utils/performanceMonitor';
@@ -73,56 +73,6 @@ app.use(compression({
 }));
 
 /**
- * Rate limiter for registration endpoints
- * @description Prevents abuse by limiting registration attempts to 5 per IP every 15 minutes
- * Helps protect against automated bot registrations and brute force attempts
- */
-const registrationLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // limit each IP to 5 requests per windowMs
-  message: {
-    success: false,
-    message: 'Zu viele Registrierungsversuche. Bitte versuchen Sie es in 15 Minuten erneut.'
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
-/**
- * General API rate limiter
- * @description Applies to all API endpoints to prevent abuse and ensure fair usage
- * Allows 1000 requests per 15 minutes per IP, only counting failed requests
- */
-const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 1000, // limit each IP to 1000 requests per windowMs (increased from 100)
-  message: {
-    success: false,
-    message: 'Zu viele API-Anfragen. Bitte versuchen Sie es später erneut.'
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-  skipSuccessfulRequests: true, // Only count failed requests
-});
-
-/**
- * Vendor dashboard rate limiter
- * @description More lenient rate limiting for authenticated vendor operations
- * Allows 2000 requests per 15 minutes to support intensive dashboard usage
- */
-const vendorDashboardLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 2000, // Allow 2000 requests per 15 minutes for vendor operations (increased from 500)
-  message: {
-    success: false,
-    message: 'Zu viele Dashboard-Anfragen. Bitte versuchen Sie es in wenigen Minuten erneut.'
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-  skipSuccessfulRequests: true, // Only count failed requests
-});
-
-/**
  * Basic middleware configuration
  * @description Configures JSON parsing with 10MB limit and CORS for cross-origin requests
  */
@@ -131,20 +81,10 @@ app.use(express.json({ limit: '10mb' }));
 // Configure Express to trust proxy headers from Nginx
 app.set('trust proxy', 1);
 
-// Debug middleware for setup requests
-app.use((req, res, next) => {
-  if (req.path.includes('setup')) {
-    console.log('=== SETUP REQUEST DEBUG ===');
-    console.log('Path:', req.path);
-    console.log('Method:', req.method);
-    console.log('Headers:', req.headers);
-    console.log('Body:', req.body);
-    console.log('=========================');
-  }
-  next();
-});
 app.use(cors({
-  origin: true, // Allow all origins in development
+  origin: process.env.NODE_ENV === 'production'
+    ? (process.env.CORS_ORIGINS || '').split(',').map(o => o.trim()).filter(Boolean)
+    : true,
   credentials: true
 }));
 
@@ -172,24 +112,24 @@ app.use(cleanupMonitoringMiddleware); // Periodic cleanup
  * @description Applies rate limiters to specific routes before general API limiter
  * More specific routes must be configured before general patterns
  */
-app.use('/api/vendor-auth/register', registrationLimiter);
-app.use('/api/vendor-auth/pre-register', registrationLimiter);
+app.use('/api/vendor-auth/register', vendorRegistrationRateLimit);
+app.use('/api/vendor-auth/pre-register', vendorRegistrationRateLimit);
 
 /**
  * Vendor dashboard rate limiting
  * @description Applies lenient rate limiting for authenticated vendor operations
  */
-app.use('/api/vendor-auth/bookings', vendorDashboardLimiter);
-app.use('/api/vendor-auth/contracts', vendorDashboardLimiter);
-app.use('/api/vendor-auth/profile', vendorDashboardLimiter);
-app.use('/api/vendor-auth/dashboard', vendorDashboardLimiter);
-app.use('/api/vendor-contracts', vendorDashboardLimiter);
+app.use('/api/vendor-auth/bookings', vendorDashboardRateLimit);
+app.use('/api/vendor-auth/contracts', vendorDashboardRateLimit);
+app.use('/api/vendor-auth/profile', vendorDashboardRateLimit);
+app.use('/api/vendor-auth/dashboard', vendorDashboardRateLimit);
+app.use('/api/vendor-contracts', vendorDashboardRateLimit);
 
 /**
  * General API rate limiting
  * @description Applies to all remaining API routes not covered by specific limiters
  */
-app.use('/api', apiLimiter);
+app.use('/api', apiRateLimit);
 
 /**
  * Database connection initialization

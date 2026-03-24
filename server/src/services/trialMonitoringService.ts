@@ -13,6 +13,7 @@ import { IUser } from '../types/modelTypes';
 import { performanceMonitor } from '../utils/performanceMonitor';
 import AlertingService from './alertingService';
 import { cache } from '../utils/cache';
+import logger from '../utils/logger';
 
 /**
  * @interface TrialMetrics
@@ -207,7 +208,7 @@ class TrialMonitoringService {
       this.setCachedMetrics(cacheKey, metrics);
       return metrics;
     } catch (error) {
-      console.error('Error getting trial metrics:', error);
+      logger.error('Error getting trial metrics', { error });
       throw error;
     }
   }
@@ -323,29 +324,24 @@ class TrialMonitoringService {
       // Check conversion rate
       if (metrics.conversionRate < 10) {
         // TODO: Implement proper alerting after test cleanup
-        console.warn('ALERT:', {
+        logger.warn('ALERT: Critical: Low Trial Conversion Rate', {
           type: 'trial_conversion_low',
           severity: 'high',
-          title: 'Critical: Low Trial Conversion Rate',
-          message: `Trial conversion rate has dropped to ${metrics.conversionRate.toFixed(1)}%`,
-          details: {
-            currentRate: metrics.conversionRate,
-            targetRate: 30,
-            activeTrials: metrics.activeTrials,
-            recentConversions: metrics.convertedTrials
-          }
+          currentRate: metrics.conversionRate,
+          targetRate: 30,
+          activeTrials: metrics.activeTrials,
+          recentConversions: metrics.convertedTrials
         });
       }
 
       // Check for mass expirations
       if (metrics.upcomingExpirations.next24Hours > 20) {
         // TODO: Implement proper alerting after test cleanup
-        console.warn('ALERT:', {
+        logger.warn('ALERT: High Volume of Trial Expirations', {
           type: 'mass_trial_expiration',
           severity: 'medium',
-          title: 'High Volume of Trial Expirations',
-          message: `${metrics.upcomingExpirations.next24Hours} trials expiring in next 24 hours`,
-          details: metrics.upcomingExpirations
+          expiringNext24Hours: metrics.upcomingExpirations.next24Hours,
+          upcomingExpirations: metrics.upcomingExpirations
         });
       }
 
@@ -358,7 +354,7 @@ class TrialMonitoringService {
       });
 
     } catch (error) {
-      console.error('Error monitoring trial conversions:', error);
+      logger.error('Error monitoring trial conversions', { error });
       performanceMonitor.recordError(error instanceof Error ? error.message : String(error));
     }
   }
@@ -411,7 +407,7 @@ class TrialMonitoringService {
         .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
         .slice(0, limit);
     } catch (error) {
-      console.error('Error getting recent trial activity:', error);
+      logger.error('Error getting recent trial activity', { error });
       return [];
     }
   }

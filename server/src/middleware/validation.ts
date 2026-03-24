@@ -35,8 +35,8 @@ export const handleValidationErrors = (req: Request, res: Response, next: NextFu
   
   // Debug log for setup endpoint
   if (req.url.includes('setup')) {
-    console.log('Setup validation - Request body:', req.body);
-    console.log('Setup validation - Errors:', errors.array());
+    const logger = require('../utils/logger').default;
+    logger.debug('Setup validation', { body: req.body, errors: errors.array() });
   }
   
   if (!errors.isEmpty()) {

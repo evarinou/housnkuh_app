@@ -7,6 +7,7 @@
 import { Request, Response } from 'express';
 import User from '../models/User';
 import Vertrag from '../models/Vertrag';
+import logger from '../utils/logger';
 import { TrialService } from '../services/trialService';
 import { sendTrialStatusEmail, sendTrialConversionEmail } from '../utils/emailService';
 import mongoose from 'mongoose';
@@ -139,7 +140,7 @@ export const getAllTrials = async (req: Request, res: Response): Promise<void> =
       }
     });
   } catch (error) {
-    console.error('Error getting trials:', error);
+    logger.error('Error getting trials:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error'
@@ -202,7 +203,7 @@ export const getTrialById = async (req: Request, res: Response): Promise<void> =
       }
     });
   } catch (error) {
-    console.error('Error getting trial by ID:', error);
+    logger.error('Error getting trial by ID:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error'
@@ -252,7 +253,7 @@ export const updateTrial = async (req: Request, res: Response): Promise<void> =>
       data: user
     });
   } catch (error) {
-    console.error('Error updating trial:', error);
+    logger.error('Error updating trial:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error'
@@ -325,7 +326,7 @@ export const bulkOperations = async (req: Request, res: Response): Promise<void>
       data: results
     });
   } catch (error) {
-    console.error('Error in bulk operations:', error);
+    logger.error('Error in bulk operations:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error'
@@ -351,7 +352,7 @@ export const getTrialStatistics = async (req: Request, res: Response): Promise<v
       data: stats
     });
   } catch (error) {
-    console.error('Error getting trial statistics:', error);
+    logger.error('Error getting trial statistics:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error'
@@ -405,7 +406,7 @@ export const exportTrialData = async (req: Request, res: Response): Promise<void
       });
     }
   } catch (error) {
-    console.error('Error exporting trial data:', error);
+    logger.error('Error exporting trial data:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error'
@@ -447,7 +448,7 @@ export const manualTrialConversion = async (req: Request, res: Response): Promis
     }
 
     // Log admin action
-    console.log(`Admin manual trial conversion: ${user.kontakt.email}, reason: ${reason}`);
+    logger.info(`Admin manual trial conversion: ${user.kontakt.email}, reason: ${reason}`);
 
     res.json({
       success: true,
@@ -455,7 +456,7 @@ export const manualTrialConversion = async (req: Request, res: Response): Promis
       data: result
     });
   } catch (error) {
-    console.error('Error in manual trial conversion:', error);
+    logger.error('Error in manual trial conversion:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error'
@@ -497,7 +498,7 @@ export const manualTrialExtension = async (req: Request, res: Response): Promise
     }
 
     // Log admin action
-    console.log(`Admin manual trial extension: ${user.kontakt.email}, days: ${extensionDays}, reason: ${reason}`);
+    logger.info(`Admin manual trial extension: ${user.kontakt.email}, days: ${extensionDays}, reason: ${reason}`);
 
     res.json({
       success: true,
@@ -505,7 +506,7 @@ export const manualTrialExtension = async (req: Request, res: Response): Promise
       data: result
     });
   } catch (error) {
-    console.error('Error in manual trial extension:', error);
+    logger.error('Error in manual trial extension:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error'
@@ -547,7 +548,7 @@ export const manualTrialCancellation = async (req: Request, res: Response): Prom
     }
 
     // Log admin action
-    console.log(`Admin manual trial cancellation: ${user.kontakt.email}, reason: ${reason}`);
+    logger.info(`Admin manual trial cancellation: ${user.kontakt.email}, reason: ${reason}`);
 
     res.json({
       success: true,
@@ -555,7 +556,7 @@ export const manualTrialCancellation = async (req: Request, res: Response): Prom
       data: result
     });
   } catch (error) {
-    console.error('Error in manual trial cancellation:', error);
+    logger.error('Error in manual trial cancellation:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error'

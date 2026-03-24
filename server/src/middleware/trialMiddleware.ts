@@ -10,6 +10,7 @@
 import { Request, Response, NextFunction } from 'express';
 import User from '../models/User';
 import { TrialService } from '../services/trialService';
+import logger from '../utils/logger';
 
 /**
  * Interface extending Request with trial-related properties
@@ -78,7 +79,7 @@ export const checkTrialStatus = async (req: TrialRequest, res: Response, next: N
 
     next();
   } catch (error) {
-    console.error('Error in trial status check:', error);
+    logger.error('Error in trial status check', { error });
     next(); // Continue without trial info on error
   }
 };
@@ -135,7 +136,7 @@ export const requireActiveTrial = async (req: TrialRequest, res: Response, next:
 
     next();
   } catch (error) {
-    console.error('Error in require active trial:', error);
+    logger.error('Error in require active trial', { error });
     res.status(500).json({
       success: false,
       message: 'Internal server error'
@@ -225,7 +226,7 @@ export const logTrialAction = (action: string) => {
     const userId = req.user?.id || req.userId;
     
     if (userId && req.trialInfo) {
-      console.log(`Trial action: ${action} by user ${userId}, status: ${req.trialInfo.status}, days remaining: ${req.trialInfo.daysRemaining}`);
+      logger.info('Trial action', { action, userId, status: req.trialInfo.status, daysRemaining: req.trialInfo.daysRemaining });
     }
     
     next();

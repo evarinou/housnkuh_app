@@ -5,8 +5,9 @@
  */
 
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
-import { RateLimitHandler, RateLimitConfig } from './rateLimitHandler';
+import { RateLimitHandler, RateLimitConfig } from './RateLimitHandler';
 import { FlourioErrorHandler } from './errorHandler';
+import logger from '../../../utils/logger';
 
 export interface FlourioClientConfig {
   baseURL: string;
@@ -92,6 +93,21 @@ export class FlourioClient {
     });
   }
 
+  async put<T>(
+    url: string,
+    data?: any,
+    config?: AxiosRequestConfig
+  ): Promise<T> {
+    if (this.mockMode) {
+      return this.getMockData<T>(url);
+    }
+
+    return this.rateLimitHandler.executeWithRetry(async () => {
+      const response = await this.axios.put<T>(url, data, config);
+      return response.data;
+    });
+  }
+
   async delete<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
     if (this.mockMode) {
       return this.getMockData<T>(url);
@@ -104,7 +120,7 @@ export class FlourioClient {
   }
 
   private getMockData<T>(url: string): Promise<T> {
-    console.log(`[FlourioClient] Mock mode: ${url}`);
+    logger.debug('[FlourioClient] Mock mode', { url });
     return Promise.resolve({} as T);
   }
 
@@ -114,5 +130,26 @@ export class FlourioClient {
 
   getBaseURL(): string {
     return this.axios.defaults.baseURL || '';
+  }
+
+  /**
+   * Get rate limit metrics
+   */
+  getRateLimitMetrics() {
+    return this.rateLimitHandler.getMetrics();
+  }
+
+  /**
+   * Reset rate limit metrics
+   */
+  resetRateLimitMetrics(): void {
+    this.rateLimitHandler.resetMetrics();
+  }
+
+  /**
+   * Get rate limit hit rate percentage
+   */
+  getRateLimitHitRate(): number {
+    return this.rateLimitHandler.getRateLimitHitRate();
   }
 }

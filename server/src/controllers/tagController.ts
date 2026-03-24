@@ -7,6 +7,7 @@
 import { Request, Response } from 'express';
 import { Tag, ITag } from '../models/Tag';
 import { Product } from '../models/Product';
+import logger from '../utils/logger';
 
 /**
  * Retrieves all tags with optional filtering
@@ -33,7 +34,7 @@ export const getAllTags = async (req: Request, res: Response): Promise<void> => 
       count: tags.length
     });
   } catch (error) {
-    console.error('Error fetching tags:', error);
+    logger.error('Error fetching tags:', error);
     res.status(500).json({
       success: false,
       message: 'Fehler beim Laden der Tags'
@@ -67,7 +68,7 @@ export const getTagsByCategory = async (req: Request, res: Response): Promise<vo
       data: groupedTags
     });
   } catch (error) {
-    console.error('Error fetching tags by category:', error);
+    logger.error('Error fetching tags by category:', error);
     res.status(500).json({
       success: false,
       message: 'Fehler beim Laden der Tag-Kategorien'
@@ -116,7 +117,7 @@ export const getTag = async (req: Request, res: Response): Promise<void> => {
       }
     });
   } catch (error) {
-    console.error('Error fetching tag:', error);
+    logger.error('Error fetching tag:', error);
     res.status(500).json({
       success: false,
       message: 'Fehler beim Laden des Tags'
@@ -168,7 +169,7 @@ export const createTag = async (req: Request, res: Response): Promise<void> => {
       message: 'Tag erfolgreich erstellt'
     });
   } catch (error) {
-    console.error('Error creating tag:', error);
+    logger.error('Error creating tag:', error);
     res.status(500).json({
       success: false,
       message: 'Fehler beim Erstellen des Tags'
@@ -232,7 +233,7 @@ export const updateTag = async (req: Request, res: Response): Promise<void> => {
       message: 'Tag erfolgreich aktualisiert'
     });
   } catch (error) {
-    console.error('Error updating tag:', error);
+    logger.error('Error updating tag:', error);
     res.status(500).json({
       success: false,
       message: 'Fehler beim Aktualisieren des Tags'
@@ -279,7 +280,7 @@ export const deleteTag = async (req: Request, res: Response): Promise<void> => {
       message: 'Tag erfolgreich gelöscht'
     });
   } catch (error) {
-    console.error('Error deleting tag:', error);
+    logger.error('Error deleting tag:', error);
     res.status(500).json({
       success: false,
       message: 'Fehler beim Löschen des Tags'
@@ -325,7 +326,7 @@ export const searchTags = async (req: Request, res: Response): Promise<void> => 
       count: tags.length
     });
   } catch (error) {
-    console.error('Error searching tags:', error);
+    logger.error('Error searching tags:', error);
     res.status(500).json({
       success: false,
       message: 'Fehler bei der Tag-Suche'
@@ -362,7 +363,7 @@ export const bulkCreateTags = async (req: Request, res: Response): Promise<void>
       message: `${tags.length} Tags verarbeitet`
     });
   } catch (error) {
-    console.error('Error bulk creating tags:', error);
+    logger.error('Error bulk creating tags:', error);
     res.status(500).json({
       success: false,
       message: 'Fehler beim Erstellen der Tags'

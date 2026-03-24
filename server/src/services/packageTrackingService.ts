@@ -8,6 +8,7 @@ import PackageTracking from '../models/PackageTracking';
 import Vertrag from '../models/Vertrag';
 import { IPackageTracking } from '../types/modelTypes';
 import mongoose from 'mongoose';
+import logger from '../utils/logger';
 
 /**
  * Package Tracking Service for managing Zusatzleistungen package lifecycle
@@ -36,7 +37,7 @@ export class PackageTrackingService {
 
       return await packageTracking.save();
     } catch (error) {
-      console.error('Fehler beim Erstellen des Package Trackings:', error);
+      logger.error('Fehler beim Erstellen des Package Trackings', { error });
       throw new Error('Package Tracking konnte nicht erstellt werden');
     }
   }
@@ -104,7 +105,7 @@ export class PackageTrackingService {
 
       return await packageTracking.save();
     } catch (error) {
-      console.error('Fehler beim Aktualisieren des Package Status:', error);
+      logger.error('Fehler beim Aktualisieren des Package Status', { error });
       throw error;
     }
   }
@@ -123,7 +124,7 @@ export class PackageTrackingService {
         .populate('bestätigt_von', 'username kontakt.name')
         .sort({ created_at: -1 });
     } catch (error) {
-      console.error('Fehler beim Abrufen der Package Timeline:', error);
+      logger.error('Fehler beim Abrufen der Package Timeline', { error });
       throw new Error('Package Timeline konnte nicht abgerufen werden');
     }
   }
@@ -175,7 +176,7 @@ export class PackageTrackingService {
         .populate('bestätigt_von', 'username kontakt.name')
         .sort({ created_at: -1 });
     } catch (error) {
-      console.error('Fehler beim Abrufen aller Packages:', error);
+      logger.error('Fehler beim Abrufen aller Packages', { error });
       throw new Error('Packages konnten nicht abgerufen werden');
     }
   }
@@ -201,7 +202,7 @@ export class PackageTrackingService {
         })
         .sort({ created_at: 1 }); // Oldest first for processing queue
     } catch (error) {
-      console.error(`Fehler beim Abrufen der Packages mit Status ${status}:`, error);
+      logger.error('Fehler beim Abrufen der Packages mit Status', { status, error });
       throw new Error(`Packages mit Status ${status} konnten nicht abgerufen werden`);
     }
   }
@@ -291,7 +292,7 @@ export class PackageTrackingService {
 
       await packageTracking.save();
     } catch (error) {
-      console.error('Fehler beim automatischen Status-Übergang:', error);
+      logger.error('Fehler beim automatischen Status-Uebergang', { error });
       throw error;
     }
   }
@@ -347,7 +348,7 @@ export class PackageTrackingService {
         recent_activity
       };
     } catch (error) {
-      console.error('Fehler beim Abrufen der Package-Statistiken:', error);
+      logger.error('Fehler beim Abrufen der Package-Statistiken', { error });
       throw new Error('Package-Statistiken konnten nicht abgerufen werden');
     }
   }

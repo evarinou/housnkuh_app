@@ -1,26 +1,26 @@
 # Architecture Statistics (Auto-Generated)
 
-**Generated**: 2025-10-16 13:50:48
+**Generated**: 2026-03-24 17:45:49
 **Generator**: scripts/update-architecture.sh
 
 ## File Counts
 
 ### Frontend (Client)
-- Components: 80
-- Pages: 52
+- Components: 91
+- Pages: 54
 - Hooks: 13
-- Tests: 19
+- Tests: 25
 
 ### Backend (Server)
-- Controllers: 21
+- Controllers: 22
 - Models: 20
-- Services: 37
-- Routes: 18
-- Tests: 30
+- Services: 57
+- Routes: 19
+- Tests: 39
 
 ### Overall
-- Total TypeScript Files: 326
-- Total Tests: 49
+- Total TypeScript Files: 369
+- Total Tests: 64
 
 ## Component Breakdown
 
@@ -47,6 +47,7 @@ ZusatzleistungenSelector.tsx
 ### Admin Components
 ```
 AdminLayout.tsx
+AssignCategoryModal.tsx
 AvailabilityCalendar.tsx
 BookingTimeline.tsx
 ExportButton.tsx
@@ -56,6 +57,10 @@ ManualInvoiceGenerator.tsx
 MonthlyRevenueWidget.test.tsx
 MonthlyRevenueWidget.tsx
 PackageManagementInterface.tsx
+ProductCreationModal.test.tsx
+ProductCreationModal.tsx
+ProductFormFields.test.tsx
+ProductFormFields.tsx
 ProtectedRoute.tsx
 RevenueByUnitTable.tsx
 RevenueChart.tsx
@@ -67,8 +72,8 @@ ZusatzleistungenOverview.tsx
 ```
 BookingCard.tsx
 BookingDetailModal.tsx
-BookingStatusBadge.tsx
 BookingsList.tsx
+BookingStatusBadge.tsx
 DashboardMessage.tsx
 InvoiceDetail.test.tsx
 InvoiceDetail.tsx
@@ -77,6 +82,8 @@ InvoiceList.tsx
 MietfachCard.tsx
 PackageTrackingWidget.test.tsx
 PackageTrackingWidget.tsx
+ProductCard.test.tsx
+ProductCard.tsx
 StatusFilterTabs.tsx
 TrialAccessGuard.test.tsx
 TrialAccessGuard.tsx
@@ -100,6 +107,7 @@ Invoice.integration.test.ts
 Invoice.test.ts
 Invoice.ts
 Mietfach.ts
+modelTypes.ts
 MonthlyRevenue.ts
 PackageTracking.ts
 Product.ts
@@ -110,7 +118,6 @@ User.test.ts
 User.ts
 VendorContest.ts
 Vertrag.ts
-modelTypes.ts
 ```
 
 ---

@@ -19,21 +19,19 @@ import * as authController from '../controllers/authController';
 import { adminAuth } from '../middleware/auth';
 import { validateAdminLogin, validateAdminSetup } from '../middleware/validation';
 import { authRateLimit, adminSetupRateLimit } from '../middleware/rateLimiting';
+import logger from '../utils/logger';
 
 const router = Router();
 
 // Test endpoint to see if we get any requests
 router.all('/test-setup', (req: any, res: any) => {
-  console.log('TEST SETUP ENDPOINT HIT');
-  console.log('Method:', req.method);
-  console.log('Body:', req.body);
+  logger.debug('TEST SETUP ENDPOINT HIT', { method: req.method, body: req.body });
   res.json({ message: 'Test endpoint hit', body: req.body });
 });
 
 router.post('/login', authRateLimit, validateAdminLogin, authController.login);
 router.post('/setup', adminSetupRateLimit, (req: any, res: any, next: any) => {
-  console.log('Setup route hit - Body:', req.body);
-  console.log('Setup route hit - Headers:', req.headers);
+  logger.debug('Setup route hit', { body: req.body, headers: req.headers });
   next();
 }, authController.setupAdmin); // Temporarily removed validateAdminSetup
 
