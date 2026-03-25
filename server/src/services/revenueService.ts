@@ -7,7 +7,7 @@
 
 import mongoose from 'mongoose';
 import { cached, CacheInvalidator } from '../utils/queryCache';
-import { IMonthlyRevenue, IMietfachRevenue, IVertrag } from '../models/modelTypes';
+import { IMonthlyRevenue, IMietfachRevenue, IVertrag } from '../types/modelTypes';
 import Vertrag from '../models/Vertrag';
 import Mietfach from '../models/Mietfach';
 import MonthlyRevenue from '../models/MonthlyRevenue';

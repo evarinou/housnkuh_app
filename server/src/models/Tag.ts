@@ -19,6 +19,7 @@ export interface ITag extends Document {
   color?: string;
   icon?: string;
   isActive: boolean;
+  flourioId?: string; // FlourIO tag ID for synced tags
   createdAt: Date;
   updatedAt: Date;
 }
@@ -64,6 +65,11 @@ const TagSchema: Schema<ITag> = new Schema({
   isActive: {
     type: Boolean,
     default: true
+  },
+  flourioId: {
+    type: String,
+    trim: true,
+    sparse: true // Allows null/undefined, but ensures uniqueness when present
   }
 }, {
   timestamps: true
@@ -76,6 +82,7 @@ const TagSchema: Schema<ITag> = new Schema({
 TagSchema.index({ slug: 1 });
 TagSchema.index({ category: 1, isActive: 1 });
 TagSchema.index({ name: 'text', description: 'text' });
+TagSchema.index({ flourioId: 1 }, { sparse: true }); // Index for FlourIO synced tags
 
 /**
  * Pre-save middleware to generate URL-friendly slug
@@ -108,24 +115,20 @@ TagSchema.pre('save', function(next) {
  * @complexity O(n*m) where n is tagNames length and m is average database query time
  */
 TagSchema.statics.findOrCreateTags = async function(tagNames: string[], category: string = 'product'): Promise<ITag[]> {
-  const tags: ITag[] = [];
-  
-  for (const name of tagNames) {
-    let tag = await this.findOne({ name: name.trim(), category });
-    
-    if (!tag) {
-      tag = new this({
-        name: name.trim(),
-        category,
-        isActive: true
-      });
-      await tag.save();
-    }
-    
-    tags.push(tag);
-  }
-  
-  return tags;
+  const trimmedNames = tagNames.map(n => n.trim()).filter(Boolean);
+  if (trimmedNames.length === 0) return [];
+
+  // Single query to find all existing tags
+  const existing = await this.find({ name: { $in: trimmedNames }, category });
+  const existingNames = new Set(existing.map((t: ITag) => t.name));
+
+  // Bulk-create missing tags
+  const missing = trimmedNames.filter(n => !existingNames.has(n));
+  const created = missing.length > 0
+    ? await this.insertMany(missing.map(name => ({ name, category, isActive: true })))
+    : [];
+
+  return [...existing, ...created];
 };
 
 /**

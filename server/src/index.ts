@@ -43,11 +43,12 @@ import {
   cleanupMonitoringMiddleware 
 } from './middleware/monitoring';
 import logger from './utils/logger';
-import { 
-  securityHeaders, 
-  sanitizeInput, 
-  requestLogger, 
-  errorHandler 
+import { cache } from './utils/cache';
+import {
+  securityHeaders,
+  sanitizeInput,
+  requestLogger,
+  errorHandler
 } from './middleware/security';
 
 /**
@@ -223,18 +224,20 @@ app.get('/', (_req, res) => {
  * @description Stops all scheduled jobs before process termination
  */
 process.on('SIGTERM', () => {
-  logger.info('SIGTERM received, stopping scheduled jobs...');
+  logger.info('SIGTERM received, shutting down...');
   ScheduledJobs.stopAll();
+  cache.destroy();
   process.exit(0);
 });
 
 /**
  * Graceful shutdown handler for SIGINT (Ctrl+C)
- * @description Stops all scheduled jobs before process termination
+ * @description Stops all scheduled jobs and cache before process termination
  */
 process.on('SIGINT', () => {
-  logger.info('SIGINT received, stopping scheduled jobs...');
+  logger.info('SIGINT received, shutting down...');
   ScheduledJobs.stopAll();
+  cache.destroy();
   process.exit(0);
 });
 

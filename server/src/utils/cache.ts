@@ -28,6 +28,7 @@ interface CacheItem<T> {
  */
 class InMemoryCache {
   private cache: Map<string, CacheItem<any>> = new Map();
+  private pending: Map<string, Promise<any>> = new Map();
   private cleanupInterval: NodeJS.Timeout;
 
   /**
@@ -155,19 +156,30 @@ class InMemoryCache {
    * @description Implements cache-aside pattern for efficient data access
    */
   async getOrSet<T>(
-    key: string, 
-    fetchFunction: () => Promise<T>, 
+    key: string,
+    fetchFunction: () => Promise<T>,
     ttlSeconds: number = 300
   ): Promise<T> {
     const cached = this.get<T>(key);
-    
-    if (cached !== null) {
-      return cached;
-    }
+    if (cached !== null) return cached;
 
-    const data = await fetchFunction();
-    this.set(key, data, ttlSeconds);
-    return data;
+    // Prevent thundering herd: reuse in-flight promise for same key
+    const inflight = this.pending.get(key);
+    if (inflight) return inflight as Promise<T>;
+
+    const promise = fetchFunction()
+      .then(data => {
+        this.set(key, data, ttlSeconds);
+        this.pending.delete(key);
+        return data;
+      })
+      .catch(err => {
+        this.pending.delete(key);
+        throw err;
+      });
+
+    this.pending.set(key, promise);
+    return promise;
   }
 
   /**
