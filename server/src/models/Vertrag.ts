@@ -117,7 +117,7 @@ const VertragSchema = new Schema({
  */
 VertragSchema.virtual('gesamtpreis').get(function(this: any) {
   let basePrice = this.totalMonthlyPrice * this.contractDuration;
-  
+
   // Add zusatzleistungen monthly fees using values from contract
   if (this.zusatzleistungen?.lagerservice) {
     const lagerKosten = this.zusatzleistungen_kosten?.lagerservice_monatlich || ZUSATZLEISTUNGEN_PREISE.lagerservice;
@@ -127,12 +127,14 @@ VertragSchema.virtual('gesamtpreis').get(function(this: any) {
     const versandKosten = this.zusatzleistungen_kosten?.versandservice_monatlich || ZUSATZLEISTUNGEN_PREISE.versandservice;
     basePrice += versandKosten * this.contractDuration;
   }
-  
+
   // Apply existing discount logic
   if (this.discount > 0) {
-    return basePrice * (1 - this.discount);
+    basePrice = basePrice * (1 - this.discount);
   }
-  return basePrice;
+
+  // Round to 2 decimal places to avoid floating-point arithmetic errors
+  return Math.round(basePrice * 100) / 100;
 });
 /**
  * Validation method for additional services (Zusatzleistungen)

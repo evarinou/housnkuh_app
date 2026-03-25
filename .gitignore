@@ -16,6 +16,10 @@ node_modules/
 /client/build
 /server/dist
 
+# Test coverage reports (generated)
+coverage/
+server/coverage/
+
 # Logs
 logs
 *.log
