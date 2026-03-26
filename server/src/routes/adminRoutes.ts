@@ -14,6 +14,8 @@
 
 import { Router } from 'express';
 import * as adminController from '../controllers/adminController';
+import * as bookingAdminController from '../controllers/admin/bookingAdminController';
+import * as revenueAdminController from '../controllers/admin/revenueAdminController';
 import * as vertragController from '../controllers/vertragController';
 import { adminAuth } from '../middleware/auth';
 // import { cacheMiddleware, cacheInvalidationMiddleware } from '../middleware/cacheMiddleware';
@@ -56,24 +58,24 @@ router.delete('/newsletter/subscribers/:id',
 );
 
 // Ausstehende Buchungen verwalten (no cache for debugging)
-router.get('/pending-bookings', noCacheHeaders, adminController.getPendingBookings);
-router.get('/available-mietfaecher', noCacheHeaders, adminController.getAvailableMietfaecher);
-router.post('/pending-bookings/confirm/:userId', 
-  noCacheHeaders, 
-  adminController.confirmPendingBooking
+router.get('/pending-bookings', noCacheHeaders, bookingAdminController.getPendingBookings);
+router.get('/available-mietfaecher', noCacheHeaders, bookingAdminController.getAvailableMietfaecher);
+router.post('/pending-bookings/confirm/:userId',
+  noCacheHeaders,
+  bookingAdminController.confirmPendingBooking
 );
-router.post('/pending-bookings/reject/:userId', 
-  noCacheHeaders, 
-  adminController.rejectPendingBooking
+router.post('/pending-bookings/reject/:userId',
+  noCacheHeaders,
+  bookingAdminController.rejectPendingBooking
 );
 
 // M005 Implementation: Mietfach Availability API
 // router.get('/mietfaecher/availability', noCacheHeaders, adminController.getMietfachAvailability);
-router.post('/check-mietfach-availability', adminController.checkMietfachAvailability);
+router.post('/check-mietfach-availability', bookingAdminController.checkMietfachAvailability);
 
 // M005 Implementation: Booking Schedule Management API
 // router.put('/bookings/:bookingId/schedule', adminController.updateBookingSchedule);
-router.post('/bookings/:bookingId/confirm-with-schedule', adminController.confirmPendingBookingWithSchedule);
+router.post('/bookings/:bookingId/confirm-with-schedule', bookingAdminController.confirmPendingBookingWithSchedule);
 
 // Benutzerverwaltung (no cache for debugging)
 router.get('/users', noCacheHeaders, adminController.getAllUsers);
@@ -188,54 +190,76 @@ router.get('/revenue/overview', (req, res, next) => {
   res.set('Pragma', 'no-cache');
   res.set('Expires', '0');
   next();
-}, adminController.getRevenueOverview);
+}, revenueAdminController.getRevenueOverview);
 router.get('/revenue/by-unit', (req, res, next) => {
   res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
   res.set('Pragma', 'no-cache');
   res.set('Expires', '0');
   next();
-}, adminController.getRevenueByUnit);
-router.get('/revenue/trends', noCacheHeaders, adminController.getRevenueTrends);
-router.get('/revenue/mietfach-analysis', noCacheHeaders, adminController.getMietfachAnalysis);
+}, revenueAdminController.getRevenueByUnit);
+router.get('/revenue/trends', noCacheHeaders, revenueAdminController.getRevenueTrends);
+router.get('/revenue/mietfach-analysis', noCacheHeaders, revenueAdminController.getMietfachAnalysis);
 
 // Detailed Monthly Revenue (temporarily no cache for debugging)
-router.get('/revenue/details/:year/:month', noCacheHeaders, adminController.getMonthlyRevenueDetails);
+router.get('/revenue/details/:year/:month', noCacheHeaders, revenueAdminController.getMonthlyRevenueDetails);
 
 // Revenue Export (no caching for downloads)
-router.get('/revenue/export', noCacheHeaders, adminController.exportRevenueData);
+router.get('/revenue/export', noCacheHeaders, revenueAdminController.exportRevenueData);
 
 // Revenue Data Maintenance (admin only, no cache)
-router.post('/revenue/refresh', 
-  noCacheHeaders, 
-  adminController.refreshRevenueData
+router.post('/revenue/refresh',
+  noCacheHeaders,
+  revenueAdminController.refreshRevenueData
 );
 
 // Manual Revenue Calculation Trigger (admin only)
-router.post('/revenue/calculate', noCacheHeaders, adminController.triggerRevenueCalculation);
+router.post('/revenue/calculate', noCacheHeaders, revenueAdminController.triggerRevenueCalculation);
 
 // Future Revenue Projections (temporarily no cache for debugging)
-router.get('/revenue/projections', noCacheHeaders, adminController.getFutureRevenueProjections);
+router.get('/revenue/projections', noCacheHeaders, revenueAdminController.getFutureRevenueProjections);
 router.get('/revenue/combined', (req, res, next) => {
   res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
   res.set('Pragma', 'no-cache');
   res.set('Expires', '0');
   next();
-}, adminController.getCombinedRevenueData);
-router.get('/revenue/pipeline', noCacheHeaders, adminController.getContractPipeline);
-router.get('/revenue/projected-occupancy', noCacheHeaders, adminController.getProjectedOccupancy);
+}, revenueAdminController.getCombinedRevenueData);
+router.get('/revenue/pipeline', noCacheHeaders, revenueAdminController.getContractPipeline);
+router.get('/revenue/projected-occupancy', noCacheHeaders, revenueAdminController.getProjectedOccupancy);
 
 // ===============================================
 // ZUSATZLEISTUNGEN MANAGEMENT ROUTES (M013) - Updated Implementation
 // ===============================================
 
 // Package confirmation routes for zusatzleistungen
-router.post('/contracts/:id/confirm-package-arrival', adminController.confirmPackageArrival);
-router.post('/contracts/:id/confirm-package-stored', adminController.confirmPackageStored);
+router.post('/contracts/:id/confirm-package-arrival', bookingAdminController.confirmPackageArrival);
+router.post('/contracts/:id/confirm-package-stored', bookingAdminController.confirmPackageStored);
 
 // Contract zusatzleistungen management
-router.put('/contracts/:id/zusatzleistungen', adminController.adminUpdateZusatzleistungen);
+router.put('/contracts/:id/zusatzleistungen', bookingAdminController.adminUpdateZusatzleistungen);
 
 // Overview of contracts with zusatzleistungen
-router.get('/contracts/zusatzleistungen', adminController.getContractsWithZusatzleistungen);
+router.get('/contracts/zusatzleistungen', bookingAdminController.getContractsWithZusatzleistungen);
+
+// ===== ADMIN INVOICE MANAGEMENT ROUTES =====
+
+// Invoice statistics
+router.get('/invoices/stats', noCacheHeaders, adminController.getInvoiceStats);
+
+// Bulk invoice generation
+router.post('/invoices/bulk-generate', adminController.bulkGenerateInvoices);
+
+// Invoice editing (limited fields)
+router.put('/invoices/:id', adminController.editInvoice);
+
+// Resend invoice email
+router.post('/invoices/:id/resend', adminController.resendInvoiceEmail);
+
+// Cancel invoice (soft delete)
+router.delete('/invoices/:id', adminController.cancelInvoice);
+
+// ===== PRODUCT CATEGORY MANAGEMENT ROUTES =====
+
+// Assign FlourIO category tag to products (bulk operation)
+router.post('/products/assign-category', adminController.assignCategoryToProducts);
 
 export default router;
