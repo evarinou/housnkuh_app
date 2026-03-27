@@ -16,6 +16,8 @@
 
 import { Router } from 'express';
 import * as vendorAuthController from '../controllers/vendorAuthController';
+import * as vendorProfileController from '../controllers/vendor/vendorProfileController';
+import * as vendorBookingController from '../controllers/vendor/vendorBookingController';
 import { vendorAuth } from '../middleware/auth';
 import { validateVendorRegistration, validateEmailConfirmationParam } from '../middleware/validation';
 import { 
@@ -31,19 +33,19 @@ router.post('/preregister', vendorRegistrationRateLimit, validateVendorRegistrat
 router.post('/register', vendorRegistrationRateLimit, validateVendorRegistration, vendorAuthController.registerVendorWithBooking);
 router.post('/login', authRateLimit, vendorAuthController.loginVendor);
 router.get('/confirm/:token', emailConfirmationRateLimit, validateEmailConfirmationParam, vendorAuthController.confirmVendorEmail);
-router.get('/public/profiles', vendorAuthController.getAllVendorProfiles);
-router.get('/public/profile/:vendorId', vendorAuthController.getPublicVendorProfile);
+router.get('/public/profiles', vendorProfileController.getAllVendorProfiles);
+router.get('/public/profile/:vendorId', vendorProfileController.getPublicVendorProfile);
 
 // Geschützte Routen (mit Vendor-Auth-Middleware)
-router.post('/complete-booking/:userId', vendorAuth, vendorAuthController.completeBooking);
+router.post('/complete-booking/:userId', vendorAuth, vendorBookingController.completeBooking);
 
 // Vendor Profile Management
-router.get('/profile/:userId', vendorAuth, vendorAuthController.getVendorProfile);
-router.put('/profile/:userId', vendorAuth, vendorAuthController.updateVendorProfile);
-router.post('/upload-image', vendorAuth, vendorAuthController.uploadVendorImage);
+router.get('/profile/:userId', vendorAuth, vendorProfileController.getVendorProfile);
+router.put('/profile/:userId', vendorAuth, vendorProfileController.updateVendorProfile);
+router.post('/upload-image', vendorAuth, vendorProfileController.uploadVendorImage);
 
 // Tag Management for Vendors
-router.post('/create-tag', vendorAuth, vendorAuthController.createVendorTag);
+router.post('/create-tag', vendorAuth, vendorProfileController.createVendorTag);
 
 // Auth-Check Route (optional)
 router.get('/check', vendorAuth, (_req, res) => {
@@ -51,25 +53,31 @@ router.get('/check', vendorAuth, (_req, res) => {
 });
 
 // Vendor Verträge
-router.get('/contracts/:userId', vendorAuth, vendorAuthController.getVendorContracts);
+router.get('/contracts/:userId', vendorAuth, vendorBookingController.getVendorContracts);
 
 // Vendor Subscription Management
-router.post('/cancel/:userId', vendorAuth, vendorAuthController.cancelVendorSubscription);
+router.post('/cancel/:userId', vendorAuth, vendorProfileController.cancelVendorSubscription);
 
 // Additional Booking for authenticated vendors
-router.post('/additional-booking', vendorAuth, vendorAuthController.additionalBooking);
+router.post('/additional-booking', vendorAuth, vendorBookingController.additionalBooking);
 
 // Vendor Booking Status API - M005 Implementation
-router.get('/bookings/:userId', vendorAuth, vendorAuthController.getVendorBookings);
-router.get('/bookings/:userId/:bookingId', vendorAuth, vendorAuthController.getVendorBookingById);
+router.get('/bookings/:userId', vendorAuth, vendorBookingController.getVendorBookings);
+router.get('/bookings/:userId/:bookingId', vendorAuth, vendorBookingController.getVendorBookingById);
 
 // Vendor Dashboard Messages API - M005 Implementation
-router.get('/dashboard/messages/:userId', vendorAuth, vendorAuthController.getDashboardMessages);
-router.delete('/dashboard/messages/:messageId', vendorAuth, vendorAuthController.dismissDashboardMessage);
+router.get('/dashboard/messages/:userId', vendorAuth, vendorBookingController.getDashboardMessages);
+router.delete('/dashboard/messages/:messageId', vendorAuth, vendorBookingController.dismissDashboardMessage);
 
 // Trial Management API - M006 S004 Implementation
-router.get('/trial-status', vendorAuth, vendorAuthController.getTrialStatus);
-router.post('/cancel-trial-booking/:bookingId', vendorAuth, vendorAuthController.cancelTrialBooking);
-router.post('/bookings/confirm', vendorAuth, vendorAuthController.confirmTrialBooking);
+router.get('/trial-status', vendorAuth, vendorBookingController.getTrialStatus);
+router.post('/cancel-trial-booking/:bookingId', vendorAuth, vendorBookingController.cancelTrialBooking);
+router.post('/bookings/confirm', vendorAuth, vendorBookingController.confirmTrialBooking);
+
+// Vendor Invoice Management API - TASK-014 Implementation
+router.get('/invoices', vendorAuth, vendorBookingController.getVendorInvoices);
+router.get('/invoices/summary', vendorAuth, vendorBookingController.getVendorInvoiceSummary);
+router.get('/invoices/:id', vendorAuth, vendorBookingController.getVendorInvoiceById);
+router.get('/invoices/:id/download', vendorAuth, vendorBookingController.downloadVendorInvoicePdf);
 
 export default router;
