@@ -20,7 +20,7 @@ export const getAllUsers = async (req: Request, res: Response): Promise<void> =>
   try {
     const users = await User.find().select('-password');
     res.json(users);
-  } catch (err) {
+  } catch (_err) {
     res.status(500).json({ message: 'Serverfehler beim Abrufen der Benutzer' });
   }
 };
@@ -42,7 +42,7 @@ export const getUserById = async (req: Request, res: Response): Promise<void> =>
       return;
     }
     res.json(user);
-  } catch (err) {
+  } catch (_err) {
     res.status(500).json({ message: 'Serverfehler beim Abrufen des Benutzers' });
   }
 };
@@ -103,7 +103,7 @@ export const updateUser = async (req: Request, res: Response): Promise<void> => 
     }
     
     res.json(updatedUser);
-  } catch (err) {
+  } catch (_err) {
     res.status(400).json({ message: 'Fehler beim Aktualisieren des Benutzers' });
   }
 };
@@ -127,7 +127,7 @@ export const deleteUser = async (req: Request, res: Response): Promise<void> => 
     }
     
     res.json({ message: 'Benutzer erfolgreich gelöscht' });
-  } catch (err) {
+  } catch (_err) {
     res.status(500).json({ message: 'Serverfehler beim Löschen des Benutzers' });
   }
 };

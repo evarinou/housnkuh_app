@@ -25,9 +25,12 @@ import publicRoutes from './publicRoutes'; // Performance-optimized public endpo
 import tagRoutes from './tagRoutes'; // Tag management
 import faqRoutes from './faqRoutes'; // FAQ management
 import emailTemplateRoutes from './emailTemplateRoutes'; // Email template management
+import invoiceRoutes from './invoiceRoutes'; // Invoice management
+import flourioRoutes from './flourioRoutes'; // FlourIO integration (Article Management)
 import Settings from '../models/Settings';
 import HealthCheckService from '../services/healthCheckService';
 import logger from '../utils/logger';
+import invoiceMonitoringService from '../services/invoiceMonitoringService';
 
 /**
  * Main API router instance
@@ -56,13 +59,15 @@ router.use('/public', publicRoutes); // Performance-optimized public endpoints
 router.use('/tags', tagRoutes); // Tag management
 router.use('/faqs', faqRoutes); // FAQ management
 router.use('/admin/email-templates', emailTemplateRoutes); // Email template management
+router.use('/invoices', invoiceRoutes); // Invoice management
+router.use('/admin/flourio', flourioRoutes); // FlourIO integration (Article Management)
 
 // Public health check endpoint (no authentication required)
 router.get('/health', async (req: Request, res: Response) => {
   try {
     const simpleStatus = await HealthCheckService.getSimpleStatus();
     res.json(simpleStatus);
-  } catch (error) {
+  } catch (_error) {
     res.status(500).json({
       status: 'error',
       timestamp: new Date(),
@@ -91,8 +96,42 @@ router.get('/health/detailed', async (req: Request, res: Response) => {
   }
 });
 
+// Prometheus metrics endpoint
+router.get('/metrics', async (_req: Request, res: Response) => {
+  try {
+    const metrics = await invoiceMonitoringService.getPrometheusMetrics();
+    res.set('Content-Type', 'text/plain');
+    res.send(metrics);
+  } catch (error) {
+    logger.error('Error getting Prometheus metrics:', error);
+    res.status(500).json({
+      error: 'Failed to get metrics',
+      timestamp: new Date()
+    });
+  }
+});
+
+// Invoice monitoring metrics summary (JSON format for dashboards)
+router.get('/metrics/invoice-summary', async (_req: Request, res: Response) => {
+  try {
+    const summary = invoiceMonitoringService.getMetricsSummary();
+    res.json({
+      success: true,
+      timestamp: new Date(),
+      ...summary
+    });
+  } catch (error) {
+    logger.error('Error getting invoice metrics summary:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get invoice metrics summary',
+      timestamp: new Date()
+    });
+  }
+});
+
 // Public endpoint for store opening date
-router.get('/public/store-opening', async (req: Request, res: Response) => {
+router.get('/public/store-opening', async (_req: Request, res: Response) => {
   try {
     const settings = await Settings.getSettings();
     

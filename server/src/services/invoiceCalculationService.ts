@@ -7,7 +7,6 @@
 
 import { Types } from 'mongoose';
 import Vertrag from '../models/Vertrag';
-import User from '../models/User';
 import { ZUSATZLEISTUNGEN_PREISE } from '../models/Vertrag';
 import logger from '../utils/logger';
 

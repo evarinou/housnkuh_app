@@ -5,7 +5,7 @@
  */
 
 import { Request, Response } from 'express';
-import { Tag, ITag } from '../models/Tag';
+import { Tag } from '../models/Tag';
 import { Product } from '../models/Product';
 import logger from '../utils/logger';
 

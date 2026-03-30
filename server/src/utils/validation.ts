@@ -227,7 +227,7 @@ export const validatePackageData = (packageData: any): PackageDataValidationResu
   ];
   
   // Optional but expected fields
-  const optionalFields = ['packageCounts', 'zusatzleistungen', 'discount'];
+  const _optionalFields = ['packageCounts', 'zusatzleistungen', 'discount'];
 
   for (const field of requiredFields) {
     if (!(field in packageData)) {
@@ -301,7 +301,7 @@ export const validatePackageData = (packageData: any): PackageDataValidationResu
   }
 
   const costFields = ['monthly', 'provision'];
-  const optionalCostFields = ['oneTime'];
+  const _optionalCostFields = ['oneTime'];
   
   for (const field of costFields) {
     if (typeof packageData.totalCost[field] !== 'number' || packageData.totalCost[field] < 0) {
@@ -398,7 +398,7 @@ export interface ZusatzleistungenValidationResult {
  */
 export const validateZusatzleistungen = (
   packageData: any,
-  zusatzleistungenData?: any
+  _zusatzleistungenData?: any
 ): ZusatzleistungenValidationResult => {
   // Import pricing constants from Vertrag model
   const { ZUSATZLEISTUNGEN_PREISE } = require('../models/Vertrag');

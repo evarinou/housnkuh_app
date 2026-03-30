@@ -34,7 +34,7 @@ export class ScheduledJobs {
    * @throws {Error} If job initialization fails
    */
   static async initialize(): Promise<void> {
-    logger.info('🕒 Initializing scheduled jobs...');
+    logger.info('🔒 Initializing scheduled jobs...');
     
     // Initialize alerting service
     await AlertingService.initialize();
@@ -56,6 +56,9 @@ export class ScheduledJobs {
     
     // Job 6: Revenue calculation (monthly on 1st at 2 AM)
     this.scheduleRevenueCalculation();
+    
+    // Job 7: Invoice generation (monthly on 1st at 3 AM)
+    this.scheduleInvoiceGeneration();
     
     logger.info('✅ Scheduled jobs initialized successfully');
   }
@@ -252,6 +255,56 @@ export class ScheduledJobs {
   }
 
   /**
+   * @description Manually trigger invoice generation (for admin use)
+   * @param {number} [year] - Optional year for generation
+   * @param {number} [month] - Optional month for generation
+   * @param {string} [vendorId] - Optional specific vendor ID
+   * @security Admin-only manual trigger for invoice generation
+   * @complexity Medium - Manual job execution with period/vendor selection
+   * @returns {Promise<any>} Result object with success status and generation details
+   */
+  static async triggerInvoiceGeneration(year?: number, month?: number, vendorId?: string): Promise<any> {
+    try {
+      logger.info('🔧 Manual invoice generation triggered');
+      const { InvoiceGenerationJob } = require('../jobs/invoiceGenerationJob');
+      
+      if (vendorId && year && month) {
+        await InvoiceGenerationJob.generateForVendor(vendorId, year, month);
+        return {
+          success: true,
+          type: 'vendor-specific',
+          vendorId,
+          period: `${month}/${year}`,
+          timestamp: new Date()
+        };
+      } else if (year && month) {
+        await InvoiceGenerationJob.generateForMonth(year, month);
+        return {
+          success: true,
+          type: 'monthly',
+          period: `${month}/${year}`,
+          timestamp: new Date()
+        };
+      } else {
+        await InvoiceGenerationJob.run();
+        return {
+          success: true,
+          type: 'current-cycle',
+          period: 'previous month',
+          timestamp: new Date()
+        };
+      }
+    } catch (error) {
+      logger.error('❌ Manual invoice generation failed:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: new Date()
+      };
+    }
+  }
+
+  /**
    * @description Stop all scheduled jobs
    * @security Safely stops all running jobs
    * @complexity Medium - Coordinates stopping multiple jobs
@@ -268,6 +321,10 @@ export class ScheduledJobs {
     // Stop the revenue calculation job separately
     RevenueCalculationJob.stop();
     
+    // Stop the invoice generation job separately
+    const { InvoiceGenerationJob } = require('../jobs/invoiceGenerationJob');
+    InvoiceGenerationJob.stop();
+    
     this.jobs.clear();
     logger.info('✅ All scheduled jobs stopped');
   }
@@ -280,8 +337,8 @@ export class ScheduledJobs {
    */
   static getJobsStatus(): any {
     const status: any = {};
-    
-    for (const [name, task] of this.jobs) {
+
+    for (const [name, _task] of this.jobs) {
       status[name] = {
         scheduled: true,
         name: name
@@ -460,6 +517,18 @@ export class ScheduledJobs {
   private static scheduleRevenueCalculation(): void {
     RevenueCalculationJob.init();
     logger.info('📅 Revenue calculation job scheduled (monthly on 1st at 2 AM)');
+  }
+
+  /**
+   * @description Schedule invoice generation - runs monthly on 1st at 3 AM
+   * @security Generates invoices for eligible vendors with validation
+   * @complexity Medium - Invoice generation job initialization
+   * @returns {void}
+   */
+  private static scheduleInvoiceGeneration(): void {
+    const { InvoiceGenerationJob } = require('../jobs/invoiceGenerationJob');
+    InvoiceGenerationJob.init();
+    logger.info('📅 Invoice generation job scheduled (monthly on 1st at 3 AM)');
   }
 
   /**

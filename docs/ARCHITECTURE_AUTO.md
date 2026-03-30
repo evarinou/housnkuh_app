@@ -1,6 +1,6 @@
 # Architecture Statistics (Auto-Generated)
 
-**Generated**: 2026-03-30 13:11:02
+**Generated**: 2026-03-30 14:56:07
 **Generator**: scripts/update-architecture.sh
 
 ## File Counts
@@ -12,15 +12,15 @@
 - Tests: 25
 
 ### Backend (Server)
-- Controllers: 33
+- Controllers: 34
 - Models: 20
 - Services: 57
 - Routes: 19
-- Tests: 42
+- Tests: 43
 
 ### Overall
-- Total TypeScript Files: 381
-- Total Tests: 67
+- Total TypeScript Files: 382
+- Total Tests: 68
 
 ## Component Breakdown
 

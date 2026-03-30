@@ -8,11 +8,7 @@
 
 // server/src/services/trialMonitoringService.ts
 import User from '../models/User';
-import Vertrag from '../models/Vertrag';
-import { IUser } from '../types/modelTypes';
 import { performanceMonitor } from '../utils/performanceMonitor';
-import AlertingService from './alertingService';
-import { cache } from '../utils/cache';
 import logger from '../utils/logger';
 
 /**
@@ -419,7 +415,7 @@ class TrialMonitoringService {
    * @complexity Low - Alert retrieval placeholder
    * @returns {Promise<any[]>} Array of recent alerts
    */
-  private async getRecentAlerts(limit: number = 10): Promise<any[]> {
+  private async getRecentAlerts(_limit: number = 10): Promise<any[]> {
     // This would integrate with your alerting system
     // For now, return mock data structure
     return [];

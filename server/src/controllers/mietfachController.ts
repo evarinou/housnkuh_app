@@ -6,8 +6,6 @@
 
 import { Request, Response } from 'express';
 import Mietfach from '../models/Mietfach';
-import Vertrag from '../models/Vertrag';
-import { IMietfach, IVertrag, IService } from '../types/modelTypes';
 import logger from '../utils/logger';
 
 /**
@@ -22,7 +20,7 @@ export const getAllMietfaecher = async (req: Request, res: Response): Promise<vo
   try {
     const mietfaecher = await Mietfach.find();
     res.json(mietfaecher);
-  } catch (err) {
+  } catch (_err) {
     res.status(500).json({ message: 'Serverfehler beim Abrufen der Mietfächer' });
   }
 };
@@ -149,7 +147,7 @@ export const getMietfachById = async (req: Request, res: Response): Promise<void
       return;
     }
     res.json(mietfach);
-  } catch (err) {
+  } catch (_err) {
     res.status(500).json({ message: 'Serverfehler beim Abrufen des Mietfachs' });
   }
 };
@@ -237,7 +235,7 @@ export const deleteMietfach = async (req: Request, res: Response): Promise<void>
     }
     
     res.json({ message: 'Mietfach erfolgreich gelöscht' });
-  } catch (err) {
+  } catch (_err) {
     res.status(500).json({ message: 'Serverfehler beim Löschen des Mietfachs' });
   }
 };
@@ -248,7 +246,7 @@ export const getMietfaecherByTyp = async (req: Request, res: Response): Promise<
     const { typ } = req.query;
     const mietfaecher = await Mietfach.find({ typ });
     res.json(mietfaecher);
-  } catch (err) {
+  } catch (_err) {
     res.status(500).json({ message: 'Serverfehler beim Filtern der Mietfächer' });
   }
 };

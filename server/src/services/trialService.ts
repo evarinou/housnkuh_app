@@ -10,7 +10,7 @@
 import User from '../models/User';
 import Settings from '../models/Settings';
 import { sendTrialActivationEmail, sendTrialExpirationWarning, sendTrialExpiredEmail, sendLaunchDayActivationNotification } from '../utils/emailService';
-import { IUser, ITrialAutomation } from '../types/modelTypes';
+import { IUser } from '../types/modelTypes';
 import EmailTemplate from '../models/EmailTemplate';
 import * as Handlebars from 'handlebars';
 import logger from '../utils/logger';
@@ -280,7 +280,7 @@ export class TrialService {
                     vendor.trialAutomation.remindersSent.expirationNotification = true;
                     vendor.trialAutomation.lastReminderSent = now;
                   }
-                } catch (emailError) {
+                } catch (_emailError) {
                   result.warnings.push(`Failed to send trial expired email to ${vendor.kontakt.email}`);
                 }
               }
@@ -303,7 +303,7 @@ export class TrialService {
                   }
                   reminderSent = true;
                   logger.info(`Sent 7-day reminder to vendor: ${vendor.kontakt.email}`);
-                } catch (emailError) {
+                } catch (_emailError) {
                   result.warnings.push(`Failed to send 7-day reminder to ${vendor.kontakt.email}`);
                 }
               }
@@ -318,7 +318,7 @@ export class TrialService {
                   }
                   reminderSent = true;
                   logger.info(`Sent 3-day reminder to vendor: ${vendor.kontakt.email}`);
-                } catch (emailError) {
+                } catch (_emailError) {
                   result.warnings.push(`Failed to send 3-day reminder to ${vendor.kontakt.email}`);
                 }
               }
@@ -333,7 +333,7 @@ export class TrialService {
                   }
                   reminderSent = true;
                   logger.info(`Sent 1-day reminder to vendor: ${vendor.kontakt.email}`);
-                } catch (emailError) {
+                } catch (_emailError) {
                   result.warnings.push(`Failed to send 1-day reminder to ${vendor.kontakt.email}`);
                 }
               }
@@ -729,7 +729,7 @@ export class TrialService {
       });
 
       return { success: true };
-    } catch (error) {
+    } catch (_error) {
       return { success: false, message: 'Failed to convert trial' };
     }
   }
@@ -765,7 +765,7 @@ export class TrialService {
       });
 
       return { success: true, newTrialEndDate: newEndDate };
-    } catch (error) {
+    } catch (_error) {
       return { success: false, message: 'Failed to extend trial' };
     }
   }
@@ -778,7 +778,7 @@ export class TrialService {
    * @complexity Medium - Status validation and cancellation
    * @returns {Promise<object>} Result object with success status
    */
-  static async cancelTrial(user: IUser, reason?: string): Promise<{ 
+  static async cancelTrial(user: IUser, _reason?: string): Promise<{
     success: boolean; 
     message?: string;
   }> {
@@ -792,7 +792,7 @@ export class TrialService {
       });
 
       return { success: true };
-    } catch (error) {
+    } catch (_error) {
       return { success: false, message: 'Failed to cancel trial' };
     }
   }

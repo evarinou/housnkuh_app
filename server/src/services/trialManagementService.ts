@@ -8,10 +8,7 @@
 
 // server/src/services/trialManagementService.ts
 import User from '../models/User';
-import Vertrag from '../models/Vertrag';
 import { IUser } from '../types/modelTypes';
-import { sendTrialStatusEmail } from '../utils/emailService';
-import { performanceMonitor } from '../utils/performanceMonitor';
 import logger from '../utils/logger';
 
 /**

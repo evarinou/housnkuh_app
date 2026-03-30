@@ -8,7 +8,6 @@
 import * as cron from 'node-cron';
 import { invoiceGenerationService } from '../services/invoiceGenerationService';
 import User from '../models/User';
-import { IUser } from '../types/modelTypes';
 import logger from '../utils/logger';
 import invoiceMonitoringService from '../services/invoiceMonitoringService';
 

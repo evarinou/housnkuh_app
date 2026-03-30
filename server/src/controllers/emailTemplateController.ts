@@ -5,7 +5,7 @@
  */
 
 import { Request, Response } from 'express';
-import EmailTemplate, { IEmailTemplate } from '../models/EmailTemplate';
+import EmailTemplate from '../models/EmailTemplate';
 import { emailService } from '../utils/emailService';
 import logger from '../utils/logger';
 

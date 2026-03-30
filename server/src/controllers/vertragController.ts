@@ -8,10 +8,9 @@ import { Request, Response } from 'express';
 import Vertrag from '../models/Vertrag';
 import User from '../models/User';
 import mongoose from 'mongoose';
-import { 
-  PriceCalculationRequest, 
+import {
+  PriceCalculationRequest,
   CreateVertragRequest,
-  MIETFACH_BASE_PRICES,
   ZUSATZLEISTUNGEN_PRICING,
   calculateRabatt,
   calculateMonthlyTotal,
@@ -43,7 +42,7 @@ export const getAllVertraege = async (req: Request, res: Response): Promise<void
       const validServices = services.filter(service => service.mietfach);
       
       // Get base prices (before discount) for display
-      let monthlyMietfachTotal = validServices.reduce((sum, service) => sum + (service.monatspreis || 0), 0);
+      const monthlyMietfachTotal = validServices.reduce((sum, service) => sum + (service.monatspreis || 0), 0);
       
       // Add Zusatzleistungen costs if present
       let zusatzleistungenCosts = 0;
@@ -295,7 +294,7 @@ export const addServiceToVertrag = async (req: Request, res: Response): Promise<
 };
 
 // Mapping von packageBuilder IDs zu Mietfach-Typen
-const packageTypeMapping: Record<string, string> = {
+const _packageTypeMapping: Record<string, string> = {
   'block-a': 'regal',           // Regal Typ A
   'block-b': 'regal-b',         // Regal Typ B
   'block-cold': 'kuehlregal',   // Kühlregal

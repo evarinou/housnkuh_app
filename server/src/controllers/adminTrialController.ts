@@ -9,16 +9,7 @@ import User from '../models/User';
 import Vertrag from '../models/Vertrag';
 import logger from '../utils/logger';
 import { TrialService } from '../services/trialService';
-import { sendTrialStatusEmail, sendTrialConversionEmail } from '../utils/emailService';
 import mongoose from 'mongoose';
-
-interface TrialFilterQuery {
-  status?: string;
-  startDate?: Date;
-  endDate?: Date;
-  expiringIn?: number;
-  search?: string;
-}
 
 /**
  * Retrieves all trials with comprehensive filtering and pagination

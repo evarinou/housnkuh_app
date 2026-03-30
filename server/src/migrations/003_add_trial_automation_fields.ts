@@ -1,5 +1,4 @@
 // server/src/migrations/003_add_trial_automation_fields.ts
-import mongoose from 'mongoose';
 import User from '../models/User';
 
 /**

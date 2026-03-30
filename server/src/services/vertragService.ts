@@ -9,7 +9,7 @@
 import Vertrag from '../models/Vertrag';
 import User from '../models/User';
 import Mietfach from '../models/Mietfach';
-import { IVertrag, IUser } from '../types/modelTypes';
+import { IVertrag } from '../types/modelTypes';
 import mongoose from 'mongoose';
 
 /**

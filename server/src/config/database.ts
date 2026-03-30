@@ -63,7 +63,7 @@ export async function connectToDatabase(mongoUri: string): Promise<void> {
     
     // Enable query logging in development
     if (process.env.NODE_ENV === 'development') {
-      mongoose.set('debug', (collectionName: string, method: string, query: any, doc: any) => {
+      mongoose.set('debug', (collectionName: string, method: string, query: any, _doc: any) => {
         const startTime = Date.now();
         logger.debug('MongoDB Query', { collection: collectionName, method, query });
         

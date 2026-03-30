@@ -335,7 +335,7 @@ export class HealthCheckService {
   private static async checkDiskSpace(): Promise<ComponentHealth> {
     try {
       const fs = require('fs');
-      const stats = fs.statSync('.');
+      fs.statSync('.');
       
       // This is a basic check - in production you might want more sophisticated disk monitoring
       return {
@@ -441,7 +441,7 @@ export class HealthCheckService {
         status: dbState === 1 && uptime > 30 ? 'ok' : 'error',
         timestamp: new Date()
       };
-    } catch (error) {
+    } catch (_error) {
       return {
         status: 'error',
         timestamp: new Date()

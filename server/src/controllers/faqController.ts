@@ -5,7 +5,7 @@
  */
 
 import { Request, Response } from 'express';
-import FAQ, { IFAQ } from '../models/FAQ';
+import FAQ from '../models/FAQ';
 import logger from '../utils/logger';
 
 /**

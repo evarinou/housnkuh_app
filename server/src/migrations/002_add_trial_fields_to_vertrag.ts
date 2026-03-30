@@ -1,4 +1,3 @@
-import mongoose from 'mongoose';
 import { MongoClient, Db } from 'mongodb';
 
 interface MigrationResult {

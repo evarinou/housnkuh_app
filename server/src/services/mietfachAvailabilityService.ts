@@ -15,11 +15,9 @@ import {
   BatchAvailabilityResult,
   AvailabilityMetrics
 } from '../types/availability';
-import { 
-  dateRangesOverlap, 
+import {
   findLatestEndDate,
   startOfNextMonth,
-  createDateRangeFromDuration,
   startOfDay
 } from '../utils/dateUtils';
 import { IMietfach } from '../types/modelTypes';
@@ -43,7 +41,7 @@ export class MietfachAvailabilityService {
     requestedRange: DateRange,
     options: AvailabilityOptions = {}
   ): Promise<AvailabilityResult> {
-    const startTime = Date.now();
+    const _startTime = Date.now();
     
     // Get Mietfach ID
     const mietfachId = typeof mietfach === 'string' ? mietfach : (mietfach._id as any).toString();

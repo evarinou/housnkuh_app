@@ -5,13 +5,12 @@
  * @modified 2025-09-05
  */
 
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { Types } from 'mongoose';
 import Invoice from '../models/Invoice';
 import { AuthRequest } from '../middleware/auth';
 import logger from '../utils/logger';
 import { invoiceGenerationService } from '../services/invoiceGenerationService';
-import { invoicePdfService } from '../services/pdf/invoicePdfService';
 import path from 'path';
 import fs from 'fs';
 
@@ -29,7 +28,7 @@ export const getInvoices = async (req: AuthRequest, res: Response): Promise<void
     const isVendor = req.user?.isVendor;
 
     // Build query based on user role
-    let query: any = {};
+    const query: any = {};
     
     // Vendors can only see their own invoices
     if (isVendor && !isAdmin) {
@@ -526,7 +525,7 @@ export const bulkGenerateInvoices = async (req: AuthRequest, res: Response): Pro
       }
     }
 
-    let results = [];
+    const results = [];
     let successCount = 0;
     let errorCount = 0;
 
@@ -907,7 +906,7 @@ export const exportInvoices = async (req: AuthRequest, res: Response): Promise<v
     const { status, vendor, month, year, search } = req.query;
 
     // Build query based on filters
-    let query: any = {};
+    const query: any = {};
     
     if (status && typeof status === 'string') {
       query.status = status;

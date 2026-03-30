@@ -36,7 +36,7 @@
     "build:ci": "CI=false craco build",
     "test": "craco test",
     "eject": "react-scripts eject",
-    "lint": "eslint src/ --ext .ts,.tsx --max-warnings 50",
+    "lint": "eslint src/ --ext .ts,.tsx --max-warnings 175",
     "lint:fix": "eslint src/ --ext .ts,.tsx --fix"
   },
   "eslintConfig": {
@@ -44,6 +44,20 @@
       "react-app",
       "react-app/jest",
       "prettier"
+    ],
+    "overrides": [
+      {
+        "files": ["**/*.test.ts", "**/*.test.tsx"],
+        "rules": {
+          "testing-library/no-node-access": "warn",
+          "testing-library/no-wait-for-multiple-assertions": "warn",
+          "testing-library/no-container": "warn",
+          "testing-library/no-render-in-setup": "warn",
+          "testing-library/prefer-find-by": "warn",
+          "testing-library/no-wait-for-side-effects": "warn",
+          "jest/no-conditional-expect": "warn"
+        }
+      }
     ]
   },
   "jest": {

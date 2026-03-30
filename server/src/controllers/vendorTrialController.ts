@@ -9,8 +9,7 @@ import User from '../models/User';
 import Vertrag from '../models/Vertrag';
 import logger from '../utils/logger';
 import { TrialService } from '../services/trialService';
-import { VertragService } from '../services/vertragService';
-import { sendTrialStatusEmail, sendTrialConversionEmail } from '../utils/emailService';
+import { sendTrialConversionEmail } from '../utils/emailService';
 
 interface VendorRequest extends Request {
   userId?: string;

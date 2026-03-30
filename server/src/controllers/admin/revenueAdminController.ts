@@ -74,12 +74,12 @@ export const getRevenueOverview = async (req: Request, res: Response): Promise<v
 
     logger.info('🔍 Calculated totals:', { totalRevenue, monthlyAverage, monthsCount: revenueRange.length });
 
-    var trends = { monthlyTrends };
-    var finalTotalRevenue = totalRevenue;
-    var finalMonthlyAverage = monthlyAverage;
+    const trends = { monthlyTrends };
+    const finalTotalRevenue = totalRevenue;
+    const finalMonthlyAverage = monthlyAverage;
 
     // Get revenue statistics
-    const statistics = await revenueService.getRevenueStatistics();
+    const _statistics = await revenueService.getRevenueStatistics();
 
     // Calculate contract totals
     const totalActiveContracts = currentMonthRevenue?.anzahlAktiveVertraege || 0;

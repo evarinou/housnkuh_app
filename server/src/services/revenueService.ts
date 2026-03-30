@@ -6,7 +6,6 @@
  */
 
 import mongoose from 'mongoose';
-import { cached, CacheInvalidator } from '../utils/queryCache';
 import { IMonthlyRevenue, IMietfachRevenue, IVertrag } from '../types/modelTypes';
 import Vertrag from '../models/Vertrag';
 import Mietfach from '../models/Mietfach';
@@ -821,7 +820,7 @@ export class RevenueService {
     const startDate = new Date(earliestContract.createdAt);
     const endDate = new Date();
     
-    let currentDate = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+    const currentDate = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
     
     while (currentDate <= endDate) {
       logger.info(`Calculating revenue for ${currentDate.getFullYear()}-${currentDate.getMonth() + 1}`);

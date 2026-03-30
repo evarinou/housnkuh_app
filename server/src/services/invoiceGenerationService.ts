@@ -7,7 +7,6 @@
 
 import mongoose from 'mongoose';
 import Invoice from '../models/Invoice';
-import { invoiceCalculationService } from './invoiceCalculationService';
 import { invoicePdfService, PdfResult } from './pdf/invoicePdfService';
 import logger from '../utils/logger';
 

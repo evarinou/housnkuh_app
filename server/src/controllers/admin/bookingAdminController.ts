@@ -299,7 +299,7 @@ export const confirmPendingBooking = async (req: Request, res: Response): Promis
     );
 
     // E-Mail via Queue system senden (enhanced booking confirmation)
-    const emailQueue = require('../../utils/emailQueue').default;
+    // Note: emailQueue bypassed in favor of direct sending below
 
     // Prepare enhanced email data with complete assignment details
     const mietfachDetails = mietfaecher.map((mf: any) => {
@@ -320,7 +320,7 @@ export const confirmPendingBooking = async (req: Request, res: Response): Promis
 
     // Send email directly (bypassing queue temporarily due to Redis issues)
     logger.info('Sending booking confirmation email directly...');
-    let emailJobId = 'direct-email-' + Date.now();
+    const emailJobId = 'direct-email-' + Date.now();
 
     try {
       const { sendAdminConfirmationEmail } = require('../../utils/emailService');
@@ -390,7 +390,7 @@ export const confirmPendingBooking = async (req: Request, res: Response): Promis
 export const rejectPendingBooking = async (req: Request, res: Response): Promise<void> => {
   try {
     const { userId } = req.params;
-    const { reason } = req.body;
+    const { reason: _reason } = req.body;
 
     const user = await User.findById(userId);
     if (!user || !user.pendingBooking || user.pendingBooking.status !== 'pending') {

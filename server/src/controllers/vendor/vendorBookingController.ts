@@ -187,7 +187,7 @@ export const additionalBooking = async (req: AuthRequest, res: Response): Promis
 User: ${(user as any).name} (${(user as any).email})
 Provision: ${selectedProvisionType}
 Packages: ${JSON.stringify(packageCounts)}
-Zusatzleistungen: ${zusatzleistungen ? Object.entries(zusatzleistungen).filter(([key, value]) => value).map(([key]) => key).join(', ') : 'Keine'}
+Zusatzleistungen: ${zusatzleistungen ? Object.entries(zusatzleistungen).filter(([_key, value]) => value).map(([key]) => key).join(', ') : 'Keine'}
 Duration: ${rentalDuration} months
 Monthly Cost: €${totalCost.monthly}
 Status: Pending Admin Review`;
@@ -801,7 +801,7 @@ export const cancelTrialBooking = async (req: AuthRequest, res: Response): Promi
 // M006 S004 Implementation: Confirm trial booking
 export const confirmTrialBooking = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { mietfachId, startdatum, istProbemonatBuchung } = req.body;
+    const { mietfachId, startdatum, istProbemonatBuchung: _istProbemonatBuchung } = req.body;
 
     if (!req.user) {
       res.status(403).json({
@@ -931,7 +931,7 @@ export const getVendorInvoices = async (req: AuthRequest, res: Response): Promis
     }
 
     // Build query - vendors can only see their own invoices
-    let query: any = { vendor: req.user.id };
+    const query: any = { vendor: req.user.id };
 
     // Filter by status
     if (status && typeof status === 'string') {
@@ -1147,7 +1147,7 @@ export const getVendorInvoiceSummary = async (req: AuthRequest, res: Response): 
     }
 
     // Build query for vendor's invoices
-    let query: any = { vendor: req.user.id };
+    const query: any = { vendor: req.user.id };
 
     // Filter by year
     if (year) {

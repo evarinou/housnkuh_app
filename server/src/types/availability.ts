@@ -5,8 +5,6 @@
  * @modified 2025-08-06
  */
 
-import { Types } from 'mongoose';
-
 /**
  * Represents a date range for availability checking
  */

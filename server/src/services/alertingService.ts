@@ -10,7 +10,6 @@
 import { SystemHealth, ComponentHealth } from './healthCheckService';
 import { PerformanceSummary } from '../utils/performanceMonitor';
 import User from '../models/User';
-import Settings from '../models/Settings';
 import AlertModel from '../models/Alert';
 import logger from '../utils/logger';
 

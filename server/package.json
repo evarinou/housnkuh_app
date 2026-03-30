@@ -23,7 +23,7 @@
     "benchmark:queries": "node scripts/benchmark-queries.js",
     "create:indexes": "node scripts/create-indexes.js",
     "generate:flourio-types": "openapi-typescript https://flour.host/api/v3-json --output src/services/flourio/generated/api-types.d.ts",
-    "lint": "eslint src/ --ext .ts --max-warnings 850",
+    "lint": "eslint src/ --ext .ts --max-warnings 475",
     "lint:fix": "eslint src/ --ext .ts --fix"
   },
   "dependencies": {

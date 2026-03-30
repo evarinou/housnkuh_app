@@ -253,7 +253,7 @@ export class PerformanceMonitor {
     
     // Request metrics
     const recentRequests = this.requestMetrics.filter(r => r.timestamp >= fiveMinutesAgo);
-    const errorRequests = this.requestMetrics.filter(r => r.statusCode >= 400);
+    const _errorRequests = this.requestMetrics.filter(r => r.statusCode >= 400);
     const slowRequests = this.requestMetrics.filter(r => r.responseTime > 2000);
     
     const avgResponseTime = this.requestMetrics.length > 0 
@@ -262,7 +262,7 @@ export class PerformanceMonitor {
 
     // Database metrics - also filter by recent time window
     const recentDbMetrics = this.databaseMetrics.filter(d => d.timestamp >= fiveMinutesAgo);
-    const dbErrors = this.databaseMetrics.filter(d => !d.success);
+    const _dbErrors = this.databaseMetrics.filter(d => !d.success);
     const slowQueries = this.databaseMetrics.filter(d => d.duration > 1000);
     
     const avgDbResponseTime = this.databaseMetrics.length > 0

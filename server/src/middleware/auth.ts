@@ -56,7 +56,7 @@ export const auth = (req: AuthRequest, res: Response, next: NextFunction): void 
     req.user = decoded;
     req.userId = decoded.id;
     next();
-  } catch (err) {
+  } catch (_err) {
     unauthorized(res, 'Token ist ungültig');
   }
 };
@@ -91,7 +91,7 @@ export const adminAuth = (req: AuthRequest, res: Response, next: NextFunction): 
     req.user = decoded;
     req.userId = decoded.id;
     next();
-  } catch (err) {
+  } catch (_err) {
     unauthorized(res, 'Token ist ungültig');
   }
 };
@@ -126,7 +126,7 @@ export const vendorAuth = (req: AuthRequest, res: Response, next: NextFunction):
     req.user = decoded;
     req.userId = decoded.id;
     next();
-  } catch (err) {
+  } catch (_err) {
     unauthorized(res, 'Token ist ungültig');
   }
 };

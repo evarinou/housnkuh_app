@@ -17,7 +17,7 @@
 import { Router } from 'express';
 import * as authController from '../controllers/authController';
 import { adminAuth } from '../middleware/auth';
-import { validateAdminLogin, validateAdminSetup } from '../middleware/validation';
+import { validateAdminLogin } from '../middleware/validation';
 import { authRateLimit, adminSetupRateLimit } from '../middleware/rateLimiting';
 import logger from '../utils/logger';
 

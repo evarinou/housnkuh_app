@@ -422,8 +422,7 @@ class EmailQueueService {
     try {
       const { sendInvoiceNotification } = require('./emailService');
       const Invoice = require('../models/Invoice').default;
-      const User = require('../models/User').default;
-      
+
       // Get invoice and vendor details
       const invoice = await Invoice.findById(data.invoiceId).populate('vendor');
       if (!invoice) {

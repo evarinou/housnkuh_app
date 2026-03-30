@@ -1,4 +1,3 @@
-import mongoose from 'mongoose';
 import Mietfach from '../models/Mietfach';
 
 /**
