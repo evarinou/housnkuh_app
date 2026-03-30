@@ -17,10 +17,14 @@
     "cleanup:mietfaecher:dry": "node scripts/cleanup-seeded-mietfaecher.js --dry-run --verbose",
     "migrate:up": "ts-node src/migrations/migrationRunner.ts up",
     "migrate:down": "ts-node src/migrations/migrationRunner.ts down",
+    "migrate:backup": "ts-node scripts/backup-products-pre-category-migration.ts",
+    "migrate:validate": "ts-node scripts/validate-category-migration.ts",
     "optimize:queries": "node scripts/apply-query-optimizations.js",
     "benchmark:queries": "node scripts/benchmark-queries.js",
     "create:indexes": "node scripts/create-indexes.js",
-    "generate:flourio-types": "openapi-typescript https://flour.host/api/v3-json --output src/services/flourio/generated/api-types.d.ts"
+    "generate:flourio-types": "openapi-typescript https://flour.host/api/v3-json --output src/services/flourio/generated/api-types.d.ts",
+    "lint": "eslint src/ --ext .ts --max-warnings 850",
+    "lint:fix": "eslint src/ --ext .ts --fix"
   },
   "dependencies": {
     "@types/express-validator": "^2.20.33",
@@ -68,6 +72,10 @@
     "@types/node-fetch": "^2.6.12",
     "@types/nodemailer": "^6.4.14",
     "@types/supertest": "^6.0.3",
+    "@typescript-eslint/eslint-plugin": "^8.57.2",
+    "@typescript-eslint/parser": "^8.57.2",
+    "eslint": "^8.57.1",
+    "eslint-config-prettier": "^10.1.8",
     "jest": "^29.7.0",
     "jsdom": "^26.1.0",
     "mongodb-memory-server": "^10.1.4",

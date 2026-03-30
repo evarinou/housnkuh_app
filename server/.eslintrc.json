@@ -1,0 +1,29 @@
+{
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "ecmaVersion": 2020,
+    "sourceType": "module"
+  },
+  "plugins": ["@typescript-eslint"],
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
+    "prettier"
+  ],
+  "env": {
+    "node": true,
+    "jest": true,
+    "es2020": true
+  },
+  "rules": {
+    "@typescript-eslint/no-explicit-any": "warn",
+    "@typescript-eslint/no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }],
+    "@typescript-eslint/no-require-imports": "off",
+    "@typescript-eslint/ban-ts-comment": "warn",
+    "no-console": "warn",
+    "no-case-declarations": "warn",
+    "no-useless-escape": "warn",
+    "prefer-const": "warn"
+  },
+  "ignorePatterns": ["dist/", "node_modules/", "scripts/", "**/*.js"]
+}

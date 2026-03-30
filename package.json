@@ -13,7 +13,16 @@
     "test:booking-flow:headed": "playwright test tests/booking-flow.spec.ts --headed",
     "test:booking-flow:debug": "playwright test tests/booking-flow.spec.ts --debug",
     "test:setup": "./run-booking-tests.sh",
-    "update:architecture": "./scripts/update-architecture.sh"
+    "update:architecture": "./scripts/update-architecture.sh",
+    "docs:flourio:fetch": "cd server && npx tsx scripts/fetch-swagger.ts",
+    "docs:flourio:generate": "npx redoc-cli bundle docs/flourio-api-v3/swagger.json -o docs/flourio-api-v3/api-reference.html --title 'FlourIO API v3 Reference'",
+    "docs:flourio:update": "npm run docs:flourio:fetch && npm run docs:flourio:generate",
+    "migrate:backup": "cd server && npm run migrate:backup",
+    "migrate:validate": "cd server && npm run migrate:validate",
+    "lint": "cd server && npm run lint",
+    "lint:fix": "cd server && npm run lint:fix",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,css,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,css,md}\""
   },
   "keywords": [
     "direktvermarkter",
@@ -23,13 +32,17 @@
   "author": "Eva-Maria Schaller",
   "license": "ISC",
   "devDependencies": {
+    "@openapitools/openapi-generator-cli": "^2.25.0",
     "@types/node": "^24.0.12",
     "concurrently": "^8.2.2",
+    "prettier": "^3.8.1",
+    "redoc-cli": "^0.13.21",
     "typescript": "^5.8.3"
   },
   "dependencies": {
     "@playwright/test": "^1.53.2",
     "cheerio": "^1.1.0",
+    "csv-parse": "^6.1.0",
     "node-fetch": "^2.7.0"
   }
 }

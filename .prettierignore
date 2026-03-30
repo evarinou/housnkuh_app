@@ -1,0 +1,8 @@
+node_modules/
+build/
+dist/
+coverage/
+*.min.js
+server/src/services/flourio/generated/
+client/build/
+.playwright-mcp/
