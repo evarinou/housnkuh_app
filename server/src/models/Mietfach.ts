@@ -7,6 +7,7 @@
 import mongoose, { Schema } from 'mongoose';
 import { IMietfach, MietfachTyp } from '../types/modelTypes';
 import { queryCache } from '../utils/queryCache';
+import logger from '../utils/logger';
 
 /**
  * Mietfach schema for rental units
@@ -90,6 +91,40 @@ const MietfachSchema = new Schema({
     default: undefined
   }
 }, { timestamps: true });
+
+/**
+ * Post-save hook: Auto-sync Mietfach to FlourIO Warehouse
+ * Creates or updates Warehouse in Flourio when Mietfach is saved.
+ * Runs async via setImmediate() to avoid blocking the save operation.
+ */
+MietfachSchema.post('save', async function(doc) {
+  const shouldSync = (this as any).isNew ||
+    (this as any).isModified('bezeichnung') ||
+    (this as any).isModified('standort') ||
+    (this as any).isModified('typ');
+
+  if (!shouldSync) return;
+
+  setImmediate(async () => {
+    try {
+      const { WarehouseService } = await import('../services/flourio/services/WarehouseService');
+      const { FlourioClient } = await import('../services/flourio/client/FlourioClient');
+      const { flourioConfig } = await import('../services/flourio/client/config');
+
+      if (!flourioConfig.bearerToken) return;
+
+      logger.info('[Mietfach Hook] Auto-syncing to FlourIO Warehouse', { mietfachId: doc._id });
+
+      const client = new FlourioClient(flourioConfig);
+      const warehouseService = new WarehouseService(client);
+      await warehouseService.syncMietfach(doc as unknown as IMietfach);
+
+      logger.info('[Mietfach Hook] Successfully synced', { mietfachId: doc._id });
+    } catch (error: any) {
+      logger.error('[Mietfach Hook] Failed to sync', { mietfachId: doc._id, error: error.message });
+    }
+  });
+});
 
 /**
  * Instance method to check if Mietfach is available for a specific period

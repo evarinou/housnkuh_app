@@ -54,8 +54,12 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onSync, onEdit }) =>
     }
   };
 
+  const unitLabels: Record<string, string> = {
+    kg: 'kg', g: 'g', piece: 'Stk.', liter: 'l', ml: 'ml', bunch: 'Bund', pack: 'Pkg.', box: 'Kiste'
+  };
+
   const formatPrice = (price: number, unit: string) => {
-    return `${price.toFixed(2)}€/${unit}`;
+    return `${price.toFixed(2)}€/${unitLabels[unit] || unit}`;
   };
 
   const getSyncStatus = (): SyncStatus => {

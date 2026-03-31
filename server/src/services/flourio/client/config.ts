@@ -19,6 +19,25 @@ export const flourioConfig: FlourioClientConfig = {
   }
 };
 
+/**
+ * Flourio tenant-specific IDs (required for BusinessPartner creation).
+ * These are fetched from Flourio once per deployment — set them in .env.local.
+ */
+export const flourioTenantConfig = {
+  defaultPricelistId: process.env.FLOURIO_DEFAULT_PRICELIST_ID || '',
+  defaultRevenueCreditorId: process.env.FLOURIO_DEFAULT_REVENUE_CREDITOR_ID || '',
+  defaultTaxassignmentFull: process.env.FLOURIO_TAXASSIGNMENT_FULL || '',    // 19% MwSt
+  defaultTaxassignmentReduced: process.env.FLOURIO_TAXASSIGNMENT_REDUCED || '', // 7% MwSt
+  defaultWarehouseAddress: {
+    company1: process.env.FLOURIO_WAREHOUSE_COMPANY || 'housnkuh',
+    street: process.env.FLOURIO_WAREHOUSE_STREET || '',
+    streetNumber: process.env.FLOURIO_WAREHOUSE_STREET_NR || '',
+    zipCode: process.env.FLOURIO_WAREHOUSE_ZIP || '',
+    city: process.env.FLOURIO_WAREHOUSE_CITY || '',
+    country: 'DE'
+  }
+};
+
 export function validateFlourioConfig(): void {
   if (!flourioConfig.bearerToken) {
     throw new Error(

@@ -7,43 +7,37 @@
 
 import type { Warehouse, CreateWarehouseDto, UpdateWarehouseDto } from '../generated/api-types';
 import type { IMietfach } from '../../../types/modelTypes';
+import { flourioTenantConfig } from '../client/config';
 
 export class WarehouseMapper {
   /**
-   * Convert housnkuh Mietfach to FlourIO CreateWarehouseDto
+   * Convert housnkuh Mietfach to FlourIO CreateWarehouseDto.
+   * Uses default warehouse address from config as base, with Mietfach name.
    */
   static mietfachToWarehouse(mietfach: IMietfach): CreateWarehouseDto {
-    const dto: CreateWarehouseDto = {
-      name: `${mietfach.bezeichnung}`,
-    };
+    const defaultAddr = flourioTenantConfig.defaultWarehouseAddress;
 
-    // Add address if standort is set
-    if (mietfach.standort) {
-      dto.address = {
-        company1: mietfach.standort,
+    return {
+      name: mietfach.bezeichnung,
+      address: {
+        company1: defaultAddr.company1 || 'housnkuh',
+        street: defaultAddr.street,
+        streetNumber: defaultAddr.streetNumber,
+        zipCode: defaultAddr.zipCode,
+        city: defaultAddr.city,
         country: 'DE'
-      };
-    }
-
-    return dto;
+      },
+      useBins: false
+    };
   }
 
   /**
    * Create UpdateWarehouseDto from Mietfach changes
    */
   static mietfachToUpdateDto(mietfach: IMietfach): UpdateWarehouseDto {
-    const dto: UpdateWarehouseDto = {
-      name: `${mietfach.bezeichnung}`,
+    return {
+      name: mietfach.bezeichnung
     };
-
-    if (mietfach.standort) {
-      dto.address = {
-        company1: mietfach.standort,
-        country: 'DE'
-      };
-    }
-
-    return dto;
   }
 
   /**

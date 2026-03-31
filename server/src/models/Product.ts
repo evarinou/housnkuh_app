@@ -75,6 +75,7 @@ export interface IProduct extends Document {
     status: 'synced' | 'pending' | 'error' | 'never';
     lastSyncedAt?: Date;
     error?: string;
+    barcode?: string;
   };
 
   // FlourIO Stock (Pull: Flourio → housnkuh) — Flourio is source of truth for inventory
@@ -249,6 +250,10 @@ const ProductSchema: Schema<IProduct> = new Schema({
       type: Date
     },
     error: {
+      type: String,
+      trim: true
+    },
+    barcode: {
       type: String,
       trim: true
     }

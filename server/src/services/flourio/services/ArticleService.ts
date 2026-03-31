@@ -25,6 +25,7 @@ export interface ArticleSyncStatus {
   lastSyncedAt?: Date;
   status?: 'synced' | 'pending' | 'error' | 'never';
   error?: string;
+  barcode?: string;
 }
 
 /**
@@ -60,19 +61,28 @@ export class ArticleService {
   /**
    * Create new article
    */
-  async createArticle(dto: CreateArticleDto): Promise<Article> {
+  async createArticle(dto: Record<string, any>): Promise<Article> {
     try {
+      logger.info('[ArticleService] Creating article', { dto: JSON.stringify(dto) });
       const response = await this.client.post<Article>('/articles', dto);
       return response;
     } catch (error: any) {
-      throw new Error(`Failed to create article: ${error.message}`);
+      // Try to get raw Axios response data from wrapped error
+      const rawData = error.response?.data || error.cause?.response?.data || error.details;
+      logger.error('[ArticleService] Create failed', {
+        message: error.message,
+        status: error.response?.status || error.statusCode,
+        rawData: JSON.stringify(rawData),
+        errorKeys: Object.keys(error)
+      });
+      throw new Error(`Failed to create article: ${error.message} ${rawData ? JSON.stringify(rawData) : ''}`);
     }
   }
 
   /**
    * Update existing article
    */
-  async updateArticle(articleId: string, dto: Partial<UpdateArticleDto>): Promise<Article> {
+  async updateArticle(articleId: string, dto: Record<string, any>): Promise<Article> {
     try {
       const response = await this.client.put<Article>(`/articles/${articleId}`, dto);
       return response;
@@ -115,11 +125,12 @@ export class ArticleService {
         // Write back FlourIO tag IDs to local tags
         await this.updateTagFlourioIds(article.tags, updateDto.tags || []);
 
-        // Update product sync status
+        // Update product sync status + barcode from Flourio
         await this.updateProductSyncStatus(product, {
           articleId: article.id,
           lastSyncedAt: new Date(),
-          status: 'synced'
+          status: 'synced',
+          barcode: article.barcode
         });
 
         return { article, created: false };
@@ -131,11 +142,12 @@ export class ArticleService {
         // Write back FlourIO tag IDs to local tags
         await this.updateTagFlourioIds(article.tags, createDto.tags || []);
 
-        // Update product sync status
+        // Update product sync status + barcode from Flourio
         await this.updateProductSyncStatus(product, {
           articleId: article.id,
           lastSyncedAt: new Date(),
-          status: 'synced'
+          status: 'synced',
+          barcode: article.barcode
         });
 
         return { article, created: true };
@@ -162,6 +174,7 @@ export class ArticleService {
     if (status.status !== undefined) updateData['flourioSync.status'] = status.status;
     if (status.lastSyncedAt !== undefined) updateData['flourioSync.lastSyncedAt'] = status.lastSyncedAt;
     if (status.error !== undefined) updateData['flourioSync.error'] = status.error;
+    if (status.barcode !== undefined) updateData['flourioSync.barcode'] = status.barcode;
 
     await Product.updateOne(
       { _id: product._id },
@@ -178,6 +191,7 @@ export class ArticleService {
     if (status.status !== undefined) product.flourioSync.status = status.status;
     if (status.lastSyncedAt !== undefined) product.flourioSync.lastSyncedAt = status.lastSyncedAt;
     if (status.error !== undefined) product.flourioSync.error = status.error;
+    if (status.barcode !== undefined) (product.flourioSync as any).barcode = status.barcode;
   }
 
   /**

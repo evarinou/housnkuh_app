@@ -240,7 +240,11 @@ export const syncProduct = async (req: any, res: Response): Promise<void> => {
       message: syncResult.created ? 'Article created successfully' : 'Article updated successfully'
     });
   } catch (error: any) {
-    logger.error('Error syncing product:', error);
+    logger.error('Error syncing product:', {
+      message: error.message,
+      stack: error.stack?.split('\n')[1]?.trim(),
+      response: error.response?.data
+    });
     res.status(500).json({
       success: false,
       message: 'Failed to sync product',

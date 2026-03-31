@@ -81,8 +81,16 @@ router.get('/invoices/:id', vendorAuth, vendorBookingController.getVendorInvoice
 router.get('/invoices/:id/download', vendorAuth, vendorBookingController.downloadVendorInvoicePdf);
 
 // Flourio Documents & Products for Vendors (vendor-auth path avoids global adminAuth)
-import { getDocuments, getProducts } from '../controllers/flourioController';
+import { getDocuments, getProducts, syncProduct, syncBulkProducts } from '../controllers/flourioController';
 router.get('/flourio/documents', vendorAuth, getDocuments);
 router.get('/flourio/products', vendorAuth, getProducts);
+router.post('/flourio/products/:id/sync', vendorAuth, syncProduct);
+router.post('/flourio/products/sync-bulk', vendorAuth, syncBulkProducts);
+
+// Vendor Product Management & Stock Booking
+import * as vendorProductController from '../controllers/vendor/vendorProductController';
+router.get('/mietfaecher', vendorAuth, vendorProductController.getVendorMietfaecher);
+router.post('/products', vendorAuth, vendorProductController.createProduct);
+router.post('/products/:id/stock', vendorAuth, vendorProductController.bookStock);
 
 export default router;

@@ -6,6 +6,7 @@
 
 import mongoose, { Schema } from 'mongoose';
 import { IUser } from '../types/modelTypes';
+import logger from '../utils/logger';
 
 /**
  * Address schema for user addresses
@@ -268,7 +269,28 @@ const UserSchema = new Schema({
   },
   
   pendingBooking: UserBookingSchema, // Erweiterte Eigenschaft für Buchungsverwaltung mit Status-Tracking
-  
+
+  // FlourIO v3 API Integration (BusinessPartner sync)
+  flourioPartnerId: {
+    type: String,
+    default: undefined,
+    sparse: true,
+    index: true
+  },
+  flourioSyncStatus: {
+    type: String,
+    enum: ['pending', 'synced', 'error', 'deleted'],
+    default: undefined
+  },
+  flourioLastSyncAt: {
+    type: Date,
+    default: undefined
+  },
+  flourioSyncError: {
+    type: String,
+    default: undefined
+  },
+
   // Top-level email field for index compatibility
   email: {
     type: String,
@@ -277,6 +299,54 @@ const UserSchema = new Schema({
     // unique: true - temporarily removed to fix duplicate key error
   }
 }, { timestamps: true });
+
+// Virtual populate for user invoices
+UserSchema.virtual('invoices', {
+  ref: 'Invoice',
+  localField: '_id',
+  foreignField: 'vendor',
+  justOne: false
+});
+
+// Ensure virtual fields are included in JSON
+UserSchema.set('toJSON', { virtuals: true });
+UserSchema.set('toObject', { virtuals: true });
+
+/**
+ * Post-save hook: Auto-sync Vendor to FlourIO BusinessPartner
+ * Only triggers for vendors when relevant fields change.
+ * Runs async via setImmediate() to avoid blocking the save operation.
+ */
+UserSchema.post('save', async function(doc) {
+  if (!doc.isVendor) return;
+
+  const shouldSync = (this as any).isNew ||
+    (this as any).isModified('kontakt') ||
+    (this as any).isModified('vendorProfile') ||
+    (this as any).isModified('adressen');
+
+  if (!shouldSync) return;
+
+  setImmediate(async () => {
+    try {
+      const { BusinessPartnerService } = await import('../services/flourio/services/BusinessPartnerService');
+      const { FlourioClient } = await import('../services/flourio/client/FlourioClient');
+      const { flourioConfig } = await import('../services/flourio/client/config');
+
+      if (!flourioConfig.bearerToken) return;
+
+      logger.info('[Vendor Hook] Auto-syncing to FlourIO BusinessPartner', { vendorId: doc._id });
+
+      const client = new FlourioClient(flourioConfig);
+      const bpService = new BusinessPartnerService(client);
+      await bpService.syncVendor(doc as unknown as IUser);
+
+      logger.info('[Vendor Hook] Successfully synced', { vendorId: doc._id });
+    } catch (error: any) {
+      logger.error('[Vendor Hook] Failed to sync', { vendorId: doc._id, error: error.message });
+    }
+  });
+});
 
 /**
  * User model export

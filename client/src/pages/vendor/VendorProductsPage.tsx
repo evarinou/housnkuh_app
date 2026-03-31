@@ -10,6 +10,7 @@ import { ShoppingCart, Plus, RefreshCw, Search, X } from 'lucide-react';
 import axios from 'axios';
 import VendorLayout from '../../components/vendor/VendorLayout';
 import ProductCard, { Product } from '../../components/vendor/ProductCard';
+import ProductCreationModal, { VendorMietfach } from '../../components/admin/ProductCreationModal';
 import { tokenStorage, apiUtils } from '../../utils/auth';
 
 /**
@@ -36,6 +37,8 @@ const VendorProductsPage: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [vendorMietfaecher, setVendorMietfaecher] = useState<VendorMietfach[]>([]);
 
   const apiUrl = apiUtils.getApiUrl();
   const token = tokenStorage.getToken('VENDOR');
@@ -55,8 +58,9 @@ const VendorProductsPage: React.FC = () => {
         headers: getHeaders()
       });
 
-      if (response.data && Array.isArray(response.data)) {
-        setProducts(response.data);
+      const products = response.data?.data || response.data;
+      if (Array.isArray(products)) {
+        setProducts(products);
       }
     } catch (err: any) {
       console.error('Error fetching products:', err);
@@ -70,11 +74,28 @@ const VendorProductsPage: React.FC = () => {
     fetchProducts();
   }, [fetchProducts]);
 
+  // Fetch vendor's active Mietfächer (for product creation)
+  useEffect(() => {
+    const fetchMietfaecher = async () => {
+      try {
+        const response = await axios.get(`${apiUrl}/vendor-auth/mietfaecher`, {
+          headers: getHeaders()
+        });
+        if (response.data?.success) {
+          setVendorMietfaecher(response.data.data || []);
+        }
+      } catch (err) {
+        // Silent fail — Mietfächer just won't show in create modal
+      }
+    };
+    fetchMietfaecher();
+  }, [apiUrl, token]);
+
   // Sync individual product
   const handleSync = async (productId: string) => {
     try {
       await axios.post(
-        `${apiUrl}/admin/flourio/products/${productId}/sync`,
+        `${apiUrl}/vendor-auth/flourio/products/${productId}/sync`,
         {},
         { headers: getHeaders() }
       );
@@ -99,7 +120,7 @@ const VendorProductsPage: React.FC = () => {
       const productIds = products.map(p => p._id);
 
       await axios.post(
-        `${apiUrl}/admin/flourio/products/sync-bulk`,
+        `${apiUrl}/vendor-auth/flourio/products/sync-bulk`,
         { productIds },
         { headers: getHeaders() }
       );
@@ -180,8 +201,8 @@ const VendorProductsPage: React.FC = () => {
                 {syncing ? 'Synchronisiere...' : 'Alle synchronisieren'}
               </button>
               <button
+                onClick={() => setShowCreateModal(true)}
                 className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors"
-                disabled
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Neues Produkt
@@ -309,6 +330,21 @@ const VendorProductsPage: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Product Creation Modal */}
+      <ProductCreationModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onSuccess={() => {
+          setShowCreateModal(false);
+          setSuccessMessage('Produkt erfolgreich erstellt!');
+          setTimeout(() => setSuccessMessage(null), 3000);
+          fetchProducts();
+        }}
+        isVendor={true}
+        availableTags={categories.map(c => ({ _id: c, name: c }))}
+        vendorMietfaecher={vendorMietfaecher}
+      />
     </VendorLayout>
   );
 };
