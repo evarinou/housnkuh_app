@@ -1,16 +1,17 @@
 /**
- * @file stockSyncService.ts
- * @purpose Bulk synchronization service for Mietfächer to FlourIO Stocks
- * @created 2025-10-16
+ * @file warehouseSyncService.ts
+ * @purpose Bulk synchronization service for Mietfächer to FlourIO Warehouses
+ * @created 2026-03-31
+ * @note In Flourio, /v3/stocks = Warehouses. Each Mietfach = one Warehouse.
  */
 
-import { StockService } from './StockService';
-import { StockMapper } from './stockMapping';
+import { WarehouseService } from './WarehouseService';
+import { WarehouseMapper } from './warehouseMapping';
 import Mietfach from '../../../models/Mietfach';
 import type { IMietfach } from '../../../types/modelTypes';
 import logger from '../../../utils/logger';
 
-export interface SyncResult {
+export interface WarehouseSyncResult {
   synced: number;
   failed: number;
   skipped: number;
@@ -21,37 +22,35 @@ export interface SyncResult {
   }>;
 }
 
-export interface SyncOptions {
-  forceResync?: boolean;  // Resync even if already synced
-  dryRun?: boolean;       // Don't actually sync, just validate
-  batchSize?: number;     // Process in batches (default: 10)
+export interface WarehouseSyncOptions {
+  forceResync?: boolean;
+  dryRun?: boolean;
+  batchSize?: number;
 }
 
-export class StockSyncService {
-  constructor(private stockService: StockService) {}
+export class WarehouseSyncService {
+  constructor(private warehouseService: WarehouseService) {}
 
   /**
    * Sync all Mietfächer that need synchronization
    */
-  async syncAllMietfaecher(options: SyncOptions = {}): Promise<SyncResult> {
+  async syncAllMietfaecher(options: WarehouseSyncOptions = {}): Promise<WarehouseSyncResult> {
     const {
       forceResync = false,
       dryRun = false,
       batchSize = 10
     } = options;
 
-    const result: SyncResult = {
+    const result: WarehouseSyncResult = {
       synced: 0,
       failed: 0,
       skipped: 0,
       errors: []
     };
 
-    // Build query for Mietfächer that need sync
     const query: any = {};
 
     if (!forceResync) {
-      // Only sync Mietfächer that are not synced or have errors
       query.$or = [
         { flourioSyncStatus: { $in: [undefined, 'pending', 'error'] } },
         { flourioSyncStatus: 'synced', updatedAt: { $gt: '$flourioLastSyncAt' } }
@@ -60,9 +59,8 @@ export class StockSyncService {
 
     const mietfaecher = await Mietfach.find(query);
 
-    logger.info('Found Mietfaecher to sync', { count: mietfaecher.length });
+    logger.info('[WarehouseSyncService] Found Mietfaecher to sync', { count: mietfaecher.length });
 
-    // Process in batches to avoid overwhelming the API
     for (let i = 0; i < mietfaecher.length; i += batchSize) {
       const batch = mietfaecher.slice(i, i + batchSize);
 
@@ -70,7 +68,6 @@ export class StockSyncService {
         batch.map(mietfach => this.syncSingleMietfach(mietfach, result, dryRun, forceResync))
       );
 
-      // Small delay between batches to respect rate limits
       if (i + batchSize < mietfaecher.length) {
         await new Promise(resolve => setTimeout(resolve, 1000));
       }
@@ -84,13 +81,12 @@ export class StockSyncService {
    */
   private async syncSingleMietfach(
     mietfach: IMietfach,
-    result: SyncResult,
+    result: WarehouseSyncResult,
     dryRun: boolean,
     forceResync: boolean = false
   ): Promise<void> {
     try {
-      // Validate Mietfach data
-      const errors = StockMapper.validateMietfachForSync(mietfach);
+      const errors = WarehouseMapper.validateMietfachForSync(mietfach);
       if (errors.length > 0) {
         result.skipped++;
         result.errors.push({
@@ -101,22 +97,20 @@ export class StockSyncService {
         return;
       }
 
-      // Skip if already synced and data hasn't changed (unless forceResync)
       if (!forceResync &&
           mietfach.flourioSyncStatus === 'synced' &&
-          !StockMapper.hasMietfachChanged(mietfach)) {
+          !WarehouseMapper.hasMietfachChanged(mietfach)) {
         result.skipped++;
         return;
       }
 
       if (dryRun) {
-        logger.info('[DRY RUN] Would sync Mietfach', { bezeichnung: mietfach.bezeichnung });
+        logger.info('[DRY RUN] Would sync Mietfach as Warehouse', { bezeichnung: mietfach.bezeichnung });
         result.synced++;
         return;
       }
 
-      // Perform actual sync
-      await this.stockService.syncMietfach(mietfach);
+      await this.warehouseService.syncMietfach(mietfach);
       result.synced++;
 
     } catch (error: any) {
@@ -127,7 +121,6 @@ export class StockSyncService {
         error: error.message || 'Unknown error'
       });
 
-      // Update Mietfach with error status
       mietfach.flourioSyncStatus = 'error';
       mietfach.flourioSyncError = error.message;
       await mietfach.save();
@@ -139,11 +132,11 @@ export class StockSyncService {
    */
   async syncMietfaecherByIds(
     mietfachIds: string[],
-    options: SyncOptions = {}
-  ): Promise<SyncResult> {
+    options: WarehouseSyncOptions = {}
+  ): Promise<WarehouseSyncResult> {
     const { dryRun = false } = options;
 
-    const result: SyncResult = {
+    const result: WarehouseSyncResult = {
       synced: 0,
       failed: 0,
       skipped: 0,
@@ -184,7 +177,7 @@ export class StockSyncService {
     for (const mietfach of mietfaecher) {
       switch (mietfach.flourioSyncStatus) {
         case 'synced':
-          if (StockMapper.hasMietfachChanged(mietfach)) {
+          if (WarehouseMapper.hasMietfachChanged(mietfach)) {
             status.needsSync++;
           } else {
             status.synced++;
@@ -207,10 +200,10 @@ export class StockSyncService {
   /**
    * Retry failed syncs
    */
-  async retryFailedSyncs(options: SyncOptions = {}): Promise<SyncResult> {
+  async retryFailedSyncs(options: WarehouseSyncOptions = {}): Promise<WarehouseSyncResult> {
     const { dryRun = false } = options;
 
-    const result: SyncResult = {
+    const result: WarehouseSyncResult = {
       synced: 0,
       failed: 0,
       skipped: 0,
@@ -221,7 +214,7 @@ export class StockSyncService {
       flourioSyncStatus: 'error'
     });
 
-    logger.info('Retrying failed syncs', { count: mietfaecher.length });
+    logger.info('[WarehouseSyncService] Retrying failed syncs', { count: mietfaecher.length });
 
     for (const mietfach of mietfaecher) {
       await this.syncSingleMietfach(mietfach, result, dryRun);

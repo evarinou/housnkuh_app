@@ -2,7 +2,7 @@
  * @file AppContent.tsx
  * @purpose Main routing component that defines all application routes with lazy loading
  * @created 2025-01-15
- * @modified 2025-08-12
+ * @modified 2025-10-17
  */
 import React, { Suspense } from 'react';
 import { Routes, Route, Outlet } from 'react-router-dom';
@@ -37,7 +37,9 @@ const MeineBuchungenPage = React.lazy(() => import('../pages/vendor/MeineBuchung
 const VendorProductsPage = React.lazy(() => import('../pages/vendor/VendorProductsPage'));
 const VendorReportsPage = React.lazy(() => import('../pages/vendor/VendorReportsPage'));
 const VendorCustomerInvoicesPage = React.lazy(() => import('../pages/vendor/VendorCustomerInvoicesPage'));
+const VendorInvoiceDetailPage = React.lazy(() => import('../pages/vendor/VendorInvoiceDetailPage'));
 const VendorHousnkuhInvoicesPage = React.lazy(() => import('../pages/vendor/VendorHousnkuhInvoicesPage'));
+const VendorFlourioDocumentsPage = React.lazy(() => import('../pages/vendor/VendorFlourioDocumentsPage'));
 
 // Lazy load admin components for code splitting
 const LoginPage = React.lazy(() => import('../pages/admin/LoginPage'));
@@ -56,7 +58,10 @@ const TagsPage = React.lazy(() => import('../pages/admin/TagsPage'));
 const FAQManagementPage = React.lazy(() => import('../pages/admin/FAQManagementPage'));
 const RevenueOverviewPage = React.lazy(() => import('../pages/admin/RevenueOverviewPage'));
 const ZusatzleistungenPage = React.lazy(() => import('../pages/admin/ZusatzleistungenPage'));
+const ArticleManagementPage = React.lazy(() => import('../pages/admin/ArticleManagementPage'));
+const FlourioDocumentsPage = React.lazy(() => import('../pages/admin/FlourioDocumentsPage'));
 const EmailTemplatesPage = React.lazy(() => import('../pages/admin/EmailTemplatesPage'));
+const InvoiceDashboard = React.lazy(() => import('../pages/admin/InvoiceDashboard'));
 
 /**
  * Loading spinner component displayed while lazy-loaded components are being loaded
@@ -159,6 +164,16 @@ const AppContent: React.FC = () => {
             <ZusatzleistungenPage />
           </Suspense>
         } />
+        <Route path="articles" element={
+          <Suspense fallback={<LoadingSpinner />}>
+            <ArticleManagementPage />
+          </Suspense>
+        } />
+        <Route path="flourio-documents" element={
+          <Suspense fallback={<LoadingSpinner />}>
+            <FlourioDocumentsPage />
+          </Suspense>
+        } />
         <Route path="contacts" element={
           <Suspense fallback={<LoadingSpinner />}>
             <ContactsPage />
@@ -187,6 +202,11 @@ const AppContent: React.FC = () => {
         <Route path="revenue" element={
           <Suspense fallback={<LoadingSpinner />}>
             <RevenueOverviewPage />
+          </Suspense>
+        } />
+        <Route path="invoices" element={
+          <Suspense fallback={<LoadingSpinner />}>
+            <InvoiceDashboard />
           </Suspense>
         } />
       </Route>
@@ -231,9 +251,19 @@ const AppContent: React.FC = () => {
             <VendorCustomerInvoicesPage />
           </Suspense>
         } />
+        <Route path="customer-invoices/:id" element={
+          <Suspense fallback={<LoadingSpinner />}>
+            <VendorInvoiceDetailPage />
+          </Suspense>
+        } />
         <Route path="housnkuh-invoices" element={
           <Suspense fallback={<LoadingSpinner />}>
             <VendorHousnkuhInvoicesPage />
+          </Suspense>
+        } />
+        <Route path="flourio-documents" element={
+          <Suspense fallback={<LoadingSpinner />}>
+            <VendorFlourioDocumentsPage />
           </Suspense>
         } />
       </Route>

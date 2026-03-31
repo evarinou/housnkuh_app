@@ -9,8 +9,11 @@ import { FlourioClient } from '../services/flourio/client/FlourioClient';
 import { flourioConfig } from '../services/flourio/client/config';
 import { TagSyncService } from '../services/flourio/services/TagSyncService';
 import { ArticleService } from '../services/flourio/services/ArticleService';
+// StockItemEntryPullService is used via ScheduledJobs.triggerStockPull()
 import { Product } from '../models/Product';
+import { FlourioDocument } from '../models/FlourioDocument';
 import { Tag } from '../models/Tag';
+import { ScheduledJobs } from '../services/scheduledJobs';
 import logger from '../utils/logger';
 
 logger.debug('Initializing FlourioClient', {
@@ -295,6 +298,211 @@ export const syncBulkProducts = async (req: any, res: Response): Promise<void> =
     res.status(500).json({
       success: false,
       message: 'Failed to bulk sync products',
+      error: error.message
+    });
+  }
+};
+
+// ─── Stock Level Endpoints ────────────────────────────────────────────
+
+/**
+ * GET /api/admin/flourio/stock/levels
+ * Get all products with their Flourio stock levels (Admin only)
+ */
+export const getStockLevels = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const products = await Product.find({
+      'flourioSync.articleId': { $exists: true, $ne: null }
+    })
+      .select('name vendorId flourioSync flourioStock availability')
+      .populate('vendorId', 'kontakt.name vendorProfile.unternehmen')
+      .sort({ 'flourioStock.totalAmount': 1 })
+      .lean();
+
+    const stats = {
+      total: products.length,
+      inStock: products.filter(p => (p.flourioStock?.totalAmount ?? 0) > 0).length,
+      outOfStock: products.filter(p => (p.flourioStock?.totalAmount ?? 0) === 0).length,
+      neverPulled: products.filter(p => !p.flourioStock?.lastPulledAt).length
+    };
+
+    res.json({
+      success: true,
+      data: products,
+      stats
+    });
+  } catch (error: any) {
+    logger.error('Error fetching stock levels:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch stock levels',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * POST /api/admin/flourio/stock/pull
+ * Manually trigger stock pull from Flourio (Admin only)
+ */
+export const triggerStockPull = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const result = await ScheduledJobs.triggerStockPull();
+
+    res.json({
+      success: result.success,
+      data: result,
+      message: result.success ? 'Stock pull completed' : 'Stock pull failed'
+    });
+  } catch (error: any) {
+    logger.error('Error triggering stock pull:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to trigger stock pull',
+      error: error.message
+    });
+  }
+};
+
+// ─── Document Endpoints ───────────────────────────────────────────────
+
+/**
+ * GET /api/admin/flourio/documents
+ * List documents (Admin: all, Vendor: own)
+ */
+export const getDocuments = async (req: any, res: Response): Promise<void> => {
+  try {
+    const { type, status, fromDate, toDate } = req.query;
+    const user = req.user;
+
+    const filter: any = {};
+
+    // Vendors can only see their own documents
+    if (user?.isVendor && !user?.isAdmin) {
+      filter.vendorId = user.id;
+    }
+
+    if (type) filter.type = type;
+    if (status) filter.status = status;
+    if (fromDate || toDate) {
+      filter.date = {};
+      if (fromDate) filter.date.$gte = new Date(fromDate as string);
+      if (toDate) filter.date.$lte = new Date(toDate as string);
+    }
+
+    const documents = await FlourioDocument.find(filter)
+      .populate('vendorId', 'kontakt.name vendorProfile.unternehmen')
+      .sort({ date: -1 })
+      .limit(200)
+      .lean();
+
+    res.json({
+      success: true,
+      data: documents
+    });
+  } catch (error: any) {
+    logger.error('Error fetching documents:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch documents',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * GET /api/admin/flourio/documents/stats
+ * Get document statistics (Admin only)
+ */
+export const getDocumentStats = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const [total, byType, byStatus] = await Promise.all([
+      FlourioDocument.countDocuments(),
+      FlourioDocument.aggregate([
+        { $group: { _id: '$type', count: { $sum: 1 }, totalAmount: { $sum: '$total' } } }
+      ]),
+      FlourioDocument.aggregate([
+        { $group: { _id: '$status', count: { $sum: 1 } } }
+      ])
+    ]);
+
+    const lastPull = await FlourioDocument.findOne()
+      .sort({ lastPulledAt: -1 })
+      .select('lastPulledAt')
+      .lean();
+
+    res.json({
+      success: true,
+      data: {
+        total,
+        byType: Object.fromEntries(byType.map(t => [t._id, { count: t.count, totalAmount: t.totalAmount }])),
+        byStatus: Object.fromEntries(byStatus.map(s => [s._id, s.count])),
+        lastPulledAt: lastPull?.lastPulledAt
+      }
+    });
+  } catch (error: any) {
+    logger.error('Error fetching document stats:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch document stats',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * GET /api/admin/flourio/documents/:id
+ * Get single document detail (Admin: any, Vendor: own)
+ */
+export const getDocumentById = async (req: any, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const user = req.user;
+
+    const filter: any = { _id: id };
+    if (user?.isVendor && !user?.isAdmin) {
+      filter.vendorId = user.id;
+    }
+
+    const document = await FlourioDocument.findOne(filter)
+      .populate('vendorId', 'kontakt.name vendorProfile.unternehmen')
+      .populate('items.productId', 'name price priceUnit')
+      .lean();
+
+    if (!document) {
+      res.status(404).json({ success: false, message: 'Dokument nicht gefunden' });
+      return;
+    }
+
+    res.json({ success: true, data: document });
+  } catch (error: any) {
+    logger.error('Error fetching document:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch document',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * POST /api/admin/flourio/documents/sync
+ * Manually trigger document sync (Admin only)
+ */
+export const triggerDocumentSync = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const result = await ScheduledJobs.triggerDocumentSync();
+
+    res.json({
+      success: result.success,
+      data: result,
+      message: result.success ? 'Document sync completed' : 'Document sync failed'
+    });
+  } catch (error: any) {
+    logger.error('Error triggering document sync:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to trigger document sync',
       error: error.message
     });
   }

@@ -69,12 +69,23 @@ export interface IProduct extends Document {
   createdAt: Date;
   updatedAt: Date;
 
-  // FlourIO Sync
+  // FlourIO Sync (Push: housnkuh → Flourio)
   flourioSync?: {
     articleId?: string;
     status: 'synced' | 'pending' | 'error' | 'never';
     lastSyncedAt?: Date;
     error?: string;
+  };
+
+  // FlourIO Stock (Pull: Flourio → housnkuh) — Flourio is source of truth for inventory
+  flourioStock?: {
+    totalAmount: number;
+    entries: Array<{
+      warehouseId: string;
+      warehouseName?: string;
+      amount: number;
+    }>;
+    lastPulledAt?: Date;
   };
 }
 
@@ -223,7 +234,7 @@ const ProductSchema: Schema<IProduct> = new Schema({
     default: 0
   },
 
-  // FlourIO Sync
+  // FlourIO Sync (Push: housnkuh → Flourio)
   flourioSync: {
     articleId: {
       type: String,
@@ -241,6 +252,22 @@ const ProductSchema: Schema<IProduct> = new Schema({
       type: String,
       trim: true
     }
+  },
+
+  // FlourIO Stock (Pull: Flourio → housnkuh)
+  flourioStock: {
+    totalAmount: {
+      type: Number,
+      default: 0
+    },
+    entries: [{
+      warehouseId: { type: String, required: true },
+      warehouseName: { type: String },
+      amount: { type: Number, required: true }
+    }],
+    lastPulledAt: {
+      type: Date
+    }
   }
 }, {
   timestamps: true
@@ -253,6 +280,7 @@ const ProductSchema: Schema<IProduct> = new Schema({
  */
 ProductSchema.index({ vendorId: 1, isActive: 1 });
 ProductSchema.index({ tags: 1, availability: 1 });
+ProductSchema.index({ 'flourioSync.articleId': 1 });
 ProductSchema.index({ slug: 1, vendorId: 1 }, { unique: true });
 ProductSchema.index({ name: 'text', description: 'text', keywords: 'text' });
 ProductSchema.index({ featured: 1, sortOrder: 1 });

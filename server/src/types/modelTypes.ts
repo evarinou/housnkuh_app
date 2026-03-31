@@ -1,6 +1,36 @@
 // server/src/types/modelTypes.ts - Erweiterte User-Types
 import mongoose, { Document } from 'mongoose';
 
+// Forward declaration for Invoice interface
+export interface IInvoiceDocument extends Document {
+  invoiceNumber: string;
+  vendor: mongoose.Types.ObjectId;
+  period: {
+    month: number;
+    year: number;
+  };
+  items: Array<{
+    description: string;
+    quantity: number;
+    unitPrice: number;
+    totalPrice: number;
+    type: 'mietfach' | 'zusatzleistung' | 'sonstiges';
+    referenceId?: mongoose.Types.ObjectId;
+    period?: {
+      from?: Date;
+      to?: Date;
+    };
+  }>;
+  subtotal: number;
+  tax: number;
+  totalAmount: number;
+  status: 'draft' | 'sent' | 'paid' | 'overdue' | 'cancelled';
+  dueDate: Date;
+  paidDate?: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 // Basis-Interface für Subdokumente
 export interface IAdresse {
   adresstyp: 'Rechnungsadresse' | 'Lieferadresse' | 'Hauptadresse';
@@ -184,6 +214,16 @@ export interface IUser extends Document {
   
   // Buchungsspezifische Felder
   pendingBooking?: IUserBooking;
+
+  // FlourIO v3 API Integration (BusinessPartner sync)
+  flourioPartnerId?: string;
+  flourioSyncStatus?: 'pending' | 'synced' | 'error' | 'deleted';
+  flourioLastSyncAt?: Date;
+  flourioSyncError?: string;
+
+  // Virtual populate for invoice references
+  invoices?: IInvoiceDocument[];
+
   createdAt: Date;
   updatedAt: Date;
 }
@@ -212,6 +252,13 @@ export interface IMietfach extends Document {
   // Sprint S12_M11_Mietfaecher_Seeding_Cleanup - Manual creation tracking
   creationSource?: 'manual' | 'import' | 'seed';
   createdBy?: string; // ObjectId des Admin-Users
+
+  // FlourIO v3 API Integration (Warehouse/Lager sync)
+  flourioWarehouseId?: string;
+  flourioSyncStatus?: 'pending' | 'synced' | 'error' | 'deleted';
+  flourioLastSyncAt?: Date;
+  flourioSyncError?: string;
+
   createdAt: Date;
   updatedAt: Date;
   // Methods for availability checking

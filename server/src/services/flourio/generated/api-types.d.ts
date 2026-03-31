@@ -2,6 +2,7 @@
  * @file api-types.d.ts
  * @purpose Manually crafted TypeScript types for Flourio API v3
  * @created 2025-10-16
+ * @updated 2026-03-31 — Stock corrected to Warehouse, added StockItemEntry
  * @note Generated from https://flour.host/api/v3-json (OpenAPI schema has broken refs)
  */
 
@@ -9,13 +10,19 @@
 // Core Entity Types
 // ============================================================================
 
+export interface ArticleTag {
+  _id: string;
+  name: string;
+  section?: string;
+}
+
 export interface Article {
   id: string;
   name: string;
   description?: string;
   price: number;
   unit?: string;
-  category?: string;
+  tags?: string[] | ArticleTag[]; // Can be string[] or populated ArticleTag objects
   sku?: string;
   barcode?: string;
   taxRate?: number;
@@ -28,15 +35,88 @@ export interface Article {
   updatedAt: string;
 }
 
-export interface Stock {
+/**
+ * Warehouse (Lager) — mapped from /v3/stocks endpoints.
+ * In Flourio, "Stock" = Warehouse/Lager, NOT an inventory entry.
+ * Each Mietfach in housnkuh maps to one Warehouse in Flourio.
+ */
+export interface Warehouse {
   id: string;
-  articleId: string;
-  locationId: string;
-  quantity: number;
-  reserved?: number;
-  available?: number;
-  unit?: string;
-  lastUpdated: string;
+  name: string;
+  address?: WarehouseAddress;
+  useBins?: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * Address format for Warehouses (from Flourio Swagger Address schema).
+ * Note: differs from BusinessPartner Address — Flourio uses different
+ * field names (streetNumber vs houseNumber, zipCode vs postalCode).
+ */
+export interface WarehouseAddress {
+  prefix?: string;
+  salutation?: string;
+  company1?: string;
+  company2?: string;
+  company3?: string;
+  firstName?: string;
+  lastName?: string;
+  street?: string;
+  streetNumber?: string;
+  zipCode?: string;
+  city?: string;
+  country?: string;
+  vatId?: string;
+}
+
+/**
+ * StockItemEntry — the actual inventory record.
+ * Links an Article (item) to a Warehouse (stock) with an amount.
+ * Mapped from /v3/stockitementries endpoints.
+ */
+export interface StockItemEntry {
+  id: string;
+  item: string;            // Flourio Article ID
+  stock: string;           // Flourio Warehouse ID
+  amount: number;
+  type: string;            // "I" = Inbound
+  bin?: string;
+  serialNumber?: string;
+  bestBeforeDate?: string;
+  batchNumber?: string;
+  description?: string;
+  date?: string;
+  order?: boolean;
+  orderId?: string;
+  orderItemId?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * StockTransfer — movement of items between warehouses.
+ * Mapped from /v3/stocktransfers endpoints.
+ */
+export interface StockTransfer {
+  id: string;
+  name: string;
+  mode?: string;
+  out?: StockTransferSide;
+  in?: StockTransferSide;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface StockTransferSide {
+  date?: string;
+  items?: StockTransferItem[];
+  stock?: string;          // Warehouse ID
+}
+
+export interface StockTransferItem {
+  item?: string;           // Article ID
+  amount?: number;
 }
 
 export interface BusinessPartner {
@@ -56,6 +136,12 @@ export interface BusinessPartner {
   updatedAt: string;
 }
 
+/**
+ * Address format for BusinessPartners.
+ * Note: This uses simplified field names (houseNumber, postalCode).
+ * Flourio's Swagger uses a shared Address schema with different names
+ * (streetNumber, zipCode) — the BusinessPartnerMapping handles translation.
+ */
 export interface Address {
   street?: string;
   houseNumber?: string;
@@ -101,7 +187,7 @@ export interface CreateArticleDto {
   description?: string;
   price: number;
   unit?: string;
-  category?: string;
+  tags?: string[];
   sku?: string;
   barcode?: string;
   taxRate?: number;
@@ -116,17 +202,83 @@ export interface UpdateArticleDto extends Partial<CreateArticleDto> {
   id: string;
 }
 
-export interface CreateStockDto {
-  articleId: string;
-  locationId: string;
-  quantity: number;
-  unit?: string;
+// --- Warehouse (Lager) DTOs --- mapped to /v3/stocks ---
+
+export interface CreateWarehouseDto {
+  name: string;
+  address?: WarehouseAddress;
+  useBins?: boolean;
 }
 
-export interface UpdateStockDto {
-  quantity?: number;
-  reserved?: number;
+export interface UpdateWarehouseDto {
+  name?: string;
+  address?: WarehouseAddress;
+  useBins?: boolean;
 }
+
+export interface SearchWarehouseDto {
+  query?: string;
+  filters?: Record<string, any>;
+  pagination?: { page?: number; pageSize?: number };
+}
+
+// --- StockItemEntry DTOs --- mapped to /v3/stockitementries ---
+
+export interface CreateStockItemEntryDto {
+  item: string;            // Article ID (REQUIRED)
+  amount: number;          // Quantity (REQUIRED)
+  type: string;            // "I" = Inbound (REQUIRED)
+  stock: string;           // Warehouse ID (REQUIRED)
+}
+
+export interface UpdateStockItemEntryDto {
+  stock?: string;
+  bin?: string;
+  item?: string;
+  amount?: number;
+  date?: string;
+  type?: string;
+  serialNumber?: string;
+  bestBeforeDate?: string;
+  batchNumber?: string;
+  description?: string;
+  order?: boolean;
+  orderId?: string;
+  orderItemId?: string;
+}
+
+// --- Article Stock Availability ---
+
+export interface SetStockAvailabilityDto {
+  amount: number;
+  type: string;
+  stock: string;           // Warehouse ID
+  description: string;
+}
+
+export interface GetArticleStockItemEntryDto {
+  from?: string;
+  to?: string;
+  stocks?: string;         // Warehouse ID filter
+}
+
+// --- StockTransfer DTOs ---
+
+export interface CreateStockTransferDto {
+  name: string;
+  mode?: string;
+  out?: StockTransferSide;
+  in?: StockTransferSide;
+}
+
+export interface UpdateStockTransferDto {
+  name?: string;
+  mode?: string;
+  out?: StockTransferSide;
+  in?: StockTransferSide;
+}
+
+// --- BusinessPartner DTOs ---
 
 export interface CreateBusinessPartnerDto {
   type: 'customer' | 'supplier' | 'both';
@@ -144,6 +296,8 @@ export interface CreateBusinessPartnerDto {
 export interface UpdateBusinessPartnerDto extends Partial<CreateBusinessPartnerDto> {
   id: string;
 }
+
+// --- Document DTOs ---
 
 export interface CreateDocumentDto {
   type: 'invoice' | 'order' | 'delivery' | 'quote';
@@ -187,7 +341,7 @@ export interface ApiError {
 export interface ArticleQueryParams {
   page?: number;
   pageSize?: number;
-  category?: string;
+  tags?: string[];
   search?: string;
   minPrice?: number;
   maxPrice?: number;
@@ -196,10 +350,12 @@ export interface ArticleQueryParams {
   sortOrder?: 'asc' | 'desc';
 }
 
-export interface StockQueryParams {
-  articleId?: string;
-  locationId?: string;
-  minQuantity?: number;
+export interface WarehouseQueryParams {
+  page?: number;
+  pageSize?: number;
+}
+
+export interface StockItemEntryQueryParams {
   page?: number;
   pageSize?: number;
 }
@@ -246,8 +402,12 @@ export function isArticle(obj: any): obj is Article {
   return obj && typeof obj.id === 'string' && typeof obj.name === 'string' && typeof obj.price === 'number';
 }
 
-export function isStock(obj: any): obj is Stock {
-  return obj && typeof obj.id === 'string' && typeof obj.articleId === 'string' && typeof obj.quantity === 'number';
+export function isWarehouse(obj: any): obj is Warehouse {
+  return obj && typeof obj.id === 'string' && typeof obj.name === 'string';
+}
+
+export function isStockItemEntry(obj: any): obj is StockItemEntry {
+  return obj && typeof obj.id === 'string' && typeof obj.item === 'string' && typeof obj.stock === 'string';
 }
 
 export function isBusinessPartner(obj: any): obj is BusinessPartner {

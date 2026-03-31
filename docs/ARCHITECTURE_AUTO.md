@@ -1,26 +1,26 @@
 # Architecture Statistics (Auto-Generated)
 
-**Generated**: 2026-03-30 15:41:42
+**Generated**: 2026-03-31 16:49:56
 **Generator**: scripts/update-architecture.sh
 
 ## File Counts
 
 ### Frontend (Client)
-- Components: 91
-- Pages: 54
+- Components: 92
+- Pages: 56
 - Hooks: 13
 - Tests: 25
 
 ### Backend (Server)
 - Controllers: 35
-- Models: 20
-- Services: 57
+- Models: 21
+- Services: 61
 - Routes: 19
-- Tests: 44
+- Tests: 45
 
 ### Overall
-- Total TypeScript Files: 383
-- Total Tests: 69
+- Total TypeScript Files: 393
+- Total Tests: 70
 
 ## Component Breakdown
 
@@ -103,6 +103,7 @@ Alert.ts
 Contact.ts
 EmailTemplate.ts
 FAQ.ts
+FlourioDocument.ts
 Invoice.integration.test.ts
 Invoice.test.ts
 Invoice.ts

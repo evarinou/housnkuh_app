@@ -12,6 +12,8 @@ import TrialService from './trialService';
 import HealthCheckService from './healthCheckService';
 import AlertingService from './alertingService';
 import RevenueCalculationJob from '../jobs/revenueCalculationJob';
+import StockPullJob from '../jobs/stockPullJob';
+import DocumentSyncJob from '../jobs/documentSyncJob';
 import { performanceMonitor } from '../utils/performanceMonitor';
 import Settings from '../models/Settings';
 import logger from '../utils/logger';
@@ -59,7 +61,13 @@ export class ScheduledJobs {
     
     // Job 7: Invoice generation (monthly on 1st at 3 AM)
     this.scheduleInvoiceGeneration();
-    
+
+    // Job 8: Flourio Stock Pull (every 5 minutes)
+    this.scheduleStockPull();
+
+    // Job 9: Flourio Document Sync (every 15 minutes)
+    this.scheduleDocumentSync();
+
     logger.info('✅ Scheduled jobs initialized successfully');
   }
 
@@ -305,6 +313,64 @@ export class ScheduledJobs {
   }
 
   /**
+   * @description Schedule Flourio stock pull - every 5 minutes
+   */
+  private static scheduleStockPull(): void {
+    StockPullJob.init();
+    logger.info('📅 Flourio stock pull job scheduled (every 5 minutes)');
+  }
+
+  /**
+   * @description Schedule Flourio document sync - every 15 minutes
+   */
+  private static scheduleDocumentSync(): void {
+    DocumentSyncJob.init();
+    logger.info('📅 Flourio document sync job scheduled (every 15 minutes)');
+  }
+
+  /**
+   * @description Manually trigger Flourio document sync (for admin use)
+   */
+  static async triggerDocumentSync(): Promise<any> {
+    try {
+      logger.info('🔧 Manual Flourio document sync triggered');
+      await DocumentSyncJob.run();
+      return {
+        success: true,
+        timestamp: new Date()
+      };
+    } catch (error) {
+      logger.error('❌ Manual Flourio document sync failed:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: new Date()
+      };
+    }
+  }
+
+  /**
+   * @description Manually trigger Flourio stock pull (for admin use)
+   */
+  static async triggerStockPull(): Promise<any> {
+    try {
+      logger.info('🔧 Manual Flourio stock pull triggered');
+      await StockPullJob.run();
+      return {
+        success: true,
+        timestamp: new Date()
+      };
+    } catch (error) {
+      logger.error('❌ Manual Flourio stock pull failed:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: new Date()
+      };
+    }
+  }
+
+  /**
    * @description Stop all scheduled jobs
    * @security Safely stops all running jobs
    * @complexity Medium - Coordinates stopping multiple jobs
@@ -320,6 +386,12 @@ export class ScheduledJobs {
     
     // Stop the revenue calculation job separately
     RevenueCalculationJob.stop();
+
+    // Stop the stock pull job
+    StockPullJob.stop();
+
+    // Stop the document sync job
+    DocumentSyncJob.stop();
     
     // Stop the invoice generation job separately
     const { InvoiceGenerationJob } = require('../jobs/invoiceGenerationJob');

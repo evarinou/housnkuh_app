@@ -67,6 +67,27 @@ const MietfachSchema = new Schema({
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
+  },
+
+  // FlourIO v3 API Integration (Warehouse/Lager sync)
+  flourioWarehouseId: {
+    type: String,
+    default: undefined,
+    sparse: true,
+    index: true
+  },
+  flourioSyncStatus: {
+    type: String,
+    enum: ['pending', 'synced', 'error', 'deleted'],
+    default: undefined
+  },
+  flourioLastSyncAt: {
+    type: Date,
+    default: undefined
+  },
+  flourioSyncError: {
+    type: String,
+    default: undefined
   }
 }, { timestamps: true });
 

@@ -11,7 +11,13 @@ import {
   syncCategories,
   getProducts,
   syncProduct,
-  syncBulkProducts
+  syncBulkProducts,
+  getStockLevels,
+  triggerStockPull,
+  getDocuments,
+  getDocumentStats,
+  getDocumentById,
+  triggerDocumentSync
 } from '../controllers/flourioController';
 import { adminAuth, auth } from '../middleware/auth';
 
@@ -19,19 +25,7 @@ const router = express.Router();
 
 // Middleware that allows both admins and vendors
 const adminOrVendorAuth = (req: Request, res: Response, next: NextFunction) => {
-  const authHeader = req.header('Authorization');
-  const token = authHeader && authHeader.startsWith('Bearer ')
-    ? authHeader.slice(7)
-    : null;
-
-  if (!token) {
-    return res.status(401).json({
-      success: false,
-      message: 'No token, authorization denied'
-    });
-  }
-
-  // First authenticate the token
+  // Delegate token extraction to auth middleware (supports both Bearer and x-auth-token)
   auth(req, res, () => {
     const user = (req as any).user;
 
@@ -94,5 +88,44 @@ router.post('/products/:id/sync', adminOrVendorAuth, syncProduct);
  * Body: { productIds: string[] }
  */
 router.post('/products/sync-bulk', adminOrVendorAuth, syncBulkProducts);
+
+/**
+ * GET /api/admin/flourio/stock/levels
+ * Get all products with Flourio stock levels (Admin only)
+ */
+router.get('/stock/levels', adminAuth, getStockLevels);
+
+/**
+ * POST /api/admin/flourio/stock/pull
+ * Manually trigger stock pull from Flourio (Admin only)
+ */
+router.post('/stock/pull', adminAuth, triggerStockPull);
+
+// ─── Document Endpoints ───────────────────────────────────────────────
+
+/**
+ * GET /api/admin/flourio/documents
+ * List Flourio documents (Admin: all, Vendor: own)
+ * Query: type, status, fromDate, toDate
+ */
+router.get('/documents', adminOrVendorAuth, getDocuments);
+
+/**
+ * GET /api/admin/flourio/documents/stats
+ * Document statistics (Admin only)
+ */
+router.get('/documents/stats', adminAuth, getDocumentStats);
+
+/**
+ * GET /api/admin/flourio/documents/:id
+ * Single document detail (Admin: any, Vendor: own)
+ */
+router.get('/documents/:id', adminOrVendorAuth, getDocumentById);
+
+/**
+ * POST /api/admin/flourio/documents/sync
+ * Manually trigger document sync from Flourio (Admin only)
+ */
+router.post('/documents/sync', adminAuth, triggerDocumentSync);
 
 export default router;

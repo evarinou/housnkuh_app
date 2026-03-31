@@ -80,4 +80,9 @@ router.get('/invoices/summary', vendorAuth, vendorBookingController.getVendorInv
 router.get('/invoices/:id', vendorAuth, vendorBookingController.getVendorInvoiceById);
 router.get('/invoices/:id/download', vendorAuth, vendorBookingController.downloadVendorInvoicePdf);
 
+// Flourio Documents & Products for Vendors (vendor-auth path avoids global adminAuth)
+import { getDocuments, getProducts } from '../controllers/flourioController';
+router.get('/flourio/documents', vendorAuth, getDocuments);
+router.get('/flourio/products', vendorAuth, getProducts);
+
 export default router;
