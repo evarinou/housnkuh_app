@@ -41,6 +41,8 @@ export interface ProductFormFieldsProps {
   onVendorChange?: (vendorId: string) => void;
   availableTags: Tag[];
   availableVendors?: Vendor[];
+  /** Current stock info from Flourio (read-only, shown in edit mode) */
+  flourioStock?: { totalAmount: number; entries?: Array<{ warehouseName?: string; amount: number }> };
   values: ProductFormValues;
   errors: FormikErrors<ProductFormValues>;
   touched: FormikTouched<ProductFormValues>;
@@ -73,6 +75,7 @@ const ProductFormFields: React.FC<ProductFormFieldsProps> = ({
   onVendorChange,
   availableTags,
   availableVendors = [],
+  flourioStock,
   values,
   errors,
   touched,
@@ -302,27 +305,32 @@ const ProductFormFields: React.FC<ProductFormFieldsProps> = ({
         />
       </div>
 
-      {/* Availability and Minimum Quantity */}
+      {/* Stock Info (read-only) + Minimum Quantity */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label htmlFor="availability" className="block text-sm font-medium text-gray-700 mb-1">
-            Verfügbarkeit
-          </label>
-          <select
-            id="availability"
-            name="availability"
-            value={values.availability}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-          >
-            {AVAILABILITY_OPTIONS.map(option => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </div>
+        {flourioStock != null && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Aktueller Bestand
+            </label>
+            <div className={`px-3 py-2 rounded-md text-sm font-medium ${
+              flourioStock.totalAmount > 0
+                ? 'bg-green-50 text-green-800 border border-green-200'
+                : 'bg-red-50 text-red-800 border border-red-200'
+            }`}>
+              {flourioStock.totalAmount} Stk. gesamt
+              {flourioStock.entries && flourioStock.entries.length > 0 && (
+                <span className="text-xs ml-2 opacity-75">
+                  ({flourioStock.entries.map(e =>
+                    `${e.warehouseName || 'Lager'}: ${e.amount}`
+                  ).join(', ')})
+                </span>
+              )}
+            </div>
+            <p className="mt-1 text-xs text-gray-500">
+              Bestand wird über Flourio verwaltet
+            </p>
+          </div>
+        )}
 
         <div>
           <label htmlFor="minimumQuantity" className="block text-sm font-medium text-gray-700 mb-1">

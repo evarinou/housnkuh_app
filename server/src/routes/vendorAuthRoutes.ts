@@ -91,6 +91,7 @@ router.post('/flourio/products/sync-bulk', vendorAuth, syncBulkProducts);
 import * as vendorProductController from '../controllers/vendor/vendorProductController';
 router.get('/mietfaecher', vendorAuth, vendorProductController.getVendorMietfaecher);
 router.post('/products', vendorAuth, vendorProductController.createProduct);
+router.put('/products/:id', vendorAuth, vendorProductController.updateProduct);
 router.post('/products/:id/stock', vendorAuth, vendorProductController.bookStock);
 
 export default router;

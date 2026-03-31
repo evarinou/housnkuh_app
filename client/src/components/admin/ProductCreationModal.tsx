@@ -20,7 +20,7 @@ export interface Product {
   description: string;
   price: number;
   priceUnit: string;
-  tags: string[];
+  tags: any[];
   images: string[];
   availability: string;
   minimumQuantity: number;
@@ -30,6 +30,10 @@ export interface Product {
     articleId?: string;
     status: string;
     lastSyncedAt?: string;
+  };
+  flourioStock?: {
+    totalAmount: number;
+    entries?: Array<{ warehouseId?: string; warehouseName?: string; amount: number }>;
   };
 }
 
@@ -49,6 +53,8 @@ export interface ProductCreationModalProps {
   availableTags: Tag[];
   availableVendors?: Vendor[];
   vendorMietfaecher?: VendorMietfach[];
+  /** Edit mode: pass existing product to pre-populate form */
+  editProduct?: Product;
 }
 
 // Validation Schema
@@ -91,13 +97,26 @@ const ProductCreationModal: React.FC<ProductCreationModalProps> = ({
   vendorId,
   availableTags,
   availableVendors = [],
-  vendorMietfaecher = []
+  vendorMietfaecher = [],
+  editProduct
 }) => {
+  const isEdit = !!editProduct;
   const [apiError, setApiError] = useState<string | null>(null);
   const [initialMietfachId, setInitialMietfachId] = useState('');
   const [initialAmount, setInitialAmount] = useState('');
 
-  const initialValues: ProductFormValues = {
+  const initialValues: ProductFormValues = editProduct ? {
+    name: editProduct.name,
+    description: editProduct.description,
+    price: editProduct.price,
+    priceUnit: editProduct.priceUnit,
+    tags: editProduct.tags?.map((t: any) => t._id || t) || [],
+    images: editProduct.images || [],
+    availability: (editProduct.availability as any) || 'available',
+    minimumQuantity: editProduct.minimumQuantity || '',
+    taxRate: editProduct.taxRate || '7',
+    vendorId: typeof editProduct.vendorId === 'object' ? (editProduct.vendorId as any)?._id : editProduct.vendorId
+  } : {
     name: '',
     description: '',
     price: '',
@@ -131,30 +150,24 @@ const ProductCreationModal: React.FC<ProductCreationModalProps> = ({
         vendorId: values.vendorId
       };
 
-      // Add optional initial stock (only for vendors with Mietfächer)
-      if (isVendor && initialMietfachId && initialAmount) {
+      // Add optional initial stock (only for new products with Mietfächer)
+      if (!isEdit && isVendor && initialMietfachId && initialAmount) {
         payload.initialStock = {
           mietfachId: initialMietfachId,
           amount: Number(initialAmount)
         };
       }
 
-      // Use vendor-auth route for vendors, admin route for admins
-      const createUrl = isVendor
-        ? `${apiUrl}/vendor-auth/products`
-        : `${apiUrl}/admin/products`;
+      const baseUrl = isVendor ? `${apiUrl}/vendor-auth` : `${apiUrl}/admin`;
+      const headers = {
+        'Authorization': `Bearer ${token}`,
+        'x-auth-token': token || '',
+        'Content-Type': 'application/json'
+      };
 
-      const response = await axios.post(
-        createUrl,
-        payload,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'x-auth-token': token || '',
-            'Content-Type': 'application/json'
-          }
-        }
-      );
+      const response = isEdit
+        ? await axios.put(`${baseUrl}/products/${editProduct!._id}`, payload, { headers })
+        : await axios.post(`${baseUrl}/products`, payload, { headers });
 
       if (response.data.success) {
         const createdProduct = response.data.data;
@@ -202,7 +215,7 @@ const ProductCreationModal: React.FC<ProductCreationModalProps> = ({
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
               <h2 className="text-xl font-semibold text-gray-900">
-                Neues Produkt erstellen
+                {isEdit ? 'Produkt bearbeiten' : 'Neues Produkt erstellen'}
               </h2>
               <button
                 onClick={onClose}
@@ -216,10 +229,11 @@ const ProductCreationModal: React.FC<ProductCreationModalProps> = ({
             <div className="px-6 py-4 overflow-y-auto max-h-[calc(90vh-8rem)]">
               <Formik
                 initialValues={initialValues}
+                enableReinitialize
                 validationSchema={getValidationSchema(isVendor)}
                 onSubmit={handleSubmit}
               >
-                {({ values, errors, touched, handleChange, handleBlur, setFieldValue, setFieldTouched, isSubmitting }) => (
+                {({ values, errors, touched, handleChange, handleBlur, setFieldValue, setFieldTouched, isSubmitting, isValid }) => (
                   <Form className="space-y-6">
                     {/* API Error */}
                     {apiError && (
@@ -240,6 +254,7 @@ const ProductCreationModal: React.FC<ProductCreationModalProps> = ({
                       selectedVendor={values.vendorId}
                       availableTags={availableTags}
                       availableVendors={availableVendors}
+                      flourioStock={isEdit ? editProduct?.flourioStock : undefined}
                       values={values}
                       errors={errors}
                       touched={touched}
@@ -248,49 +263,6 @@ const ProductCreationModal: React.FC<ProductCreationModalProps> = ({
                       setFieldValue={setFieldValue}
                       setFieldTouched={setFieldTouched}
                     />
-
-                    {/* Optional Initial Stock (Vendor only) */}
-                    {isVendor && vendorMietfaecher.length > 0 && (
-                      <div className="bg-amber-50 border border-amber-200 rounded-md p-4">
-                        <h3 className="text-sm font-medium text-amber-900 mb-3">
-                          Initialer Bestand (optional)
-                        </h3>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Mietfach
-                            </label>
-                            <select
-                              value={initialMietfachId}
-                              onChange={(e) => setInitialMietfachId(e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-emerald-500 text-sm"
-                            >
-                              <option value="">Kein Bestand buchen</option>
-                              {vendorMietfaecher.map((mf) => (
-                                <option key={mf._id} value={mf._id}>
-                                  {mf.bezeichnung} ({mf.typ})
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-                          {initialMietfachId && (
-                            <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Menge
-                              </label>
-                              <input
-                                type="number"
-                                value={initialAmount}
-                                onChange={(e) => setInitialAmount(e.target.value)}
-                                min="1"
-                                placeholder="z.B. 50"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-emerald-500 text-sm"
-                              />
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
 
                     {/* FlourIO Sync Info */}
                     <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
@@ -312,6 +284,11 @@ const ProductCreationModal: React.FC<ProductCreationModalProps> = ({
                       <button
                         type="submit"
                         disabled={isSubmitting}
+                        onClick={() => {
+                          if (!isValid && Object.keys(errors).length > 0) {
+                            setApiError('Bitte alle Pflichtfelder ausfüllen: ' + Object.keys(errors).join(', '));
+                          }
+                        }}
                         className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
                       >
                         {isSubmitting ? (
@@ -320,12 +297,12 @@ const ProductCreationModal: React.FC<ProductCreationModalProps> = ({
                               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                             </svg>
-                            Wird erstellt...
+                            {isEdit ? 'Wird gespeichert...' : 'Wird erstellt...'}
                           </>
                         ) : (
                           <>
                             <Check className="h-4 w-4 mr-2" />
-                            Produkt erstellen
+                            {isEdit ? 'Änderungen speichern' : 'Produkt erstellen'}
                           </>
                         )}
                       </button>

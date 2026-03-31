@@ -46,6 +46,7 @@ export interface IProduct extends Document {
   // Pricing & Units
   price?: number;
   priceUnit?: string;
+  taxRate?: number;
   minimumQuantity?: number;
   bulkPricing?: IBulkPrice[];
   
@@ -176,6 +177,11 @@ const ProductSchema: Schema<IProduct> = new Schema({
     type: String,
     enum: ['kg', 'g', 'piece', 'liter', 'ml', 'bunch', 'pack', 'box'],
     default: 'piece'
+  },
+  taxRate: {
+    type: Number,
+    enum: [7, 19],
+    default: 7
   },
   minimumQuantity: {
     type: Number,

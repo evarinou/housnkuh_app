@@ -208,6 +208,67 @@ export const createProduct = async (req: any, res: Response): Promise<void> => {
 };
 
 /**
+ * PUT /api/vendor-auth/products/:id
+ * Update an existing product. Only the owning vendor can edit.
+ * Triggers Flourio re-sync via post-save hook if relevant fields change.
+ */
+export const updateProduct = async (req: any, res: Response): Promise<void> => {
+  try {
+    const vendorId = req.user.id;
+    const { id } = req.params;
+
+    // Verify ownership
+    const product = await Product.findOne({ _id: id, vendorId });
+    if (!product) {
+      res.status(404).json({ success: false, message: 'Produkt nicht gefunden' });
+      return;
+    }
+
+    const {
+      name, description, price, priceUnit,
+      tags, images, availability, minimumQuantity,
+      shortDescription, seasonalInfo, bulkPricing, keywords
+    } = req.body;
+
+    // Update fields (only set what's provided)
+    if (name !== undefined) product.name = name;
+    if (description !== undefined) product.description = description;
+    if (price !== undefined) product.price = price;
+    if (priceUnit !== undefined) product.priceUnit = priceUnit;
+    if (tags !== undefined) product.tags = tags;
+    if (images !== undefined) product.images = images;
+    if (availability !== undefined) product.availability = availability;
+    if (minimumQuantity !== undefined) product.minimumQuantity = minimumQuantity;
+    if (req.body.taxRate !== undefined) product.taxRate = req.body.taxRate;
+    if (shortDescription !== undefined) product.shortDescription = shortDescription;
+    if (seasonalInfo !== undefined) product.seasonalInfo = seasonalInfo;
+    if (bulkPricing !== undefined) product.bulkPricing = bulkPricing;
+    if (keywords !== undefined) product.keywords = keywords;
+
+    await product.save(); // Triggers post-save hook → Flourio re-sync
+
+    const updated = await Product.findById(id)
+      .populate('tags', 'name color slug')
+      .lean();
+
+    logger.info('[VendorProduct] Product updated', { productId: id, vendorId });
+
+    res.json({
+      success: true,
+      data: updated,
+      message: 'Produkt erfolgreich aktualisiert'
+    });
+  } catch (error: any) {
+    logger.error('Error updating product:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Fehler beim Aktualisieren des Produkts',
+      error: error.message
+    });
+  }
+};
+
+/**
  * POST /api/vendor-auth/products/:id/stock
  * Book stock for a product onto a Mietfach.
  * Validates vendor has active booking for the Mietfach.

@@ -38,6 +38,7 @@ const VendorProductsPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [vendorMietfaecher, setVendorMietfaecher] = useState<VendorMietfach[]>([]);
 
   const apiUrl = apiUtils.getApiUrl();
@@ -156,6 +157,15 @@ const VendorProductsPage: React.FC = () => {
     }
   };
 
+  // Edit product
+  const handleEdit = (productId: string) => {
+    const product = products.find(p => p._id === productId);
+    if (product) {
+      setEditingProduct(product);
+      setShowCreateModal(true);
+    }
+  };
+
   // Filter and search products
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
@@ -218,7 +228,7 @@ const VendorProductsPage: React.FC = () => {
                 {syncing ? 'Synchronisiere...' : 'Alle synchronisieren'}
               </button>
               <button
-                onClick={() => setShowCreateModal(true)}
+                onClick={() => { setEditingProduct(null); setShowCreateModal(true); }}
                 className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors"
               >
                 <Plus className="w-4 h-4 mr-2" />
@@ -342,6 +352,7 @@ const VendorProductsPage: React.FC = () => {
                 key={product._id}
                 product={product}
                 onSync={handleSync}
+                onEdit={handleEdit}
                 onBookStock={handleBookStock}
                 vendorMietfaecher={vendorMietfaecher}
               />
@@ -353,16 +364,18 @@ const VendorProductsPage: React.FC = () => {
       {/* Product Creation Modal */}
       <ProductCreationModal
         isOpen={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
+        onClose={() => { setShowCreateModal(false); setEditingProduct(null); }}
         onSuccess={() => {
           setShowCreateModal(false);
-          setSuccessMessage('Produkt erfolgreich erstellt!');
+          setEditingProduct(null);
+          setSuccessMessage(editingProduct ? 'Produkt aktualisiert!' : 'Produkt erstellt!');
           setTimeout(() => setSuccessMessage(null), 3000);
           fetchProducts();
         }}
         isVendor={true}
         availableTags={categories.map(c => ({ _id: c, name: c }))}
         vendorMietfaecher={vendorMietfaecher}
+        editProduct={editingProduct || undefined}
       />
     </VendorLayout>
   );

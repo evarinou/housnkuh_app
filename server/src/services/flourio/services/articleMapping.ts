@@ -78,7 +78,7 @@ export async function getVatRateForProduct(product: IProduct): Promise<number> {
  */
 export async function mapProductToCreateArticle(product: IProduct): Promise<Record<string, any>> {
   const tagNames = await getProductTagNames(product);
-  const vatRate = await getVatRateForProduct(product);
+  const vatRate = product.taxRate || await getVatRateForProduct(product);
   const sku = await generateSKU(product);
 
   const taxassignment = vatRate <= 7
@@ -104,7 +104,7 @@ export async function mapProductToCreateArticle(product: IProduct): Promise<Reco
  */
 export async function mapProductToUpdateArticle(product: IProduct, articleId: string): Promise<Record<string, any>> {
   const tagNames = await getProductTagNames(product);
-  const vatRate = await getVatRateForProduct(product);
+  const vatRate = product.taxRate || await getVatRateForProduct(product);
 
   const taxassignment = vatRate <= 7
     ? flourioTenantConfig.defaultTaxassignmentReduced
