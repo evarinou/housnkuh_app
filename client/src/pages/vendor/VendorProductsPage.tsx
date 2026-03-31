@@ -139,6 +139,23 @@ const VendorProductsPage: React.FC = () => {
     }
   };
 
+  // Book stock for a product onto a Mietfach
+  const handleBookStock = async (productId: string, mietfachId: string, amount: number) => {
+    try {
+      await axios.post(
+        `${apiUrl}/vendor-auth/products/${productId}/stock`,
+        { mietfachId, amount },
+        { headers: getHeaders() }
+      );
+      setSuccessMessage(`${amount} Stk. erfolgreich gebucht`);
+      setTimeout(() => setSuccessMessage(null), 3000);
+      await fetchProducts();
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Fehler beim Buchen des Bestands');
+      setTimeout(() => setError(null), 5000);
+    }
+  };
+
   // Filter and search products
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
@@ -325,6 +342,8 @@ const VendorProductsPage: React.FC = () => {
                 key={product._id}
                 product={product}
                 onSync={handleSync}
+                onBookStock={handleBookStock}
+                vendorMietfaecher={vendorMietfaecher}
               />
             ))}
           </div>

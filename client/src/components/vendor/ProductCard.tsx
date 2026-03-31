@@ -7,7 +7,7 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Edit2, RefreshCw, Package } from 'lucide-react';
+import { Edit2, RefreshCw, Package, BarChart3 } from 'lucide-react';
 import SyncStatusBadge, { SyncStatus } from '../ui/SyncStatusBadge';
 import StockLevelBadge from '../ui/StockLevelBadge';
 
@@ -36,14 +36,26 @@ export interface Product {
   };
 }
 
+export interface VendorMietfach {
+  _id: string;
+  bezeichnung: string;
+  typ: string;
+}
+
 export interface ProductCardProps {
   product: Product;
   onSync: (productId: string) => Promise<void>;
   onEdit?: (productId: string) => void;
+  onBookStock?: (productId: string, mietfachId: string, amount: number) => Promise<void>;
+  vendorMietfaecher?: VendorMietfach[];
 }
 
-const ProductCard: React.FC<ProductCardProps> = ({ product, onSync, onEdit }) => {
+const ProductCard: React.FC<ProductCardProps> = ({ product, onSync, onEdit, onBookStock, vendorMietfaecher = [] }) => {
   const [syncing, setSyncing] = useState(false);
+  const [showStockForm, setShowStockForm] = useState(false);
+  const [stockMietfachId, setStockMietfachId] = useState('');
+  const [stockAmount, setStockAmount] = useState('');
+  const [bookingStock, setBookingStock] = useState(false);
 
   const handleSync = async () => {
     setSyncing(true);
@@ -51,6 +63,19 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onSync, onEdit }) =>
       await onSync(product._id);
     } finally {
       setSyncing(false);
+    }
+  };
+
+  const handleBookStock = async () => {
+    if (!onBookStock || !stockMietfachId || !stockAmount) return;
+    setBookingStock(true);
+    try {
+      await onBookStock(product._id, stockMietfachId, Number(stockAmount));
+      setShowStockForm(false);
+      setStockMietfachId('');
+      setStockAmount('');
+    } finally {
+      setBookingStock(false);
     }
   };
 
@@ -144,6 +169,49 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onSync, onEdit }) =>
           />
         </div>
 
+        {/* Stock Booking Form (inline) */}
+        {showStockForm && vendorMietfaecher.length > 0 && (
+          <div className="mb-3 p-3 bg-amber-50 border border-amber-200 rounded-md">
+            <div className="space-y-2">
+              <select
+                value={stockMietfachId}
+                onChange={(e) => setStockMietfachId(e.target.value)}
+                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md"
+              >
+                <option value="">Mietfach wählen...</option>
+                {vendorMietfaecher.map((mf) => (
+                  <option key={mf._id} value={mf._id}>
+                    {mf.bezeichnung} ({mf.typ})
+                  </option>
+                ))}
+              </select>
+              <input
+                type="number"
+                value={stockAmount}
+                onChange={(e) => setStockAmount(e.target.value)}
+                min="1"
+                placeholder="Menge"
+                className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md"
+              />
+              <div className="flex gap-2">
+                <button
+                  onClick={handleBookStock}
+                  disabled={bookingStock || !stockMietfachId || !stockAmount}
+                  className="flex-1 px-3 py-1.5 text-sm font-medium text-white bg-amber-600 rounded-md hover:bg-amber-700 disabled:opacity-50"
+                >
+                  {bookingStock ? 'Wird gebucht...' : 'Bestand buchen'}
+                </button>
+                <button
+                  onClick={() => setShowStockForm(false)}
+                  className="px-3 py-1.5 text-sm text-gray-500 border border-gray-300 rounded-md hover:bg-gray-50"
+                >
+                  Abbrechen
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Action Buttons */}
         <div className="flex gap-2">
           <button
@@ -155,6 +223,15 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onSync, onEdit }) =>
             <RefreshCw className={`w-4 h-4 mr-2 ${syncing ? 'animate-spin' : ''}`} />
             {syncing ? 'Syncing...' : 'Sync'}
           </button>
+          {onBookStock && vendorMietfaecher.length > 0 && product.flourioSync?.status === 'synced' && (
+            <button
+              onClick={() => setShowStockForm(!showStockForm)}
+              className="px-3 py-2 text-sm font-medium text-amber-700 bg-white border border-amber-300 rounded-md hover:bg-amber-50 transition-colors"
+              aria-label="Bestand buchen"
+            >
+              <BarChart3 className="w-4 h-4" />
+            </button>
+          )}
           {onEdit && (
             <button
               onClick={() => onEdit(product._id)}

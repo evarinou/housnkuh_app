@@ -1,6 +1,6 @@
 # Architecture Statistics (Auto-Generated)
 
-**Generated**: 2026-03-31 18:22:21
+**Generated**: 2026-03-31 18:48:55
 **Generator**: scripts/update-architecture.sh
 
 ## File Counts

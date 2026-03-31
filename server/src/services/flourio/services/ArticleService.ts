@@ -84,7 +84,7 @@ export class ArticleService {
    */
   async updateArticle(articleId: string, dto: Record<string, any>): Promise<Article> {
     try {
-      const response = await this.client.put<Article>(`/articles/${articleId}`, dto);
+      const response = await this.client.patch<Article>(`/articles/${articleId}`, dto);
       return response;
     } catch (error: any) {
       throw new Error(`Failed to update article ${articleId}: ${error.message}`);
@@ -153,8 +153,9 @@ export class ArticleService {
         return { article, created: true };
       }
     } catch (error: any) {
-      // Update product with error status
+      // Update product with error status — preserve existing articleId
       await this.updateProductSyncStatus(product, {
+        articleId: product.flourioSync?.articleId, // don't lose existing ID
         status: 'error',
         error: error.message
       });
