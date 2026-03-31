@@ -1,78 +1,31 @@
 # housnkuh Documentation
 
-Welcome to the housnkuh project documentation. This directory contains comprehensive documentation for the regional marketplace platform for direct marketers (Direktvermarkter).
+Documentation for the housnkuh regional marketplace for Direktvermarkter.
 
-## 📁 Directory Structure
+## Core Docs
 
-### 🚀 Sprints & Project Management
-- [`sprints/`](./sprints/) - Sprint planning and execution documentation
-  - [`current/`](./sprints/current/) - Active sprint documentation
-  - [`archive/`](./sprints/archive/) - Completed milestone documentation
+- **[DEVELOPMENT.md](DEVELOPMENT.md)** - Development workflow, testing, setup
+- **[ARCHITECTURE.md](ARCHITECTURE.md)** - Project structure and decisions
+- **[ARCHITECTURE_AUTO.md](ARCHITECTURE_AUTO.md)** - Auto-generated statistics (updated on commit)
+- **[DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md)** - Deployment and rollback procedures
+- **[TECHNICAL_DOCUMENTATION.md](TECHNICAL_DOCUMENTATION.md)** - Development best practices
 
-### 🏗️ Architecture
-- [`architecture/`](./architecture/) - Technical architecture documentation
-  - [`decisions/`](./architecture/decisions/) - Architectural Decision Records (ADRs)
-  - [`diagrams/`](./architecture/diagrams/) - System architecture diagrams
+## Flourio API (v3)
 
-### 🔌 API Documentation
-- [`api/`](./api/) - API documentation and specifications
-  - [`endpoints/`](./api/endpoints/) - Endpoint documentation
-  - [`schemas/`](./api/schemas/) - Data schema definitions
+- **[flourio-api-v3/](flourio-api-v3/)** - FlourIO ERP integration docs
+  - [AUTHENTICATION.md](flourio-api-v3/AUTHENTICATION.md) - Token management
+  - [MIGRATION_GUIDE.md](flourio-api-v3/MIGRATION_GUIDE.md) - v2 to v3 migration
 
-### 🚢 Deployment
-- [`deployment/`](./deployment/) - Deployment guides and configurations
-  - [`docker/`](./deployment/docker/) - Docker configurations
-  - [`kubernetes/`](./deployment/kubernetes/) - Kubernetes configurations
+## Deployment & Operations
 
-### 🔒 Security
-- [`security/`](./security/) - Security documentation and best practices
+- **[deployment/](deployment/)** - Deployment guides
+- **[operations/](operations/)** - Runbooks
+- **[security/](security/)** - Security best practices
 
-## 🎯 Quick Links
+## Vendor
 
-### For Developers
-- [API Endpoints](./api/README.md)
-- [Architecture Overview](./architecture/README.md)
-- [Security Guidelines](./security/best-practices.md)
+- **[vendor/trial-period-guide.md](vendor/trial-period-guide.md)** - Trial period user guide
 
-### For DevOps
-- [Deployment Guide](./deployment/README.md)
-- [Environment Configuration](../README.md#environment-setup)
+## Server API Docs
 
-### For Project Management
-- [Current Sprint](./sprints/README.md)
-- [Sprint Archive](./sprints/archive/)
-
-## 📝 Documentation Standards
-
-### File Naming
-- Use kebab-case for file names: `my-document.md`
-- Include date prefixes for sprint docs: `2024-01-15-sprint-planning.md`
-- Use descriptive names that clearly indicate content
-
-### Markdown Standards
-- Use `#` for main title (one per document)
-- Use `##` for major sections
-- Use `###` for subsections
-- Include table of contents for long documents
-- Use relative links when referencing other docs
-
-### Update Guidelines
-- Keep documentation current with code changes
-- Review docs during PR process
-- Archive outdated documentation rather than deleting
-- Use clear commit messages for doc updates
-
-## 🔄 Maintenance
-
-This documentation is actively maintained by the development team. If you find outdated information or missing documentation, please:
-
-1. Create an issue describing the problem
-2. Submit a PR with corrections
-3. Notify the team lead for urgent updates
-
-## 📞 Contact
-
-For questions about this documentation:
-- Team Lead: [See CLAUDE.md](../CLAUDE.md)
-- Email: info@housnkuh.de
-- Phone: 0152 22035788
+- **[../server/docs/](../server/docs/)** - Server-specific API documentation
