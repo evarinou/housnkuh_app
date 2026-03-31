@@ -2,66 +2,31 @@
   "permissions": {
     "allow": [
       "Bash(git add:*)",
-      "Bash(npm run build:*)",
-      "Bash(grep:*)",
+      "Bash(git checkout:*)",
+      "Bash(npm run:*)",
+      "Bash(npm test:*)",
+      "Bash(npm install:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npx tsx:*)",
+      "Bash(npx jest:*)",
+      "Bash(npx prettier:*)",
+      "Bash(npx eslint:*)",
       "Bash(node:*)",
-      "Bash(npx ts-node:*)",
-      "Bash(rg:*)",
-      "Bash(npm run dev:*)",
       "Bash(curl:*)",
       "Bash(ls:*)",
       "Bash(find:*)",
-      "Bash(npx tsc:*)",
-      "Bash(npm test:*)",
+      "Bash(grep:*)",
+      "Bash(rg:*)",
+      "Bash(head:*)",
+      "Bash(sed:*)",
       "Bash(mv:*)",
       "Bash(mkdir:*)",
-      "Bash(git checkout:*)",
-      "Bash(npx jest:*)",
       "Bash(rm:*)",
-      "mcp__serena__get_symbols_overview",
-      "mcp__serena__find_symbol",
-      "mcp__serena__find_file",
-      "mcp__serena__think_about_collected_information",
-      "mcp__serena__write_memory",
-      "mcp__serena__list_dir",
-      "mcp__serena__read_file",
-      "mcp__serena__search_for_pattern",
-      "mcp__serena__initial_instructions",
-      "mcp__serena__check_onboarding_performed",
-      "mcp__serena__read_memory",
-      "mcp__serena__replace_regex",
-      "mcp__serena__replace_symbol_body",
-      "mcp__serena__insert_after_symbol",
-      "Bash(sed:*)",
-      "Bash(npm run:*)",
-      "Bash(npm --prefix ../../../server run)",
-      "mcp__serena__activate_project",
-      "mcp__serena__create_text_file",
-      "mcp__serena__switch_modes",
-      "mcp__serena__think_about_whether_you_are_done",
-      "mcp__playwright__browser_navigate",
-      "mcp__playwright__browser_click",
-      "mcp__playwright__browser_press_key",
-      "mcp__playwright__browser_type",
-      "mcp__playwright__browser_snapshot",
-      "mcp__playwright__browser_take_screenshot",
-      "mcp__playwright__browser_handle_dialog",
-      "mcp__playwright__browser_tab_new",
-      "mcp__playwright__browser_tab_select",
-      "Bash(npx tsx:*)",
-      "mcp__zen__codereview",
-      "mcp__playwright__browser_install",
-      "Bash(npm install:*)",
-      "mcp__zen__docgen",
-      "mcp__zen__chat",
-      "mcp__zen__planner",
       "Bash(touch:*)",
-      "Bash(echo:*)",
-      "Bash(head:*)"
+      "Bash(echo:*)"
     ],
     "deny": []
   },
-  "enableAllProjectMcpServers": false,
   "hooks": {
     "SessionStart": [
       {
@@ -69,7 +34,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "echo '🚀 Claude Code Startup - housnkuh Project' && echo '========================================' && if [ ! -f 'docs/DEVELOPMENT.md' ]; then echo '⚠️  WARNUNG: docs/DEVELOPMENT.md nicht gefunden'; else echo '✅ Development Guide gefunden'; fi && if [ ! -f 'docs/ARCHITECTURE.md' ]; then echo '⚠️  WARNUNG: docs/ARCHITECTURE.md nicht gefunden'; else echo '✅ Architecture Guide gefunden'; fi && echo '' && echo '📋 AKTIVE TASKS:' && if [ -d '.task/current' ] && [ \"$(ls -A .task/current 2>/dev/null)\" ]; then ls -la .task/current/; else echo '❌ Keine aktiven Tasks in .task/current/ gefunden' && echo '💡 Erstelle einen Task aus .task/templates/task-template.md'; fi && echo '' && echo '📚 PFLICHTLEKTÜRE vor Arbeitsbeginn:' && echo '   1. docs/DEVELOPMENT.md (Testing, Setup, Workflow)' && echo '   2. docs/ARCHITECTURE.md (Projektstruktur)' && echo '   3. .task/current/ (Aktuelle Aufgaben)' && echo ''"
+            "command": "echo '🚀 Claude Code Startup - housnkuh Project' && echo '========================================' && if [ -f 'docs/DEVELOPMENT.md' ]; then echo '✅ Development Guide gefunden'; fi && if [ -f 'docs/ARCHITECTURE.md' ]; then echo '✅ Architecture Guide gefunden'; fi && echo '' && echo '📋 AKTIVE TASKS:' && if [ -d '.task/current' ] && [ \"$(ls -A .task/current 2>/dev/null)\" ]; then ls -la .task/current/; else echo '   Keine aktiven Tasks'; fi"
           }
         ]
       }
@@ -80,126 +45,11 @@
         "hooks": [
           {
             "type": "command",
-            "command": "echo '🎯 User Prompt eingegangen...' && USER_INPUT=\"$(cat)\" && if echo \"$USER_INPUT\" | grep -q 'TASK-[0-9]*'; then TASK_ID=$(echo \"$USER_INPUT\" | grep -o 'TASK-[0-9]*' | head -1) && echo '🎯 Validiere Task: $TASK_ID' && TASK_FILE='' && for file in .task/current/TASK-*; do if [[ \"$file\" == *\"$TASK_ID\"* ]]; then TASK_FILE=\"$file\"; break; fi; done && if [ -z \"$TASK_FILE\" ] || [ ! -f \"$TASK_FILE\" ]; then echo '❌ FEHLER: Task $TASK_ID nicht in .task/current/ gefunden' && echo '💡 Verfügbare Tasks:' && ls .task/current/ 2>/dev/null || echo '   Keine Tasks vorhanden'; else echo '✅ Task-Datei gefunden: $TASK_FILE' && if ! grep -q '## User Acceptance Criteria' \"$TASK_FILE\"; then echo '❌ FEHLER: Task hat keine User Acceptance Criteria Sektion'; fi && if ! grep -q '## Test Plan' \"$TASK_FILE\"; then echo '❌ FEHLER: Task hat keine Test Plan Sektion'; fi && if ! grep -q '## Definition of Done' \"$TASK_FILE\"; then echo '❌ FEHLER: Task hat keine Definition of Done Sektion'; fi && echo '' && echo '📋 Task-Details:' && grep -A 5 '# Task:' \"$TASK_FILE\" | head -6 && echo '' && echo '✅ User Acceptance Criteria:' && grep -A 10 '## User Acceptance Criteria' \"$TASK_FILE\" | grep '^- \\[ \\]' | nl && echo '' && echo '🧪 Geplante Tests:' && grep -A 15 '## Test Plan' \"$TASK_FILE\" | grep '^- \\[ \\]' | wc -l | xargs echo '   Anzahl Test-Szenarien:'; fi; fi && if echo \"$USER_INPUT\" | grep -E '(implement|create|fix|add|refactor|update|test) .* (and|also|then|plus) (implement|create|fix|add|refactor|update|test)'; then echo '🔬 Task Decomposition Check' && echo '❌ FEHLER: Task enthält mehrere Aktionen (and/also/then)' && echo '💡 Teile in atomare Tasks auf:' && echo '   - Ein Task = Eine Aktion' && echo '   - Ein Task = Ein testbares Ergebnis' && echo '   - Ein Task = <2h Arbeit'; fi && if echo \"$USER_INPUT\" | grep -E '(system|module|feature|all|complete)'; then echo '📊 Automatische Task-Zerlegung' && echo '⚠️  Große Aufgabe erkannt - Zerlegung erforderlich:' && echo '1. Liste alle einzelnen Aktionen' && echo '2. Identifiziere Abhängigkeiten' && echo '3. Erstelle atomare Tasks (TASK-XXX-verb-object)' && echo '4. Verlinke verwandte Tasks'; fi"
-          }
-        ]
-      }
-    ],
-    "PreToolUse": [
-      {
-        "matcher": "mcp__serena__create_text_file",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "echo '📝 Reminder: Add file header documentation with @file and @purpose tags!'"
-          }
-        ]
-      },
-      {
-        "matcher": "mcp__serena__replace_regex",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "echo '📂 File Edit wird vorbereitet...'"
-          }
-        ]
-      },
-      {
-        "matcher": "mcp__serena__replace_symbol_body",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "echo '📂 Symbol Edit wird vorbereitet...'"
-          }
-        ]
-      },
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "echo '🚀 Running Bash Command' && TOOL_INPUT=\"$(cat)\" && if echo \"$TOOL_INPUT\" | grep -E '(grep|find|sed|awk)' | grep -v 'mcp__serena'; then echo '⚠️  WARNUNG: Native Tool für Code-Analyse verwendet!' && echo '❌ Verwende stattdessen Serena MCP:' && echo '   - mcp__serena__search_for_pattern statt grep' && echo '   - mcp__serena__find_file statt find' && echo '   - mcp__serena__replace_regex statt sed' && echo '📚 Siehe CLAUDE.md: Tool Selection Protocol'; fi"
-          }
-        ]
-      },
-      {
-        "matcher": "mcp__serena__*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "echo '🎯 Pre-Implementation Check...' && if [ -d '.task/current' ] && [ \"$(ls -A .task/current 2>/dev/null)\" ]; then CURRENT_TASKS=$(ls .task/current/ | wc -l) && echo '📊 Aktive Tasks: $CURRENT_TASKS' && echo '🧪 Validiere Test-Plan...' && for TASK_FILE in .task/current/TASK-*; do if [ -f \"$TASK_FILE\" ]; then UNIT_TESTS=$(grep -A 10 '### Unit Tests' \"$TASK_FILE\" | grep '^- \\[ \\]' | wc -l) && INTEGRATION_TESTS=$(grep -A 10 '### Integration Tests' \"$TASK_FILE\" | grep '^- \\[ \\]' | wc -l) && MANUAL_TESTS=$(grep -A 10 '### Manual Testing' \"$TASK_FILE\" | grep '^- \\[ \\]' | wc -l) && echo \"   📊 Unit Tests geplant: $UNIT_TESTS\" && echo \"   📊 Integration Tests geplant: $INTEGRATION_TESTS\" && echo \"   📊 Manual Tests geplant: $MANUAL_TESTS\" && if [ \"$UNIT_TESTS\" -eq 0 ]; then echo '⚠️  WARNUNG: Keine Unit-Tests geplant' && echo '💡 Stelle sicher, dass co-located Tests erstellt werden (siehe Development.md)'; fi && if ! grep -q '\\.test\\.' \"$TASK_FILE\"; then echo '⚠️  WARNUNG: Keine .test.tsx/.test.ts Dateien im Test-Plan erwähnt' && echo '💡 Gemäß Development.md: Tests gehören neben die Komponenten'; fi; break; fi; done && echo '' && echo '📚 Erinnerung - Co-located Testing (Development.md):' && echo '   ✅ ComponentName.test.tsx neben ComponentName.tsx' && echo '   ✅ serviceName.test.ts neben serviceName.ts' && echo '   ✅ Integration Tests nur in __tests__/integration/'; fi"
-          }
-        ]
-      }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "mcp__serena__create_text_file",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "echo '📝 File created - Consider updating ARCHITECTURE.md if this is a new component/service/model!'"
-          }
-        ]
-      },
-      {
-        "matcher": "mcp__serena__replace_regex",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "echo '✏️  File edited' && echo '📐 Remember: Update ARCHITECTURE.md if needed'"
-          }
-        ]
-      },
-      {
-        "matcher": "mcp__serena__replace_symbol_body",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "echo '🔧 Symbol body replaced' && echo '📐 Remember: Update ARCHITECTURE.md if needed'"
-          }
-        ]
-      },
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "TOOL_OUTPUT=\"$(cat)\" && if echo \"$TOOL_OUTPUT\" | grep -q 'test'; then echo '🧪 Tests completed'; elif echo \"$TOOL_OUTPUT\" | grep -q 'build'; then echo '🏗️ Build Process completed' && if echo \"$TOOL_OUTPUT\" | grep -i error; then echo '❌ Build Errors gefunden!'; else echo '✅ Build erfolgreich'; fi; else echo '✅ Bash Command completed'; fi"
-          }
-        ]
-      },
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "echo '🏁 Führe finale Task Completion Checks aus...' && echo '🧪 Führe Tests aus (Development.md)...' && echo '   Client Tests...' && cd client 2>/dev/null && if npm test --watchAll=false --passWithNoTests; then echo '✅ Client Tests bestanden'; else echo '❌ Client Tests fehlgeschlagen' && cd .. && exit 1; fi && echo '   Client Build...' && if npm run build; then echo '✅ Client Build erfolgreich'; else echo '❌ Client Build fehlgeschlagen' && cd .. && exit 1; fi && echo '   Client TypeScript Check...' && if npx tsc --noEmit; then echo '✅ Client TypeScript OK'; else echo '❌ Client TypeScript Check fehlgeschlagen' && cd .. && exit 1; fi && cd ../server 2>/dev/null && echo '   Server Tests...' && if npm test --passWithNoTests; then echo '✅ Server Tests bestanden'; else echo '❌ Server Tests fehlgeschlagen' && cd .. && exit 1; fi && echo '   Server Build...' && if npm run build; then echo '✅ Server Build erfolgreich'; else echo '❌ Server Build fehlgeschlagen' && cd .. && exit 1; fi && echo '   Server TypeScript Check...' && if npx tsc --noEmit; then echo '✅ Server TypeScript OK'; else echo '❌ Server TypeScript Check fehlgeschlagen' && cd .. && exit 1; fi && cd .. && echo '✅ Alle technischen Tests bestanden' && echo '' && echo '📋 USER ACCEPTANCE CRITERIA PRÜFUNG:' && echo '======================================' && if [ -d '.task/current' ] && [ \"$(ls -A .task/current 2>/dev/null)\" ]; then for TASK_FILE in .task/current/TASK-*; do if [ -f \"$TASK_FILE\" ]; then echo '📋 Task: $(basename \"$TASK_FILE\")' && grep -A 20 '## User Acceptance Criteria' \"$TASK_FILE\" | grep '^- \\[' && break; fi; done; fi && echo '' && echo '❓ Sind ALLE User Acceptance Criteria (UAC) erfüllt?' && echo '   Prüfe jeden Punkt einzeln und bestätige mit dem Benutzer!' && echo '' && echo '⚠️  WICHTIG: Task wird erst nach Benutzerbestätigung abgeschlossen!'"
-          }
-        ]
-      }
-    ],
-    "Notification": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "echo '🔔 Claude Code Notification' && NOTIFICATION=\"$(cat)\" && echo \"Nachricht: $NOTIFICATION\""
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "echo '📁 Finalisiere Session...' && if [ -d '.task/current' ] && [ \"$(ls -A .task/current 2>/dev/null)\" ]; then echo '📋 Verbleibende aktive Tasks:' && ls -la .task/current/ && echo '' && echo '💡 Tasks können nach Abschluss mit folgendem Befehl finalisiert werden:' && echo '   mkdir -p .task/completed && mv .task/current/TASK-XXX .task/completed/'; else echo '🎉 Keine aktiven Tasks mehr!' && echo '💡 Erstelle neue Tasks aus .task/templates/task-template.md'; fi && if [ -f 'package.json' ] && grep -q 'update:architecture' package.json; then echo '📈 Aktualisiere Architecture Documentation...' && npm run update:architecture 2>/dev/null || echo '   ⚠️ Architecture Update fehlgeschlagen'; fi"
+            "command": "echo '🎯 User Prompt eingegangen...'"
           }
         ]
       }
     ]
-  }
+  },
+  "outputStyle": "Explanatory"
 }
