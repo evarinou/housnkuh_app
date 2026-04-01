@@ -706,6 +706,22 @@ export const getPublicVendorProfile = async (req: Request, res: Response): Promi
       return;
     }
 
+    // Get distinct product tags for this vendor
+    const { Product } = await import('../../models/Product');
+    const vendorProducts = await Product.find({ vendorId: vendor._id, isActive: true })
+      .populate('tags', 'name slug color icon')
+      .select('tags')
+      .lean();
+
+    const productTagMap = new Map<string, any>();
+    for (const p of vendorProducts) {
+      for (const tag of (p.tags || [])) {
+        const t = tag as any;
+        if (t._id) productTagMap.set(t._id.toString(), t);
+      }
+    }
+    const productTags = Array.from(productTagMap.values());
+
     // Vendor-Daten für die öffentliche Anzeige formatieren
     const publicVendorData = {
       id: vendor._id?.toString() || '',
@@ -736,8 +752,10 @@ export const getPublicVendorProfile = async (req: Request, res: Response): Promi
         samstag: '',
         sonntag: ''
       },
-      // Tag-basiertes System
-      tags: (vendor.vendorProfile as any)?.tags || [],
+      // Tags from vendor's actual products (distinct)
+      tags: productTags,
+      // Vendor profile tags (vendor self-description)
+      profileTags: (vendor.vendorProfile as any)?.tags || [],
       slogan: vendor.vendorProfile?.slogan || '',
       website: vendor.vendorProfile?.website || '',
       socialMedia: vendor.vendorProfile?.socialMedia || {

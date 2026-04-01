@@ -8,6 +8,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Phone, Mail, MapPin, ExternalLink, Calendar, Clock, Facebook, Instagram, ChevronLeft } from 'lucide-react';
+import TagBadge from '../components/ui/TagBadge';
 import axios from 'axios';
 import { resolveImageUrl } from '../utils/imageUtils';
 import SimpleMapComponent from '../components/SimpleMapComponent';
@@ -97,6 +98,7 @@ interface Direktvermarkter {
     sonntag: string;
   };
   tags: Tag[];
+  profileTags?: Tag[];
   slogan: string;
   website: string;
   socialMedia: {
@@ -335,13 +337,13 @@ const DirektvermarkterDetailPage: React.FC = () => {
                 </p>
               </div>
               
-              {/* Tags - rechts positioniert, responsive */}
-              {direktvermarkter.tags && direktvermarkter.tags.length > 0 && (
+              {/* Vendor Profile Tags - rechts im Header */}
+              {direktvermarkter.profileTags && direktvermarkter.profileTags.length > 0 && (
                 <div className="flex-shrink-0 self-end pb-2 hidden lg:block">
                   <div className="flex flex-wrap gap-2 justify-end max-w-xs">
-                    {direktvermarkter.tags.slice(0, 5).map(tag => (
-                      <span 
-                        key={tag.id} 
+                    {direktvermarkter.profileTags.slice(0, 5).map(tag => (
+                      <span
+                        key={tag.id || (tag as any)._id}
                         className="inline-block px-3 py-1 text-sm text-white bg-primary/90 rounded-full backdrop-blur-sm border border-white/20"
                         style={tag.color ? { backgroundColor: tag.color + 'E6' } : undefined}
                         title={tag.description || tag.name}
@@ -350,12 +352,12 @@ const DirektvermarkterDetailPage: React.FC = () => {
                         {tag.name}
                       </span>
                     ))}
-                    {direktvermarkter.tags.length > 5 && (
-                      <span 
+                    {direktvermarkter.profileTags && direktvermarkter.profileTags.length > 5 && (
+                      <span
                         className="inline-block px-3 py-1 text-sm text-white bg-gray-500/90 rounded-full backdrop-blur-sm border border-white/20"
-                        title={`+${direktvermarkter.tags.length - 5} weitere Tags`}
+                        title={`+${direktvermarkter.profileTags.length - 5} weitere Tags`}
                       >
-                        +{direktvermarkter.tags.length - 5}
+                        +{direktvermarkter.profileTags.length - 5}
                       </span>
                     )}
                   </div>
@@ -549,19 +551,19 @@ const DirektvermarkterDetailPage: React.FC = () => {
                 }
               </div>
               
-              {/* Tags/Produktkategorien */}
+              {/* Tags/Produktkategorien — zeigt distinct Tags von Vendor-Produkten */}
               {direktvermarkter.tags && direktvermarkter.tags.length > 0 && (
                 <div className="mt-6">
                   <h3 className="text-xl font-semibold text-gray-900 mb-3">Produktkategorien</h3>
                   <div className="flex flex-wrap gap-2">
-                    {direktvermarkter.tags.map(tag => (
-                      <span
-                        key={tag.id}
-                        className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-primary/10 text-primary border border-primary/20"
-                        title={tag.description || tag.name}
-                      >
-                        {tag.name}
-                      </span>
+                    {direktvermarkter.tags.map((tag: any) => (
+                      <TagBadge
+                        key={tag.id || tag._id}
+                        name={tag.name}
+                        color={tag.color}
+                        icon={tag.icon}
+                        size="md"
+                      />
                     ))}
                   </div>
                 </div>

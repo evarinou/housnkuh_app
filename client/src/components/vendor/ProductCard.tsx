@@ -10,6 +10,7 @@ import { motion } from 'framer-motion';
 import { Edit2, RefreshCw, Package, BarChart3 } from 'lucide-react';
 import SyncStatusBadge, { SyncStatus } from '../ui/SyncStatusBadge';
 import StockLevelBadge from '../ui/StockLevelBadge';
+import TagBadge from '../ui/TagBadge';
 
 export interface Product {
   _id: string;
@@ -141,15 +142,15 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onSync, onEdit, onBo
         {product.tags && product.tags.length > 0 && (
           <div className="flex flex-wrap gap-1 mb-3">
             {product.tags.slice(0, 3).map((tag) => (
-              <span
+              <TagBadge
                 key={tag._id}
-                className="inline-block px-2 py-1 text-xs font-medium bg-blue-50 text-blue-700 rounded-full"
-              >
-                {tag.name}
-              </span>
+                name={tag.name}
+                color={(tag as any).color}
+                icon={(tag as any).icon}
+              />
             ))}
             {product.tags.length > 3 && (
-              <span className="inline-block px-2 py-1 text-xs font-medium bg-gray-100 text-gray-600 rounded-full">
+              <span className="inline-block px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-500 rounded-full">
                 +{product.tags.length - 3}
               </span>
             )}

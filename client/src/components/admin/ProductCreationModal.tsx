@@ -55,6 +55,8 @@ export interface ProductCreationModalProps {
   vendorMietfaecher?: VendorMietfach[];
   /** Edit mode: pass existing product to pre-populate form */
   editProduct?: Product;
+  /** Callback to create a new tag inline */
+  onCreateTag?: (name: string) => Promise<any>;
 }
 
 // Validation Schema
@@ -98,7 +100,8 @@ const ProductCreationModal: React.FC<ProductCreationModalProps> = ({
   availableTags,
   availableVendors = [],
   vendorMietfaecher = [],
-  editProduct
+  editProduct,
+  onCreateTag
 }) => {
   const isEdit = !!editProduct;
   const [apiError, setApiError] = useState<string | null>(null);
@@ -255,6 +258,7 @@ const ProductCreationModal: React.FC<ProductCreationModalProps> = ({
                       availableTags={availableTags}
                       availableVendors={availableVendors}
                       flourioStock={isEdit ? editProduct?.flourioStock : undefined}
+                      onCreateTag={onCreateTag}
                       values={values}
                       errors={errors}
                       touched={touched}

@@ -1,12 +1,12 @@
 # Architecture Statistics (Auto-Generated)
 
-**Generated**: 2026-03-31 19:17:12
+**Generated**: 2026-04-01 14:37:17
 **Generator**: scripts/update-architecture.sh
 
 ## File Counts
 
 ### Frontend (Client)
-- Components: 92
+- Components: 94
 - Pages: 56
 - Hooks: 13
 - Tests: 25
@@ -19,7 +19,7 @@
 - Tests: 45
 
 ### Overall
-- Total TypeScript Files: 395
+- Total TypeScript Files: 396
 - Total Tests: 70
 
 ## Component Breakdown

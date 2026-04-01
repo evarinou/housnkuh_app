@@ -11,6 +11,7 @@ import axios from 'axios';
 import VendorLayout from '../../components/vendor/VendorLayout';
 import ProductCard, { Product } from '../../components/vendor/ProductCard';
 import ProductCreationModal, { VendorMietfach } from '../../components/admin/ProductCreationModal';
+import { Tag } from '../../components/admin/ProductFormFields';
 import { tokenStorage, apiUtils } from '../../utils/auth';
 
 /**
@@ -40,6 +41,7 @@ const VendorProductsPage: React.FC = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [vendorMietfaecher, setVendorMietfaecher] = useState<VendorMietfach[]>([]);
+  const [allTags, setAllTags] = useState<Tag[]>([]);
 
   const apiUrl = apiUtils.getApiUrl();
   const token = tokenStorage.getToken('VENDOR');
@@ -74,6 +76,22 @@ const VendorProductsPage: React.FC = () => {
   useEffect(() => {
     fetchProducts();
   }, [fetchProducts]);
+
+  // Fetch all available tags (public endpoint)
+  useEffect(() => {
+    const fetchTags = async () => {
+      try {
+        const response = await axios.get(`${apiUrl}/tags`);
+        const tags = response.data?.data || response.data;
+        if (Array.isArray(tags)) {
+          setAllTags(tags.filter((t: Tag) => t.isActive !== false));
+        }
+      } catch (err) {
+        // Silent fail
+      }
+    };
+    fetchTags();
+  }, [apiUrl]);
 
   // Fetch vendor's active Mietfächer (for product creation)
   useEffect(() => {
@@ -155,6 +173,28 @@ const VendorProductsPage: React.FC = () => {
       setError(err.response?.data?.message || 'Fehler beim Buchen des Bestands');
       setTimeout(() => setError(null), 5000);
     }
+  };
+
+  // Create new tag inline
+  const handleCreateTag = async (name: string, icon?: string, color?: string) => {
+    try {
+      const response = await axios.post(
+        `${apiUrl}/vendor-auth/create-tag`,
+        { name, icon, color },
+        { headers: getHeaders() }
+      );
+      if (response.data?.success) {
+        const newTag = response.data.tag || response.data.data;
+        if (newTag) {
+          setAllTags(prev => [...prev, newTag]);
+          return newTag;
+        }
+      }
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Fehler beim Erstellen des Tags');
+      setTimeout(() => setError(null), 5000);
+    }
+    return null;
   };
 
   // Edit product
@@ -373,9 +413,10 @@ const VendorProductsPage: React.FC = () => {
           fetchProducts();
         }}
         isVendor={true}
-        availableTags={categories.map(c => ({ _id: c, name: c }))}
+        availableTags={allTags}
         vendorMietfaecher={vendorMietfaecher}
         editProduct={editingProduct || undefined}
+        onCreateTag={handleCreateTag}
       />
     </VendorLayout>
   );

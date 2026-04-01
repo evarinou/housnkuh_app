@@ -6,6 +6,8 @@
  */
 import React, { useState, useEffect, FormEvent, useRef, ChangeEvent } from 'react';
 import { User, Save, Mail, Phone, Building, CheckCircle, AlertCircle, Upload, X, Image } from 'lucide-react';
+import TagBadge from '../../components/ui/TagBadge';
+import CreateTagInline from '../../components/ui/CreateTagInline';
 import { useNavigate } from 'react-router-dom';
 import { useVendorAuth } from '../../contexts/VendorAuthContext';
 import VendorLayout from '../../components/vendor/VendorLayout';
@@ -258,8 +260,7 @@ const VendorProfilePage: React.FC = () => {
       setLoadingTags(true);
       try {
         const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
-        console.log('Loading tags from:', `${apiUrl}/tags?category=product&active=true`);
-        const response = await axios.get(`${apiUrl}/tags?category=product&active=true`);
+        const response = await axios.get(`${apiUrl}/tags?active=true`);
         
         console.log('Tags API response:', response.data);
         
@@ -614,49 +615,43 @@ const VendorProfilePage: React.FC = () => {
   };
   
   // Neuen Tag erstellen
-  const handleCreateNewTag = async () => {
-    if (!newTagName.trim()) {
+  const handleCreateNewTag = async (tagName?: string, tagIcon?: string, tagColor?: string) => {
+    const name = tagName || newTagName;
+    const icon = tagIcon || newTagIcon;
+    const color = tagColor || newTagColor;
+
+    if (!name.trim()) {
       setErrorMessage('Bitte geben Sie einen Tag-Namen ein.');
       return;
     }
-    
+
     // Prüfen ob Tag bereits existiert
-    const existingTag = availableTags.find(tag => 
-      tag.name.toLowerCase() === newTagName.trim().toLowerCase()
+    const existingTag = availableTags.find(tag =>
+      tag.name.toLowerCase() === name.trim().toLowerCase()
     );
-    
+
     if (existingTag) {
-      // Wenn Tag bereits existiert, einfach hinzufügen
       handleTagToggle(existingTag);
-      setNewTagName('');
-      setNewTagIcon('');
-      setNewTagColor('#6B7280');
       return;
     }
-    
+
     setIsCreatingTag(true);
     try {
       const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
       const token = localStorage.getItem('vendorToken');
-      
+
       if (!token) {
         navigate('/vendor/login');
         return;
       }
-      
-      // Tag über die vendor-auth API erstellen
+
       const requestData = {
-        name: newTagName.trim(),
-        category: 'product',
+        name: name.trim(),
         description: `Von ${user?.name || 'Vendor'} erstellt`,
-        icon: newTagIcon.trim() || undefined,
-        color: newTagColor || '#6B7280'
+        icon: icon?.trim() || undefined,
+        color: color || '#6B7280'
       };
-      
-      console.log('Creating tag with data:', requestData);
-      console.log('API URL:', `${apiUrl}/vendor-auth/create-tag`);
-      console.log('Token present:', !!token);
-      
+
       const response = await axios.post(`${apiUrl}/vendor-auth/create-tag`, requestData, {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -1267,22 +1262,15 @@ const VendorProfilePage: React.FC = () => {
                         <h3 className="text-sm font-medium text-gray-700 mb-2">Ausgewählte Tags:</h3>
                         <div className="flex flex-wrap gap-2">
                           {(profileData.tags || []).map(tag => (
-                            <span
-                              key={getTagId(tag)}
-                              className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium text-white border border-white/20"
-                              style={tag.color ? { backgroundColor: tag.color } : { backgroundColor: '#6B7280' }}
-                              title={tag.description || tag.name}
-                            >
-                              {tag.icon && <span className="mr-1">{tag.icon}</span>}
-                              {tag.name}
-                              <button
-                                type="button"
+                            <span key={getTagId(tag)} className="inline-flex items-center gap-1">
+                              <TagBadge
+                                name={tag.name}
+                                color={tag.color}
+                                icon={tag.icon}
+                                selected={true}
                                 onClick={() => handleTagToggle(tag)}
-                                className="ml-2 inline-flex items-center justify-center w-4 h-4 rounded-full hover:bg-black/20 transition-colors"
-                                title="Tag entfernen"
-                              >
-                                ×
-                              </button>
+                                size="md"
+                              />
                             </span>
                           ))}
                         </div>
@@ -1290,104 +1278,10 @@ const VendorProfilePage: React.FC = () => {
                     )}
                     
                     {/* Neuen Tag erstellen */}
-                    <div className="mb-4">
-                      <h3 className="text-sm font-medium text-gray-700 mb-2">Neuen Tag erstellen:</h3>
-                      
-                      {/* Tag Name */}
-                      <div className="mb-3">
-                        <label className="block text-xs font-medium text-gray-600 mb-1">Tag Name</label>
-                        <input
-                          type="text"
-                          value={newTagName}
-                          onChange={(e) => setNewTagName(e.target.value)}
-                          placeholder="z.B. Bio-Äpfel, Freilandhaltung, etc."
-                          className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter' && !e.shiftKey) {
-                              e.preventDefault();
-                              handleCreateNewTag();
-                            }
-                          }}
-                          disabled={isCreatingTag}
-                        />
-                      </div>
-                      
-                      {/* Icon und Farbe */}
-                      <div className="grid grid-cols-2 gap-3 mb-3">
-                        {/* Icon Auswahl */}
-                        <div>
-                          <label className="block text-xs font-medium text-gray-600 mb-1">Icon (Emoji)</label>
-                          <input
-                            type="text"
-                            value={newTagIcon}
-                            onChange={(e) => setNewTagIcon(e.target.value)}
-                            placeholder="🥕 🥩 🥛 🍞 🥚"
-                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
-                            disabled={isCreatingTag}
-                            maxLength={2}
-                          />
-                        </div>
-                        
-                        {/* Farbe Auswahl */}
-                        <div>
-                          <label className="block text-xs font-medium text-gray-600 mb-1">Farbe</label>
-                          <div className="flex gap-2">
-                            <input
-                              type="color"
-                              value={newTagColor}
-                              onChange={(e) => setNewTagColor(e.target.value)}
-                              className="w-8 h-8 border border-gray-300 rounded cursor-pointer disabled:cursor-not-allowed"
-                              disabled={isCreatingTag}
-                            />
-                            <input
-                              type="text"
-                              value={newTagColor}
-                              onChange={(e) => setNewTagColor(e.target.value)}
-                              placeholder="#6B7280"
-                              className="flex-1 border border-gray-300 rounded-md px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
-                              disabled={isCreatingTag}
-                            />
-                          </div>
-                        </div>
-                      </div>
-                      
-                      {/* Vorschau */}
-                      {(newTagName.trim() || newTagIcon.trim()) && (
-                        <div className="mb-3">
-                          <label className="block text-xs font-medium text-gray-600 mb-1">Vorschau:</label>
-                          <span
-                            className="inline-block px-3 py-1 text-sm text-white rounded-full"
-                            style={{ backgroundColor: newTagColor }}
-                          >
-                            {newTagIcon && <span className="mr-1">{newTagIcon}</span>}
-                            {newTagName.trim() || 'Tag Name'}
-                          </span>
-                        </div>
-                      )}
-                      
-                      {/* Create Button */}
-                      <div className="flex gap-2">
-                        <button
-                          type="button"
-                          onClick={handleCreateNewTag}
-                          disabled={isCreatingTag || !newTagName.trim()}
-                          className="flex-1 px-4 py-2 bg-primary text-white rounded-md text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                        >
-                          {isCreatingTag ? (
-                            <>
-                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                              Erstellen...
-                            </>
-                          ) : (
-                            'Tag erstellen'
-                          )}
-                        </button>
-                      </div>
-                      
-                      <p className="mt-2 text-xs text-gray-500">
-                        Erstellen Sie eigene Tags für Ihre Produkte. Diese werden nach Überprüfung auch anderen Direktvermarktern zur Verfügung gestellt.
-                      </p>
-                    </div>
+                    <CreateTagInline
+                      onCreateTag={handleCreateNewTag}
+                      disabled={isCreatingTag}
+                    />
                     
                     {/* Verfügbare Tags */}
                     <div>
@@ -1396,21 +1290,15 @@ const VendorProfilePage: React.FC = () => {
                         {availableTags && availableTags.length > 0 ? availableTags.map(tag => {
                           const isSelected = profileData.tags?.some(t => getTagId(t) === getTagId(tag)) || false;
                           return (
-                            <button
+                            <TagBadge
                               key={getTagId(tag)}
-                              type="button"
+                              name={tag.name}
+                              color={tag.color}
+                              icon={tag.icon}
+                              selected={isSelected}
                               onClick={() => handleTagToggle(tag)}
-                              className={`text-left px-3 py-2 rounded-md text-sm font-medium transition-colors border ${
-                                isSelected
-                                  ? 'text-white border-white/20'
-                                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border-gray-200'
-                              }`}
-                              style={isSelected && tag.color ? { backgroundColor: tag.color } : undefined}
-                              title={tag.description || tag.name}
-                            >
-                              {tag.icon && <span className="mr-1">{tag.icon}</span>}
-                              {tag.name}
-                            </button>
+                              size="md"
+                            />
                           );
                         }) : (
                           <p className="text-sm text-gray-500 italic p-4 text-center col-span-full">

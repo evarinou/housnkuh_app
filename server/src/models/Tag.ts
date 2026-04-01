@@ -15,7 +15,7 @@ export interface ITag extends Document {
   name: string;
   slug: string;
   description?: string;
-  category: 'product' | 'certification' | 'method' | 'feature';
+  category?: 'product' | 'certification' | 'method' | 'feature';
   color?: string;
   icon?: string;
   isActive: boolean;
@@ -50,7 +50,7 @@ const TagSchema: Schema<ITag> = new Schema({
   category: {
     type: String,
     enum: ['product', 'certification', 'method', 'feature'],
-    required: true,
+    required: false,
     default: 'product'
   },
   color: {
@@ -118,8 +118,8 @@ TagSchema.statics.findOrCreateTags = async function(tagNames: string[], category
   const trimmedNames = tagNames.map(n => n.trim()).filter(Boolean);
   if (trimmedNames.length === 0) return [];
 
-  // Single query to find all existing tags
-  const existing = await this.find({ name: { $in: trimmedNames }, category });
+  // Single query to find all existing tags (by name only, no category filter)
+  const existing = await this.find({ name: { $in: trimmedNames } });
   const existingNames = new Set(existing.map((t: ITag) => t.name));
 
   // Bulk-create missing tags

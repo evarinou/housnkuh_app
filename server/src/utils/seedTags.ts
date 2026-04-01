@@ -274,8 +274,9 @@ export const seedTags = async (): Promise<void> => {
       // Group by category for summary
       const allTags = await Tag.find({}).lean();
       const tagsByCategory = allTags.reduce((acc: any, tag) => {
-        if (!acc[tag.category]) acc[tag.category] = 0;
-        acc[tag.category]++;
+        const cat = tag.category || 'general';
+        if (!acc[cat]) acc[cat] = 0;
+        acc[cat]++;
         return acc;
       }, {});
       

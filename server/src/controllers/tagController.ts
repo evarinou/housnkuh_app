@@ -56,10 +56,11 @@ export const getTagsByCategory = async (req: Request, res: Response): Promise<vo
     const tags = await Tag.find({ isActive: true }).sort({ category: 1, name: 1 });
     
     const groupedTags = tags.reduce((acc: any, tag) => {
-      if (!acc[tag.category]) {
-        acc[tag.category] = [];
+      const cat = tag.category || 'general';
+      if (!acc[cat]) {
+        acc[cat] = [];
       }
-      acc[tag.category].push(tag);
+      acc[cat].push(tag);
       return acc;
     }, {});
     
@@ -138,16 +139,13 @@ export const createTag = async (req: Request, res: Response): Promise<void> => {
   try {
     const { name, description, category, color, icon } = req.body;
     
-    // Check if tag with same name and category already exists
-    const existingTag = await Tag.findOne({ 
-      name: name.trim(), 
-      category: category || 'product' 
-    });
-    
+    // Check if tag with same name already exists
+    const existingTag = await Tag.findOne({ name: name.trim() });
+
     if (existingTag) {
       res.status(400).json({
         success: false,
-        message: 'Tag mit diesem Namen existiert bereits in dieser Kategorie'
+        message: 'Tag mit diesem Namen existiert bereits'
       });
       return;
     }

@@ -26,8 +26,12 @@ export class BusinessPartnerService {
       throw new Error(`Validation failed: ${errors.join(', ')}`);
     }
 
-    // Map vendor to BusinessPartner
+    // Map vendor to BusinessPartner + resolve tag names
     const partnerData = BusinessPartnerMapper.vendorToBusinessPartner(vendor);
+    const tagNames = await BusinessPartnerMapper.resolveVendorTags(vendor);
+    if (tagNames.length > 0) {
+      partnerData.tags = tagNames;
+    }
 
     // Create in FlourIO
     const partner = await this.client.post<BusinessPartner>(
@@ -58,8 +62,12 @@ export class BusinessPartnerService {
       throw new Error(`Validation failed: ${errors.join(', ')}`);
     }
 
-    // Map vendor to update DTO
+    // Map vendor to update DTO + resolve tag names
     const updateData = BusinessPartnerMapper.vendorToUpdateDto(vendor);
+    const tagNames = await BusinessPartnerMapper.resolveVendorTags(vendor);
+    if (tagNames.length > 0) {
+      updateData.tags = tagNames;
+    }
 
     // Update in FlourIO
     const partner = await this.client.patch<BusinessPartner>(

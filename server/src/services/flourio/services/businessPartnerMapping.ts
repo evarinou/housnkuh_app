@@ -5,6 +5,7 @@
  */
 
 import type { IUser } from '../../../types/modelTypes';
+import { Tag } from '../../../models/Tag';
 import { flourioTenantConfig } from '../client/config';
 
 /**
@@ -50,6 +51,23 @@ export class BusinessPartnerMapper {
         revenueCreditor: flourioTenantConfig.defaultRevenueCreditorId
       }
     };
+  }
+
+  /**
+   * Resolve vendor profile tag ObjectIds to tag name strings for Flourio.
+   * Call this separately since it's async (DB query).
+   */
+  static async resolveVendorTags(vendor: IUser): Promise<string[]> {
+    const allTagIds = [
+      ...(vendor.vendorProfile?.tags || []),
+      ...(vendor.vendorProfile?.businessDetails?.certifications || []),
+      ...(vendor.vendorProfile?.businessDetails?.productionMethods || [])
+    ];
+
+    if (allTagIds.length === 0) return [];
+
+    const tags = await Tag.find({ _id: { $in: allTagIds } }).select('name').lean();
+    return tags.map((t: any) => t.name);
   }
 
   /**

@@ -103,35 +103,15 @@ export const getCategories = async (req: Request, res: Response): Promise<void> 
 
 /**
  * POST /api/admin/flourio/categories/sync
- * Sync categories from FlourIO (uses TagSyncService)
- * Access: Admin only
+ * @deprecated Tags are now synced automatically when Articles are created.
+ * Returns HTTP 410 Gone.
  */
-export const syncCategories = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const syncResult = await tagSyncService.syncTags();
-
-    const categories = await Tag.find({
-      flourioId: { $exists: true, $ne: null },
-      isActive: true
-    })
-      .select('name flourioId isActive')
-      .sort({ name: 1 })
-      .lean();
-
-    res.json({
-      success: true,
-      data: categories,
-      syncResult,
-      message: `Synced ${syncResult.synced} categories (${syncResult.created} created, ${syncResult.updated} updated, ${syncResult.deactivated} deactivated)`
-    });
-  } catch (error: any) {
-    logger.error('Error syncing categories:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Category sync failed',
-      error: error.message
-    });
-  }
+export const syncCategories = async (_req: Request, res: Response): Promise<void> => {
+  res.status(410).json({
+    success: false,
+    message: 'Category sync ist deprecated. Tags werden automatisch beim Artikel-Sync erstellt.',
+    deprecatedSince: '2025-11-14'
+  });
 };
 
 /**

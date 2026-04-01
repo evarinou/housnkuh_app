@@ -5,9 +5,11 @@
  * @modified 2025-11-17
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import { FormikErrors, FormikTouched } from 'formik';
 import { AlertCircle } from 'lucide-react';
+import TagBadge from '../ui/TagBadge';
+import CreateTagInline from '../ui/CreateTagInline';
 import ImageUploadField from '../ui/ImageUploadField';
 
 export interface ProductFormValues {
@@ -26,8 +28,11 @@ export interface ProductFormValues {
 export interface Tag {
   _id: string;
   name: string;
+  slug?: string;
   category?: string;
+  color?: string;
   flourioId?: string;
+  isActive?: boolean;
 }
 
 export interface Vendor {
@@ -43,6 +48,8 @@ export interface ProductFormFieldsProps {
   availableVendors?: Vendor[];
   /** Current stock info from Flourio (read-only, shown in edit mode) */
   flourioStock?: { totalAmount: number; entries?: Array<{ warehouseName?: string; amount: number }> };
+  /** Callback to create a new tag (vendor can add tags inline) */
+  onCreateTag?: (name: string, icon?: string, color?: string) => Promise<Tag | null>;
   values: ProductFormValues;
   errors: FormikErrors<ProductFormValues>;
   touched: FormikTouched<ProductFormValues>;
@@ -76,6 +83,7 @@ const ProductFormFields: React.FC<ProductFormFieldsProps> = ({
   availableTags,
   availableVendors = [],
   flourioStock,
+  onCreateTag,
   values,
   errors,
   touched,
@@ -84,8 +92,27 @@ const ProductFormFields: React.FC<ProductFormFieldsProps> = ({
   setFieldValue,
   setFieldTouched
 }) => {
+  const [newTagName, setNewTagName] = useState('');
+  const [creatingTag, setCreatingTag] = useState(false);
+
   const getFieldError = (fieldName: keyof ProductFormValues) => {
     return touched[fieldName] && errors[fieldName] ? String(errors[fieldName]) : undefined;
+  };
+
+  const handleCreateNewTag = async () => {
+    if (!onCreateTag || !newTagName.trim()) return;
+    setCreatingTag(true);
+    try {
+      const tag = await onCreateTag(newTagName.trim());
+      if (tag) {
+        // Auto-select the new tag
+        const currentTags = values.tags || [];
+        setFieldValue('tags', [...currentTags, tag._id]);
+        setNewTagName('');
+      }
+    } finally {
+      setCreatingTag(false);
+    }
   };
 
   const handleTagToggle = (tagId: string) => {
@@ -264,24 +291,15 @@ const ProductFormFields: React.FC<ProductFormFieldsProps> = ({
             availableTags.map(tag => {
               const isSelected = values.tags?.includes(tag._id) || false;
               return (
-                <button
+                <TagBadge
                   key={tag._id}
-                  type="button"
+                  name={tag.name}
+                  color={tag.color}
+                  icon={(tag as any).icon}
+                  selected={isSelected}
                   onClick={() => handleTagToggle(tag._id)}
-                  className={`
-                    px-3 py-1.5 rounded-full text-sm font-medium transition-colors
-                    ${
-                      isSelected
-                        ? 'bg-blue-500 text-white hover:bg-blue-600'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }
-                  `}
-                >
-                  {tag.name}
-                  {tag.category && (
-                    <span className="ml-1 text-xs opacity-75">({tag.category})</span>
-                  )}
-                </button>
+                  size="md"
+                />
               );
             })
           )}
@@ -289,6 +307,19 @@ const ProductFormFields: React.FC<ProductFormFieldsProps> = ({
         <p className="mt-1 text-xs text-gray-500">
           Tags helfen Kunden, Ihre Produkte zu finden
         </p>
+        {onCreateTag && (
+          <CreateTagInline
+            onCreateTag={async (name, icon, color) => {
+              const tag = await onCreateTag(name, icon, color);
+              if (tag) {
+                const currentTags = values.tags || [];
+                if (!currentTags.includes(tag._id)) {
+                  setFieldValue('tags', [...currentTags, tag._id]);
+                }
+              }
+            }}
+          />
+        )}
       </div>
 
       {/* Images */}
