@@ -92,6 +92,7 @@ router.patch('/vendors/:vendorId/verification', adminController.updateVendorVeri
 
 // Vertragsverwaltung
 router.get('/vertraege', vertragController.getAllVertraege);
+router.patch('/vertraege/:id/activate', vertragController.activateVertrag);
 
 // Store Opening Settings
 router.get('/settings/store-opening', adminController.getStoreOpeningSettings);

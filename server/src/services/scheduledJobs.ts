@@ -139,7 +139,22 @@ export class ScheduledJobs {
       try {
         logger.info('📊 Running daily trial status update...');
         const startTime = Date.now();
-        
+
+        // Activate scheduled Verträge where mietbeginn has passed
+        try {
+          const mongoose = require('mongoose');
+          const Vertrag = mongoose.model('Vertrag');
+          const activated = await Vertrag.updateMany(
+            { status: 'scheduled', 'availabilityImpact.from': { $lte: new Date() } },
+            { $set: { status: 'active', actualStartDate: new Date() } }
+          );
+          if (activated.modifiedCount > 0) {
+            logger.info(`✅ Activated ${activated.modifiedCount} scheduled Verträge`);
+          }
+        } catch (vertragError) {
+          logger.error('❌ Vertrag activation failed:', vertragError);
+        }
+
         // Run optimized trial status update
         const result = await TrialService.updateTrialStatuses();
         

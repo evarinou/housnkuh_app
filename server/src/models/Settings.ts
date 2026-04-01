@@ -369,12 +369,12 @@ SettingsSchema.methods.isFeatureEnabled = function(category: string, feature: st
  * @complexity O(1) - Simple date comparisons
  */
 SettingsSchema.methods.isStoreOpen = function(): boolean {
-  // Wenn Store Opening nicht aktiviert ist, ist der Store sofort offen
+  // Kein Store-Opening konfiguriert oder nicht aktiviert → Store ist noch nicht offen
   if (!this.storeOpening.enabled) {
-    return true;
+    return false;
   }
-  
-  // Wenn aktiviert aber kein Datum gesetzt, ist der Store noch nicht offen
+
+  // Aktiviert aber kein Datum gesetzt → Store ist noch nicht offen
   if (!this.storeOpening.openingDate) {
     return false;
   }

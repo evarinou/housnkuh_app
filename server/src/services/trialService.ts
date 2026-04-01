@@ -52,6 +52,33 @@ export interface TrialStatusUpdateResult {
  * @security Handles sensitive user data and email communications
  * @complexity High - Manages complex trial lifecycle with automated reminders
  */
+/**
+ * Calculate trial period: starts today, ends at the end of the next full calendar month.
+ * Exception: if starting on the 1st of a month, trial = that full month.
+ *
+ * Examples:
+ * - April 1 → April 1 to April 30
+ * - April 15 → April 15 to May 31
+ * - April 28 → April 28 to May 31
+ */
+export function calculateTrialPeriod(referenceDate?: Date): { start: Date; end: Date } {
+  const ref = referenceDate || new Date();
+  const start = new Date(ref.getFullYear(), ref.getMonth(), ref.getDate());
+
+  let end: Date;
+  if (ref.getDate() === 1) {
+    // Am 1. des Monats → Trial = genau dieser volle Monat
+    end = new Date(ref.getFullYear(), ref.getMonth() + 1, 0); // Letzter Tag dieses Monats
+  } else {
+    // Mitten im Monat → Trial bis Ende des NÄCHSTEN vollen Monats
+    end = new Date(ref.getFullYear(), ref.getMonth() + 2, 0); // Letzter Tag nächster Monat
+  }
+  // Auf Tagesende setzen (23:59:59)
+  end.setHours(23, 59, 59, 999);
+
+  return { start, end };
+}
+
 export class TrialService {
   
   /**
@@ -153,11 +180,8 @@ export class TrialService {
    * @throws {Error} If vendor activation fails
    */
   private static async activateSingleVendorTrial(vendor: IUser, storeOpeningDate: Date): Promise<void> {
-    const trialDurationDays = 30; // 30-day trial period
-    
-    const trialStartDate = new Date(storeOpeningDate);
-    const trialEndDate = new Date(storeOpeningDate);
-    trialEndDate.setDate(trialEndDate.getDate() + trialDurationDays);
+    // Calculate trial period: full calendar month from reference date
+    const { start: trialStartDate, end: trialEndDate } = calculateTrialPeriod(storeOpeningDate);
 
     // Update vendor status
     vendor.registrationStatus = 'trial_active';

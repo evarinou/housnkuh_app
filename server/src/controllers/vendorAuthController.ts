@@ -287,11 +287,11 @@ export const registerVendorWithBooking = async (req: Request, res: Response): Pr
       
       // Set registration status based on store status
       if (isStoreOpen) {
+        const { calculateTrialPeriod } = require('../services/trialService');
+        const { start, end } = calculateTrialPeriod(new Date());
         user.registrationStatus = 'trial_active';
-        user.trialStartDate = new Date();
-        const trialEndDate = new Date();
-        trialEndDate.setDate(trialEndDate.getDate() + 30);
-        user.trialEndDate = trialEndDate;
+        user.trialStartDate = start;
+        user.trialEndDate = end;
       } else {
         user.registrationStatus = 'preregistered';
       }
@@ -357,12 +357,11 @@ export const registerVendorWithBooking = async (req: Request, res: Response): Pr
         isVendor: true,
         registrationStatus: isStoreOpen ? 'trial_active' : 'preregistered',
         registrationDate: new Date(),
-        trialStartDate: isStoreOpen ? new Date() : undefined,
-        trialEndDate: isStoreOpen ? (() => {
-          const endDate = new Date();
-          endDate.setDate(endDate.getDate() + 30);
-          return endDate;
-        })() : undefined,
+        ...(isStoreOpen ? (() => {
+          const { calculateTrialPeriod } = require('../services/trialService');
+          const { start, end } = calculateTrialPeriod(new Date());
+          return { trialStartDate: start, trialEndDate: end };
+        })() : {}),
         kontakt: {
           name,
           email,

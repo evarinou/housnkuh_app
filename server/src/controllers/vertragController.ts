@@ -834,9 +834,50 @@ export const createVertragWithZusatzleistungen = async (req: Request, res: Respo
     });
   } catch (error) {
     logger.error('Fehler beim Erstellen des Vertrags:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       success: false,
-      error: 'Interner Serverfehler beim Erstellen des Vertrags' 
+      error: 'Interner Serverfehler beim Erstellen des Vertrags'
     });
+  }
+};
+
+/**
+ * PATCH /api/admin/vertraege/:id/activate
+ * Manually activate a scheduled Vertrag (Admin only)
+ */
+export const activateVertrag = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+
+    const vertrag = await Vertrag.findById(id);
+    if (!vertrag) {
+      res.status(404).json({ success: false, message: 'Vertrag nicht gefunden' });
+      return;
+    }
+
+    if (vertrag.status === 'active') {
+      res.status(400).json({ success: false, message: 'Vertrag ist bereits aktiv' });
+      return;
+    }
+
+    if (vertrag.status === 'cancelled' || vertrag.status === 'expired') {
+      res.status(400).json({ success: false, message: `Vertrag kann nicht aktiviert werden (Status: ${vertrag.status})` });
+      return;
+    }
+
+    vertrag.status = 'active';
+    vertrag.actualStartDate = new Date();
+    await vertrag.save();
+
+    logger.info('[Admin] Vertrag manually activated', { vertragId: id });
+
+    res.json({
+      success: true,
+      data: vertrag,
+      message: 'Vertrag erfolgreich aktiviert'
+    });
+  } catch (error: any) {
+    logger.error('Fehler beim Aktivieren des Vertrags:', error);
+    res.status(500).json({ success: false, message: 'Fehler beim Aktivieren', error: error.message });
   }
 };
