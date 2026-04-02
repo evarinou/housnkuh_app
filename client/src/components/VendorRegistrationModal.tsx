@@ -370,12 +370,12 @@ const VendorRegistrationModal: React.FC<VendorRegistrationModalProps> = React.me
     try {
       if (isLogin) {
         // Login-Logik
-        const success = await login(formData.email, formData.password);
-        if (success) {
+        const result = await login(formData.email, formData.password);
+        if (result.success) {
           onSuccess();
           onClose();
         } else {
-          setError('Ungültige Anmeldedaten');
+          setError(result.message || 'Ungültige Anmeldedaten');
         }
       } else {
         // Immer normale Package-Registrierung verwenden (egal ob Store offen oder nicht)

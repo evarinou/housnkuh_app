@@ -52,6 +52,8 @@ export interface IKontakt {
   newsletterConfirmed?: boolean;
   confirmationToken?: string | null;
   tokenExpires?: Date | null;
+  passwordResetToken?: string | null;
+  passwordResetExpires?: Date | null;
   status: 'aktiv' | 'inaktiv' | 'pending';
   usrID?: string;
   email: string; // E-Mail ist jetzt erforderlich

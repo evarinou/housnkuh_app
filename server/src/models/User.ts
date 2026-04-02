@@ -42,6 +42,8 @@ const KontaktSchema = new Schema({
   newsletterConfirmed: { type: Boolean, default: false },
   confirmationToken: { type: String, default: null },
   tokenExpires: { type: Date, default: null },
+  passwordResetToken: { type: String, default: null },
+  passwordResetExpires: { type: Date, default: null },
   status: {
     type: String,
     enum: ['aktiv', 'inaktiv', 'pending'],

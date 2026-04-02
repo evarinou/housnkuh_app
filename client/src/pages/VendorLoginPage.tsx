@@ -1,70 +1,65 @@
 /**
  * @file VendorLoginPage.tsx
- * @purpose Vendor authentication login page with form validation and error handling
- * @created 2024-01-01
- * @modified 2025-08-05
+ * @purpose Vendor authentication login page with form validation, error handling,
+ *          "forgot password" link, and resend confirmation email support
  */
 
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Mail, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, AlertCircle, CheckCircle, Send } from 'lucide-react';
+import axios from 'axios';
 import { useVendorAuth } from '../contexts/VendorAuthContext';
 
-/**
- * Vendor login page component with authentication form
- * @description Secure login interface for direct marketers with validation, error handling, and password visibility toggle
- * @returns {JSX.Element} Login form with email/password fields and authentication flow
- */
+const UNCONFIRMED_EMAIL_MESSAGE = 'Bitte bestätige zuerst deine E-Mail-Adresse, bevor du dich anmeldest';
+
 const VendorLoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  
+  const [showResendConfirmation, setShowResendConfirmation] = useState(false);
+  const [resendSuccess, setResendSuccess] = useState('');
+  const [isResending, setIsResending] = useState(false);
+
   const { login } = useVendorAuth();
   const navigate = useNavigate();
-  
-  /**
-   * Validates email address format using regex
-   * @description Checks if the provided email matches standard email format
-   * @param {string} email - Email address to validate
-   * @returns {boolean} True if email is valid, false otherwise
-   */
-  const validateEmail = (email: string): boolean => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
+
+  const validateEmail = (emailValue: string): boolean => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValue);
   };
-  
-  /**
-   * Handles form submission for vendor login
-   * @description Validates form inputs, performs authentication, and handles success/error states
-   * @param {React.FormEvent} e - Form submission event
-   */
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Validierungen
+
     if (!email || !password) {
       setError('Bitte füllen Sie alle Felder aus');
       return;
     }
-    
+
     if (!validateEmail(email)) {
       setError('Bitte geben Sie eine gültige E-Mail-Adresse ein');
       return;
     }
-    
+
     setIsLoading(true);
     setError('');
-    
+    setShowResendConfirmation(false);
+    setResendSuccess('');
+
     try {
-      const success = await login(email, password);
-      
-      if (success) {
-        navigate('/vendor/dashboard'); // Weiterleitung zum Vendor-Dashboard
+      const result = await login(email, password);
+
+      if (result.success) {
+        navigate('/vendor/dashboard');
       } else {
-        setError('Ungültige Anmeldedaten. Bitte überprüfen Sie Ihre E-Mail und Ihr Passwort.');
+        const message = result.message || 'Ungültige Anmeldedaten. Bitte überprüfen Sie Ihre E-Mail und Ihr Passwort.';
+        setError(message);
+
+        // Zeige "Bestätigungslink erneut senden" wenn E-Mail nicht bestätigt
+        if (message.includes('bestätige') || message.includes('E-Mail-Adresse')) {
+          setShowResendConfirmation(true);
+        }
       }
     } catch (err) {
       setError('Ein Fehler ist aufgetreten. Bitte versuchen Sie es später noch einmal.');
@@ -73,7 +68,29 @@ const VendorLoginPage: React.FC = () => {
       setIsLoading(false);
     }
   };
-  
+
+  const handleResendConfirmation = async () => {
+    setIsResending(true);
+    setResendSuccess('');
+
+    try {
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+      const response = await axios.post(`${apiUrl}/vendor-auth/resend-confirmation`, { email });
+
+      if (response.data.success) {
+        setResendSuccess(response.data.message);
+        setShowResendConfirmation(false);
+        setError('');
+      }
+    } catch (err) {
+      if (axios.isAxiosError(err) && err.response?.data?.message) {
+        setError(err.response.data.message);
+      }
+    } finally {
+      setIsResending(false);
+    }
+  };
+
   return (
     <div className="container mx-auto py-12 px-4">
       <div className="max-w-md mx-auto bg-white rounded-lg shadow-lg overflow-hidden">
@@ -81,7 +98,7 @@ const VendorLoginPage: React.FC = () => {
           <h1 className="text-2xl font-bold text-center text-secondary mb-6">
             Direktvermarkter Login
           </h1>
-          
+
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="email">
@@ -101,11 +118,19 @@ const VendorLoginPage: React.FC = () => {
                 />
               </div>
             </div>
-            
+
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="password">
-                Passwort
-              </label>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-gray-700" htmlFor="password">
+                  Passwort
+                </label>
+                <Link
+                  to="/vendor/forgot-password"
+                  className="text-sm text-primary hover:underline"
+                >
+                  Passwort vergessen?
+                </Link>
+              </div>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <input
@@ -127,20 +152,38 @@ const VendorLoginPage: React.FC = () => {
                 </button>
               </div>
             </div>
-            
+
             {error && (
               <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
                 <div className="flex items-center">
                   <AlertCircle className="w-5 h-5 text-red-600 mr-2 flex-shrink-0" />
                   <span className="text-red-700">{error}</span>
                 </div>
+                {showResendConfirmation && (
+                  <button
+                    type="button"
+                    onClick={handleResendConfirmation}
+                    disabled={isResending}
+                    className="mt-3 flex items-center text-sm text-primary hover:underline font-medium disabled:opacity-50"
+                  >
+                    <Send className="w-4 h-4 mr-1" />
+                    {isResending ? 'Wird gesendet...' : 'Bestätigungslink erneut senden'}
+                  </button>
+                )}
               </div>
             )}
-            
+
+            {resendSuccess && (
+              <div className="p-4 bg-green-50 border border-green-200 rounded-lg flex items-center">
+                <CheckCircle className="w-5 h-5 text-green-600 mr-2 flex-shrink-0" />
+                <span className="text-green-700">{resendSuccess}</span>
+              </div>
+            )}
+
             <div>
               <button
                 type="submit"
-                className="w-full bg-primary text-white py-3 rounded-lg font-medium hover:bg-primary/90 
+                className="w-full bg-primary text-white py-3 rounded-lg font-medium hover:bg-primary/90
                          transition-all duration-200 flex items-center justify-center"
                 disabled={isLoading}
               >
@@ -155,7 +198,7 @@ const VendorLoginPage: React.FC = () => {
               </button>
             </div>
           </form>
-          
+
           <div className="mt-6 text-center">
             <p className="text-gray-600">
               Noch kein Account?{' '}
@@ -164,14 +207,14 @@ const VendorLoginPage: React.FC = () => {
               </Link>
             </p>
           </div>
-          
+
           <div className="mt-4 text-center">
             <Link to="/" className="text-gray-500 hover:text-gray-700 text-sm">
               Zurück zur Startseite
             </Link>
           </div>
         </div>
-        
+
         <div className="px-6 py-4 bg-gray-50 border-t">
           <div className="text-center text-sm text-gray-600">
             <p>Bei Fragen oder Problemen:</p>

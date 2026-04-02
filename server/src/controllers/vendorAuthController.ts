@@ -10,7 +10,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import config from '../config/config';
-import { sendPreRegistrationConfirmation, sendTrialActivationEmail, sendBookingConfirmation } from '../utils/emailService';
+import { sendPreRegistrationConfirmation, sendTrialActivationEmail, sendBookingConfirmation, sendCustomEmail } from '../utils/emailService';
 import Settings from '../models/Settings';
 import { BookingStatus } from '../types/modelTypes';
 import logger from '../utils/logger';
@@ -725,6 +725,250 @@ export const confirmVendorEmail = async (req: Request, res: Response): Promise<v
       success: false, 
       message: 'Ein Serverfehler ist aufgetreten' 
     });
+  }
+};
+
+// Passwort ändern (authentifizierter Vendor)
+export const changeVendorPassword = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = (req as any).userId;
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      res.status(400).json({
+        success: false,
+        message: 'Aktuelles und neues Passwort sind erforderlich'
+      });
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      res.status(400).json({
+        success: false,
+        message: 'Das neue Passwort muss mindestens 8 Zeichen lang sein'
+      });
+      return;
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      res.status(404).json({ success: false, message: 'Benutzer nicht gefunden' });
+      return;
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, user.password!);
+    if (!isMatch) {
+      res.status(401).json({
+        success: false,
+        message: 'Das aktuelle Passwort ist nicht korrekt'
+      });
+      return;
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(newPassword, salt);
+    await user.save();
+
+    logger.info('Vendor password changed successfully', { userId });
+    res.json({ success: true, message: 'Passwort erfolgreich geändert' });
+  } catch (err) {
+    logger.error('Fehler beim Passwort-Ändern:', err);
+    res.status(500).json({ success: false, message: 'Serverfehler beim Passwort-Ändern' });
+  }
+};
+
+// Passwort-Reset anfordern (öffentlich)
+export const requestPasswordReset = async (req: Request, res: Response): Promise<void> => {
+  const securityLogger = require('../utils/securityLogger').default;
+
+  try {
+    const { email } = req.body;
+
+    // Immer 200 zurückgeben (Security: kein User-Enumeration)
+    const successMessage = 'Falls ein Account mit dieser E-Mail existiert, wurde ein Link zum Zurücksetzen gesendet.';
+
+    if (!email) {
+      res.status(400).json({ success: false, message: 'E-Mail-Adresse ist erforderlich' });
+      return;
+    }
+
+    const user = await User.findOne({
+      'kontakt.email': email,
+      isFullAccount: true,
+      isVendor: true
+    });
+
+    if (!user) {
+      // Kein User verraten — gleiche Response
+      securityLogger.logPasswordReset(req, email, false, { reason: 'user_not_found' });
+      res.json({ success: true, message: successMessage });
+      return;
+    }
+
+    // Token generieren
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const resetExpires = new Date();
+    resetExpires.setHours(resetExpires.getHours() + 1); // 1 Stunde gültig
+
+    user.kontakt.passwordResetToken = resetToken;
+    user.kontakt.passwordResetExpires = resetExpires;
+    await user.save();
+
+    // Reset-E-Mail senden
+    const baseUrl = process.env.CLIENT_URL || 'http://localhost:3000';
+    const resetUrl = `${baseUrl}/vendor/reset-password?token=${resetToken}`;
+
+    await sendCustomEmail({
+      to: email,
+      subject: 'housnkuh – Passwort zurücksetzen',
+      html: `
+      <div style="font-family: 'Quicksand', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
+        <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="color: #09122c; margin: 0;">housnkuh</h1>
+            <p style="color: #666; margin: 10px 0;">Regionaler Marktplatz Kronach</p>
+          </div>
+          <h2 style="color: #09122c; text-align: center;">Passwort zurücksetzen</h2>
+          <p style="color: #333; line-height: 1.6;">Hallo ${user.kontakt.name},</p>
+          <p style="color: #333; line-height: 1.6;">
+            du hast eine Anfrage zum Zurücksetzen deines Passworts gestellt. Klicke auf den folgenden Link, um ein neues Passwort festzulegen:
+          </p>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${resetUrl}" style="background-color: #09122c; color: white; padding: 12px 30px; border-radius: 5px; text-decoration: none; font-weight: bold;">
+              Neues Passwort festlegen
+            </a>
+          </div>
+          <p style="color: #999; font-size: 14px; line-height: 1.6;">
+            Dieser Link ist <strong>1 Stunde</strong> gültig. Falls du keine Passwort-Zurücksetzung angefordert hast, kannst du diese E-Mail ignorieren.
+          </p>
+        </div>
+      </div>
+      `
+    });
+
+    securityLogger.logPasswordReset(req, email, true, { reason: 'reset_email_sent' });
+    res.json({ success: true, message: successMessage });
+  } catch (err) {
+    logger.error('Fehler bei Passwort-Reset-Anforderung:', err);
+    res.status(500).json({ success: false, message: 'Serverfehler' });
+  }
+};
+
+// Passwort zurücksetzen mit Token (öffentlich)
+export const resetPassword = async (req: Request, res: Response): Promise<void> => {
+  const securityLogger = require('../utils/securityLogger').default;
+
+  try {
+    const { token, newPassword } = req.body;
+
+    if (!token || !newPassword) {
+      res.status(400).json({ success: false, message: 'Token und neues Passwort sind erforderlich' });
+      return;
+    }
+
+    const user = await User.findOne({
+      'kontakt.passwordResetToken': token,
+      'kontakt.passwordResetExpires': { $gt: new Date() },
+      isVendor: true
+    });
+
+    if (!user) {
+      res.status(400).json({
+        success: false,
+        message: 'Ungültiger oder abgelaufener Reset-Link. Bitte fordere einen neuen an.'
+      });
+      return;
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(newPassword, salt);
+    user.kontakt.passwordResetToken = null;
+    user.kontakt.passwordResetExpires = null;
+    await user.save();
+
+    securityLogger.logPasswordReset(req, user.kontakt.email, true, { reason: 'password_reset_completed' });
+    logger.info('Password reset completed', { userId: user._id });
+
+    res.json({ success: true, message: 'Passwort erfolgreich zurückgesetzt. Du kannst dich jetzt anmelden.' });
+  } catch (err) {
+    logger.error('Fehler beim Passwort-Zurücksetzen:', err);
+    res.status(500).json({ success: false, message: 'Serverfehler beim Passwort-Zurücksetzen' });
+  }
+};
+
+// Bestätigungslink erneut senden (öffentlich)
+export const resendConfirmationEmail = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      res.status(400).json({ success: false, message: 'E-Mail-Adresse ist erforderlich' });
+      return;
+    }
+
+    const user = await User.findOne({
+      'kontakt.email': email,
+      isFullAccount: true,
+      isVendor: true
+    });
+
+    if (!user) {
+      // Kein User verraten
+      res.json({ success: true, message: 'Falls ein Account mit dieser E-Mail existiert, wurde ein neuer Bestätigungslink gesendet.' });
+      return;
+    }
+
+    if (user.kontakt.newsletterConfirmed && user.kontakt.status === 'aktiv') {
+      res.json({ success: true, message: 'Deine E-Mail-Adresse ist bereits bestätigt. Du kannst dich direkt anmelden.' });
+      return;
+    }
+
+    // Neuen Token generieren
+    const newToken = crypto.randomBytes(32).toString('hex');
+    const tokenExpires = new Date();
+    tokenExpires.setHours(tokenExpires.getHours() + 24);
+
+    user.kontakt.confirmationToken = newToken;
+    user.kontakt.tokenExpires = tokenExpires;
+    await user.save();
+
+    // Bestätigungs-E-Mail erneut senden
+    const baseUrl = process.env.CLIENT_URL || 'http://localhost:3000';
+    const confirmUrl = `${baseUrl}/vendor/confirm/${newToken}`;
+
+    await sendCustomEmail({
+      to: email,
+      subject: 'housnkuh – E-Mail-Bestätigung',
+      html: `
+      <div style="font-family: 'Quicksand', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
+        <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="color: #09122c; margin: 0;">housnkuh</h1>
+            <p style="color: #666; margin: 10px 0;">Regionaler Marktplatz Kronach</p>
+          </div>
+          <h2 style="color: #09122c; text-align: center;">E-Mail bestätigen</h2>
+          <p style="color: #333; line-height: 1.6;">Hallo ${user.kontakt.name},</p>
+          <p style="color: #333; line-height: 1.6;">
+            bitte klicke auf den folgenden Link, um deine E-Mail-Adresse zu bestätigen und deinen Account zu aktivieren:
+          </p>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${confirmUrl}" style="background-color: #09122c; color: white; padding: 12px 30px; border-radius: 5px; text-decoration: none; font-weight: bold;">
+              E-Mail bestätigen
+            </a>
+          </div>
+          <p style="color: #999; font-size: 14px; line-height: 1.6;">
+            Dieser Link ist <strong>24 Stunden</strong> gültig.
+          </p>
+        </div>
+      </div>
+      `
+    });
+
+    logger.info('Confirmation email resent', { email });
+    res.json({ success: true, message: 'Ein neuer Bestätigungslink wurde gesendet. Bitte prüfe dein E-Mail-Postfach.' });
+  } catch (err) {
+    logger.error('Fehler beim erneuten Senden der Bestätigungs-E-Mail:', err);
+    res.status(500).json({ success: false, message: 'Serverfehler' });
   }
 };
 

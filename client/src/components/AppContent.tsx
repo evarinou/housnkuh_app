@@ -40,6 +40,9 @@ const VendorCustomerInvoicesPage = React.lazy(() => import('../pages/vendor/Vend
 const VendorInvoiceDetailPage = React.lazy(() => import('../pages/vendor/VendorInvoiceDetailPage'));
 const VendorHousnkuhInvoicesPage = React.lazy(() => import('../pages/vendor/VendorHousnkuhInvoicesPage'));
 const VendorFlourioDocumentsPage = React.lazy(() => import('../pages/vendor/VendorFlourioDocumentsPage'));
+const VendorSettingsPage = React.lazy(() => import('../pages/vendor/VendorSettingsPage'));
+const VendorForgotPasswordPage = React.lazy(() => import('../pages/vendor/VendorForgotPasswordPage'));
+const VendorResetPasswordPage = React.lazy(() => import('../pages/vendor/VendorResetPasswordPage'));
 
 // Lazy load admin components for code splitting
 const LoginPage = React.lazy(() => import('../pages/admin/LoginPage'));
@@ -216,6 +219,16 @@ const AppContent: React.FC = () => {
         <VendorLoginPage />
       } />
       <Route path="/vendor/confirm" element={<VendorConfirmPage />} />
+      <Route path="/vendor/forgot-password" element={
+        <Suspense fallback={<LoadingSpinner />}>
+          <VendorForgotPasswordPage />
+        </Suspense>
+      } />
+      <Route path="/vendor/reset-password" element={
+        <Suspense fallback={<LoadingSpinner />}>
+          <VendorResetPasswordPage />
+        </Suspense>
+      } />
       
       {/* Geschützte Vendor-Routen */}
       <Route path="/vendor/*" element={
@@ -264,6 +277,11 @@ const AppContent: React.FC = () => {
         <Route path="flourio-documents" element={
           <Suspense fallback={<LoadingSpinner />}>
             <VendorFlourioDocumentsPage />
+          </Suspense>
+        } />
+        <Route path="settings" element={
+          <Suspense fallback={<LoadingSpinner />}>
+            <VendorSettingsPage />
           </Suspense>
         } />
       </Route>

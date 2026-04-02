@@ -24,7 +24,7 @@ export interface VendorAuthState {
  * Vendor authentication actions interface
  */
 export interface VendorAuthActions {
-  login: (email: string, password: string) => Promise<boolean>;
+  login: (email: string, password: string) => Promise<{ success: boolean; message?: string }>;
   logout: () => void;
   checkAuth: () => Promise<boolean>;
   registerWithBooking: (bookingData: any) => Promise<any>;
@@ -55,7 +55,7 @@ export interface ProviderStateService {
    * Create memoized actions object
    */
   createActions: (
-    login: (email: string, password: string) => Promise<boolean>,
+    login: (email: string, password: string) => Promise<{ success: boolean; message?: string }>,
     logout: () => void,
     checkAuth: () => Promise<boolean>,
     registerWithBooking: (bookingData: any) => Promise<any>,
@@ -105,7 +105,7 @@ export const useProviderState = (): ProviderStateService => {
    */
   const createActions = useMemo(() => {
     return (
-      login: (email: string, password: string) => Promise<boolean>,
+      login: (email: string, password: string) => Promise<{ success: boolean; message?: string }>,
       logout: () => void,
       checkAuth: () => Promise<boolean>,
       registerWithBooking: (bookingData: any) => Promise<any>,

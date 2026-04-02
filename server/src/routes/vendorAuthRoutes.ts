@@ -20,11 +20,13 @@ import * as vendorProfileController from '../controllers/vendor/vendorProfileCon
 import * as vendorBookingController from '../controllers/vendor/vendorBookingController';
 import { vendorAuth } from '../middleware/auth';
 import { validateVendorRegistration, validateEmailConfirmationParam } from '../middleware/validation';
-import { 
-  vendorRegistrationRateLimit, 
-  emailConfirmationRateLimit, 
-  authRateLimit 
+import {
+  vendorRegistrationRateLimit,
+  emailConfirmationRateLimit,
+  authRateLimit,
+  passwordResetRateLimit
 } from '../middleware/rateLimiting';
+import { validatePasswordReset, validatePasswordResetToken } from '../middleware/validation';
 
 const router = Router();
 
@@ -36,6 +38,11 @@ router.get('/confirm/:token', emailConfirmationRateLimit, validateEmailConfirmat
 router.get('/public/profiles', vendorProfileController.getAllVendorProfiles);
 router.get('/public/profile/:vendorId', vendorProfileController.getPublicVendorProfile);
 
+// Password Reset & Email Confirmation (öffentlich)
+router.post('/request-password-reset', passwordResetRateLimit, validatePasswordReset, vendorAuthController.requestPasswordReset);
+router.post('/reset-password', validatePasswordResetToken, vendorAuthController.resetPassword);
+router.post('/resend-confirmation', emailConfirmationRateLimit, vendorAuthController.resendConfirmationEmail);
+
 // Geschützte Routen (mit Vendor-Auth-Middleware)
 router.post('/complete-booking/:userId', vendorAuth, vendorBookingController.completeBooking);
 
@@ -46,6 +53,9 @@ router.post('/upload-image', vendorAuth, vendorProfileController.uploadVendorIma
 
 // Tag Management for Vendors
 router.post('/create-tag', vendorAuth, vendorProfileController.createVendorTag);
+
+// Password Change (authenticated)
+router.put('/change-password', vendorAuth, vendorAuthController.changeVendorPassword);
 
 // Auth-Check Route (optional)
 router.get('/check', vendorAuth, (_req, res) => {

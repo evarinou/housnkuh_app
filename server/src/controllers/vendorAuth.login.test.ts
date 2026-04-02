@@ -30,6 +30,7 @@ jest.mock('../utils/emailService', () => ({
   sendPreRegistrationConfirmation: jest.fn().mockResolvedValue(true),
   sendTrialActivationEmail: jest.fn().mockResolvedValue(true),
   sendBookingConfirmation: jest.fn().mockResolvedValue(true),
+  sendCustomEmail: jest.fn().mockResolvedValue(undefined),
 }));
 jest.mock('../utils/securityLogger', () => ({
   __esModule: true,
@@ -38,6 +39,7 @@ jest.mock('../utils/securityLogger', () => ({
     logInvalidToken: jest.fn(),
     logTokenExpired: jest.fn(),
     logEmailConfirmation: jest.fn(),
+    logPasswordReset: jest.fn(),
   },
 }));
 jest.mock('../utils/logger', () => ({
@@ -51,7 +53,7 @@ jest.mock('../utils/logger', () => ({
 }));
 
 import { Request, Response } from 'express';
-import { loginVendor, confirmVendorEmail } from './vendorAuthController';
+import { loginVendor, confirmVendorEmail, changeVendorPassword, requestPasswordReset, resetPassword, resendConfirmationEmail } from './vendorAuthController';
 import User from '../models/User';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
@@ -282,6 +284,148 @@ describe('vendorAuthController - Login & Email Confirmation', () => {
 
       await confirmVendorEmail(req as Request, res as Response);
       expect(statusMock).toHaveBeenCalledWith(500);
+    });
+  });
+
+  describe('changeVendorPassword', () => {
+    it('should return 400 if passwords are missing', async () => {
+      req = { body: {}, userId: 'vendor-id' } as any;
+      await changeVendorPassword(req as Request, res as Response);
+      expect(statusMock).toHaveBeenCalledWith(400);
+    });
+
+    it('should return 401 if current password is wrong', async () => {
+      req = { body: { currentPassword: 'wrong', newPassword: 'NewPass1!' }, userId: 'vendor-id' } as any;
+      MockedUser.findById = jest.fn().mockResolvedValue({
+        _id: 'vendor-id',
+        password: 'hashed',
+        save: jest.fn(),
+      }) as any;
+      (bcrypt.compare as jest.Mock).mockResolvedValue(false);
+
+      await changeVendorPassword(req as Request, res as Response);
+      expect(statusMock).toHaveBeenCalledWith(401);
+      expect(jsonMock).toHaveBeenCalledWith(
+        expect.objectContaining({ message: 'Das aktuelle Passwort ist nicht korrekt' }),
+      );
+    });
+
+    it('should change password successfully', async () => {
+      req = { body: { currentPassword: 'correct', newPassword: 'NewPass1!' }, userId: 'vendor-id' } as any;
+      const saveMock = jest.fn();
+      MockedUser.findById = jest.fn().mockResolvedValue({
+        _id: 'vendor-id',
+        password: 'hashed',
+        save: saveMock,
+      }) as any;
+      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+      (bcrypt.genSalt as jest.Mock).mockResolvedValue('salt');
+      (bcrypt.hash as jest.Mock).mockResolvedValue('new-hashed');
+
+      await changeVendorPassword(req as Request, res as Response);
+      expect(saveMock).toHaveBeenCalled();
+      expect(jsonMock).toHaveBeenCalledWith(
+        expect.objectContaining({ success: true, message: 'Passwort erfolgreich geändert' }),
+      );
+    });
+  });
+
+  describe('requestPasswordReset', () => {
+    it('should return 200 even if user not found (security)', async () => {
+      req = { body: { email: 'unknown@test.com' }, ip: '127.0.0.1', headers: {} };
+      MockedUser.findOne = jest.fn().mockResolvedValue(null) as any;
+
+      await requestPasswordReset(req as Request, res as Response);
+      expect(jsonMock).toHaveBeenCalledWith(
+        expect.objectContaining({ success: true }),
+      );
+    });
+
+    it('should generate token and return 200 for valid user', async () => {
+      req = { body: { email: 'vendor@test.com' }, ip: '127.0.0.1', headers: {} };
+      const saveMock = jest.fn().mockResolvedValue(undefined);
+      MockedUser.findOne = jest.fn().mockResolvedValue({
+        _id: 'vendor-id',
+        kontakt: { email: 'vendor@test.com', name: 'Test Vendor' },
+        save: saveMock,
+      }) as any;
+
+      await requestPasswordReset(req as Request, res as Response);
+
+      expect(saveMock).toHaveBeenCalled();
+      expect(jsonMock).toHaveBeenCalledWith(
+        expect.objectContaining({ success: true }),
+      );
+    });
+  });
+
+  describe('resetPassword', () => {
+    it('should return 400 for invalid/expired token', async () => {
+      req = { body: { token: 'invalid-token', newPassword: 'NewPass1!' } };
+      MockedUser.findOne = jest.fn().mockResolvedValue(null) as any;
+
+      await resetPassword(req as Request, res as Response);
+      expect(statusMock).toHaveBeenCalledWith(400);
+      expect(jsonMock).toHaveBeenCalledWith(
+        expect.objectContaining({ message: expect.stringContaining('Ungültiger oder abgelaufener') }),
+      );
+    });
+
+    it('should reset password successfully with valid token', async () => {
+      req = { body: { token: 'valid-token-abc', newPassword: 'NewPass1!' }, ip: '127.0.0.1', headers: {} };
+      const saveMock = jest.fn();
+      MockedUser.findOne = jest.fn().mockResolvedValue({
+        _id: 'vendor-id',
+        kontakt: { email: 'vendor@test.com', passwordResetToken: 'valid-token-abc', passwordResetExpires: new Date(Date.now() + 3600000) },
+        save: saveMock,
+      }) as any;
+      (bcrypt.genSalt as jest.Mock).mockResolvedValue('salt');
+      (bcrypt.hash as jest.Mock).mockResolvedValue('new-hashed');
+
+      await resetPassword(req as Request, res as Response);
+      expect(saveMock).toHaveBeenCalled();
+      expect(jsonMock).toHaveBeenCalledWith(
+        expect.objectContaining({ success: true, message: expect.stringContaining('erfolgreich zurückgesetzt') }),
+      );
+    });
+  });
+
+  describe('resendConfirmationEmail', () => {
+    it('should return 200 even if user not found (security)', async () => {
+      req = { body: { email: 'unknown@test.com' } };
+      MockedUser.findOne = jest.fn().mockResolvedValue(null) as any;
+
+      await resendConfirmationEmail(req as Request, res as Response);
+      expect(jsonMock).toHaveBeenCalledWith(
+        expect.objectContaining({ success: true }),
+      );
+    });
+
+    it('should return success if already confirmed', async () => {
+      req = { body: { email: 'vendor@test.com' } };
+      MockedUser.findOne = jest.fn().mockResolvedValue({
+        kontakt: { email: 'vendor@test.com', name: 'Test', newsletterConfirmed: true, status: 'aktiv' },
+      }) as any;
+
+      await resendConfirmationEmail(req as Request, res as Response);
+      expect(jsonMock).toHaveBeenCalledWith(
+        expect.objectContaining({ message: expect.stringContaining('bereits bestätigt') }),
+      );
+    });
+
+    it('should generate new token and resend for unconfirmed user', async () => {
+      req = { body: { email: 'vendor@test.com' } };
+      const saveMock = jest.fn();
+      MockedUser.findOne = jest.fn().mockResolvedValue({
+        kontakt: { email: 'vendor@test.com', name: 'Test', newsletterConfirmed: false, status: 'pending' },
+        save: saveMock,
+      }) as any;
+
+      await resendConfirmationEmail(req as Request, res as Response);
+      expect(saveMock).toHaveBeenCalled();
+      expect(jsonMock).toHaveBeenCalledWith(
+        expect.objectContaining({ success: true, message: expect.stringContaining('Bestätigungslink') }),
+      );
     });
   });
 });

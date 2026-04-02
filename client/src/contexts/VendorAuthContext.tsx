@@ -207,26 +207,26 @@ export const VendorAuthProvider: React.FC<VendorAuthProviderProps> = React.memo(
     };
   }, [token, checkAuth, isLoading]);
 
-  const login = useCallback(async (email: string, password: string): Promise<boolean> => {
+  const login = useCallback(async (email: string, password: string): Promise<{ success: boolean; message?: string }> => {
     setIsLoading(true);
 
     try {
       const result = await loginOperations.performLogin(email, password, processUserData);
-      
+
       if (result.success && result.token && result.user) {
         setToken(result.token);
         setUser(result.user);
         setIsAuthenticated(true);
         setIsLoading(false);
-        return true;
+        return { success: true };
       } else {
         setIsLoading(false);
-        return false;
+        return { success: false, message: result.message };
       }
     } catch (error) {
       console.error('Vendor login error:', error);
       setIsLoading(false);
-      return false;
+      return { success: false, message: 'Ein Fehler ist aufgetreten. Bitte versuchen Sie es später noch einmal.' };
     }
   }, [loginOperations, processUserData]);
 
