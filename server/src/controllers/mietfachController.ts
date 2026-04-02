@@ -27,116 +27,56 @@ export const getAllMietfaecher = async (req: Request, res: Response): Promise<vo
 
 // Alle Mietfächer mit Vertragsinformationen abrufen
 export const getAllMietfaecherWithContracts = async (req: Request, res: Response): Promise<void> => {
-               try {
-                 // Use aggregation pipeline to avoid N+1 queries
-                 const mietfaecherWithContracts = await Mietfach.aggregate([
-                   {
-                     $lookup: {
-                       from: 'vertraege',
-                       let: { mietfachId: '$_id' },
-                       pipeline: [
-                         {
-                           $match: {
-                             $expr: {
-                               $in: ['$$mietfachId', '$services.mietfach']
-                             }
-                           }
-                         },
-                         {
-                           $lookup: {
-                             from: 'users',
-                             localField: 'user',
-                             foreignField: '_id',
-                             as: 'user',
-                             pipeline: [
-                               {
-                                 $project: {
-                                   username: 1,
-                                   'kontakt.name': 1,
-                                   'kontakt.email': 1
-                                 }
-                               }
-                             ]
-                           }
-                         },
-                         { $unwind: '$user' },
-                         { $sort: { datum: -1 } }
-                       ],
-                       as: 'vertraege'
-                     }
-                   },
-                   {
-                     $addFields: {
-                       belegungen: {
-                         $reduce: {
-                           input: '$vertraege',
-                           initialValue: [],
-                           in: {
-                             $concatArrays: [
-                               '$$value',
-                               {
-                                 $map: {
-                                   input: {
-                                     $filter: {
-                                       input: '$$this.services',
-                                       cond: { $eq: ['$$this.mietfach', '$_id'] }
-                                     }
-                                   },
-                                   as: 'service',
-                                   in: {
-                                     vertragId: '$$this._id',
-                                     user: '$$this.user',
-                                     mietbeginn: '$$service.mietbeginn',
-                                     mietende: '$$service.mietende',
-                                     monatspreis: '$$service.monatspreis',
-                                     status: {
-                                       $cond: {
-                                         if: {
-                                           $or: [
-                                             { $eq: ['$$service.mietende', null] },
-                                             { $gt: ['$$service.mietende', new Date()] }
-                                           ]
-                                         },
-                                         then: 'aktiv',
-                                         else: 'beendet'
-                                       }
-                                     }
-                                   }
-                                 }
-                               }
-                             ]
-                           }
-                         }
-                       }
-                     }
-                   },
-                   {
-                     $addFields: {
-                       istBelegt: {
-                         $anyElementTrue: {
-                           $map: {
-                             input: '$belegungen',
-                             as: 'belegung',
-                             in: { $eq: ['$$belegung.status', 'aktiv'] }
-                           }
-                         }
-                       }
-                     }
-                   },
-                   {
-                     $project: {
-                       vertraege: 0 // Remove the intermediate vertraege field
-                     }
-                   }
-                 ]);
-                 
-                 res.json(mietfaecherWithContracts);
-               } catch (err) {
-                 logger.error('Fehler beim Abrufen der Mietfächer mit Verträgen:', err);
-                 res.status(500).json({ message: 'Serverfehler beim Abrufen der Mietfächer' });
-               }
-             };
-;
+  try {
+    const mongoose = require('mongoose');
+    const Vertrag = mongoose.model('Vertrag');
+
+    // Step 1: Get all Mietfächer
+    const mietfaecher = await Mietfach.find().lean();
+
+    // Step 2: Get all Verträge with populated user
+    const vertraege = await Vertrag.find()
+      .populate('user', 'username kontakt.name kontakt.email vendorProfile.unternehmen vendorProfile.modelltyp vendorProfile.provisionssatz')
+      .lean();
+
+    // Step 3: For each Mietfach, find matching Verträge
+    const result = mietfaecher.map((mf: any) => {
+      const belegungen: any[] = [];
+
+      for (const vertrag of vertraege as any[]) {
+        for (const service of vertrag.services || []) {
+          if (String(service.mietfach) === String(mf._id)) {
+            belegungen.push({
+              vertragId: vertrag._id,
+              user: vertrag.user,
+              mietbeginn: service.mietbeginn,
+              mietende: service.mietende,
+              monatspreis: vertrag.totalMonthlyPrice || service.monatspreis || 0,
+              discount: vertrag.discount || 0,
+              status: vertrag.status,
+              provisionssatz: vertrag.provisionssatz,
+              modelltyp: vertrag.provisionssatz === 7 ? 'Premium' : 'Basic',
+              zusatzleistungen: vertrag.zusatzleistungen || {}
+            });
+          }
+        }
+      }
+
+      const istBelegt = belegungen.some(b => ['active', 'scheduled'].includes(b.status));
+
+      return {
+        ...mf,
+        belegungen,
+        istBelegt
+      };
+    });
+
+    res.json(result);
+  } catch (err) {
+    logger.error('Fehler beim Abrufen der Mietfächer mit Verträgen:', err);
+    res.status(500).json({ message: 'Serverfehler beim Abrufen der Mietfächer' });
+  }
+};
 
 // Mietfach nach ID abrufen
 export const getMietfachById = async (req: Request, res: Response): Promise<void> => {

@@ -251,6 +251,48 @@ const VertraegeePage: React.FC = () => {
     setCurrentVertrag(vertrag);
     setShowVertragDetailsModal(true);
   };
+
+  // Vertrag stornieren
+  const handleCancelVertrag = async (vertragId: string) => {
+    if (!window.confirm('Vertrag wirklich stornieren? Diese Aktion kann nicht rückgängig gemacht werden.')) return;
+    try {
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+      const token = localStorage.getItem('adminToken');
+      const response = await axios.patch(`${apiUrl}/admin/vertraege/${vertragId}/cancel`, {}, {
+        headers: { 'Authorization': `Bearer ${token}`, 'x-auth-token': token || '' }
+      });
+      if (response.data.success) {
+        setVertraege(prev => prev.map(v => v._id === vertragId ? { ...v, status: 'gekuendigt' as any } : v));
+        if (currentVertrag?._id === vertragId) {
+          setCurrentVertrag({ ...currentVertrag, status: 'gekuendigt' as any });
+        }
+      }
+    } catch (err: any) {
+      console.error('Error cancelling vertrag:', err);
+      setError(err.response?.data?.message || 'Fehler beim Stornieren');
+    }
+  };
+
+  // Vertrag aktivieren
+  const handleActivateVertrag = async (vertragId: string) => {
+    try {
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+      const token = localStorage.getItem('adminToken');
+      const response = await axios.patch(`${apiUrl}/admin/vertraege/${vertragId}/activate`, {}, {
+        headers: { 'Authorization': `Bearer ${token}`, 'x-auth-token': token || '' }
+      });
+      if (response.data.success) {
+        // Update in der lokalen Liste
+        setVertraege(prev => prev.map(v => v._id === vertragId ? { ...v, status: 'aktiv' as any } : v));
+        if (currentVertrag?._id === vertragId) {
+          setCurrentVertrag({ ...currentVertrag, status: 'aktiv' as any });
+        }
+      }
+    } catch (err: any) {
+      console.error('Error activating vertrag:', err);
+      setError(err.response?.data?.message || 'Fehler beim Aktivieren');
+    }
+  };
   
   // Status-Badge Style
   const getStatusStyle = (status: string) => {
@@ -536,8 +578,24 @@ const VertraegeePage: React.FC = () => {
             <div className="flex justify-between items-start mb-4">
               <div>
                 <h2 className="text-xl font-bold">Vertrag: {currentVertrag.vertragsnummer}</h2>
-                <div className="mt-1">
+                <div className="mt-1 flex items-center gap-3">
                   <StatusBadge status={currentVertrag.status} />
+                  {(currentVertrag.status === 'ausstehend' || (currentVertrag as any).rawStatus === 'scheduled' || (currentVertrag as any).rawStatus === 'pending') && (
+                    <button
+                      onClick={() => handleActivateVertrag(currentVertrag._id)}
+                      className="px-3 py-1 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 transition-colors"
+                    >
+                      Aktivieren
+                    </button>
+                  )}
+                  {(currentVertrag.status !== 'gekuendigt' && currentVertrag.status !== 'beendet') && (
+                    <button
+                      onClick={() => handleCancelVertrag(currentVertrag._id)}
+                      className="px-3 py-1 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 transition-colors"
+                    >
+                      Stornieren
+                    </button>
+                  )}
                 </div>
               </div>
               <button
@@ -662,8 +720,8 @@ const VertraegeePage: React.FC = () => {
                 </div>
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <h4 className="text-sm text-gray-500 uppercase mb-2">Provision</h4>
-                  <p className="text-2xl font-bold text-gray-900">{currentVertrag.provision || 0}%</p>
-                  <p className="text-sm text-gray-500">auf Verkäufe</p>
+                  <p className="text-2xl font-bold text-gray-900">{typeof currentVertrag.provision === 'object' ? (currentVertrag.provision as any).rate : currentVertrag.provision || 0}%</p>
+                  <p className="text-sm text-gray-500">{typeof currentVertrag.provision === 'object' ? (currentVertrag.provision as any).model : ''} — auf Verkäufe</p>
                 </div>
               </div>
             </div>

@@ -192,7 +192,9 @@ const MietfaecherPage: React.FC = () => {
             createdAt: m.createdAt || new Date().toISOString(),
             // Sprint S12_M11_Mietfaecher_Seeding_Cleanup - Manual creation tracking
             creationSource: (m as any).creationSource || 'manual',
-            createdBy: (m as any).createdBy
+            createdBy: (m as any).createdBy,
+            flourioWarehouseId: (m as any).flourioWarehouseId,
+            flourioSyncStatus: (m as any).flourioSyncStatus
           }));
           
           setMietfaecher(convertedMietfaecher);
@@ -950,38 +952,65 @@ const MietfaecherPage: React.FC = () => {
                   </div>
                 </div>
                 
-                {/* Vertragsinformationen */}
-                {mietfach.belegungen && mietfach.belegungen.length > 0 && (
-                  <div className="mt-3 mb-3">
-                    <h4 className="text-xs uppercase tracking-wide text-gray-500 mb-2">Aktuelle Belegungen</h4>
-                    <div className="space-y-2">
-                      {mietfach.belegungen
-                        .filter(b => b.status === 'aktiv')
-                        .map((belegung, idx) => (
-                          <div key={idx} className="text-sm bg-blue-50 p-2 rounded">
+                {/* Aktive Belegung — prominent */}
+                {(() => {
+                  const activeBelegungen = (mietfach.belegungen || []).filter((b: any) =>
+                    ['active', 'scheduled'].includes(b.status)
+                  );
+                  if (activeBelegungen.length === 0) return null;
+                  return (
+                    <div className="mt-3 mb-3 space-y-2">
+                      {activeBelegungen.map((belegung: any, idx: number) => {
+                        const isActive = belegung.status === 'active';
+                        return (
+                          <div key={idx} className={`p-3 rounded-lg border ${isActive ? 'bg-blue-50 border-blue-200' : 'bg-yellow-50 border-yellow-200'}`}>
                             <div className="flex justify-between items-start">
                               <div>
-                                <span className="font-medium">
-                                  {belegung.user.kontakt?.name || belegung.user.username || 'Unbekannt'}
-                                </span>
-                                <div className="text-xs text-gray-600">
-                                  {new Date(belegung.mietbeginn).toLocaleDateString('de-DE')} - 
-                                  {belegung.mietende ? new Date(belegung.mietende).toLocaleDateString('de-DE') : 'unbefristet'}
+                                <div className="font-semibold text-gray-900">
+                                  {belegung.user?.vendorProfile?.unternehmen || belegung.user?.kontakt?.name || belegung.user?.username || 'Unbekannt'}
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                  {belegung.user?.kontakt?.email || ''}
                                 </div>
                               </div>
-                              <span className="font-medium text-blue-800">
-                                {belegung.monatspreis.toFixed(2)}€/M
+                              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${isActive ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                                {isActive ? 'Aktiv' : 'Ausstehend'}
                               </span>
                             </div>
+                            <div className="mt-2 text-sm text-gray-600 space-y-1">
+                              <div className="flex justify-between">
+                                <span>
+                                  {new Date(belegung.mietbeginn).toLocaleDateString('de-DE')} — {belegung.mietende ? new Date(belegung.mietende).toLocaleDateString('de-DE') : 'unbefristet'}
+                                </span>
+                                <span className="font-semibold text-gray-900">
+                                  {belegung.monatspreis?.toFixed(2) || '0.00'}€/Monat
+                                  {belegung.discount > 0 && (
+                                    <span className="ml-1 text-xs text-green-600">(-{(belegung.discount * 100).toFixed(0)}%)</span>
+                                  )}
+                                </span>
+                              </div>
+                              <div className="flex flex-wrap gap-1.5">
+                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-700">
+                                  {belegung.modelltyp || 'Basic'} ({belegung.provisionssatz || 4}%)
+                                </span>
+                                {belegung.zusatzleistungen?.lagerservice && (
+                                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-700">
+                                    Lagerservice
+                                  </span>
+                                )}
+                                {belegung.zusatzleistungen?.versandservice && (
+                                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-700">
+                                    Versandservice
+                                  </span>
+                                )}
+                              </div>
+                            </div>
                           </div>
-                        ))
-                      }
-                      {mietfach.belegungen.filter(b => b.status === 'aktiv').length === 0 && (
-                        <div className="text-sm text-gray-500 italic">Keine aktiven Belegungen</div>
-                      )}
+                        );
+                      })}
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
                 
                 {/* Features */}
                 <div className="mt-3">
@@ -998,6 +1027,15 @@ const MietfaecherPage: React.FC = () => {
                     ))}
                   </div>
                 </div>
+
+                {/* Flourio Sync Status */}
+                {(mietfach as any).flourioWarehouseId && (
+                  <div className="mt-2">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">
+                      Flourio: {(mietfach as any).flourioWarehouseId.substring(0, 8)}...
+                    </span>
+                  </div>
+                )}
 
                 {/* Sprint S12_M11_Mietfaecher_Seeding_Cleanup - Creation source tracking */}
                 <div className="mt-3 pt-3 border-t border-gray-100">

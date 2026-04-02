@@ -68,6 +68,21 @@ export class ScheduledJobs {
     // Job 9: Flourio Document Sync (every 15 minutes)
     this.scheduleDocumentSync();
 
+    // Run Vertrag activation once at startup
+    try {
+      const mongoose = require('mongoose');
+      const Vertrag = mongoose.model('Vertrag');
+      const activated = await Vertrag.updateMany(
+        { status: 'scheduled', 'availabilityImpact.from': { $lte: new Date() } },
+        { $set: { status: 'active', actualStartDate: new Date() } }
+      );
+      if (activated.modifiedCount > 0) {
+        logger.info(`✅ Startup: Activated ${activated.modifiedCount} scheduled Verträge`);
+      }
+    } catch (e) {
+      logger.warn('Could not run startup Vertrag activation:', e);
+    }
+
     logger.info('✅ Scheduled jobs initialized successfully');
   }
 

@@ -102,7 +102,8 @@ export const getAllVertraege = async (req: Request, res: Response): Promise<void
         gesamtpreis: gesamtpreis,
         zusatzleistungen: vertrag.zusatzleistungen || null,
         zusatzleistungen_kosten: vertrag.zusatzleistungen_kosten || null,
-        status: vertrag.status || 'aktiv',
+        status: ({ active: 'aktiv', pending: 'ausstehend', scheduled: 'ausstehend', cancelled: 'gekuendigt', expired: 'beendet' } as any)[vertrag.status] || vertrag.status || 'aktiv',
+        rawStatus: vertrag.status, // Original DB status for admin actions
         zahlungsart: 'Überweisung', // Default
         zahlungsrhythmus: 'monatlich', // Default
         createdAt: vertrag.createdAt,
@@ -838,6 +839,46 @@ export const createVertragWithZusatzleistungen = async (req: Request, res: Respo
       success: false,
       error: 'Interner Serverfehler beim Erstellen des Vertrags'
     });
+  }
+};
+
+/**
+ * PATCH /api/admin/vertraege/:id/cancel
+ * Cancel a Vertrag (Admin only)
+ */
+export const cancelVertrag = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+
+    const vertrag = await Vertrag.findById(id);
+    if (!vertrag) {
+      res.status(404).json({ success: false, message: 'Vertrag nicht gefunden' });
+      return;
+    }
+
+    if (vertrag.status === 'cancelled') {
+      res.status(400).json({ success: false, message: 'Vertrag ist bereits storniert' });
+      return;
+    }
+
+    if (vertrag.status === 'expired') {
+      res.status(400).json({ success: false, message: 'Abgelaufene Verträge können nicht storniert werden' });
+      return;
+    }
+
+    vertrag.status = 'cancelled';
+    await vertrag.save();
+
+    logger.info('[Admin] Vertrag cancelled', { vertragId: id });
+
+    res.json({
+      success: true,
+      data: vertrag,
+      message: 'Vertrag erfolgreich storniert'
+    });
+  } catch (error: any) {
+    logger.error('Fehler beim Stornieren des Vertrags:', error);
+    res.status(500).json({ success: false, message: 'Fehler beim Stornieren', error: error.message });
   }
 };
 
