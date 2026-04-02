@@ -10,8 +10,6 @@ import { Mail, Lock, Eye, EyeOff, AlertCircle, CheckCircle, Send } from 'lucide-
 import axios from 'axios';
 import { useVendorAuth } from '../contexts/VendorAuthContext';
 
-const UNCONFIRMED_EMAIL_MESSAGE = 'Bitte bestätige zuerst deine E-Mail-Adresse, bevor du dich anmeldest';
-
 const VendorLoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
