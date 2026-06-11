@@ -68,3 +68,10 @@ export async function down(): Promise<void> {
     throw error;
   }
 }
+// Standardformat für den migrationRunner ({ version, name, up, down })
+export default {
+  version: 6,
+  name: 'add_mietfach_creation_tracking',
+  up,
+  down
+};

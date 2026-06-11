@@ -1,5 +1,10 @@
 import mongoose from 'mongoose';
 import { MongoMemoryServer } from 'mongodb-memory-server';
+import { config } from 'dotenv';
+import { resolve } from 'path';
+
+const envPath = resolve(__dirname, '../.env.local');
+config({ path: envPath });
 
 let mongoServer: MongoMemoryServer;
 

@@ -34,15 +34,24 @@ class MigrationRunner {
     const files = fs.readdirSync(this.migrationsPath)
       .filter(f => f.endsWith('.ts') && f !== 'migrationRunner.ts')
       .sort();
-    
+
     const migrations: Migration[] = [];
-    
+
     for (const file of files) {
       const migrationPath = path.join(this.migrationsPath, file);
       const migration = await import(migrationPath);
-      migrations.push(migration.default);
+      const def = migration.default;
+
+      // Nur Migrationen im Format { version, name, up, down } sind lauffähig —
+      // Altdateien (Klassen-Export, kein Default) überspringen statt crashen
+      if (!def || typeof def.up !== 'function' || def.version === undefined) {
+        console.warn(`Skipping non-conforming migration file: ${file}`);
+        continue;
+      }
+
+      migrations.push(def);
     }
-    
+
     return migrations;
   }
   
@@ -159,16 +168,23 @@ class MigrationRunner {
 const command = process.argv[2];
 const runner = new MigrationRunner();
 
+// Explizites exit: importierte Models/Services können offene Handles
+// (Timer, Pools) hinterlassen, die den Prozess sonst nie enden lassen
 switch (command) {
   case 'up':
-    runner.runMigrations().catch(console.error);
+    runner.runMigrations()
+      .then(() => process.exit(0))
+      .catch(err => { console.error(err); process.exit(1); });
     break;
-    
-  case 'down':
+
+  case 'down': {
     const version = process.argv[3] ? parseInt(process.argv[3]) : undefined;
-    runner.rollback(version).catch(console.error);
+    runner.rollback(version)
+      .then(() => process.exit(0))
+      .catch(err => { console.error(err); process.exit(1); });
     break;
-    
+  }
+
   default:
     console.log('Usage:');
     console.log('  npm run migrate:up     - Run all pending migrations');

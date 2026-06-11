@@ -90,3 +90,11 @@ export const metadata = {
   sprint: 'S18_M015_Backend_Foundation',
   date: new Date('2024-01-15')
 };
+
+// Standardformat für den migrationRunner ({ version, name, up, down })
+export default {
+  version: 3,
+  name: 'add_trial_automation_fields',
+  up,
+  down
+};

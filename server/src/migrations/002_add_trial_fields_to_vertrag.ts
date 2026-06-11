@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { MongoClient, Db } from 'mongodb';
 
 interface MigrationResult {
@@ -22,16 +23,17 @@ export class AddTrialFieldsToVertragMigration {
       console.log('Starting migration: Add trial fields to Vertrag collection...');
 
       // Update all existing contracts with trial fields
+      // ($ifNull braucht die Aggregation-Pipeline-Form des Updates)
       const updateResult = await this.db.collection('vertrags').updateMany(
         {}, // Update all documents
-        {
+        [{
           $set: {
             istProbemonatBuchung: false,
             gekuendigtInProbemonat: false,
             // Set zahlungspflichtigAb to scheduledStartDate for existing contracts
             zahlungspflichtigAb: { $ifNull: ['$scheduledStartDate', '$datum'] }
           }
-        }
+        }]
       );
 
       console.log(`Updated ${updateResult.modifiedCount} contracts with trial fields`);
@@ -241,5 +243,33 @@ export async function rollbackTrialFieldsMigration(mongoUrl: string): Promise<Mi
   }
 }
 
-// Export for direct usage
-export default AddTrialFieldsToVertragMigration;
+/** Holt die aktive Mongoose-Verbindung für den migrationRunner */
+function getDb(): Db {
+  const db = mongoose.connection.db;
+  if (!db) {
+    throw new Error('Database connection not established');
+  }
+  return db as unknown as Db;
+}
+
+// Standardformat für den migrationRunner ({ version, name, up, down })
+export default {
+  version: 2,
+  name: 'add_trial_fields_to_vertrag',
+
+  up: async () => {
+    const migration = new AddTrialFieldsToVertragMigration(getDb());
+    const result = await migration.up();
+    if (!result.success) {
+      throw new Error(result.message);
+    }
+  },
+
+  down: async () => {
+    const migration = new AddTrialFieldsToVertragMigration(getDb());
+    const result = await migration.down();
+    if (!result.success) {
+      throw new Error(result.message);
+    }
+  }
+};
