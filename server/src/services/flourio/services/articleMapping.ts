@@ -66,6 +66,30 @@ export async function getVatRateForProduct(product: IProduct): Promise<number> {
 }
 
 /**
+ * Convert stored image references to publicly reachable URLs for flour.io.
+ * - Absolute http(s)-URLs bleiben unverändert
+ * - Relative /uploads/-Pfade werden mit PUBLIC_SERVER_URL (Fallback FRONTEND_URL)
+ *   gepräfixt; ohne konfigurierten Host werden sie weggelassen
+ * - Base64-Data-URLs werden nie übertragen (zu groß, von flour.io nicht ladbar)
+ */
+export function toPublicImageUrls(images: string[] | undefined): string[] {
+  if (!images || images.length === 0) {
+    return [];
+  }
+
+  const baseUrl = (process.env.PUBLIC_SERVER_URL || process.env.FRONTEND_URL || '')
+    .replace(/\/$/, '');
+
+  return images
+    .filter(img => !img.startsWith('data:'))
+    .map(img => {
+      if (/^https?:\/\//.test(img)) return img;
+      return baseUrl ? `${baseUrl}${img.startsWith('/') ? '' : '/'}${img}` : null;
+    })
+    .filter((img): img is string => img !== null);
+}
+
+/**
  * Map Product to Flourio CreateArticle DTO.
  *
  * Flourio Article format (discovered from live API):
@@ -89,9 +113,11 @@ export async function mapProductToCreateArticle(product: IProduct): Promise<Reco
     title: product.name,
     description: product.description || '',
     number: sku,
+    ...(product.ean ? { ean: product.ean } : {}),
     taxassignment,
     tags: tagNames,
-    images: product.images || [],
+    // flour.io erwartet Bild-OBJEKTE ({url}), keine String-URLs (PATCH validiert strikt)
+    images: toPublicImageUrls(product.images).map(url => ({ url })),
     sale: [{
       price: product.price || 0,
       pricelist: flourioTenantConfig.defaultPricelistId
@@ -113,9 +139,11 @@ export async function mapProductToUpdateArticle(product: IProduct, articleId: st
   return {
     title: product.name,
     description: product.description || '',
+    ...(product.ean ? { ean: product.ean } : {}),
     taxassignment,
     tags: tagNames,
-    images: product.images || [],
+    // flour.io erwartet Bild-OBJEKTE ({url}), keine String-URLs (PATCH validiert strikt)
+    images: toPublicImageUrls(product.images).map(url => ({ url })),
     sale: [{
       price: product.price || 0,
       pricelist: flourioTenantConfig.defaultPricelistId

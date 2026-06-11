@@ -17,14 +17,19 @@ export interface ArticleTag {
 }
 
 export interface Article {
+  /** flour.io liefert die Artikel-ID als Mongo-_id — `id` existiert in echten Responses nicht */
+  _id?: string;
   id: string;
   name: string;
   description?: string;
   price: number;
   unit?: string;
   tags?: string[] | ArticleTag[]; // Can be string[] or populated ArticleTag objects
+  number?: string;         // Artikelnummer (housnkuh sends generated SKU here)
+  ean?: string;            // Scan code matched by the flour.io POS (housnkuh-generated EAN-13)
+  codes?: Array<{ id?: string; text: string }>; // additional scan codes
+  manufacturerNumber?: string;
   sku?: string;
-  barcode?: string;
   taxRate?: number;
   stock?: number;
   minStock?: number;
@@ -188,8 +193,9 @@ export interface CreateArticleDto {
   price: number;
   unit?: string;
   tags?: string[];
+  number?: string;         // Artikelnummer
+  ean?: string;            // Scan code (EAN-13)
   sku?: string;
-  barcode?: string;
   taxRate?: number;
   stock?: number;
   minStock?: number;

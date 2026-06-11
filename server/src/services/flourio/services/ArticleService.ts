@@ -25,7 +25,6 @@ export interface ArticleSyncStatus {
   lastSyncedAt?: Date;
   status?: 'synced' | 'pending' | 'error' | 'never';
   error?: string;
-  barcode?: string;
 }
 
 /**
@@ -67,13 +66,12 @@ export class ArticleService {
       const response = await this.client.post<Article>('/articles', dto);
       return response;
     } catch (error: any) {
-      // Try to get raw Axios response data from wrapped error
-      const rawData = error.response?.data || error.cause?.response?.data || error.details;
+      // FlourioError trägt den API-Response-Body direkt in error.response
+      const rawData = error.response?.data ?? error.response ?? error.details;
       logger.error('[ArticleService] Create failed', {
         message: error.message,
-        status: error.response?.status || error.statusCode,
-        rawData: JSON.stringify(rawData),
-        errorKeys: Object.keys(error)
+        status: error.statusCode || error.response?.status,
+        rawData: JSON.stringify(rawData)
       });
       throw new Error(`Failed to create article: ${error.message} ${rawData ? JSON.stringify(rawData) : ''}`);
     }
@@ -84,10 +82,19 @@ export class ArticleService {
    */
   async updateArticle(articleId: string, dto: Record<string, any>): Promise<Article> {
     try {
+      logger.info('[ArticleService] Updating article', { articleId, dto: JSON.stringify(dto) });
       const response = await this.client.patch<Article>(`/articles/${articleId}`, dto);
       return response;
     } catch (error: any) {
-      throw new Error(`Failed to update article ${articleId}: ${error.message}`);
+      // FlourioError trägt den API-Response-Body direkt in error.response
+      const rawData = error.response?.data ?? error.response ?? error.details;
+      logger.error('[ArticleService] Update failed', {
+        articleId,
+        message: error.message,
+        status: error.statusCode || error.response?.status,
+        rawData: JSON.stringify(rawData)
+      });
+      throw new Error(`Failed to update article ${articleId}: ${error.message} ${rawData ? JSON.stringify(rawData) : ''}`);
     }
   }
 
@@ -125,12 +132,12 @@ export class ArticleService {
         // Write back FlourIO tag IDs to local tags
         await this.updateTagFlourioIds(article.tags, updateDto.tags || []);
 
-        // Update product sync status + barcode from Flourio
+        this.warnOnEanMismatch(product, article);
+
         await this.updateProductSyncStatus(product, {
-          articleId: article.id,
+          articleId: article._id || article.id, // flour.io liefert _id, nicht id
           lastSyncedAt: new Date(),
-          status: 'synced',
-          barcode: article.barcode
+          status: 'synced'
         });
 
         return { article, created: false };
@@ -142,12 +149,12 @@ export class ArticleService {
         // Write back FlourIO tag IDs to local tags
         await this.updateTagFlourioIds(article.tags, createDto.tags || []);
 
-        // Update product sync status + barcode from Flourio
+        this.warnOnEanMismatch(product, article);
+
         await this.updateProductSyncStatus(product, {
-          articleId: article.id,
+          articleId: article._id || article.id, // flour.io liefert _id, nicht id
           lastSyncedAt: new Date(),
-          status: 'synced',
-          barcode: article.barcode
+          status: 'synced'
         });
 
         return { article, created: true };
@@ -175,7 +182,6 @@ export class ArticleService {
     if (status.status !== undefined) updateData['flourioSync.status'] = status.status;
     if (status.lastSyncedAt !== undefined) updateData['flourioSync.lastSyncedAt'] = status.lastSyncedAt;
     if (status.error !== undefined) updateData['flourioSync.error'] = status.error;
-    if (status.barcode !== undefined) updateData['flourioSync.barcode'] = status.barcode;
 
     await Product.updateOne(
       { _id: product._id },
@@ -192,7 +198,20 @@ export class ArticleService {
     if (status.status !== undefined) product.flourioSync.status = status.status;
     if (status.lastSyncedAt !== undefined) product.flourioSync.lastSyncedAt = status.lastSyncedAt;
     if (status.error !== undefined) product.flourioSync.error = status.error;
-    if (status.barcode !== undefined) (product.flourioSync as any).barcode = status.barcode;
+  }
+
+  /**
+   * Detect flour.io rejecting or rewriting our EAN — the printed label would
+   * then no longer match what the POS expects, so this must be loud in logs.
+   */
+  private warnOnEanMismatch(product: IProduct, article: Article): void {
+    if (product.ean && article.ean && article.ean !== product.ean) {
+      logger.warn('[ArticleService] flour.io returned a different EAN than sent', {
+        productId: product._id,
+        sentEan: product.ean,
+        returnedEan: article.ean
+      });
+    }
   }
 
   /**

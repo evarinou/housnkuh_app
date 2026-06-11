@@ -7,6 +7,6 @@
 export { FlourioClient } from './FlourioClient';
 export type { FlourioClientConfig } from './FlourioClient';
 export { FlourioError, FlourioErrorHandler } from './errorHandler';
-export { RateLimitHandler } from './rateLimitHandler';
-export type { RateLimitConfig } from './rateLimitHandler';
+export { RateLimitHandler } from './RateLimitHandler';
+export type { RateLimitConfig } from './RateLimitHandler';
 export { flourioConfig, validateFlourioConfig } from './config';
