@@ -6,6 +6,7 @@
 
 import mongoose, { Schema, Document, Model } from 'mongoose';
 import logger from '../utils/logger';
+import { generateProductEan } from '../utils/ean';
 
 /**
  * Interface for bulk pricing tiers
@@ -62,7 +63,11 @@ export interface IProduct extends Document {
   slug: string;
   metaDescription?: string;
   keywords: string[];
-  
+
+  // Scancode (housnkuh-generated, synced to flour.io ean field, printed on labels)
+  ean?: string;
+
+
   // Management
   isActive: boolean;
   featured: boolean;
@@ -76,7 +81,6 @@ export interface IProduct extends Document {
     status: 'synced' | 'pending' | 'error' | 'never';
     lastSyncedAt?: Date;
     error?: string;
-    barcode?: string;
   };
 
   // FlourIO Stock (Pull: Flourio → housnkuh) — Flourio is source of truth for inventory
@@ -171,7 +175,11 @@ const ProductSchema: Schema<IProduct> = new Schema({
   // Pricing & Units
   price: {
     type: Number,
-    min: 0
+    min: 0,
+    validate: {
+      validator: (v: number) => v === undefined || v === null || Number.isFinite(v),
+      message: 'Preis muss eine endliche Zahl sein'
+    }
   },
   priceUnit: {
     type: String,
@@ -226,7 +234,16 @@ const ProductSchema: Schema<IProduct> = new Schema({
     trim: true,
     lowercase: true
   }],
-  
+
+  // Scancode: internal EAN-13 ("22" prefix, see utils/ean.ts), generated in pre-save hook
+  ean: {
+    type: String,
+    trim: true,
+    immutable: true,
+    match: /^\d{13}$/
+  },
+
+
   // Management
   isActive: {
     type: Boolean,
@@ -256,10 +273,6 @@ const ProductSchema: Schema<IProduct> = new Schema({
       type: Date
     },
     error: {
-      type: String,
-      trim: true
-    },
-    barcode: {
       type: String,
       trim: true
     }
@@ -293,15 +306,23 @@ ProductSchema.index({ vendorId: 1, isActive: 1 });
 ProductSchema.index({ tags: 1, availability: 1 });
 ProductSchema.index({ 'flourioSync.articleId': 1 });
 ProductSchema.index({ slug: 1, vendorId: 1 }, { unique: true });
+ProductSchema.index({ ean: 1 }, { unique: true, sparse: true });
 ProductSchema.index({ name: 'text', description: 'text', keywords: 'text' });
 ProductSchema.index({ featured: 1, sortOrder: 1 });
 
 /**
- * Pre-save middleware to generate slug and validate image index
- * @description Automatically generates SEO-friendly slug from product name and validates image index
- * @complexity O(n) where n is the length of the product name
+ * Pre-validate middleware to generate EAN and a collision-free slug
+ * @description Runs before schema validation (slug/ean are required/constrained).
+ * Generates SEO-friendly slug from product name; on collision with the unique
+ * (slug, vendorId) index a numeric suffix (-2, -3, …) is appended so renames
+ * never fail with E11000
  */
-ProductSchema.pre('save', function(next) {
+ProductSchema.pre('validate', async function() {
+  // Assign a unique internal EAN-13 on creation (printed on labels, synced to flour.io)
+  if (this.isNew && !this.ean) {
+    this.ean = await generateProductEan();
+  }
+
   if (this.isModified('name') || this.isNew) {
     const baseSlug = this.name
       .toLowerCase()
@@ -313,11 +334,22 @@ ProductSchema.pre('save', function(next) {
       })
       .replace(/[^a-z0-9]/g, '-')
       .replace(/-+/g, '-')
-      .replace(/^-|-$/g, '');
-    
-    this.slug = baseSlug;
+      .replace(/^-|-$/g, '')
+      || 'produkt'; // name consists only of special chars
+
+    const ProductModel = this.constructor as IProductModel;
+    let candidate = baseSlug;
+    let suffix = 2;
+    while (await ProductModel.exists({
+      slug: candidate,
+      vendorId: this.vendorId,
+      _id: { $ne: this._id }
+    })) {
+      candidate = `${baseSlug}-${suffix++}`;
+    }
+    this.slug = candidate;
   }
-  
+
   // Validate primaryImageIndex
   if (this.images && this.images.length > 0) {
     if (this.primaryImageIndex >= this.images.length) {
@@ -326,8 +358,6 @@ ProductSchema.pre('save', function(next) {
   } else {
     this.primaryImageIndex = 0;
   }
-  
-  next();
 });
 
 /**

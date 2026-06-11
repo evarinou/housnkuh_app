@@ -7,7 +7,7 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Edit2, RefreshCw, Package, BarChart3 } from 'lucide-react';
+import { Edit2, RefreshCw, Package, BarChart3, Printer } from 'lucide-react';
 import SyncStatusBadge, { SyncStatus } from '../ui/SyncStatusBadge';
 import StockLevelBadge from '../ui/StockLevelBadge';
 import TagBadge from '../ui/TagBadge';
@@ -24,6 +24,8 @@ export interface Product {
   minimumQuantity: number;
   taxRate: number;
   vendorId: string;
+  /** Interne EAN-13 für Etiketten/Kassen-Scan (auto-generiert) */
+  ean?: string;
   flourioSync?: {
     articleId?: string;
     status: string;
@@ -48,10 +50,11 @@ export interface ProductCardProps {
   onSync: (productId: string) => Promise<void>;
   onEdit?: (productId: string) => void;
   onBookStock?: (productId: string, mietfachId: string, amount: number) => Promise<void>;
+  onPrintLabel?: (productId: string) => void;
   vendorMietfaecher?: VendorMietfach[];
 }
 
-const ProductCard: React.FC<ProductCardProps> = ({ product, onSync, onEdit, onBookStock, vendorMietfaecher = [] }) => {
+const ProductCard: React.FC<ProductCardProps> = ({ product, onSync, onEdit, onBookStock, onPrintLabel, vendorMietfaecher = [] }) => {
   const [syncing, setSyncing] = useState(false);
   const [showStockForm, setShowStockForm] = useState(false);
   const [stockMietfachId, setStockMietfachId] = useState('');
@@ -137,6 +140,13 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onSync, onEdit, onBo
         <div className="text-2xl font-bold text-emerald-600 mb-3">
           {formatPrice(product.price, product.priceUnit)}
         </div>
+
+        {/* EAN (Scancode für Kasse/Etikett) */}
+        {product.ean && (
+          <div className="text-xs text-gray-500 font-mono mb-3" title="EAN-13 für Etikett und Kassen-Scan">
+            EAN {product.ean}
+          </div>
+        )}
 
         {/* Tags */}
         {product.tags && product.tags.length > 0 && (
@@ -231,6 +241,16 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onSync, onEdit, onBo
               aria-label="Bestand buchen"
             >
               <BarChart3 className="w-4 h-4" />
+            </button>
+          )}
+          {onPrintLabel && product.ean && (
+            <button
+              onClick={() => onPrintLabel(product._id)}
+              className="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+              aria-label="Etikett drucken"
+              title="Etikett mit Barcode drucken"
+            >
+              <Printer className="w-4 h-4" />
             </button>
           )}
           {onEdit && (

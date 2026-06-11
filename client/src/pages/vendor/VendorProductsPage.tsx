@@ -11,6 +11,7 @@ import axios from 'axios';
 import VendorLayout from '../../components/vendor/VendorLayout';
 import ProductCard, { Product } from '../../components/vendor/ProductCard';
 import ProductCreationModal, { VendorMietfach } from '../../components/admin/ProductCreationModal';
+import ProductLabelPrintModal from '../../components/ui/ProductLabelPrintModal';
 import { Tag } from '../../components/admin/ProductFormFields';
 import { tokenStorage, apiUtils } from '../../utils/auth';
 
@@ -40,6 +41,7 @@ const VendorProductsPage: React.FC = () => {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [labelProduct, setLabelProduct] = useState<Product | null>(null);
   const [vendorMietfaecher, setVendorMietfaecher] = useState<VendorMietfach[]>([]);
   const [allTags, setAllTags] = useState<Tag[]>([]);
 
@@ -203,6 +205,14 @@ const VendorProductsPage: React.FC = () => {
     if (product) {
       setEditingProduct(product);
       setShowCreateModal(true);
+    }
+  };
+
+  // Print label for product
+  const handlePrintLabel = (productId: string) => {
+    const product = products.find(p => p._id === productId);
+    if (product) {
+      setLabelProduct(product);
     }
   };
 
@@ -394,6 +404,7 @@ const VendorProductsPage: React.FC = () => {
                 onSync={handleSync}
                 onEdit={handleEdit}
                 onBookStock={handleBookStock}
+                onPrintLabel={handlePrintLabel}
                 vendorMietfaecher={vendorMietfaecher}
               />
             ))}
@@ -417,6 +428,13 @@ const VendorProductsPage: React.FC = () => {
         vendorMietfaecher={vendorMietfaecher}
         editProduct={editingProduct || undefined}
         onCreateTag={handleCreateTag}
+      />
+
+      {/* Label Print Modal */}
+      <ProductLabelPrintModal
+        isOpen={!!labelProduct}
+        onClose={() => setLabelProduct(null)}
+        product={labelProduct}
       />
     </VendorLayout>
   );
