@@ -1,26 +1,26 @@
 # Architecture Statistics (Auto-Generated)
 
-**Generated**: 2026-04-02 15:50:48
+**Generated**: 2026-06-11 10:25:19
 **Generator**: scripts/update-architecture.sh
 
 ## File Counts
 
 ### Frontend (Client)
-- Components: 94
-- Pages: 59
+- Components: 93
+- Pages: 58
 - Hooks: 13
-- Tests: 25
+- Tests: 26
 
 ### Backend (Server)
-- Controllers: 36
+- Controllers: 39
 - Models: 21
 - Services: 61
 - Routes: 19
-- Tests: 45
+- Tests: 48
 
 ### Overall
-- Total TypeScript Files: 399
-- Total Tests: 70
+- Total TypeScript Files: 404
+- Total Tests: 74
 
 ## Component Breakdown
 
@@ -50,20 +50,15 @@ AdminLayout.tsx
 AssignCategoryModal.tsx
 AvailabilityCalendar.tsx
 BookingTimeline.tsx
-ExportButton.tsx
 LaunchDayMonitor.tsx
 ManualInvoiceGenerator.test.tsx
 ManualInvoiceGenerator.tsx
-MonthlyRevenueWidget.test.tsx
-MonthlyRevenueWidget.tsx
 PackageManagementInterface.tsx
 ProductCreationModal.test.tsx
 ProductCreationModal.tsx
 ProductFormFields.test.tsx
 ProductFormFields.tsx
 ProtectedRoute.tsx
-RevenueByUnitTable.tsx
-RevenueChart.tsx
 VendorDetailModal.tsx
 ZusatzleistungenOverview.tsx
 ```
@@ -101,6 +96,7 @@ VendorProtectedRoute.tsx
 ```
 Alert.ts
 Contact.ts
+Counter.ts
 EmailTemplate.ts
 FAQ.ts
 FlourioDocument.ts
@@ -109,7 +105,6 @@ Invoice.test.ts
 Invoice.ts
 Mietfach.ts
 modelTypes.ts
-MonthlyRevenue.ts
 PackageTracking.ts
 Product.ts
 Settings.ts

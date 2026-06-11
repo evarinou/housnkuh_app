@@ -162,7 +162,7 @@ export class VendorContractController {
       const userId = (req as any).user._id;
       const { status, includeTrialOnly } = req.query;
 
-      let query: any = { user: userId };
+      const query: any = { user: userId };
       
       if (status && status !== 'all') {
         query.status = status;

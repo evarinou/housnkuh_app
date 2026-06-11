@@ -98,7 +98,6 @@ const checkAdminSetup = async () => {
     try {
       const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
       
-      // Debug log to see what we're sending
       const requestData = {
         username,
         password,
@@ -106,8 +105,7 @@ const checkAdminSetup = async () => {
         email,
         setupKey
       };
-      console.log('Sending setup request:', requestData);
-      
+
       const response = await axios.post(`${apiUrl}/auth/setup`, requestData);
       
       if (response.data.success) {

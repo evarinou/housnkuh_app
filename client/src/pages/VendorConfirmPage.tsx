@@ -385,7 +385,6 @@ const VendorConfirmPage: React.FC = () => {
         
         // Using the token as a path parameter to match the API's route definition
         // The email sends a URL with query parameter ?token=xyz but we need to use it in the path /:token
-        console.log(`Confirming vendor email with token: ${token}`);
         const response = await axios.get(`${apiUrl}/vendor-auth/confirm/${token}`);
         
         if (response.data.success) {
@@ -398,7 +397,6 @@ const VendorConfirmPage: React.FC = () => {
             setVendorData(response.data.vendor);
           } else {
             // No package data available - user will see basic confirmation without package details
-            console.log('No package data available from server');
             setVendorData(null);
           }
         } else {
