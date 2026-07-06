@@ -64,6 +64,10 @@ const ArticleManagementPage = React.lazy(() => import('../pages/admin/ArticleMan
 const FlourioDocumentsPage = React.lazy(() => import('../pages/admin/FlourioDocumentsPage'));
 const EmailTemplatesPage = React.lazy(() => import('../pages/admin/EmailTemplatesPage'));
 const InvoiceDashboard = React.lazy(() => import('../pages/admin/InvoiceDashboard'));
+const StoreMapEditorPage = React.lazy(() => import('../pages/admin/StoreMapEditorPage'));
+
+// Lazy load public store map (pulls in the three.js chunk)
+const LadenkartePage = React.lazy(() => import('../pages/LadenkartePage'));
 
 /**
  * Loading spinner component displayed while lazy-loaded components are being loaded
@@ -206,6 +210,11 @@ const AppContent: React.FC = () => {
             <InvoiceDashboard />
           </Suspense>
         } />
+        <Route path="ladenkarte" element={
+          <Suspense fallback={<LoadingSpinner />}>
+            <StoreMapEditorPage />
+          </Suspense>
+        } />
       </Route>
       
       {/* Vendor-Routen */}
@@ -293,6 +302,11 @@ const AppContent: React.FC = () => {
         <Route path="/direktvermarkter/:id" element={<DirektvermarkterDetailPage />} />
         <Route path="/vendors" element={<WettbewerbPage />} />
         <Route path="/standort" element={<StandortPage />} />
+        <Route path="/ladenkarte" element={
+          <Suspense fallback={<LoadingSpinner />}>
+            <LadenkartePage />
+          </Suspense>
+        } />
         <Route path="/mieten" element={<MietenPage />} />
         <Route path="/pricing" element={<PricingPage />} />
         <Route path="/kontakt" element={<KontaktPage />} />

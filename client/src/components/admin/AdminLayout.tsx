@@ -6,7 +6,7 @@
  */
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, X, Home, Users, Mail, Package, FileText, LogOut, MessageSquare, Calendar, Trophy, Settings, Tag, HelpCircle, DollarSign, Boxes, ShoppingCart } from 'lucide-react';
+import { Menu, X, Home, Users, Mail, Package, FileText, LogOut, MessageSquare, Calendar, Trophy, Settings, Tag, HelpCircle, DollarSign, Boxes, ShoppingCart, Map } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import logo from '../../assets/images/logo.svg';
 
@@ -134,7 +134,16 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                 <Package className="mr-4 h-6 w-6" />
                 Mietfächer
               </Link>
-              
+
+              <Link
+                to="/admin/ladenkarte"
+                className="group flex items-center px-2 py-2 text-base font-medium rounded-md text-white hover:bg-primary"
+                onClick={() => setSidebarOpen(false)}
+              >
+                <Map className="mr-4 h-6 w-6" />
+                Ladenkarte
+              </Link>
+
               <Link
                 to="/admin/vertraege"
                 className="group flex items-center px-2 py-2 text-base font-medium rounded-md text-white hover:bg-primary"
@@ -287,7 +296,15 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                   <Package className="mr-3 h-6 w-6" />
                   Mietfächer
                 </Link>
-                
+
+                <Link
+                  to="/admin/ladenkarte"
+                  className="group flex items-center px-2 py-2 text-base font-medium rounded-md text-white hover:bg-primary"
+                >
+                  <Map className="mr-3 h-6 w-6" />
+                  Ladenkarte
+                </Link>
+
                 <Link
                   to="/admin/vertraege"
                   className="group flex items-center px-2 py-2 text-base font-medium rounded-md text-white hover:bg-primary"
