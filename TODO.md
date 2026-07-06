@@ -31,10 +31,11 @@
 
 ## Stufe 1 – Verkaufsdaten-Fundament (trägt F2a/F2c/F3)
 
-- [ ] **T1.1 – Vendor-Steuerstatus am Modell** (FEATURES F2a Krit. 4). Feld für
-  Kleinunternehmer (§19) vs. regelbesteuert am User/vendorProfile + Pflege im
-  Admin (Vendor-Detail). *Fertig, wenn:* Status je Vendor setzbar/persistent
-  und in der Rechnungslogik abfragbar; Default dokumentiert.
+- [x] **T1.1 – Vendor-Steuerstatus am Modell** (FEATURES F2a Krit. 4). ✅
+  `vendorProfile.steuerstatus` (enum kleinunternehmer/regelbesteuert, Default
+  'kleinunternehmer' §19) am User-Model + Interface; im Admin über
+  VendorDetailModal pflegbar. In der Rechnungslogik via
+  `user.vendorProfile.steuerstatus` abfragbar. Commit.
 - [ ] **T1.2 – Abrechenbarer Verkaufs-Ledger** (FEATURES ⚑-Befund). Aus den
   `FlourioDocument`-Positionen je Verkauf/Position einen abrechenbaren,
   **markierbaren** Datensatz mit Vendor-Zuordnung (Position.productId →
