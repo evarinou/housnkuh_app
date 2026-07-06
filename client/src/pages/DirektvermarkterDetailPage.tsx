@@ -12,6 +12,7 @@ import TagBadge from '../components/ui/TagBadge';
 import axios from 'axios';
 import { resolveImageUrl } from '../utils/imageUtils';
 import SimpleMapComponent from '../components/SimpleMapComponent';
+import StoreMapEmbed from '../components/storemap/StoreMapEmbed';
 
 /**
  * Tag/category information for direct marketers
@@ -625,6 +626,9 @@ const DirektvermarkterDetailPage: React.FC = () => {
                   Adresse: {direktvermarkter.adresse.strasse} {direktvermarkter.adresse.hausnummer}, {direktvermarkter.adresse.plz} {direktvermarkter.adresse.ort}
                 </p>
               </div>
+
+              {/* Interaktive Ladenkarte: zeigt die Mietfächer dieses Vermarkters */}
+              {id && <StoreMapEmbed vendorId={id} />}
             </div>
           </div>
         </div>
