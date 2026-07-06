@@ -71,13 +71,35 @@ Ergebnis des Dialogs (2026-07-06). Grobe Reihenfolge in Phase 4 klärt die TODO.
   Direktvermarkter (Filter nach Art, Zertifizierung, Standort). Backend hat
   bereits einen ungenutzten Text-Index auf Product → neuer öffentlicher
   Endpunkt + Frontend-Seite. Größter Discoverability-Hebel.
-- **F2 – Vendor-Rechnungsansicht (beide Seiten).**
-  - *housnkuh → Vendor* (`VendorHousnkuhInvoicesPage`): nur an das **bereits
-    fertige** Invoice-Backend anbinden (Anzeige/Download). Kleiner Aufwand.
-  - *Vendor → Endkunden* (`VendorCustomerInvoicesPage`): Ansicht der
-    Verkaufsbelege des Vendors aus flour.io. Hängt an ⚑flour.io-Datenquelle.
+- **F2a – Automatischer Vendor-Abrechnungslauf (Gutschriftsverfahren).**
+  **Größtes neues Feature.** housnkuh erstellt in Vertretung der
+  Direktvermarkter deren Verkaufsrechnungen (Abrechnung im fremden Namen /
+  Gutschriftsverfahren; Eva-Maria rechnet für die Vendors ab). Ablauf: Job
+  alle 5 min zieht Verkaufsdaten aus flour.io, gruppiert Verkäufe je Vendor,
+  erzeugt pro Vendor **eine** zusammengefasste Rechnung. Dies ist ein
+  **eigener, zweiter Rechnungslauf** — NICHT zu verwechseln mit dem
+  bestehenden monatlichen `invoiceGenerationJob` (housnkuh → Vendor,
+  Miete/Gebühren). Anzeigefläche im Portal: `VendorCustomerInvoicesPage`.
+  Akzeptanzkriterien (fertig, wenn):
+  1. Job läuft zuverlässig alle 5 min, gegen Überlappung/Doppelläufe
+     abgesichert (Lauf-Lock — vgl. Audit OP9).
+  2. Jeder flour.io-Verkauf wird **genau einmal** abgerechnet
+     (Duplikat-Schutz per Status-Flag oder Cursor in MongoDB).
+  3. Pro Vendor eine korrekt aufgeschlüsselte Rechnung mit allen zugehörigen
+     Verkäufen.
+  4. **USt je Vendor korrekt** (Kleinunternehmer §19 vs. regelbesteuert)
+     → **erfordert neues Steuerstatus-Feld am Vendor (User-Model) — fehlt aktuell.**
+  5. Rechnungsausgabe definiert (PDF-Generierung, Ablage, ggf. Versand) —
+     kann `invoicePdfService` mitnutzen.
+  6. Fehlerfälle (flour.io nicht erreichbar, unvollständige Daten) sauber
+     abgefangen und geloggt, ohne dass Verkäufe verloren gehen oder doppelt
+     abgerechnet werden (vgl. Audit OP4).
+- **F2b – housnkuh-Rechnungsansicht anbinden** (`VendorHousnkuhInvoicesPage`):
+  die monatlichen housnkuh→Vendor-Rechnungen anzeigen/downloaden. Backend
+  **existiert** (invoiceGenerationJob/-service), nur die Anzeige fehlt. Kleiner Aufwand.
 - **F3 – Vendor-Reporting mit Verkaufsdaten** (`VendorReportsPage`): Umsatz-/
-  Verkaufsstatistik pro Vendor. Hängt an ⚑flour.io-Datenquelle.
+  Verkaufsstatistik pro Vendor. Speist sich aus derselben ⚑flour.io-
+  Verkaufsdatenquelle wie F2a.
 - **F4 – flour.io BusinessPartner-Sync verdrahten.** Bei Vendor-Registrierung
   automatisch flour.io-BusinessPartner anlegen/verknüpfen (Service existiert,
   nur nicht eingehängt). Warehouse-Sync-Service dabei mitklären.
@@ -95,12 +117,16 @@ Ergebnis des Dialogs (2026-07-06). Grobe Reihenfolge in Phase 4 klärt die TODO.
   einer Buchung (TODO in `rejectPendingBooking`); Admin-Alert bei E-Mail-
   Versandfehlern (**OP7**, `alertAdminOfEmailFailure`).
 
-> ⚑ **Gemeinsame Abhängigkeit (F2/F3/F4):** liefert flour.io pro Vendor
-> Verkaufs-/Belegdaten? Der `documentSyncJob` zieht bereits flour.io-
-> „Documents" (alle 15 min → `FlourioDocument`). In Phase 4 zuerst prüfen, ob
-> diese die Belege/Umsätze pro Vendor enthalten — dann speisen sie F2 und F3
-> aus derselben Quelle. Falls nicht, ist die Datenbeschaffung der erste
-> Teilschritt dieser drei Features.
+> ⚑ **Gemeinsame Abhängigkeit (F2a/F3):** In welcher Form liefert flour.io die
+> **einzelnen Verkäufe** pro Vendor? Zwei Kandidaten laufen bereits:
+> `stockPullJob` (alle 5 min, StockItemEntries = POS-Abgänge) und
+> `documentSyncJob` (alle 15 min → `FlourioDocument`, hat bereits
+> Verkaufspositionen mit `vendorId`, Menge, Steuersatz). **Phase-4-Schritt 0:**
+> klären, ob eine dieser Quellen die abrechenbaren Einzelverkäufe *persistent*
+> und *je Vendor zuordenbar* enthält. Wichtig: prüfen, ob `stockPullJob` die
+> Verkäufe nur als Bestands-Update verarbeitet (dann keine abrechenbaren
+> Einzelposten) oder speichert. Falls keine Quelle passt, ist das Persistieren
+> der Einzelverkäufe der erste Teilschritt von F2a.
 
 ## Bewusst NICHT im Scope
 
