@@ -36,15 +36,16 @@
   'kleinunternehmer' §19) am User-Model + Interface; im Admin über
   VendorDetailModal pflegbar. In der Rechnungslogik via
   `user.vendorProfile.steuerstatus` abfragbar. Commit.
-- [ ] **T1.2 – Abrechenbarer Verkaufs-Ledger** (FEATURES ⚑-Befund). Aus den
-  `FlourioDocument`-Positionen je Verkauf/Position einen abrechenbaren,
-  **markierbaren** Datensatz mit Vendor-Zuordnung (Position.productId →
-  Product.vendorId), Netto/USt und Zeitstempel ableiten. Zwei unabhängige
-  Zustände vorsehen: „in Verkaufsrechnung abgerechnet" (F2a) und „in
-  Provisionslauf Monat Y gezählt" (F2c). Nur echte Verkaufs-Belegtypen
-  (kein order/quote/delivery). *Fertig, wenn:* jeder Verkauf genau einmal je
-  Zustand markierbar ist, Vendor-Zuordnung auf Zeilenebene stimmt, gemischte
-  Bons korrekt je Vendor aufgeteilt werden.
+- [x] **T1.2 – Abrechenbarer Verkaufs-Ledger** (FEATURES ⚑-Befund). ✅
+  `VendorSale`-Collection (Variante B): je FlourioDocument-Position eine Zeile,
+  Vendor via `productId → Product.vendorId` (Zeilenebene), zwei unabhängige
+  Zustände (`salesInvoice`/`provisionPeriod`). `VendorSaleProjectionService`
+  projiziert idempotent (Unique-Index + `$setOnInsert`) nach jedem
+  documentSyncJob-Lauf. Test (grün) deckt Vendor-Split, Auslassen
+  unzuordenbarer Zeilen, Idempotenz + Zustandserhalt ab. Commit.
+  ⚑ **Offen für F2a:** Netto/Brutto-Annahme (item.total = netto) und
+  Belegtyp-Filter (`['invoice']`) mit echten flour.io-Daten validieren;
+  einmaliger Backfill via `project()` ohne `since`.
 
 ## Stufe 2 – Abrechnung (Kern-Business)
 
