@@ -408,33 +408,21 @@ const InvoiceDashboard: React.FC = () => {
       const apiUrl = apiUtils.getApiUrl();
       const token = tokenStorage.getToken('ADMIN');
 
-      console.log('📊 fetchStats called with:');
-      console.log('  API URL:', `${apiUrl}/admin/invoices/stats`);
-      console.log('  Token exists:', !!token);
-      console.log('  Token length:', token ? token.length : 0);
-
       const headers = {
         'Authorization': token ? `Bearer ${token}` : '',
         'x-auth-token': token || '',
         'Content-Type': 'application/json'
       };
 
-      console.log('  Headers being sent:', headers);
-
       const response = await axios.get(`${apiUrl}/admin/invoices/stats`, { headers });
 
       if (response.data.success) {
-        console.log('🔍 Raw API response:', response.data);
-        console.log('🔍 Response data structure:', response.data.data);
         setStats(response.data.data);
-        console.log('✅ Stats loaded successfully');
       } else {
         setError('Fehler beim Laden der Statistiken');
       }
     } catch (err: any) {
-      console.error('❌ Error fetching stats:', err);
-      console.error('  Response status:', err.response?.status);
-      console.error('  Response data:', err.response?.data);
+      console.error('Error fetching stats:', err);
       setError(err.response?.data?.message || 'Fehler beim Laden der Daten');
     }
   }, []);
@@ -484,20 +472,10 @@ const InvoiceDashboard: React.FC = () => {
       setLoading(true);
       setError(null);
 
-      // Debug: Check authentication status
-      console.log('🚀 InvoiceDashboard mounting...');
-      const token = tokenStorage.getToken('ADMIN');
-      console.log('📦 Token in localStorage:', token ? `${token.substring(0, 20)}...` : 'NOT FOUND');
-      console.log('🌐 API URL being used:', apiUtils.getApiUrl());
-
-      // Log when making requests
-      console.log('📊 Fetching stats and invoices...');
-
       try {
         await Promise.all([fetchStats(), fetchInvoices()]);
-        console.log('✅ Dashboard data loaded successfully');
       } catch (err) {
-        console.error('❌ Dashboard load error:', err);
+        console.error('Dashboard load error:', err);
         setError('Fehler beim Laden der Dashboard-Daten');
       } finally {
         setLoading(false);
@@ -588,11 +566,6 @@ const InvoiceDashboard: React.FC = () => {
       const apiUrl = apiUtils.getApiUrl();
       const token = tokenStorage.getToken('ADMIN');
 
-      console.log('📄 Attempting to view PDF:');
-      console.log('  Invoice ID:', invoice._id);
-      console.log('  API URL:', `${apiUrl}/invoices/${invoice._id}/pdf`);
-      console.log('  Token exists:', !!token);
-
       const response = await fetch(`${apiUrl}/invoices/${invoice._id}/pdf`, {
         method: 'GET',
         headers: {
@@ -601,13 +574,8 @@ const InvoiceDashboard: React.FC = () => {
         }
       });
 
-      console.log('  Response status:', response.status);
-      console.log('  Response headers:', response.headers);
-
       if (response.ok) {
         const blob = await response.blob();
-        console.log('  Blob size:', blob.size);
-        console.log('  Blob type:', blob.type);
 
         const url = window.URL.createObjectURL(blob);
         window.open(url, '_blank');
