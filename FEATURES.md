@@ -97,6 +97,17 @@ Ergebnis des Dialogs (2026-07-06). Grobe Reihenfolge in Phase 4 klärt die TODO.
 - **F2b – housnkuh-Rechnungsansicht anbinden** (`VendorHousnkuhInvoicesPage`):
   die monatlichen housnkuh→Vendor-Rechnungen anzeigen/downloaden. Backend
   **existiert** (invoiceGenerationJob/-service), nur die Anzeige fehlt. Kleiner Aufwand.
+- **F2c – Provisionsabrechnung in den Monatslauf integrieren.** Die monatliche
+  housnkuh→Vendor-Rechnung soll zusätzlich zur Miete/Zusatzleistungen die
+  **Provision aus den Verkäufen** enthalten (`provisionssatz` 4 %/7 % ×
+  Vendor-Monatsumsatz). **Aktuell fehlt das komplett**: `invoiceCalculationService`
+  kennt nur die Typen `mietfach`/`zusatzleistung`/`sonstiges`, der
+  `provisionssatz` wird in der Rechnung nirgends genutzt. → neuer Positionstyp
+  `provision` + Aggregation des Monatsumsatzes je Vendor. Hängt an derselben
+  ⚑flour.io-Verkaufsdatenquelle wie F2a/F3.
+  Steuer-Hinweis: Provision + Miete sind **housnkuh-eigener Umsatz**
+  (housnkuh-USt, i. d. R. 19 %) — NICHT mit dem Vendor-Steuerstatus aus F2a
+  verwechseln (der gilt nur für die Verkaufsrechnung im fremden Namen).
 - **F3 – Vendor-Reporting mit Verkaufsdaten** (`VendorReportsPage`): Umsatz-/
   Verkaufsstatistik pro Vendor. Speist sich aus derselben ⚑flour.io-
   Verkaufsdatenquelle wie F2a.
@@ -117,7 +128,10 @@ Ergebnis des Dialogs (2026-07-06). Grobe Reihenfolge in Phase 4 klärt die TODO.
   einer Buchung (TODO in `rejectPendingBooking`); Admin-Alert bei E-Mail-
   Versandfehlern (**OP7**, `alertAdminOfEmailFailure`).
 
-> ⚑ **Gemeinsame Abhängigkeit (F2a/F3):** In welcher Form liefert flour.io die
+> ⚑ **Gemeinsame Abhängigkeit (F2a/F2c/F3):** Die je Vendor persistierten
+> Verkäufe sind das gemeinsame Fundament für drei Dinge: die Verkaufsrechnung
+> im fremden Namen (F2a), die Provisionsposition der Monatsrechnung (F2c) und
+> das Reporting (F3). In welcher Form liefert flour.io die
 > **einzelnen Verkäufe** pro Vendor? Zwei Kandidaten laufen bereits:
 > `stockPullJob` (alle 5 min, StockItemEntries = POS-Abgänge) und
 > `documentSyncJob` (alle 15 min → `FlourioDocument`, hat bereits
