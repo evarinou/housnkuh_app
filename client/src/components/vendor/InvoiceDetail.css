@@ -1,0 +1,236 @@
+/**
+ * Print-specific styles for InvoiceDetail component
+ * Optimized for A4 paper format with clean professional layout
+ */
+
+@media print {
+  /* Page setup for A4 format */
+  @page {
+    size: A4;
+    margin: 1.5cm 2cm;
+  }
+
+  /* Hide non-essential elements */
+  .print\\:hidden {
+    display: none !important;
+  }
+
+  /* Remove shadows and rounded corners for print */
+  .print\\:shadow-none {
+    box-shadow: none !important;
+  }
+
+  .print\\:rounded-none {
+    border-radius: 0 !important;
+  }
+
+  /* Ensure proper print layout */
+  body {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Invoice content styling */
+  .invoice-detail-container {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Header styling for print */
+  .invoice-header {
+    page-break-inside: avoid;
+    margin-bottom: 1.5rem;
+  }
+
+  /* Table styling for print */
+  .invoice-table {
+    page-break-inside: avoid;
+  }
+
+  .invoice-table thead {
+    background-color: #f8f9fa !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .invoice-table tbody tr:nth-child(even) {
+    background-color: #f8f9fa !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Calculation summary styling */
+  .calculation-summary {
+    page-break-inside: avoid;
+    margin-top: 2rem;
+  }
+
+  /* Footer/notes section */
+  .invoice-footer {
+    page-break-inside: avoid;
+    margin-top: 2rem;
+  }
+
+  /* Font adjustments for print */
+  .print-text-sm {
+    font-size: 0.875rem !important;
+    line-height: 1.25rem !important;
+  }
+
+  .print-text-base {
+    font-size: 1rem !important;
+    line-height: 1.5rem !important;
+  }
+
+  /* Status badge adjustments for print */
+  .status-badge {
+    border: 1px solid #6b7280 !important;
+    background-color: transparent !important;
+    color: #374151 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Ensure proper spacing */
+  .print-space-y-4 > * + * {
+    margin-top: 1rem !important;
+  }
+
+  .print-space-y-6 > * + * {
+    margin-top: 1.5rem !important;
+  }
+
+  /* Prevent orphan/widow lines */
+  p, div {
+    orphans: 2;
+    widows: 2;
+  }
+
+  /* Invoice items table specific print styles */
+  .invoice-items-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+  }
+
+  .invoice-items-table th,
+  .invoice-items-table td {
+    border: 1px solid #d1d5db;
+    padding: 0.5rem;
+    text-align: left;
+  }
+
+  .invoice-items-table th {
+    background-color: #f3f4f6 !important;
+    font-weight: 600;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .invoice-items-table .text-right {
+    text-align: right;
+  }
+
+  /* Company logo and header section */
+  .company-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 2rem;
+    page-break-inside: avoid;
+  }
+
+  /* Invoice title styling */
+  .invoice-title {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+    color: #1f2937;
+  }
+
+  /* Vendor and invoice information grid */
+  .info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-bottom: 2rem;
+  }
+
+  /* Total amount highlighting */
+  .total-amount {
+    font-weight: bold;
+    font-size: 1.125rem;
+    border-top: 2px solid #374151;
+    padding-top: 0.5rem;
+    margin-top: 0.5rem;
+  }
+
+  /* Ensure proper page breaks */
+  .page-break-before {
+    page-break-before: always;
+  }
+
+  .page-break-after {
+    page-break-after: always;
+  }
+
+  .page-break-inside-avoid {
+    page-break-inside: avoid;
+  }
+
+  /* Mobile responsive adjustments are disabled for print */
+  .print\\:block {
+    display: block !important;
+  }
+
+  .print\\:hidden {
+    display: none !important;
+  }
+
+  /* Override mobile responsive classes for print */
+  .sm\\:hidden,
+  .md\\:hidden,
+  .lg\\:hidden,
+  .xl\\:hidden {
+    display: block !important;
+  }
+
+  .hidden {
+    display: block !important;
+  }
+
+  /* Specific overrides for print visibility */
+  .print\\:table {
+    display: table !important;
+  }
+
+  .print\\:table-row {
+    display: table-row !important;
+  }
+
+  .print\\:table-cell {
+    display: table-cell !important;
+  }
+}
+
+/* Print button and action styling (hidden in print) */
+@media print {
+  .print-actions,
+  .no-print {
+    display: none !important;
+  }
+}
+
+/* High contrast mode support for print */
+@media print and (prefers-contrast: high) {
+  .invoice-items-table th,
+  .invoice-items-table td {
+    border: 2px solid #000000;
+  }
+  
+  .status-badge {
+    border: 2px solid #000000 !important;
+  }
+}

@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rechnung {{invoiceNumber}} - housnkuh</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-size: 11pt;
+      line-height: 1.4;
+      color: #333;
+      background: #fff;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    
+    .invoice-container {
+      max-width: 210mm;
+      margin: 0 auto;
+      padding: 20mm;
+      min-height: 297mm; /* A4 height */
+      position: relative;
+    }
+    
+    /* Header Section */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 40px;
+      border-bottom: 3px solid #e17564;
+      padding-bottom: 20px;
+    }
+    
+    .company-info {
+      flex: 1;
+    }
+    
+    .logo {
+      font-size: 28px;
+      font-weight: bold;
+      color: #09122c;
+      margin-bottom: 8px;
+    }
+    
+    .company-details {
+      font-size: 9pt;
+      color: #666;
+      line-height: 1.3;
+    }
+    
+    .invoice-meta {
+      text-align: right;
+      flex: 0 0 200px;
+    }
+    
+    .invoice-title {
+      font-size: 24px;
+      font-weight: bold;
+      color: #09122c;
+      margin-bottom: 10px;
+    }
+    
+    .invoice-number {
+      font-size: 14px;
+      font-weight: bold;
+      color: #e17564;
+      margin-bottom: 5px;
+    }
+    
+    .meta-table {
+      font-size: 10pt;
+      margin-top: 10px;
+    }
+    
+    .meta-table td {
+      padding: 2px 0;
+      vertical-align: top;
+    }
+    
+    .meta-table td:first-child {
+      padding-right: 15px;
+      font-weight: 500;
+      color: #555;
+    }
+    
+    /* Recipient Section */
+    .recipient-section {
+      margin: 40px 0;
+    }
+    
+    .recipient-label {
+      font-size: 9pt;
+      color: #666;
+      border-bottom: 1px solid #ddd;
+      padding-bottom: 5px;
+      margin-bottom: 15px;
+      font-weight: 500;
+    }
+    
+    .recipient-address {
+      font-size: 11pt;
+      line-height: 1.4;
+    }
+    
+    .recipient-name {
+      font-weight: bold;
+      color: #09122c;
+      font-size: 12pt;
+    }
+    
+    /* Invoice Details */
+    .period-info {
+      background: #f8f9fa;
+      padding: 15px;
+      margin: 30px 0;
+      border-left: 4px solid #e17564;
+      border-radius: 0 4px 4px 0;
+    }
+    
+    .period-title {
+      font-weight: bold;
+      color: #09122c;
+      margin-bottom: 8px;
+    }
+    
+    /* Items Table */
+    .items-section {
+      margin: 30px 0;
+    }
+    
+    .items-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+    
+    .items-table th {
+      background: #09122c;
+      color: white;
+      padding: 12px 8px;
+      text-align: left;
+      font-size: 10pt;
+      font-weight: 600;
+    }
+    
+    .items-table th:nth-child(1) { width: 45%; }
+    .items-table th:nth-child(2) { width: 15%; text-align: center; }
+    .items-table th:nth-child(3) { width: 20%; text-align: right; }
+    .items-table th:nth-child(4) { width: 20%; text-align: right; }
+    
+    .items-table td {
+      padding: 10px 8px;
+      border-bottom: 1px solid #e5e7eb;
+      font-size: 10pt;
+      vertical-align: top;
+    }
+    
+    .items-table tbody tr:hover {
+      background: #f9fafb;
+    }
+    
+    .item-description {
+      font-weight: 500;
+      color: #09122c;
+      margin-bottom: 3px;
+    }
+    
+    .item-type {
+      font-size: 9pt;
+      color: #666;
+      font-style: italic;
+    }
+    
+    .item-period {
+      font-size: 8pt;
+      color: #888;
+      margin-top: 3px;
+    }
+    
+    .quantity {
+      text-align: center;
+    }
+    
+    .price, .total {
+      text-align: right;
+      font-weight: 500;
+    }
+    
+    .total {
+      color: #09122c;
+    }
+    
+    /* Calculation Summary */
+    .calculation-section {
+      margin: 30px 0;
+    }
+    
+    .calculation-table {
+      width: 100%;
+      max-width: 400px;
+      margin-left: auto;
+      border-collapse: collapse;
+    }
+    
+    .calculation-table td {
+      padding: 8px 12px;
+      font-size: 11pt;
+    }
+    
+    .calculation-table .label {
+      font-weight: 500;
+      color: #555;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .calculation-table .amount {
+      text-align: right;
+      font-weight: 500;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .subtotal-row .label,
+    .subtotal-row .amount {
+      font-size: 12pt;
+      color: #09122c;
+      border-bottom: 1px solid #ddd;
+    }
+    
+    .tax-row .label,
+    .tax-row .amount {
+      color: #666;
+    }
+    
+    .total-row {
+      background: #f0f9ff;
+      border-top: 2px solid #09122c;
+    }
+    
+    .total-row .label,
+    .total-row .amount {
+      font-size: 14pt;
+      font-weight: bold;
+      color: #09122c;
+      padding: 12px;
+    }
+    
+    /* Payment Information */
+    .payment-section {
+      margin: 40px 0;
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 6px;
+    }
+    
+    .payment-title {
+      font-size: 14pt;
+      font-weight: bold;
+      color: #09122c;
+      margin-bottom: 15px;
+    }
+    
+    .payment-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    
+    .payment-info h4 {
+      font-size: 11pt;
+      font-weight: bold;
+      color: #555;
+      margin-bottom: 8px;
+    }
+    
+    .payment-info p {
+      font-size: 10pt;
+      line-height: 1.4;
+      margin-bottom: 4px;
+    }
+    
+    .bank-details {
+      font-family: 'Courier New', monospace;
+      font-size: 10pt;
+      background: white;
+      padding: 10px;
+      border-radius: 3px;
+      border: 1px solid #e5e7eb;
+    }
+    
+    /* Status Badge */
+    .status-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 15px;
+      font-size: 9pt;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+    
+    .status-draft { background: #f3f4f6; color: #374151; }
+    .status-sent { background: #dbeafe; color: #1e40af; }
+    .status-paid { background: #d1fae5; color: #065f46; }
+    .status-overdue { background: #fee2e2; color: #dc2626; }
+    .status-cancelled { background: #f3f4f6; color: #6b7280; }
+    
+    /* Footer */
+    .footer {
+      position: absolute;
+      bottom: 15mm;
+      left: 20mm;
+      right: 20mm;
+      border-top: 1px solid #ddd;
+      padding-top: 15px;
+      font-size: 8pt;
+      color: #666;
+      line-height: 1.3;
+    }
+    
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 20px;
+    }
+    
+    .footer h4 {
+      font-size: 9pt;
+      font-weight: bold;
+      color: #09122c;
+      margin-bottom: 5px;
+    }
+    
+    /* Print Optimizations */
+    @media print {
+      body { margin: 0; }
+      .invoice-container { margin: 0; padding: 15mm; }
+      .footer { position: fixed; }
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 600px) {
+      .header { flex-direction: column; text-align: center; }
+      .invoice-meta { text-align: center; margin-top: 20px; }
+      .payment-grid { grid-template-columns: 1fr; }
+      .footer-grid { grid-template-columns: 1fr; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+  <div class="invoice-container">
+    
+    <!-- Header -->
+    <div class="header">
+      <div class="company-info">
+        {{#if companyInfo.logo}}
+          <img src="{{companyInfo.logo}}" alt="{{companyInfo.name}}" style="max-height: 60px; margin-bottom: 10px;">
+        {{else}}
+          <div class="logo">housnkuh</div>
+        {{/if}}
+        <div class="company-details">
+          <strong>{{companyInfo.name}}</strong><br>
+          {{companyInfo.address}}<br>
+          {{#if companyInfo.phone}}Tel: {{companyInfo.phone}}<br>{{/if}}
+          E-Mail: {{companyInfo.email}}<br>
+          {{#if companyInfo.website}}Web: {{companyInfo.website}}<br>{{/if}}
+          {{#if companyInfo.taxId}}USt-ID: {{companyInfo.taxId}}{{/if}}
+        </div>
+      </div>
+      
+      <div class="invoice-meta">
+        <div class="invoice-title">RECHNUNG</div>
+        <div class="invoice-number">{{invoiceNumber}}</div>
+        <span class="status-badge status-{{status}}">{{status}}</span>
+        
+        <table class="meta-table">
+          <tr>
+            <td>Rechnungsdatum:</td>
+            <td>{{formatDate createdAt 'DD.MM.YYYY'}}</td>
+          </tr>
+          <tr>
+            <td>Fälligkeitsdatum:</td>
+            <td>{{formatDate dueDate 'DD.MM.YYYY'}}</td>
+          </tr>
+          <tr>
+            <td>Leistungszeitraum:</td>
+            <td>{{formatMonth period.month}}/{{period.year}}</td>
+          </tr>
+          {{#if paidDate}}
+          <tr>
+            <td>Bezahlt am:</td>
+            <td>{{formatDate paidDate 'DD.MM.YYYY'}}</td>
+          </tr>
+          {{/if}}
+        </table>
+      </div>
+    </div>
+    
+    <!-- Recipient -->
+    <div class="recipient-section">
+      <div class="recipient-label">Rechnungsempfänger</div>
+      <div class="recipient-address">
+        <div class="recipient-name">
+          {{#if vendor.businessName}}
+            {{vendor.businessName}}
+          {{else}}
+            {{vendor.firstName}} {{vendor.lastName}}
+          {{/if}}
+        </div>
+        {{vendor.address.street}} {{vendor.address.number}}<br>
+        {{vendor.address.zipCode}} {{vendor.address.city}}<br>
+        {{#if vendor.address.country}}{{vendor.address.country}}{{/if}}
+        {{#if vendor.email}}<br>E-Mail: {{vendor.email}}{{/if}}
+        {{#if vendor.taxId}}<br>USt-ID: {{vendor.taxId}}{{/if}}
+      </div>
+    </div>
+    
+    <!-- Period Information -->
+    <div class="period-info">
+      <div class="period-title">Abrechnungszeitraum</div>
+      <p>Diese Rechnung bezieht sich auf Ihre Nutzung unserer Dienstleistungen im Zeitraum <strong>{{formatMonth period.month}} {{period.year}}</strong>.</p>
+    </div>
+    
+    <!-- Invoice Items -->
+    <div class="items-section">
+      <table class="items-table">
+        <thead>
+          <tr>
+            <th>Beschreibung</th>
+            <th>Menge</th>
+            <th>Einzelpreis</th>
+            <th>Gesamtpreis</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#each items}}
+          <tr>
+            <td>
+              <div class="item-description">{{description}}</div>
+              <div class="item-type">
+                {{#if (eq type 'mietfach')}}📦 Mietfach{{/if}}
+                {{#if (eq type 'zusatzleistung')}}⚡ Zusatzleistung{{/if}}
+                {{#if (eq type 'sonstiges')}}📋 Sonstiges{{/if}}
+              </div>
+              {{#if period}}
+                <div class="item-period">
+                  Zeitraum: {{formatDate period.from 'DD.MM.YYYY'}} - {{formatDate period.to 'DD.MM.YYYY'}}
+                </div>
+              {{/if}}
+            </td>
+            <td class="quantity">{{formatNumber quantity 'decimal'}} {{#if (eq type 'mietfach')}}Stk{{/if}}</td>
+            <td class="price">{{formatPrice unitPrice}}€</td>
+            <td class="total">{{formatPrice totalPrice}}€</td>
+          </tr>
+          {{/each}}
+        </tbody>
+      </table>
+    </div>
+    
+    <!-- Calculation Summary -->
+    <div class="calculation-section">
+      <table class="calculation-table">
+        <tr class="subtotal-row">
+          <td class="label">Nettobetrag:</td>
+          <td class="amount">{{formatPrice subtotal}}€</td>
+        </tr>
+        <tr class="tax-row">
+          <td class="label">MwSt. ({{multiply tax 100}}%):</td>
+          <td class="amount">{{formatPrice (subtract totalAmount subtotal)}}€</td>
+        </tr>
+        <tr class="total-row">
+          <td class="label">Gesamtbetrag:</td>
+          <td class="amount">{{formatPrice totalAmount}}€</td>
+        </tr>
+      </table>
+    </div>
+    
+    <!-- Payment Information -->
+    <div class="payment-section">
+      <div class="payment-title">💳 Zahlungsinformationen</div>
+      
+      <div class="payment-grid">
+        <div class="payment-info">
+          <h4>Zahlungsbedingungen</h4>
+          <p>Zahlungsziel: 14 Tage netto</p>
+          <p>Fällig bis: <strong>{{formatDate dueDate 'DD.MM.YYYY'}}</strong></p>
+          {{#if (isOverdue dueDate)}}
+            <p style="color: #dc2626; font-weight: bold;">⚠️ Diese Rechnung ist überfällig!</p>
+          {{/if}}
+        </div>
+        
+        <div class="payment-info">
+          <h4>Bankverbindung</h4>
+          <div class="bank-details">
+            Empfänger: {{companyInfo.name}}<br>
+            IBAN: DE12 3456 7890 1234 5678 90<br>
+            BIC: COBADEFFXXX<br>
+            Bank: Commerzbank AG<br>
+            Verwendungszweck: {{invoiceNumber}}
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Footer -->
+    <div class="footer">
+      <div class="footer-grid">
+        <div>
+          <h4>Kontakt</h4>
+          {{companyInfo.name}}<br>
+          {{companyInfo.email}}<br>
+          {{#if companyInfo.phone}}{{companyInfo.phone}}{{/if}}
+        </div>
+        
+        <div>
+          <h4>Steuern</h4>
+          {{#if companyInfo.taxId}}
+            USt-ID: {{companyInfo.taxId}}<br>
+          {{/if}}
+          Steuernummer: 123/456/78901<br>
+          Finanzamt Musterstadt
+        </div>
+        
+        <div>
+          <h4>Rechtliches</h4>
+          Geschäftsführung: Eva-Maria Schaller<br>
+          Amtsgericht: Musterstadt<br>
+          Handelsregister: HRB 12345
+        </div>
+      </div>
+      
+      <div style="text-align: center; margin-top: 15px; font-size: 7pt; color: #999;">
+        Diese Rechnung wurde elektronisch erstellt und ist ohne Unterschrift gültig.
+      </div>
+    </div>
+    
+  </div>
+</body>
+</html>

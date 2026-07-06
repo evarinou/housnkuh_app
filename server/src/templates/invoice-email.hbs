@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rechnung {{invoiceNumber}} - housnkuh</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      background-color: #f8f9fa;
+      margin: 0;
+      padding: 0;
+    }
+    
+    .email-container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .header {
+      background: linear-gradient(135deg, #09122c 0%, #1e3a8a 100%);
+      color: white;
+      padding: 30px;
+      text-align: center;
+    }
+    
+    .logo {
+      font-size: 28px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+    
+    .header-subtitle {
+      font-size: 16px;
+      opacity: 0.9;
+    }
+    
+    .content {
+      padding: 40px 30px;
+    }
+    
+    .greeting {
+      font-size: 18px;
+      color: #09122c;
+      margin-bottom: 20px;
+    }
+    
+    .intro-text {
+      margin-bottom: 30px;
+      font-size: 16px;
+      line-height: 1.6;
+    }
+    
+    .invoice-summary {
+      background: #f8f9fa;
+      border-left: 4px solid #e17564;
+      padding: 20px;
+      border-radius: 0 8px 8px 0;
+      margin: 30px 0;
+    }
+    
+    .invoice-summary h3 {
+      color: #09122c;
+      margin-top: 0;
+      margin-bottom: 15px;
+    }
+    
+    .invoice-details {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+    
+    .detail-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 5px 0;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .detail-label {
+      font-weight: 600;
+      color: #555;
+    }
+    
+    .detail-value {
+      color: #09122c;
+    }
+    
+    .total-amount {
+      background: white;
+      padding: 15px;
+      border-radius: 6px;
+      border: 2px solid #e17564;
+      text-align: center;
+      margin: 20px 0;
+    }
+    
+    .total-label {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 5px;
+    }
+    
+    .total-value {
+      font-size: 24px;
+      font-weight: bold;
+      color: #09122c;
+    }
+    
+    .payment-info {
+      background: #e3f2fd;
+      padding: 20px;
+      border-radius: 8px;
+      margin: 30px 0;
+    }
+    
+    .payment-info h4 {
+      color: #1565c0;
+      margin-top: 0;
+      margin-bottom: 15px;
+    }
+    
+    .bank-details {
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      background: white;
+      padding: 15px;
+      border-radius: 4px;
+      border: 1px solid #bbdefb;
+      margin: 10px 0;
+    }
+    
+    .cta-section {
+      text-align: center;
+      margin: 40px 0;
+    }
+    
+    .btn-primary {
+      display: inline-block;
+      background: #e17564;
+      color: white;
+      padding: 12px 30px;
+      text-decoration: none;
+      border-radius: 6px;
+      font-weight: 600;
+      transition: background-color 0.3s;
+    }
+    
+    .btn-primary:hover {
+      background: #d16454;
+    }
+    
+    .portal-info {
+      background: #f0f9ff;
+      padding: 20px;
+      border-radius: 8px;
+      margin: 30px 0;
+      border: 1px solid #e0f2fe;
+    }
+    
+    .portal-info h4 {
+      color: #0c4a6e;
+      margin-top: 0;
+    }
+    
+    .footer {
+      background: #f8f9fa;
+      padding: 30px;
+      text-align: center;
+      color: #666;
+      font-size: 14px;
+    }
+    
+    .footer-links {
+      margin: 15px 0;
+    }
+    
+    .footer-links a {
+      color: #e17564;
+      text-decoration: none;
+      margin: 0 10px;
+    }
+    
+    .contact-info {
+      font-size: 12px;
+      color: #999;
+      margin-top: 20px;
+    }
+    
+    .status-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 15px;
+      font-size: 12px;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+    
+    .status-draft { background: #f3f4f6; color: #374151; }
+    .status-sent { background: #dbeafe; color: #1e40af; }
+    .status-paid { background: #d1fae5; color: #065f46; }
+    .status-overdue { background: #fee2e2; color: #dc2626; }
+    
+    @media (max-width: 600px) {
+      .email-container { margin: 0; border-radius: 0; }
+      .content { padding: 20px 15px; }
+      .invoice-details { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="email-container">
+    
+    <!-- Header -->
+    <div class="header">
+      <div class="logo">housnkuh</div>
+      <div class="header-subtitle">Ihre Rechnung ist da</div>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="content">
+      <div class="greeting">
+        Hallo {{#if vendor.businessName}}{{vendor.businessName}}{{else}}{{vendor.firstName}} {{vendor.lastName}}{{/if}},
+      </div>
+      
+      <div class="intro-text">
+        vielen Dank für Ihr Vertrauen in housnkuh! Ihre Rechnung für {{formatMonth period.month}} {{period.year}} ist fertig und als PDF-Anhang beigefügt.
+      </div>
+      
+      <!-- Invoice Summary -->
+      <div class="invoice-summary">
+        <h3>📄 Rechnungsdetails</h3>
+        
+        <div class="invoice-details">
+          <div>
+            <div class="detail-item">
+              <span class="detail-label">Rechnungsnummer:</span>
+              <span class="detail-value">{{invoiceNumber}}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Abrechnungszeitraum:</span>
+              <span class="detail-value">{{formatMonth period.month}}/{{period.year}}</span>
+            </div>
+          </div>
+          
+          <div>
+            <div class="detail-item">
+              <span class="detail-label">Rechnungsdatum:</span>
+              <span class="detail-value">{{formatDate createdAt 'DD.MM.YYYY'}}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Fälligkeitsdatum:</span>
+              <span class="detail-value">{{formatDate dueDate 'DD.MM.YYYY'}}</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="total-amount">
+          <div class="total-label">Gesamtbetrag</div>
+          <div class="total-value">{{formatPrice totalAmount}}€</div>
+        </div>
+        
+        <div style="text-align: center; margin-top: 15px;">
+          <span class="status-badge status-{{status}}">{{status}}</span>
+        </div>
+      </div>
+      
+      <!-- Payment Information -->
+      <div class="payment-info">
+        <h4>💳 Zahlungsinformationen</h4>
+        <p><strong>Zahlungsziel:</strong> 14 Tage netto (fällig bis {{formatDate dueDate 'DD.MM.YYYY'}})</p>
+        
+        <div class="bank-details">
+          <strong>Bankverbindung:</strong><br>
+          Empfänger: {{companyInfo.name}}<br>
+          IBAN: DE12 3456 7890 1234 5678 90<br>
+          BIC: COBADEFFXXX<br>
+          Bank: Commerzbank AG<br>
+          <strong>Verwendungszweck: {{invoiceNumber}}</strong>
+        </div>
+        
+        <p><em>Bitte verwenden Sie unbedingt die Rechnungsnummer als Verwendungszweck, damit wir Ihre Zahlung korrekt zuordnen können.</em></p>
+      </div>
+      
+      <!-- Portal Information -->
+      <div class="portal-info">
+        <h4>🌐 Ihr Vendor-Portal</h4>
+        <p>Sie können Ihre Rechnungen auch jederzeit in Ihrem Vendor-Portal einsehen und herunterladen:</p>
+        
+        <div class="cta-section">
+          <a href="{{portalUrl}}" class="btn-primary" target="_blank">
+            Zum Vendor-Portal →
+          </a>
+        </div>
+      </div>
+      
+      <!-- Additional Information -->
+      <div style="margin: 30px 0; padding: 20px; background: #fff8dc; border-left: 4px solid #f59e0b; border-radius: 0 8px 8px 0;">
+        <h4 style="color: #92400e; margin-top: 0;">💡 Wichtige Hinweise</h4>
+        <ul style="margin-bottom: 0; color: #92400e;">
+          <li>Diese Rechnung wurde automatisch generiert und ist ohne Unterschrift gültig</li>
+          <li>Bei Fragen zur Rechnung kontaktieren Sie uns unter {{companyInfo.email}}</li>
+          <li>Ihre Rechnungsdaten werden sicher gespeichert und stehen jederzeit im Portal zur Verfügung</li>
+        </ul>
+      </div>
+      
+    </div>
+    
+    <!-- Footer -->
+    <div class="footer">
+      <div style="margin-bottom: 20px;">
+        <strong>{{companyInfo.name}}</strong><br>
+        {{companyInfo.address}}
+      </div>
+      
+      <div class="footer-links">
+        {{#if companyInfo.website}}<a href="{{companyInfo.website}}">Website</a>{{/if}}
+        <a href="mailto:{{companyInfo.email}}">Support</a>
+        <a href="{{portalUrl}}">Vendor-Portal</a>
+      </div>
+      
+      <div class="contact-info">
+        {{#if companyInfo.phone}}Tel: {{companyInfo.phone}} | {{/if}}
+        E-Mail: {{companyInfo.email}}<br>
+        {{#if companyInfo.taxId}}USt-ID: {{companyInfo.taxId}}{{/if}}
+      </div>
+      
+      <div style="margin-top: 20px; font-size: 11px; color: #999;">
+        Sie erhalten diese E-Mail, weil Sie Kunde bei housnkuh sind.<br>
+        Diese E-Mail wurde automatisch generiert. Bitte antworten Sie nicht direkt auf diese E-Mail.
+      </div>
+    </div>
+    
+  </div>
+</body>
+</html>
