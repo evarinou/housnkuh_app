@@ -34,3 +34,23 @@ npm-debug.log*
 
 # Task System - completed tasks are archived
 .task/completed/
+
+# Runtime-Daten & Uploads (bestehende getrackte Dateien bleiben tracked)
+server/uploads/
+server/storage/
+server/backups/*.json
+
+# Datenexporte (personenbezogene Daten – nie committen)
+*.csv
+
+# 3D-Scans (Binärdaten)
+3d mesh/
+
+# Lokale Workspace-/Debug-Dateien
+*.code-workspace
+server/debug_config.js
+/test-invoice-data.js
+
+# Einmal-/Debug-Skripte bleiben lokal; Migrationen sind versioniert
+server/scripts/*
+!server/scripts/migrations/
