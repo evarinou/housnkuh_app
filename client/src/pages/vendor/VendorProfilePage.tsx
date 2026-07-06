@@ -50,6 +50,8 @@ interface ProfileData {
   telefon: string;
   unternehmen: string;
   beschreibung: string;
+  steuernummer: string;
+  ustIdNr: string;
   profilBild: string;
   bannerBild: string;
   adresse: {
@@ -114,6 +116,8 @@ const VendorProfilePage: React.FC = () => {
     telefon: '',
     unternehmen: '',
     beschreibung: '',
+    steuernummer: '',
+    ustIdNr: '',
     profilBild: '',
     bannerBild: '', // Banner-Bild hinzugefügt
     adresse: {
@@ -958,7 +962,37 @@ const VendorProfilePage: React.FC = () => {
                   />
                 </div>
               </div>
-              
+
+              <div>
+                <label htmlFor="steuernummer" className="block text-sm font-medium text-gray-700 mb-1">
+                  Steuernummer
+                </label>
+                <input
+                  type="text"
+                  id="steuernummer"
+                  name="steuernummer"
+                  value={profileData.steuernummer}
+                  onChange={handleInputChange}
+                  placeholder="z. B. 231/123/12345"
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="ustIdNr" className="block text-sm font-medium text-gray-700 mb-1">
+                  USt-IdNr <span className="text-gray-400 font-normal">(falls vorhanden)</span>
+                </label>
+                <input
+                  type="text"
+                  id="ustIdNr"
+                  name="ustIdNr"
+                  value={profileData.ustIdNr}
+                  onChange={handleInputChange}
+                  placeholder="z. B. DE123456789"
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary"
+                />
+              </div>
+
               <div className="col-span-2">
                 <label htmlFor="beschreibung" className="block text-sm font-medium text-gray-700 mb-1">
                   Beschreibung / Über uns

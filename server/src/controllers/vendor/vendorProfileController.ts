@@ -97,7 +97,10 @@ export const getVendorProfile = async (req: Request, res: Response): Promise<voi
         facebook: '',
         instagram: ''
       },
-      verifyStatus: user.vendorProfile?.verifyStatus || 'unverified'
+      verifyStatus: user.vendorProfile?.verifyStatus || 'unverified',
+      steuerstatus: user.vendorProfile?.steuerstatus || 'kleinunternehmer',
+      steuernummer: user.vendorProfile?.steuernummer || '',
+      ustIdNr: user.vendorProfile?.ustIdNr || ''
     };
 
     res.json({
@@ -143,7 +146,9 @@ export const updateVendorProfile = async (req: Request, res: Response): Promise<
       operationalInfo,
       slogan,
       website,
-      socialMedia
+      socialMedia,
+      steuernummer,
+      ustIdNr
     } = req.body;
 
     logger.info('📤 Profile update request received:', {
@@ -205,6 +210,9 @@ export const updateVendorProfile = async (req: Request, res: Response): Promise<
 
     if (unternehmen !== undefined) vendorProfile.unternehmen = unternehmen;
     if (beschreibung !== undefined) vendorProfile.beschreibung = beschreibung;
+    // Steuer-Identnummern (steuerstatus bleibt admin-kontrolliert, hier nicht änderbar)
+    if (steuernummer !== undefined) (vendorProfile as any).steuernummer = steuernummer;
+    if (ustIdNr !== undefined) (vendorProfile as any).ustIdNr = ustIdNr;
     if (profilBild !== undefined) vendorProfile.profilBild = profilBild;
     if (bannerBild !== undefined) vendorProfile.bannerBild = bannerBild;
     if (oeffnungszeiten) vendorProfile.oeffnungszeiten = oeffnungszeiten;

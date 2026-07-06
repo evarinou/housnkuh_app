@@ -130,6 +130,9 @@ export interface IVendorProfile {
 
   // Umsatzsteuer-Status — steuert die USt-Behandlung der Verkaufsrechnungen (F2a)
   steuerstatus?: 'kleinunternehmer' | 'regelbesteuert';
+  // Steuernummer / USt-IdNr des Vendors — für seine Verkaufsrechnungen (F2a)
+  steuernummer?: string;
+  ustIdNr?: string;
 }
 
 // Booking Status Enum für detailliertes Status-Tracking

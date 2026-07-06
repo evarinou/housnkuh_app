@@ -161,7 +161,13 @@ const VendorProfileSchema = new Schema({
     enum: ['kleinunternehmer', 'regelbesteuert'],
     default: 'kleinunternehmer',
     required: function(this: any) { return this.isVendor; }
-  }
+  },
+  // Steuerliche Identnummern des Vendors — gehören auf seine Verkaufsrechnungen
+  // (F2a, Gutschriftsverfahren, §14 UStG). Kleinunternehmer haben oft nur eine
+  // Steuernummer, Regelbesteuerte meist eine USt-IdNr. Beide optional; die
+  // Rechnungslogik bevorzugt die USt-IdNr und fällt sonst auf die Steuernummer zurück.
+  steuernummer: { type: String, trim: true },
+  ustIdNr: { type: String, trim: true }
 });
 
 /**

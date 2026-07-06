@@ -34,6 +34,8 @@ interface VendorProfile {
   };
   verifyStatus?: 'unverified' | 'pending' | 'verified';
   steuerstatus?: 'kleinunternehmer' | 'regelbesteuert';
+  steuernummer?: string;
+  ustIdNr?: string;
 }
 
 /**
@@ -195,6 +197,39 @@ const VendorDetailModal: React.FC<VendorDetailModalProps> = ({ vendorId, isOpen,
       if (onUpdate) onUpdate();
     } catch (err) {
       console.error('Error updating tax status:', err);
+    }
+  };
+
+  /**
+   * Persists a vendor tax identifier field (steuernummer / ustIdNr) on blur.
+   * @param {('steuernummer'|'ustIdNr')} field
+   * @param {string} value
+   * @returns {Promise<void>}
+   */
+  const handleTaxIdSave = async (field: 'steuernummer' | 'ustIdNr', value: string) => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      await axios.patch(`/api/admin/users/${vendorId}`,
+        { [`vendorProfile.${field}`]: value.trim() },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (onUpdate) onUpdate();
+    } catch (err) {
+      console.error('Error updating tax id:', err);
+    }
+  };
+
+  /**
+   * Updates a vendor tax identifier in local state as the admin types.
+   * @param {('steuernummer'|'ustIdNr')} field
+   * @param {string} value
+   */
+  const handleTaxIdChange = (field: 'steuernummer' | 'ustIdNr', value: string) => {
+    if (vendor && vendor.vendorProfile) {
+      setVendor({
+        ...vendor,
+        vendorProfile: { ...vendor.vendorProfile, [field]: value }
+      });
     }
   };
 
@@ -411,6 +446,28 @@ const VendorDetailModal: React.FC<VendorDetailModalProps> = ({ vendorId, isOpen,
                           <option value="kleinunternehmer">Kleinunternehmer (§19, keine USt)</option>
                           <option value="regelbesteuert">Regelbesteuert</option>
                         </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-600 mb-1">Steuernummer</label>
+                        <input
+                          type="text"
+                          value={vendor.vendorProfile?.steuernummer || ''}
+                          onChange={(e) => handleTaxIdChange('steuernummer', e.target.value)}
+                          onBlur={(e) => handleTaxIdSave('steuernummer', e.target.value)}
+                          placeholder="z. B. 231/123/12345"
+                          className="px-3 py-2 border border-gray-300 rounded-md text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-600 mb-1">USt-IdNr</label>
+                        <input
+                          type="text"
+                          value={vendor.vendorProfile?.ustIdNr || ''}
+                          onChange={(e) => handleTaxIdChange('ustIdNr', e.target.value)}
+                          onBlur={(e) => handleTaxIdSave('ustIdNr', e.target.value)}
+                          placeholder="z. B. DE123456789"
+                          className="px-3 py-2 border border-gray-300 rounded-md text-sm"
+                        />
                       </div>
                     </div>
                   </div>
