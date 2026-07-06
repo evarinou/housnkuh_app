@@ -164,16 +164,11 @@ chore(scope): maintenance
 ```
 
 ### Git Hooks
-The project uses Git hooks for quality assurance:
-- **pre-commit**: TypeScript check, tests, documentation check
-- **pre-push**: Full test suite, build verification
+Only one hook is active (pre-commit/pre-push were deliberately removed on 2026-07-06):
 - **commit-msg**: Enforces conventional commit format
 
-To skip hooks in emergency:
-```bash
-git commit --no-verify -m "emergency: fix"
-git push --no-verify
-```
+Quality assurance is manual — run tests, `tsc --noEmit`, and builds yourself
+before pushing (see commands above and in CLAUDE.md).
 
 ## File Structure Guidelines
 

@@ -2,61 +2,81 @@
 
 ## Project Overview
 
-housnkuh - Regional marketplace for Direktvermarkter (React/TypeScript + Node/Express/MongoDB)
+housnkuh – Regionaler Marktplatz für Direktvermarkter
+(React 18/TS + Node/Express/MongoDB, POS über flour.io-Cloud).
 
 ## Key References
 
-- **[docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)** - Development workflow, testing, setup
-- **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** - Project structure and decisions
-- **[.task/current/](.task/current/)** - Current active tasks
+- **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** – Systemarchitektur, flour.io, Kiosk, Inkonsistenzen
+- **[docs/FAHRPLAN.md](docs/FAHRPLAN.md)** – Fahrplan zur Fertigstellung (Phasen 0–4)
+- **[docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)** – Setup, Workflow, Testing
+- **[.task/current/](.task/current/)** – Aktive Tasks
 
-## Architecture
+## Architektur-Kurzfassung
 
-- **Client**: React 18 + TypeScript + Tailwind CSS (CRA with craco)
-- **Server**: Node.js + Express + TypeScript + MongoDB (Mongoose)
-- **Dual Auth**: AuthContext (admin) + VendorAuthContext (vendors)
-- **Flourio Integration**: External ERP system for article/stock sync
+- **Client**: React 18 + TypeScript 4.9.5, CRA mit **craco** (nicht Vite), Tailwind
+- **Server**: Express + TypeScript 5.3.3 + Mongoose; API unter `/api/...` (kein `/v1`)
+- **Dual Auth**: AuthContext (Admin, `adminToken`) + VendorAuthContext (Vendor, `vendorToken`) – strikt getrennt lassen
+- **Facade-Pattern**: `adminController.ts` re-exportiert aus `controllers/admin/*`-Domänenmodulen
+- **flour.io**: komplette Integration in `server/src/services/flourio/` (Bearer-Token, 60 req/min, Retry/Backoff)
 
-## Development Rules
+## Entwicklungsregeln
 
-1. **Fix the root cause** - no workarounds or mock data
-2. **Co-located testing**: `.test.tsx` next to components, `.test.ts` next to modules
-3. **Conventional commits**: `feat|fix|docs|style|refactor|test|chore(scope): message`
-4. **File headers recommended**: `@file` and `@purpose` for new files
+1. **Root Cause fixen** – keine Workarounds, keine Mock-Daten
+2. **Co-located Tests**: `.test.tsx` neben Komponenten, `.test.ts` neben Modulen; `__tests__/` nur für Integration/Performance
+3. **Conventional Commits**: `feat|fix|docs|style|refactor|test|chore(scope): message` (commit-msg-Hook erzwingt das)
+4. **Datei-Header** `@file`/`@purpose` für neue Dateien empfohlen
 
-## Testing
+## Befehle
 
 ```bash
+# Entwicklung (Root)
+npm run dev                 # Client (:3000) + Server (:4000, nodemon)
+
 # Client
-cd client && npm test && npm run build && npx tsc --noEmit
+cd client && npm test && npm run build && npx tsc --noEmit && npm run lint
 
 # Server
-cd server && npm test && npm run build && npx tsc --noEmit
+cd server && npm test && npm run build && npx tsc --noEmit && npm run lint
 
-# Linting
-cd server && npm run lint
-cd client && npm run lint
+# Migrationen
+cd server && npm run migrate:up
+
+# Architektur-Statistiken aktualisieren
+npm run update:architecture
 ```
 
-## Task Management
+Betrieb: Server läuft als kompiliertes `node dist/index.js` → nach Fixes
+`npm run build` + manueller Neustart.
 
-Tasks live in `.task/current/` using format `TASK-XXX-description.md`. When working on a task:
-1. Check task file for User Acceptance Criteria and Test Plan
-2. Implement and verify all criteria
-3. Run full test suite before marking complete
-4. Move to `.task/completed/` after user confirmation
+## No-Gos (absichtlich so – NICHT "aufräumen")
 
-Ad-hoc work without a task file is fine when explicitly requested.
+- **three/@react-three-Versionen sind gepinnt** (three@0.160.1, fiber@8.18.0,
+  drei@9.122.0) für TypeScript 4.9.5 – nicht bumpen, Client-TS nicht anheben.
+- **Produkte haben KEINE mietfachId** – Verknüpfung Produkt↔Mietfach läuft
+  bewusst über flour.io-StockItemEntries.
+- **Dual-Auth nicht zusammenlegen** – zwei getrennte JWT-Flows sind gewollt.
+- **Domänenbegriffe bleiben deutsch** (Vertrag, Mietfach, Zusatzleistung,
+  Direktvermarkter) – nicht ins Englische umbenennen.
+- **Keine `.env`-Dateien, CSV-Exporte, Uploads oder DB-Backups committen**
+  (personenbezogene Daten; .gitignore deckt das ab).
+- **flour.io-API-Eigenheiten nicht "korrigieren"**: `_id` statt `id`,
+  Bilder als Objekte, Fehlerdetails in `error.response` – das ist deren Vertrag.
+- Bekannte Inkonsistenzen (siehe ARCHITECTURE.md) nur im Rahmen des
+  Audit-Plans beheben, nicht nebenbei.
 
-## Key Project Decisions
+## Git-Hooks
 
-1. **Dual Auth System**: AuthContext (admin) + VendorAuthContext (vendors)
-2. **Co-located Testing**: Tests alongside components (see Development.md)
-3. **Commit Format**: Conventional commits enforced by git hook
-4. **Controller Architecture**: Thin facade pattern - adminController.ts re-exports from domain modules in admin/
-5. **ESLint + Prettier**: Server has `.eslintrc.json`, shared `.prettierrc`, pre-commit hooks enforce quality
+Nur noch **commit-msg** (Conventional Commits). pre-commit/pre-push wurden am
+2026-07-06 bewusst entfernt – Qualitätssicherung läuft manuell über die
+Befehle oben. **Vor einem Push**: Tests und Builds selbst laufen lassen.
 
-## Auto-Updated Resources
+## Task-Management
 
-- Architecture stats: `npm run update:architecture` (runs automatically on commit)
-- Git hooks: pre-commit (TSC + ESLint + Prettier), commit-msg (Conventional Commits), pre-push (Tests + Build)
+Tasks in `.task/current/` im Format `TASK-XXX-beschreibung.md`:
+1. User Acceptance Criteria und Testplan im Task prüfen
+2. Implementieren, alle Kriterien verifizieren
+3. Volle Testsuite vor Abschluss
+4. Nach Bestätigung nach `.task/completed/` verschieben
+
+Ad-hoc-Arbeit ohne Task-Datei ist okay, wenn explizit gewünscht.
