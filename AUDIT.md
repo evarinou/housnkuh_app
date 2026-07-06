@@ -189,7 +189,180 @@ Einige Agent-Einstufungen wurden nach Prüfung angepasst (Begründung dabei).
   flour.io-Cloud) — housnkuh speichert nur Rechnungsbeträge/Provisionen.
 - Keine `.env` getrackt (nur `.env.example`).
 
+## Betrieb & Robustheit (Durchlauf 1d)
+
+Kontext: Kasse läuft in flour.io-Cloud, Kiosk-Terminals sind reine Browser
+(kein housnkuh-Code), MongoDB lokal, Server als `node dist/index.js`. Befunde
+selbst verifiziert; Agent-Einschätzungen wo nötig korrigiert.
+
+### Kritisch
+
+- [ ] **OP1 (K)** `server/src/index.ts` — kein `process.on('uncaughtException')`
+  / `unhandledRejection`. SIGTERM/SIGINT-Shutdown existiert, aber eine
+  unbehandelte Rejection in irgendeinem async-Pfad reißt den Prozess ohne Log
+  ab (→ housnkuh-Backend offline, Kiosk-Kasse selbst läuft weiter, da Cloud).
+  Hinweis: die flour.io-Sync-Jobs sind selbst try/catch-gekapselt (s. OK-Liste),
+  das Risiko liegt bei anderen Pfaden. → globale Handler mit Logging + kontrolliertem Neustart.
+- [ ] **OP2 (K)** `server/src/config/db.ts` — `mongoose.connect()` einmalig,
+  keine Reconnect-/Monitoring-Konfiguration. Bei DB-Verbindungsverlust laufen
+  Requests dauerhaft in Fehler statt zu recovern. → Reconnect/serverMonitoring
+  konfigurieren, Verbindungs-Events loggen.
+- [ ] **OP3 (K)** `healthCheckService.ts` prüft DB, E-Mail, Jobs, Memory, Disk —
+  **aber nicht flour.io**. Ein flour.io-Ausfall (veraltete Bestände → Kasse
+  verkauft nicht Verfügbares) bleibt unbemerkt. → `checkFlourioConnection()`
+  ergänzen und in `/health/detailed` aufnehmen.
+- [ ] **OP4 (K)** `flourio/client/RateLimitHandler.ts` + `errorHandler.ts` —
+  Retry/Backoff greift nur bei HTTP 429; echte Netzwerkfehler (ECONNREFUSED/
+  ETIMEDOUT) werden geworfen, nicht wiederholt. → Netzwerkfehler in die
+  Retry-Logik aufnehmen.
+
+### Wichtig
+
+- [ ] **OP5 (W)** `server/src/jobs/invoiceGenerationJob.ts:184` — Retry nach
+  Fehler via `setTimeout(… , 3600000)`: lebt nur im RAM, geht bei Neustart
+  verloren, kann sich stapeln. → über node-cron/Queue mit Backoff persistieren.
+- [ ] **OP6 (W)** Flourio-Sync-Fehler setzen `flourioSyncStatus='error'` ohne
+  Retry-Zähler/Wiedervorlage (warehouseSyncService u. a.). Fehler-Items
+  bleiben liegen bis manuelles Admin-Retry. → `flourioSyncRetryCount`/
+  `lastAttempt`, gezielte Wiederholung im nächsten Lauf.
+- [ ] **OP7 (W)** `emailQueue.ts:533` — `alertAdminOfEmailFailure()` ist nur ein
+  TODO. Nach 3 Fehlversuchen (z. B. Rechnungs-Mail) wird niemand informiert →
+  stiller Verlust. → Admin-Benachrichtigung implementieren.
+- [ ] **OP8 (W)** `emailQueue.ts` — Fällt Redis aus, geht die Queue in einen
+  In-Memory-Fallback: E-Mails im RAM, bei Neustart verloren. → Redis als
+  erforderlich behandeln oder persistente Fallback-Queue.
+- [ ] **OP9 (W)** stockPullJob/documentSyncJob ohne Ausführungs-Lock: `isRunning()`
+  prüft nur, ob der Cron *geplant* ist, nicht ob ein Lauf *aktiv* ist. Hängt ein
+  Lauf länger als das Intervall, startet der nächste parallel → Race beim
+  Bestands-Update. Auch kein Call-Timeout (AbortController). → Lauf-Flag + Timeout.
+- [ ] **OP10 (W)** Graceful Shutdown stoppt Jobs und ruft sofort `process.exit(0)`
+  ohne auf laufende Jobs zu warten → halbfertige Invoice-Generierung möglich.
+  → Shutdown mit Grace-Timeout auf laufende Jobs.
+- [ ] **OP11 (W)** `alertingService` — unklar, ob Alerts tatsächlich zugestellt
+  werden (E-Mail/Kanal) oder nur als DB-Eintrag existieren. → Zustellweg
+  verifizieren/implementieren (hängt mit OP7 zusammen).
+- [ ] **OP12 (W)** Backup: `.env.example` dokumentiert `BACKUP_SCHEDULE` etc.,
+  aber es gibt **keinen** Backup-Job im Code. Kein automatisches mongodump →
+  bei Datenverlust keine Wiederherstellung. → Backup-Job oder dokumentierten
+  systemd-Timer mit `mongodump`.
+- [ ] **OP13 (W)** Kein Deployment-Artefakt im Repo (keine systemd-Unit, kein
+  PM2-`ecosystem.config.js`, kein Start-Skript). Nach Reboot kein Autostart. →
+  systemd-Unit oder PM2-Config versionieren (verbindet sich mit der offenen
+  Deployment-/Kiosk-Update-Frage aus ARCHITECTURE.md).
+- [ ] **OP14 (W)** Ungetestete kritische Pfade: flour.io-Ausfallszenarien
+  (kein stockPullJob-Test), MongoDB-Reconnect, Graceful Shutdown. → gezielte
+  Tests für Ausfall-/Recovery-Verhalten (unabhängig von der Test-Drift S5).
+
+### Geprüft und in Ordnung (NICHT „reparieren")
+
+- flour.io-Sync-Jobs (`stockPullJob`/`documentSyncJob`) sind vollständig in
+  try/catch mit Logging gekapselt → ein Ausfall crasht den Prozess nicht.
+- Invoice-Batch isoliert pro Vendor (try/catch je Vendor) → ein Fehler blockiert
+  nicht den ganzen Lauf.
+- RateLimitHandler mit Exponential Backoff für 429 (3 Retries, max 60 s).
+- E-Mail-Queue mit Backoff + synchronem Notfall-Send.
+- Health-Checks laufen parallel mit Per-Check-Timeout (`Promise.allSettled` +
+  `race`), ein langsamer Check blockiert die anderen nicht.
+- Winston-Logging: Level per ENV, in Prod Daily-Rotate (30 Tage, 20 MB).
+
+## Konsistenz & TypeScript (Durchlauf 1c)
+
+Zahlen selbst nachgezählt (ohne Testdateien), daher teils niedriger als die
+Agent-Schätzung.
+
+### Wichtig
+
+- [ ] **KON1 (W)** Fehlerbehandlung uneinheitlich: 214× direktes
+  `res.status(500)` in Controllern, nur 3× `next(err)` — die zentrale
+  `errorHandler`-Middleware (`middleware/security.ts:180`) wird praktisch
+  umgangen. Response-Shapes gemischt (`{success:false,message}` /
+  `{message}` / `{error}`). → schrittweise auf `next(err)` + einheitliches
+  Shape umstellen (großer, aber mechanischer Hebel; gut in Phase 3 Konsistenz).
+- [ ] **KON2 (W)** `any` weit verbreitet: ~464× Server, ~172× Client. Hotspots
+  mit `req: any`/`res: any` (flourioController, vendorProductController,
+  einzelne Routes) — dort am wertvollsten zu typisieren. → Express-Handler
+  typisieren, `catch (error: unknown)` statt `: any` (aktuell ~54× `catch(...: any)`).
+- [ ] **KON3 (W)** API-Basis-URL im Client 4× mit falschem `:5000`-Fallback
+  (VendorLogin/Reset/Settings/ForgotPassword) statt `:4000`; insgesamt in ~82
+  Dateien inline statt zentral. Deckt sich mit S14. → eine `config/api.ts`
+  bzw. `apiUtils.getApiUrl()` konsequent nutzen.
+- [ ] **KON4 (W)** 53× inline `require(...)` in `.ts` (statt `import`),
+  meist in if-Zweigen/Funktionen — Verdacht: Umgehung zirkulärer Importe. →
+  Ursache (Zyklen) beheben und auf `import` umstellen; nicht blind ersetzen.
+- [ ] **KON5 (W)** Services teils ohne eigenes try/catch (z. B.
+  `storeMapService`, `productService.createProductForVendor`) — verlassen sich
+  auf Caller. In Kombination mit KON1 (Caller macht eigenes 500) meist okay,
+  aber fragil. → mit KON1 zusammen angehen.
+
+### Kosmetisch
+
+- [ ] **KON6 (k)** Deutsch/Englisch-Mix in Bezeichnern über Domänenbegriffe
+  hinaus (`zusatzleistungenCosts`, `lagerserviceKosten`, `monatlicheKosten`).
+  Konvention „Domäne deutsch, Technik englisch" festschreiben.
+- [ ] **KON7 (k)** Nur relative Imports, keine Pfad-Aliase (`@utils/…`);
+  tiefe `../../../`-Ketten. → optional tsconfig-Paths einführen.
+- [ ] **KON8 (k)** tsconfig Server minimalistischer als Client (beide
+  `strict:true`, aber Client mit `noFallthroughCasesInSwitch`,
+  `isolatedModules` etc.). → angleichen.
+- [ ] **KON9 (k)** Non-null-Assertions (`!`): ~17× Server, ~25× Client →
+  wo einfach, durch `?.`/Guards ersetzen.
+
+### Geprüft und in Ordnung
+
+- async/await durchgängig (nur ~6× `.then()`), keine Callback-Ketten.
+- `@ts-ignore` minimal (1× Server, 0× Client), kein `@ts-nocheck`.
+- Datei-Header `@file`/`@purpose` zu 94–97 % vorhanden.
+- HTTP-Statuscodes werden sinnvoll differenziert (400/403/404/500).
+- Datei-Casing konsistent (Controller/Services camelCase).
+
 ---
 
-*Durchläufe 1c (Konsistenz), 1d (Betrieb) folgen; die priorisierte
-Gesamt-Reihenfolge entsteht am Ende von 1d.*
+# Priorisierte Gesamt-Reihenfolge (Ende Phase 1)
+
+Reihenfolge fürs Abarbeiten in Phase 3 (Sicherheit/Daten → Konsistenz →
+Kosmetik). Jede Kategorie vor Beginn kurz mit Eva abstimmen.
+
+### Stufe 0 — Sofort, kleiner Aufwand, hoher Schutz (Sicherheit/Daten)
+1. **SEC2** `/debug/clear-cache` hinter Auth (oder weg) — 1 Zeile.
+2. **SEC1 + S1** getrackten Admin-JWT & Debug-Skripte enttracken; `JWT_SECRET`
+   rotieren (macht den Token wertlos).
+3. **S2/S3** getrackte Nutzerbilder & DB-Backups enttracken (Datenschutz).
+4. **SEC4** Token-`console.log` in InvoiceDashboard entfernen (mit S19).
+5. **SEC7** `/setup`-Validierung reaktivieren, `/test-setup` & `/test`-Routen entfernen.
+
+### Stufe 1 — Robustheit gegen Ausfälle (Betrieb, vor „fertig")
+6. **OP1** globale `uncaughtException`/`unhandledRejection`-Handler.
+7. **OP2** MongoDB-Reconnect konfigurieren.
+8. **OP4 + OP3** flour.io: Netzwerkfehler-Retry + Health-Check.
+9. **OP12/OP13** Backup-Job + systemd/PM2 ins Repo (löst auch Deployment-Lücke).
+10. **OP5/OP7/OP11** Invoice-Retry robust, Admin-Alert bei E-Mail-Fehlern.
+
+### Stufe 2 — Sicherheit zweiter Ordnung
+11. **SEC3** RegExp-Injection in Vendor-Suche escapen.
+12. **SEC6/SEC9** NODE_ENV-abhängige Bypässe/Dev-Secret absichern.
+13. **SEC10/SEC11** Profil-Validierung, CSP `unsafe-inline` entfernen.
+14. **SEC5** Vendor-Login-Passwort-Policy-Problem (UX) — siehe [[project_vendor_auth_issues]].
+
+### Stufe 3 — Konsistenz (erleichtert späteres Feature-Bauen)
+15. **KON3/S14** zentrale API-URL im Client (behebt `:5000`-Bug).
+16. **KON1/KON5** Fehlerbehandlung auf zentrale Middleware vereinheitlichen.
+17. **S13/S8** Preisformatierung auf `PriceFormatter` migrieren.
+18. **KON2** `any`-Hotspots (Express-Handler) typisieren.
+19. **KON4** `require()`→`import` (nach Zyklus-Analyse).
+20. **S16/S17** Cache-Strategie & `emailService`-Modularisierung (je eigener Task).
+
+### Stufe 4 — Kosmetik / Aufräumen
+21. **S6/S7/S9/S10/S11/S12** verwaisten Code & Dateien löschen (nach Freigabe).
+22. **S19/S20/S21** Debug-Tool, console.logs, auskommentierte Routen entfernen.
+23. **S5** Test-Drift-Cleanup (eigener Pass).
+24. **KON6–KON9, S18** Namenskonvention, Pfad-Aliase, tsconfig angleichen, Trial-Services prüfen.
+
+### Bewusst KEINE Aktion (funktioniert / Absicht)
+- Badge-Komponenten-Familie, geprüfte Auth-Mechanismen (bcrypt, Reset-Tokens,
+  Invoice-IDOR), gepinnte three-Versionen, fehlende mietfachId an Produkten,
+  flour.io-API-Eigenheiten (`_id`, Bild-Objekte) — siehe CLAUDE.md No-Gos.
+
+---
+
+*Phase 1 abgeschlossen 2026-07-06. Nächster Schritt: Phase 2 (FEATURES.md,
+gemeinsame Feature-Landkarte) — oder direkt Stufe 0 der Fixes, falls gewünscht.*
