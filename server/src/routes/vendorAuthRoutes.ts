@@ -99,9 +99,12 @@ router.post('/flourio/products/sync-bulk', vendorAuth, syncBulkProducts);
 
 // Vendor Product Management & Stock Booking
 import * as vendorProductController from '../controllers/vendor/vendorProductController';
+import { validateProductCreate, validateProductUpdate } from '../middleware/validation';
+import { uploadProductImage } from '../controllers/productImageController';
 router.get('/mietfaecher', vendorAuth, vendorProductController.getVendorMietfaecher);
-router.post('/products', vendorAuth, vendorProductController.createProduct);
-router.put('/products/:id', vendorAuth, vendorProductController.updateProduct);
+router.post('/products/upload-image', vendorAuth, uploadProductImage);
+router.post('/products', vendorAuth, validateProductCreate, vendorProductController.createProduct);
+router.put('/products/:id', vendorAuth, validateProductUpdate, vendorProductController.updateProduct);
 router.post('/products/:id/stock', vendorAuth, vendorProductController.bookStock);
 
 export default router;

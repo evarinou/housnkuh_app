@@ -26,6 +26,8 @@ export interface Product {
   minimumQuantity: number;
   taxRate: number;
   vendorId: string;
+  /** Interne EAN-13 (auto-generiert, read-only) */
+  ean?: string;
   flourioSync?: {
     articleId?: string;
     status: string;
@@ -81,7 +83,7 @@ const getValidationSchema = (isVendor: boolean) => {
       .of(Yup.string())
       .max(isVendor ? 5 : 10, `Maximal ${isVendor ? 5 : 10} Bilder erlaubt`),
     availability: Yup.string()
-      .oneOf(['available', 'limited', 'unavailable']),
+      .oneOf(['available', 'seasonal', 'out_of_stock', 'preorder']),
     minimumQuantity: Yup.number()
       .min(0, 'Muss positiv sein')
       .typeError('Muss eine Zahl sein'),
@@ -132,6 +134,28 @@ const ProductCreationModal: React.FC<ProductCreationModalProps> = ({
     vendorId: isVendor ? vendorId : ''
   };
 
+  // Produktbild zum Server hochladen — Produkt speichert nur die URL
+  const handleUploadImage = async (file: File): Promise<string> => {
+    const apiUrl = apiUtils.getApiUrl();
+    const token = tokenStorage.getToken(isVendor ? 'VENDOR' : 'ADMIN');
+    const baseUrl = isVendor ? `${apiUrl}/vendor-auth` : `${apiUrl}/admin`;
+
+    const formData = new FormData();
+    formData.append('image', file);
+
+    const response = await axios.post(`${baseUrl}/products/upload-image`, formData, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'x-auth-token': token || ''
+      }
+    });
+
+    if (!response.data?.success || !response.data?.imageUrl) {
+      throw new Error(response.data?.message || 'Upload fehlgeschlagen');
+    }
+    return response.data.imageUrl;
+  };
+
   const handleSubmit = async (values: ProductFormValues, { setSubmitting }: any) => {
     setApiError(null);
 
@@ -148,10 +172,15 @@ const ProductCreationModal: React.FC<ProductCreationModalProps> = ({
         tags: values.tags,
         images: values.images,
         availability: values.availability,
-        minimumQuantity: Number(values.minimumQuantity) || 0,
         taxRate: Number(values.taxRate),
         vendorId: values.vendorId
       };
+
+      // Mindestmenge nur mitsenden, wenn gesetzt (Server/Schema verlangen >= 1)
+      const minQty = Number(values.minimumQuantity);
+      if (Number.isFinite(minQty) && minQty >= 1) {
+        payload.minimumQuantity = Math.floor(minQty);
+      }
 
       // Add optional initial stock (only for new products with Mietfächer)
       if (!isEdit && isVendor && initialMietfachId && initialAmount) {
@@ -258,6 +287,8 @@ const ProductCreationModal: React.FC<ProductCreationModalProps> = ({
                       availableTags={availableTags}
                       availableVendors={availableVendors}
                       flourioStock={isEdit ? editProduct?.flourioStock : undefined}
+                      ean={isEdit ? editProduct?.ean : undefined}
+                      onUploadImage={handleUploadImage}
                       onCreateTag={onCreateTag}
                       values={values}
                       errors={errors}

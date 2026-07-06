@@ -19,7 +19,7 @@ export interface ProductFormValues {
   priceUnit: string;
   tags: string[];
   images: string[];
-  availability: 'available' | 'limited' | 'unavailable';
+  availability: 'available' | 'seasonal' | 'out_of_stock' | 'preorder';
   minimumQuantity: number | string;
   taxRate: number | string;
   vendorId?: string;
@@ -48,6 +48,10 @@ export interface ProductFormFieldsProps {
   availableVendors?: Vendor[];
   /** Current stock info from Flourio (read-only, shown in edit mode) */
   flourioStock?: { totalAmount: number; entries?: Array<{ warehouseName?: string; amount: number }> };
+  /** Interne EAN-13 (read-only, shown in edit mode) */
+  ean?: string;
+  /** Lädt ein Produktbild hoch und liefert die URL zurück */
+  onUploadImage?: (file: File) => Promise<string>;
   /** Callback to create a new tag (vendor can add tags inline) */
   onCreateTag?: (name: string, icon?: string, color?: string) => Promise<Tag | null>;
   values: ProductFormValues;
@@ -70,12 +74,6 @@ const PRICE_UNITS = [
   { value: 'box', label: 'Kiste' }
 ];
 
-const AVAILABILITY_OPTIONS = [
-  { value: 'available', label: 'Verfügbar' },
-  { value: 'limited', label: 'Begrenzt verfügbar' },
-  { value: 'unavailable', label: 'Nicht verfügbar' }
-];
-
 const ProductFormFields: React.FC<ProductFormFieldsProps> = ({
   isVendor,
   selectedVendor,
@@ -83,6 +81,8 @@ const ProductFormFields: React.FC<ProductFormFieldsProps> = ({
   availableTags,
   availableVendors = [],
   flourioStock,
+  ean,
+  onUploadImage,
   onCreateTag,
   values,
   errors,
@@ -333,8 +333,28 @@ const ProductFormFields: React.FC<ProductFormFieldsProps> = ({
           maxImages={isVendor ? 5 : 10}
           maxSizeMB={2}
           error={getFieldError('images')}
+          onUpload={onUploadImage}
         />
       </div>
+
+      {/* EAN (read-only, auto-generiert) */}
+      {ean && (
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            EAN / Scancode
+          </label>
+          <input
+            type="text"
+            value={ean}
+            readOnly
+            disabled
+            className="w-full rounded-md border-gray-300 bg-gray-50 text-gray-600 font-mono shadow-sm"
+          />
+          <p className="mt-1 text-xs text-gray-500">
+            Automatisch vergeben — wird auf Etiketten gedruckt und an der flour.io-Kasse gescannt
+          </p>
+        </div>
+      )}
 
       {/* Stock Info (read-only) + Minimum Quantity */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

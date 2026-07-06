@@ -331,6 +331,153 @@ export const validatePasswordResetToken = [
   handleValidationErrors
 ];
 
+/** Product validation rules (must match enums in models/Product.ts) */
+const PRODUCT_PRICE_UNITS = ['kg', 'g', 'piece', 'liter', 'ml', 'bunch', 'pack', 'box'];
+const PRODUCT_AVAILABILITY = ['available', 'seasonal', 'out_of_stock', 'preorder'];
+const PRODUCT_TAX_RATES = [7, 19];
+// Nur Upload-Pfade oder absolute URLs — Base64-Blobs gehören nicht in die DB
+// (Upload läuft über POST /products/upload-image, siehe productImageController)
+const PRODUCT_IMAGE_PATTERN = /^(\/uploads\/|https?:\/\/)/;
+
+const productPriceRule = (optional = false) => {
+  let chain = body('price');
+  if (optional) {
+    chain = chain.optional();
+  }
+  return chain
+    .custom((value: unknown) => {
+      const num = Number(value);
+      if (typeof value === 'boolean' || value === '' || value === null || !Number.isFinite(num)) {
+        throw new Error('Preis muss eine Zahl sein');
+      }
+      if (num < 0) {
+        throw new Error('Preis muss positiv sein');
+      }
+      if (Math.round(num * 100) / 100 !== num) {
+        throw new Error('Preis darf höchstens 2 Nachkommastellen haben');
+      }
+      return true;
+    })
+    .toFloat();
+};
+
+const productOptionalFieldRules = () => [
+  body('shortDescription')
+    .optional()
+    .trim()
+    .isLength({ max: 200 })
+    .withMessage('Kurzbeschreibung darf maximal 200 Zeichen lang sein'),
+
+  body('priceUnit')
+    .optional()
+    .isIn(PRODUCT_PRICE_UNITS)
+    .withMessage('Ungültige Preiseinheit'),
+
+  body('availability')
+    .optional()
+    .isIn(PRODUCT_AVAILABILITY)
+    .withMessage('Ungültige Verfügbarkeit'),
+
+  body('taxRate')
+    .optional()
+    .isIn(PRODUCT_TAX_RATES)
+    .withMessage('MwSt.-Satz muss 7 oder 19 sein')
+    .toInt(),
+
+  body('minimumQuantity')
+    .optional()
+    .isInt({ min: 1 })
+    .withMessage('Mindestmenge muss eine ganze Zahl ≥ 1 sein')
+    .toInt(),
+
+  body('tags')
+    .optional()
+    .isArray()
+    .withMessage('Tags müssen ein Array sein'),
+
+  body('tags.*')
+    .isMongoId()
+    .withMessage('Ungültige Tag-ID'),
+
+  body('images')
+    .optional()
+    .isArray({ max: 10 })
+    .withMessage('Maximal 10 Bilder erlaubt'),
+
+  body('images.*')
+    .isString()
+    .matches(PRODUCT_IMAGE_PATTERN)
+    .withMessage('Ungültige Bild-URL'),
+
+  body('keywords')
+    .optional()
+    .isArray()
+    .withMessage('Keywords müssen ein Array sein'),
+
+  body('keywords.*')
+    .isString()
+    .trim()
+    .isLength({ max: 50 })
+    .withMessage('Keyword darf maximal 50 Zeichen lang sein')
+];
+
+/**
+ * Product creation validation (vendor + admin routes)
+ * @description Enforces required fields and type safety so invalid prices
+ * (NaN, negative, >2 decimals) never reach the Mongoose layer
+ */
+export const validateProductCreate = [
+  body('name')
+    .trim()
+    .isLength({ min: 1, max: 100 })
+    .withMessage('Name ist erforderlich (maximal 100 Zeichen)'),
+
+  body('description')
+    .trim()
+    .isLength({ min: 1, max: 1000 })
+    .withMessage('Beschreibung ist erforderlich (maximal 1000 Zeichen)'),
+
+  productPriceRule(),
+
+  ...productOptionalFieldRules(),
+
+  handleValidationErrors
+];
+
+/**
+ * Product update validation — all fields optional, but validated when present
+ */
+export const validateProductUpdate = [
+  body('name')
+    .optional()
+    .trim()
+    .isLength({ min: 1, max: 100 })
+    .withMessage('Name darf nicht leer sein (maximal 100 Zeichen)'),
+
+  body('description')
+    .optional()
+    .trim()
+    .isLength({ min: 1, max: 1000 })
+    .withMessage('Beschreibung darf nicht leer sein (maximal 1000 Zeichen)'),
+
+  productPriceRule(true),
+
+  ...productOptionalFieldRules(),
+
+  handleValidationErrors
+];
+
+/**
+ * Admin product creation: additionally requires a valid vendorId
+ */
+export const validateAdminProductCreate = [
+  body('vendorId')
+    .isMongoId()
+    .withMessage('Gültige Vendor-ID ist erforderlich'),
+
+  ...validateProductCreate
+];
+
 export default {
   validateAdminLogin,
   validateAdminSetup,

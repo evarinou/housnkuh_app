@@ -212,9 +212,17 @@ router.post('/invoices/:id/resend', adminController.resendInvoiceEmail);
 // Cancel invoice (soft delete)
 router.delete('/invoices/:id', adminController.cancelInvoice);
 
-// ===== PRODUCT CATEGORY MANAGEMENT ROUTES =====
+// ===== PRODUCT MANAGEMENT ROUTES =====
 
 // Assign FlourIO category tag to products (bulk operation)
 router.post('/products/assign-category', adminController.assignCategoryToProducts);
+
+// Create/update products on behalf of vendors (used by ArticleManagementPage)
+import * as adminProductController from '../controllers/admin/adminProductController';
+import { uploadProductImage } from '../controllers/productImageController';
+import { validateAdminProductCreate, validateProductUpdate } from '../middleware/validation';
+router.post('/products/upload-image', uploadProductImage);
+router.post('/products', validateAdminProductCreate, adminProductController.createProduct);
+router.put('/products/:id', validateProductUpdate, adminProductController.updateProduct);
 
 export default router;
