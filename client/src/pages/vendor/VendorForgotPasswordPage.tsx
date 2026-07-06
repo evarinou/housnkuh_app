@@ -6,6 +6,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Mail, AlertCircle, CheckCircle, ArrowLeft } from 'lucide-react';
 import axios from 'axios';
+import { apiUtils } from '../../utils/auth';
 
 const VendorForgotPasswordPage: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -24,7 +25,7 @@ const VendorForgotPasswordPage: React.FC = () => {
     setError('');
 
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+      const apiUrl = apiUtils.getApiUrl();
       await axios.post(`${apiUrl}/vendor-auth/request-password-reset`, { email });
       setSuccess(true);
     } catch (err) {

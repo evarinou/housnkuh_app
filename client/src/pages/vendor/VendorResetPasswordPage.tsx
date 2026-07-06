@@ -6,6 +6,7 @@ import React, { useState } from 'react';
 import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import { Lock, Eye, EyeOff, AlertCircle, CheckCircle, ArrowLeft } from 'lucide-react';
 import axios from 'axios';
+import { apiUtils } from '../../utils/auth';
 import { PasswordRequirementsChecklist } from '../../components/common/PasswordRequirementsChecklist';
 import { PASSWORD_MIN_LENGTH, PASSWORD_REGEX } from '../../constants/validation';
 
@@ -50,7 +51,7 @@ const VendorResetPasswordPage: React.FC = () => {
     setError('');
 
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+      const apiUrl = apiUtils.getApiUrl();
       const response = await axios.post(`${apiUrl}/vendor-auth/reset-password`, {
         token,
         newPassword

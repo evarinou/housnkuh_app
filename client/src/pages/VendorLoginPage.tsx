@@ -8,6 +8,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, AlertCircle, CheckCircle, Send } from 'lucide-react';
 import axios from 'axios';
+import { apiUtils } from '../utils/auth';
 import { useVendorAuth } from '../contexts/VendorAuthContext';
 
 const VendorLoginPage: React.FC = () => {
@@ -72,7 +73,7 @@ const VendorLoginPage: React.FC = () => {
     setResendSuccess('');
 
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+      const apiUrl = apiUtils.getApiUrl();
       const response = await axios.post(`${apiUrl}/vendor-auth/resend-confirmation`, { email });
 
       if (response.data.success) {

@@ -5,6 +5,7 @@
 import React, { useState } from 'react';
 import { Settings, Lock, Eye, EyeOff, CheckCircle, AlertCircle } from 'lucide-react';
 import axios from 'axios';
+import { apiUtils } from '../../utils/auth';
 import VendorLayout from '../../components/vendor/VendorLayout';
 import { useVendorAuth } from '../../contexts/VendorAuthContext';
 import { PasswordRequirementsChecklist } from '../../components/common/PasswordRequirementsChecklist';
@@ -34,7 +35,7 @@ const VendorSettingsPage: React.FC = () => {
     setSuccess('');
 
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+      const apiUrl = apiUtils.getApiUrl();
       const response = await axios.put(
         `${apiUrl}/vendor-auth/change-password`,
         { currentPassword, newPassword },
