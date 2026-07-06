@@ -107,7 +107,89 @@
 - Unauthentifizierte `/debug/clear-cache`-Route → Durchlauf 1b (Sicherheit).
 - `:5000`-API-Fallbacks, require()-Stellen, any-Wildwuchs → Durchlauf 1c.
 
+## Sicherheit (Durchlauf 1b)
+
+Befunde per Datei:Zeile belegt und stichprobenartig selbst nachgeprüft.
+Einige Agent-Einstufungen wurden nach Prüfung angepasst (Begründung dabei).
+
+### Kritisch
+
+- [ ] **SEC1 (K)** `server/scripts/test-with-real-token.js:9` — echter Admin-JWT
+  (`isAdmin: true`) **hartkodiert und git-getrackt**. Datei ist über die neue
+  .gitignore nicht mehr erfasst, weil bereits tracked. → aus Index entfernen,
+  Token als kompromittiert behandeln (JWT_SECRET rotieren macht ihn ungültig);
+  History-Bereinigung erwägen. Hängt mit S1 (getrackte Debug-Skripte) zusammen.
+- [ ] **SEC2 (K)** `server/src/routes/adminRoutes.ts:32` — `POST /api/admin/debug/clear-cache`
+  ist VOR `router.use(adminAuth)` (Z. 47) registriert → **ohne Auth**
+  aufrufbar, leert den gesamten Cache (DoS-Hebel). → Route hinter die
+  Auth-Middleware verschieben oder entfernen.
+
+### Wichtig
+
+- [ ] **SEC3 (W)** `server/src/services/vendorService.ts:184` — `new RegExp(location, 'i')`
+  aus `req.query.location` (via `publicRoutes.ts:35`, öffentlich, unvalidiert)
+  → RegExp-Injection / ReDoS auf öffentlichem Vendor-Listing. → Eingabe escapen
+  oder auf Literal-Match umstellen; Länge begrenzen.
+- [ ] **SEC4 (W)** `client/src/pages/admin/InvoiceDashboard.tsx:422,490` —
+  `console.log` gibt komplette Auth-Header (Bearer-Token) bzw. Token-Präfix in
+  der Browser-Konsole aus. → entfernen (gehört zum Debug-Tool S19/invoiceApi.js).
+- [ ] **SEC5 (W)** Vendor-Login validiert die Passwort-Policy
+  (`server/src/routes/vendorAuthRoutes.ts:36`, nur `authRateLimit`) — bekanntes
+  UX-Problem: Nutzer mit policy-verletzendem Alt-Passwort kommen nicht rein.
+  Siehe [[project_vendor_auth_issues]]. → Login prüft nur Präsenz, nicht Policy.
+- [ ] **SEC6 (W)** `server/src/controllers/newsletterController.ts:185-206` —
+  im `NODE_ENV === 'development'` wird die Token-Prüfung der
+  Newsletter-Bestätigung übersprungen (bestätigt ohne gültigen Token).
+  Greift nur bei falsch gesetztem NODE_ENV (deshalb W statt K, aber
+  Defense-in-Depth). → Dev-Zweig entschärfen/entfernen.
+- [ ] **SEC7 (W)** `server/src/routes/authRoutes.ts:33-36` — `POST /setup` hat
+  `validateAdminSetup` auskommentiert („Temporarily removed") → keine
+  Feld-Validierung bei Admin-Anlage. Ausnutzbarkeit begrenzt durch den
+  adminExists-Check (kein zweiter Admin möglich), daher W. Zusätzlich
+  `router.all('/test-setup', …)` (Z. 27) loggt `req.body` inkl. Credentials.
+  → Validierung reaktivieren, Test-Route entfernen.
+- [ ] **SEC8 (W)** JWT im `localStorage` (`adminToken`/`vendorToken`) →
+  XSS-exfiltrierbar. Architektur-Thema (httpOnly-Cookie wäre robuster),
+  eigener größerer Task. → als bekannte Schwäche dokumentiert.
+- [ ] **SEC9 (W)** `server/src/config/config.ts:38` — Dev-Fallback
+  `'development-jwt-secret-not-for-production'`. In Prod korrekt abgefangen
+  (wirft ohne `JWT_SECRET`), Risiko nur bei falschem NODE_ENV in Staging.
+  → sicherstellen, dass alle Nicht-Local-Umgebungen `NODE_ENV=production` + echtes Secret haben.
+- [ ] **SEC10 (W)** `server/src/controllers/vendor/vendorProfileController.ts`
+  (u. a. Z. 167, 206-209, 316) — Profil-Textfelder werden ohne Längen-/
+  Formatprüfung übernommen; XSS-Schutz hängt allein an der globalen
+  Regex-Sanitization (`middleware/security.ts`), die nicht alle Vektoren
+  abdeckt. → express-validator-Kette für Profil-Update (analog Produkt-Rules).
+- [ ] **SEC11 (W)** `server/src/middleware/security.ts:24` — CSP mit
+  `scriptSrc: ['self','unsafe-inline']` (nur Prod aktiv) schwächt den
+  XSS-Schutz. → `unsafe-inline` entfernen, sofern machbar.
+
+### Kosmetisch / Defense-in-Depth
+
+- [ ] **SEC12 (k)** `server/src/controllers/newsletterController.ts:241` —
+  `POST /newsletter/unsubscribe` (hat Rate-Limit + Validierung, aber keinen
+  Token): jeder kann per bekannter E-Mail fremde Abos beenden. Geringer Schaden;
+  Token-basierter Unsubscribe-Link wäre sauberer. (Agent-Behauptung „keine
+  Validierung" war falsch — Route hat `validateNewsletterSubscription`.)
+- [ ] **SEC13 (k)** Kein `express-mongo-sanitize`; Schutz nur über eigene
+  Regex-Sanitization. → Bibliothek ergänzen (härtet gegen `$`-Operatoren).
+- [ ] **SEC14 (k)** `server/src/index.ts:88` CORS `origin: true` im Dev;
+  `server/src/routes/contactRoutes.ts` `/test`-Route; `productImageController.ts:31`
+  `Math.random()` für Upload-Dateinamen (unkritisch, Konsistenz).
+
+### Geprüft und in Ordnung (NICHT „reparieren")
+
+- Passwort-Hashing bcrypt mit Salt (10 Runden); Reset-/Confirm-Tokens via
+  `crypto.randomBytes(32)`, Einmal-Verwendung (Token nach Nutzung gelöscht).
+- Admin-Login ohne User-Enumeration (gleiche Fehlermeldung).
+- `ADMIN_SETUP_KEY`-Anlage durch adminExists-Check abgesichert.
+- **IDOR geprüft**: Invoice-Abruf nutzt vendorId aus dem Token
+  (`invoiceController.ts:34-36`), kein Fremdzugriff; Buchungen mit
+  Ownership-Check. Keine Kreditkarten-/IBAN-Daten im Code (Zahlung läuft über
+  flour.io-Cloud) — housnkuh speichert nur Rechnungsbeträge/Provisionen.
+- Keine `.env` getrackt (nur `.env.example`).
+
 ---
 
-*Durchläufe 1b (Sicherheit), 1c (Konsistenz), 1d (Betrieb) folgen; die
-priorisierte Gesamt-Reihenfolge entsteht am Ende von 1d.*
+*Durchläufe 1c (Konsistenz), 1d (Betrieb) folgen; die priorisierte
+Gesamt-Reihenfolge entsteht am Ende von 1d.*
