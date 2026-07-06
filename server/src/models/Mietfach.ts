@@ -39,6 +39,20 @@ const MietfachSchema = new Schema({
       default: 'm²'
     }
   },
+  // Physische Position im Laden für die interaktive Ladenkarte (Meter).
+  // Optional ohne Default: Fächer ohne Position erscheinen nicht auf der Karte.
+  position: {
+    type: {
+      x: { type: Number, required: true },
+      y: { type: Number, required: true },
+      w: { type: Number, required: true },
+      d: { type: Number, required: true },
+      h: { type: Number, required: true },
+      rotation: { type: Number, required: true, default: 0 }
+    },
+    default: undefined,
+    _id: false
+  },
   verfuegbar: {
     type: Boolean,
     default: true

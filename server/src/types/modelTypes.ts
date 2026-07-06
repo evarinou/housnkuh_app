@@ -238,6 +238,16 @@ export enum MietfachTyp {
   SONSTIGES = 'sonstiges'
 }
 
+// Physische Position eines Mietfachs im Laden (Meter, Ursprung = linke hintere Ecke)
+export interface IMietfachPosition {
+  x: number; // Meter vom Ursprung (Breitenachse)
+  y: number; // Meter vom Ursprung (Tiefenachse, im 3D = z)
+  w: number; // Breite in Metern
+  d: number; // Tiefe in Metern
+  h: number; // Höhe in Metern (nur Optik)
+  rotation: number; // Grad um die Hochachse
+}
+
 export interface IMietfach extends Document {
   bezeichnung: string;
   typ: MietfachTyp;
@@ -246,6 +256,7 @@ export interface IMietfach extends Document {
     flaeche: number;
     einheit: string;
   };
+  position?: IMietfachPosition;
   verfuegbar?: boolean;
   aktuellerVertrag?: string; // ObjectId des aktuellen Vertrags
   zugewiesenAn?: string; // ObjectId des Direktvermarkters

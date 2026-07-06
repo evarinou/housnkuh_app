@@ -18,6 +18,7 @@ import express from 'express';
 import VendorService from '../services/vendorService';
 import { Request, Response } from 'express';
 import { cacheMiddleware } from '../middleware/cacheMiddleware';
+import { getStoreMapData } from '../services/storeMapService';
 import logger from '../utils/logger';
 
 const router = express.Router();
@@ -78,6 +79,23 @@ router.get('/vendors/:id', cacheMiddleware(600), async (req: Request, res: Respo
     res.status(500).json({
       success: false,
       message: 'Fehler beim Abrufen der Direktvermarkter-Details'
+    });
+  }
+});
+
+// Get store map data: positioned Mietfächer with public-safe occupancy (cached for 5 minutes)
+router.get('/store-map', cacheMiddleware(300), async (_req: Request, res: Response): Promise<void> => {
+  try {
+    const mietfaecher = await getStoreMapData();
+    res.json({
+      success: true,
+      mietfaecher
+    });
+  } catch (error) {
+    logger.error('Error getting store map data', { error });
+    res.status(500).json({
+      success: false,
+      message: 'Fehler beim Abrufen der Ladenkarte'
     });
   }
 });

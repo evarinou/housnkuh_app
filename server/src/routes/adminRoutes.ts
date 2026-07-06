@@ -15,6 +15,7 @@
 import { Router } from 'express';
 import * as adminController from '../controllers/adminController';
 import * as bookingAdminController from '../controllers/admin/bookingAdminController';
+import * as storeMapAdminController from '../controllers/admin/storeMapAdminController';
 import * as vertragController from '../controllers/vertragController';
 import { adminAuth } from '../middleware/auth';
 // import { cacheMiddleware, cacheInvalidationMiddleware } from '../middleware/cacheMiddleware';
@@ -75,6 +76,10 @@ router.post('/check-mietfach-availability', bookingAdminController.checkMietfach
 // M005 Implementation: Booking Schedule Management API
 // router.put('/bookings/:bookingId/schedule', adminController.updateBookingSchedule);
 router.post('/bookings/:bookingId/confirm-with-schedule', bookingAdminController.confirmPendingBookingWithSchedule);
+
+// Ladenkarte: Mietfach-Positionen für den 2D-Editor verwalten
+router.get('/store-map', noCacheHeaders, storeMapAdminController.getStoreMapAdmin);
+router.patch('/store-map/positions', storeMapAdminController.updateStoreMapPositions);
 
 // Benutzerverwaltung (no cache for debugging)
 router.get('/users', noCacheHeaders, adminController.getAllUsers);
