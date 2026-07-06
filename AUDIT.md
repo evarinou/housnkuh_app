@@ -114,15 +114,16 @@ Einige Agent-Einstufungen wurden nach Prüfung angepasst (Begründung dabei).
 
 ### Kritisch
 
-- [ ] **SEC1 (K)** `server/scripts/test-with-real-token.js:9` — echter Admin-JWT
-  (`isAdmin: true`) **hartkodiert und git-getrackt**. Datei ist über die neue
-  .gitignore nicht mehr erfasst, weil bereits tracked. → aus Index entfernen,
-  Token als kompromittiert behandeln (JWT_SECRET rotieren macht ihn ungültig);
-  History-Bereinigung erwägen. Hängt mit S1 (getrackte Debug-Skripte) zusammen.
-- [ ] **SEC2 (K)** `server/src/routes/adminRoutes.ts:32` — `POST /api/admin/debug/clear-cache`
-  ist VOR `router.use(adminAuth)` (Z. 47) registriert → **ohne Auth**
-  aufrufbar, leert den gesamten Cache (DoS-Hebel). → Route hinter die
-  Auth-Middleware verschieben oder entfernen.
+- [x] **SEC1 (K→hinfällig)** `server/scripts/test-with-real-token.js:9` — Agent
+  meldete einen „git-getrackten" Admin-JWT. **Gegenprüfung 2026-07-06 (T0.2):
+  FEHLALARM.** Die Datei wurde nie committet (`git log` leer), ist untracked
+  WIP und fällt jetzt unter die `server/scripts/*`-Ignore-Regel. Der volle echte
+  flour.io-Token liegt in KEINER getrackten Datei; die Tokens in
+  `docs/flourio-api-v3/*` sind abgeschnittene Beispiele. Kein Handeln nötig,
+  keine erzwungene JWT_SECRET-Rotation. (Lehre: Agent-„tracked"-Claims gegen
+  `git log` prüfen.)
+- [x] **SEC2 (K)** ✅ erledigt (T0.1): unauthentifizierte
+  `POST /admin/debug/clear-cache` entfernt.
 
 ### Wichtig
 

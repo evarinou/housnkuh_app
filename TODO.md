@@ -12,24 +12,22 @@
 
 ## Stufe 0 – Sicherheit & Sofort-Bugfixes
 
-- [ ] **T0.1 – Offene Debug-Route schließen** (AUDIT SEC2). `POST /api/admin/
-  debug/clear-cache` hinter `adminAuth` verschieben oder entfernen.
-  *Fertig, wenn:* Route ohne gültiges Admin-JWT 401/404 liefert.
-- [ ] **T0.2 – Getrackten Admin-JWT entschärfen** (AUDIT SEC1). `server/scripts/
-  test-with-real-token.js` aus dem Index nehmen; `JWT_SECRET` rotieren (macht
-  den Token wertlos). ⚠️ Rotation loggt alle aktiven Sessions aus — mit Eva
-  timen. *Fertig, wenn:* Datei nicht mehr getrackt, neues Secret aktiv, Alt-Token
-  wird abgelehnt.
-- [ ] **T0.3 – Vendor-Login-Bug: falscher API-Port** (AUDIT KON3/S14, FEATURES
-  „muss überarbeitet"). `:5000`-Fallback in VendorLoginPage, VendorForgotPassword-,
-  VendorResetPassword-, VendorSettingsPage auf zentrale API-URL umstellen
-  (`apiUtils.getApiUrl()`), am besten gleich eine `config/api.ts` einführen.
-  *Fertig, wenn:* alle vier Seiten dieselbe Basis-URL wie der Rest nutzen, kein
-  `:5000` mehr im Client, Login/Reset ohne gesetzte Env funktioniert.
-- [ ] **T0.4 – Token-Leak & Debug-Tool entfernen** (AUDIT SEC4/S19). Token-
-  `console.log` in InvoiceDashboard entfernen; `utils/invoiceApi.js`
-  (Auto-Debug auf dem Dashboard) entfernen oder hinter Debug-Flag.
-  *Fertig, wenn:* kein Token in der Browser-Konsole, kein Auto-Debug in Prod.
+- [x] **T0.1 – Offene Debug-Route schließen** (AUDIT SEC2). ✅ Route
+  `POST /admin/debug/clear-cache` entfernt (war ohne Auth erreichbar, kein
+  Aufrufer). Commit.
+- [x] **T0.2 – „Getrackter Admin-JWT" (AUDIT SEC1) — FEHLALARM, kein Handeln
+  nötig.** ✅ Gegenprüfung: `server/scripts/test-with-real-token.js` wurde
+  **nie committet** (nicht in der Historie), fällt jetzt unter die
+  `server/scripts/*`-Ignore-Regel. Der volle echte flour.io-Token liegt in
+  **keiner** getrackten Datei; die Tokens in `docs/flourio-api-v3/*` sind
+  abgeschnittene Beispiele (`…`). → keine `JWT_SECRET`-Rotation aus diesem
+  Grund erzwungen (optional als Hygiene). SEC1 in AUDIT.md korrigiert.
+- [x] **T0.3 – Vendor-Login-Bug: falscher API-Port** (AUDIT KON3/S14). ✅ Alle
+  vier Vendor-Seiten nutzen jetzt `apiUtils.getApiUrl()`; kein `:5000/api` mehr
+  im Client. Commit.
+- [x] **T0.4 – Token-Leak & Debug-Tool entfernen** (AUDIT SEC4/S19). ✅ Alle
+  Debug-`console.log` in InvoiceDashboard entfernt (Token/Header-Leak weg),
+  totes `utils/invoiceApi.js` gelöscht. Commit.
 
 ## Stufe 1 – Verkaufsdaten-Fundament (trägt F2a/F2c/F3)
 
