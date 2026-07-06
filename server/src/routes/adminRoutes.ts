@@ -28,13 +28,6 @@ import ScheduledJobs from '../services/scheduledJobs';
  */
 const router = Router();
 
-// Temporary debug route (without auth) - should be removed in production
-router.post('/debug/clear-cache', (req, res) => {
-  const { cache } = require('../utils/cache');
-  cache.clear();
-  res.json({ success: true, message: 'Cache cleared successfully' });
-});
-
 // Add no-cache headers middleware for debugging
 const noCacheHeaders = (req: any, res: any, next: any) => {
   res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
