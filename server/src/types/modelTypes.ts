@@ -127,6 +127,9 @@ export interface IVendorProfile {
   // Provisionssatz für Vendor-Modell
   provisionssatz?: number; // 4% Basic, 7% Premium
   modelltyp?: 'Basic' | 'Premium';
+
+  // Umsatzsteuer-Status — steuert die USt-Behandlung der Verkaufsrechnungen (F2a)
+  steuerstatus?: 'kleinunternehmer' | 'regelbesteuert';
 }
 
 // Booking Status Enum für detailliertes Status-Tracking

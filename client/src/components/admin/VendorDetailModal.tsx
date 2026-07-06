@@ -33,6 +33,7 @@ interface VendorProfile {
     instagram?: string;
   };
   verifyStatus?: 'unverified' | 'pending' | 'verified';
+  steuerstatus?: 'kleinunternehmer' | 'regelbesteuert';
 }
 
 /**
@@ -164,6 +165,36 @@ const VendorDetailModal: React.FC<VendorDetailModalProps> = ({ vendorId, isOpen,
       if (onUpdate) onUpdate();
     } catch (err) {
       console.error('Error updating verification status:', err);
+    }
+  };
+
+  /**
+   * Updates the vendor's tax status (Kleinunternehmer vs. regelbesteuert).
+   * Steuert die USt-Behandlung der Verkaufsrechnungen (F2a).
+   * @param {('kleinunternehmer'|'regelbesteuert')} newStatus
+   * @returns {Promise<void>}
+   */
+  const handleSteuerstatusChange = async (newStatus: 'kleinunternehmer' | 'regelbesteuert') => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      await axios.patch(`/api/admin/users/${vendorId}`,
+        { 'vendorProfile.steuerstatus': newStatus },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (vendor && vendor.vendorProfile) {
+        setVendor({
+          ...vendor,
+          vendorProfile: {
+            ...vendor.vendorProfile,
+            steuerstatus: newStatus
+          }
+        });
+      }
+
+      if (onUpdate) onUpdate();
+    } catch (err) {
+      console.error('Error updating tax status:', err);
     }
   };
 
@@ -358,15 +389,29 @@ const VendorDetailModal: React.FC<VendorDetailModalProps> = ({ vendorId, isOpen,
                   <div className="bg-blue-50 p-4 rounded-lg">
                     <h3 className="font-semibold mb-3">Schnellaktionen</h3>
                     <div className="flex flex-wrap gap-3">
-                      <select
-                        value={vendor.vendorProfile?.verifyStatus || 'unverified'}
-                        onChange={(e) => handleVerificationChange(e.target.value as any)}
-                        className="px-3 py-2 border border-gray-300 rounded-md text-sm"
-                      >
-                        <option value="unverified">Nicht verifiziert</option>
-                        <option value="pending">In Prüfung</option>
-                        <option value="verified">Verifiziert</option>
-                      </select>
+                      <div>
+                        <label className="block text-xs text-gray-600 mb-1">Verifizierung</label>
+                        <select
+                          value={vendor.vendorProfile?.verifyStatus || 'unverified'}
+                          onChange={(e) => handleVerificationChange(e.target.value as any)}
+                          className="px-3 py-2 border border-gray-300 rounded-md text-sm"
+                        >
+                          <option value="unverified">Nicht verifiziert</option>
+                          <option value="pending">In Prüfung</option>
+                          <option value="verified">Verifiziert</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-600 mb-1">Steuerstatus (USt)</label>
+                        <select
+                          value={vendor.vendorProfile?.steuerstatus || 'kleinunternehmer'}
+                          onChange={(e) => handleSteuerstatusChange(e.target.value as any)}
+                          className="px-3 py-2 border border-gray-300 rounded-md text-sm"
+                        >
+                          <option value="kleinunternehmer">Kleinunternehmer (§19, keine USt)</option>
+                          <option value="regelbesteuert">Regelbesteuert</option>
+                        </select>
+                      </div>
                     </div>
                   </div>
                 </div>

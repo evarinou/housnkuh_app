@@ -151,6 +151,16 @@ const VendorProfileSchema = new Schema({
     enum: ['Basic', 'Premium'],
     default: function(this: any) { return this.provisionssatz === 7 ? 'Premium' : 'Basic'; },
     required: function(this: any) { return this.isVendor; }
+  },
+  // Umsatzsteuer-Status des Vendors — bestimmt die USt-Behandlung seiner
+  // Verkaufsrechnungen (F2a, Abrechnung im fremden Namen). Default
+  // 'kleinunternehmer' (§19 UStG, keine USt) als Regelfall für kleine
+  // Direktvermarkter; der Admin MUSS den Status je Vendor verifizieren.
+  steuerstatus: {
+    type: String,
+    enum: ['kleinunternehmer', 'regelbesteuert'],
+    default: 'kleinunternehmer',
+    required: function(this: any) { return this.isVendor; }
   }
 });
 
