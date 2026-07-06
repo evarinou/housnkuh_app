@@ -8,6 +8,7 @@ import * as cron from 'node-cron';
 import { DocumentPullService } from '../services/flourio/services/DocumentPullService';
 import { FlourioClient } from '../services/flourio/client/FlourioClient';
 import { flourioConfig } from '../services/flourio/client/config';
+import { VendorSaleProjectionService } from '../services/vendorSaleProjectionService';
 import logger from '../utils/logger';
 
 export class DocumentSyncJob {
@@ -38,6 +39,22 @@ export class DocumentSyncJob {
       if (result.errors.length > 0) {
         logger.warn('[DocumentSyncJob] Errors during document pull', {
           errors: result.errors
+        });
+      }
+
+      // Frisch gepullte Verkaufsbelege in den abrechenbaren VendorSale-Ledger
+      // projizieren (idempotent). Fenster großzügig über das 15-Min-Intervall.
+      try {
+        const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
+        const projection = await VendorSaleProjectionService.project({ since });
+        logger.info('[DocumentSyncJob] VendorSale projection completed', {
+          documents: projection.documents,
+          created: projection.created,
+          skippedNoVendor: projection.skippedNoVendor
+        });
+      } catch (projErr: any) {
+        logger.error('[DocumentSyncJob] VendorSale projection failed', {
+          error: projErr.message
         });
       }
     } catch (error: any) {

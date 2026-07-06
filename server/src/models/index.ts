@@ -9,6 +9,7 @@ import { Product } from './Product';
 import EmailTemplate from './EmailTemplate';
 import Invoice from './Invoice';
 import Alert from './Alert';
+import VendorSale from './VendorSale';
 
 export {
   User,
@@ -21,5 +22,6 @@ export {
   Product,
   EmailTemplate,
   Invoice,
-  Alert
+  Alert,
+  VendorSale
 };
