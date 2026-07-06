@@ -181,15 +181,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
               </Link>
               
               <Link
-                to="/admin/revenue"
-                className="group flex items-center px-2 py-2 text-base font-medium rounded-md text-white hover:bg-primary"
-                onClick={() => setSidebarOpen(false)}
-              >
-                <DollarSign className="mr-4 h-6 w-6" />
-                Umsätze
-              </Link>
-              
-              <Link
                 to="/admin/contacts"
                 className="group flex items-center px-2 py-2 text-base font-medium rounded-md text-white hover:bg-primary"
                 onClick={() => setSidebarOpen(false)}
@@ -335,14 +326,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                 >
                   <DollarSign className="mr-3 h-6 w-6" />
                   Rechnungs-Dashboard
-                </Link>
-                
-                <Link
-                  to="/admin/revenue"
-                  className="group flex items-center px-2 py-2 text-base font-medium rounded-md text-white hover:bg-primary"
-                >
-                  <DollarSign className="mr-3 h-6 w-6" />
-                  Umsätze
                 </Link>
                 
                 <Link

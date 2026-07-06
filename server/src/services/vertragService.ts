@@ -224,35 +224,6 @@ export class VertragService {
       .sort({ createdAt: -1 });
   }
 
-  /**
-   * @description Get contracts for revenue calculation (excluding unpaid trial bookings)
-   * @param {Date} startDate - Start date for revenue period
-   * @param {Date} endDate - End date for revenue period
-   * @security Filters contracts based on payment eligibility
-   * @complexity High - Complex query with trial payment date validation
-   * @returns {Promise<IVertrag[]>} Array of contracts eligible for revenue
-   */
-  async getContractsForRevenue(startDate: Date, endDate: Date): Promise<IVertrag[]> {
-    return await Vertrag.find({
-      status: 'active',
-      scheduledStartDate: { $lte: endDate },
-      $and: [
-        {
-          $or: [
-            { 'availabilityImpact.to': { $gte: startDate } },
-            { 'availabilityImpact.to': null }
-          ]
-        },
-        {
-          // Exclude trial bookings that haven't reached payment date yet
-          $or: [
-            { istProbemonatBuchung: false },
-            { zahlungspflichtigAb: { $lte: endDate } }
-          ]
-        }
-      ]
-    }).populate('services.mietfach', 'bezeichnung typ preis');
-  }
 }
 
 export const vertragService = new VertragService();

@@ -323,29 +323,6 @@ export interface IVertrag extends Document, IVertragTrialFields {
   updatedAt: Date;
 }
 
-// Mietfach Revenue Interface for MonthlyRevenue subdocuments
-export interface IMietfachRevenue {
-  mietfachId: mongoose.Types.ObjectId;
-  mietfachNummer: string;
-  einnahmen: number;
-  anzahlVertraege: number;
-  anzahlProbemonatVertraege: number;
-}
-
-// Monthly Revenue Interface for revenue tracking
-export interface IMonthlyRevenue extends Document {
-  monat: Date;
-  gesamteinnahmen: number;
-  anzahlAktiveVertraege: number;
-  anzahlProbemonatVertraege: number;
-  einnahmenProMietfach: IMietfachRevenue[];
-  erstelltAm: Date;
-  aktualisiertAm: Date;
-  isProjection?: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
 // Package Tracking Interface for Zusatzleistungen
 export interface IPackageTracking extends Document {
   vertrag_id: mongoose.Types.ObjectId;

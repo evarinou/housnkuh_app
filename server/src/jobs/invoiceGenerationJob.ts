@@ -14,7 +14,7 @@ import invoiceMonitoringService from '../services/invoiceMonitoringService';
 export class InvoiceGenerationJob {
   private static task: cron.ScheduledTask | null = null;
   
-  // Run on the 1st of each month at 3 AM (1 hour after revenue calculation)
+  // Run on the 1st of each month at 3 AM
   static schedule = '0 3 1 * *';
   
   /**

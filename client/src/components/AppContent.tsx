@@ -59,7 +59,6 @@ const UnauthorizedPage = React.lazy(() => import('../pages/admin/UnauthorizedPag
 const SettingsPage = React.lazy(() => import('../pages/admin/SettingsPage'));
 const TagsPage = React.lazy(() => import('../pages/admin/TagsPage'));
 const FAQManagementPage = React.lazy(() => import('../pages/admin/FAQManagementPage'));
-const RevenueOverviewPage = React.lazy(() => import('../pages/admin/RevenueOverviewPage'));
 const ZusatzleistungenPage = React.lazy(() => import('../pages/admin/ZusatzleistungenPage'));
 const ArticleManagementPage = React.lazy(() => import('../pages/admin/ArticleManagementPage'));
 const FlourioDocumentsPage = React.lazy(() => import('../pages/admin/FlourioDocumentsPage'));
@@ -200,11 +199,6 @@ const AppContent: React.FC = () => {
         <Route path="faq" element={
           <Suspense fallback={<LoadingSpinner />}>
             <FAQManagementPage />
-          </Suspense>
-        } />
-        <Route path="revenue" element={
-          <Suspense fallback={<LoadingSpinner />}>
-            <RevenueOverviewPage />
           </Suspense>
         } />
         <Route path="invoices" element={

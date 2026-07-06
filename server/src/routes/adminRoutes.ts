@@ -15,7 +15,6 @@
 import { Router } from 'express';
 import * as adminController from '../controllers/adminController';
 import * as bookingAdminController from '../controllers/admin/bookingAdminController';
-import * as revenueAdminController from '../controllers/admin/revenueAdminController';
 import * as vertragController from '../controllers/vertragController';
 import { adminAuth } from '../middleware/auth';
 // import { cacheMiddleware, cacheInvalidationMiddleware } from '../middleware/cacheMiddleware';
@@ -181,52 +180,6 @@ router.get('/feature-flags', adminController.getFeatureFlags);
 router.put('/feature-flags', adminController.updateFeatureFlags);
 router.post('/feature-flags/trial-automation/rollout', adminController.setTrialAutomationRollout);
 router.get('/feature-flags/trial-automation/status', adminController.getTrialAutomationStatus);
-
-// ===============================================
-// REVENUE MANAGEMENT ROUTES (M006)
-// ===============================================
-
-// Revenue Overview and Statistics (temporarily no cache for debugging)
-router.get('/revenue/overview', (req, res, next) => {
-  res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
-  res.set('Pragma', 'no-cache');
-  res.set('Expires', '0');
-  next();
-}, revenueAdminController.getRevenueOverview);
-router.get('/revenue/by-unit', (req, res, next) => {
-  res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
-  res.set('Pragma', 'no-cache');
-  res.set('Expires', '0');
-  next();
-}, revenueAdminController.getRevenueByUnit);
-router.get('/revenue/trends', noCacheHeaders, revenueAdminController.getRevenueTrends);
-router.get('/revenue/mietfach-analysis', noCacheHeaders, revenueAdminController.getMietfachAnalysis);
-
-// Detailed Monthly Revenue (temporarily no cache for debugging)
-router.get('/revenue/details/:year/:month', noCacheHeaders, revenueAdminController.getMonthlyRevenueDetails);
-
-// Revenue Export (no caching for downloads)
-router.get('/revenue/export', noCacheHeaders, revenueAdminController.exportRevenueData);
-
-// Revenue Data Maintenance (admin only, no cache)
-router.post('/revenue/refresh',
-  noCacheHeaders,
-  revenueAdminController.refreshRevenueData
-);
-
-// Manual Revenue Calculation Trigger (admin only)
-router.post('/revenue/calculate', noCacheHeaders, revenueAdminController.triggerRevenueCalculation);
-
-// Future Revenue Projections (temporarily no cache for debugging)
-router.get('/revenue/projections', noCacheHeaders, revenueAdminController.getFutureRevenueProjections);
-router.get('/revenue/combined', (req, res, next) => {
-  res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
-  res.set('Pragma', 'no-cache');
-  res.set('Expires', '0');
-  next();
-}, revenueAdminController.getCombinedRevenueData);
-router.get('/revenue/pipeline', noCacheHeaders, revenueAdminController.getContractPipeline);
-router.get('/revenue/projected-occupancy', noCacheHeaders, revenueAdminController.getProjectedOccupancy);
 
 // ===============================================
 // ZUSATZLEISTUNGEN MANAGEMENT ROUTES (M013) - Updated Implementation

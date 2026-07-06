@@ -11,7 +11,6 @@ import * as cron from 'node-cron';
 import TrialService from './trialService';
 import HealthCheckService from './healthCheckService';
 import AlertingService from './alertingService';
-import RevenueCalculationJob from '../jobs/revenueCalculationJob';
 import StockPullJob from '../jobs/stockPullJob';
 import DocumentSyncJob from '../jobs/documentSyncJob';
 import { performanceMonitor } from '../utils/performanceMonitor';
@@ -56,16 +55,13 @@ export class ScheduledJobs {
     // Job 5: Alert cleanup (daily at 2 AM)
     this.scheduleAlertCleanup();
     
-    // Job 6: Revenue calculation (monthly on 1st at 2 AM)
-    this.scheduleRevenueCalculation();
-    
-    // Job 7: Invoice generation (monthly on 1st at 3 AM)
+    // Job 6: Invoice generation (monthly on 1st at 3 AM)
     this.scheduleInvoiceGeneration();
 
-    // Job 8: Flourio Stock Pull (every 5 minutes)
+    // Job 7: Flourio Stock Pull (every 5 minutes)
     this.scheduleStockPull();
 
-    // Job 9: Flourio Document Sync (every 15 minutes)
+    // Job 8: Flourio Document Sync (every 15 minutes)
     this.scheduleDocumentSync();
 
     // Run Vertrag activation once at startup
@@ -255,42 +251,6 @@ export class ScheduledJobs {
     }
   }
 
-  /**
-   * @description Manually trigger revenue calculation (for admin use)
-   * @param {number} [year] - Optional year for calculation
-   * @param {number} [month] - Optional month for calculation
-   * @security Admin-only manual trigger for revenue calculations
-   * @complexity Medium - Manual job execution with period selection
-   * @returns {Promise<any>} Result object with success status and calculation period
-   */
-  static async triggerRevenueCalculation(year?: number, month?: number): Promise<any> {
-    try {
-      logger.info('🔧 Manual revenue calculation triggered');
-      
-      if (year && month) {
-        await RevenueCalculationJob.calculateForMonth(year, month);
-        return {
-          success: true,
-          period: `${month}/${year}`,
-          timestamp: new Date()
-        };
-      } else {
-        await RevenueCalculationJob.run();
-        return {
-          success: true,
-          period: 'current/previous month',
-          timestamp: new Date()
-        };
-      }
-    } catch (error) {
-      logger.error('❌ Manual revenue calculation failed:', error);
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
-        timestamp: new Date()
-      };
-    }
-  }
 
   /**
    * @description Manually trigger invoice generation (for admin use)
@@ -414,9 +374,6 @@ export class ScheduledJobs {
       logger.info(`⏹️ Stopped job: ${name}`);
     }
     
-    // Stop the revenue calculation job separately
-    RevenueCalculationJob.stop();
-
     // Stop the stock pull job
     StockPullJob.stop();
 
@@ -608,17 +565,6 @@ export class ScheduledJobs {
 
     this.jobs.set('alert-cleanup', task);
     logger.info('📅 Alert cleanup scheduled (daily at 2 AM)');
-  }
-
-  /**
-   * @description Schedule revenue calculation - runs monthly on 1st at 2 AM
-   * @security Calculates monthly revenue data and updates analytics
-   * @complexity Medium - Revenue calculation job initialization
-   * @returns {void}
-   */
-  private static scheduleRevenueCalculation(): void {
-    RevenueCalculationJob.init();
-    logger.info('📅 Revenue calculation job scheduled (monthly on 1st at 2 AM)');
   }
 
   /**

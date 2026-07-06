@@ -239,7 +239,6 @@ export class CacheInvalidator {
    */
   static async onContractChange(): Promise<void> {
     await Promise.all([
-      queryCache.invalidate('revenue'),
       queryCache.invalidate('mietfach'),
       queryCache.invalidate('contracts'),
       queryCache.invalidate('vendor-bookings')
