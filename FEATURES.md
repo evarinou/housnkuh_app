@@ -105,6 +105,8 @@ Ergebnis des Dialogs (2026-07-06). Grobe Reihenfolge in Phase 4 klärt die TODO.
   `provisionssatz` wird in der Rechnung nirgends genutzt. → neuer Positionstyp
   `provision` + Aggregation des Monatsumsatzes je Vendor. Hängt an derselben
   ⚑flour.io-Verkaufsdatenquelle wie F2a/F3.
+  Bemessung: Provision auf den **Netto**-Umsatz des Vendors (vor dessen USt);
+  housnkuhs 19 % USt kommen auf die Netto-Provision obendrauf. (Eva 2026-07-06.)
   Steuer-Hinweis: Provision + Miete sind **housnkuh-eigener Umsatz**
   (housnkuh-USt, i. d. R. 19 %) — NICHT mit dem Vendor-Steuerstatus aus F2a
   verwechseln (der gilt nur für die Verkaufsrechnung im fremden Namen).
@@ -128,19 +130,30 @@ Ergebnis des Dialogs (2026-07-06). Grobe Reihenfolge in Phase 4 klärt die TODO.
   einer Buchung (TODO in `rejectPendingBooking`); Admin-Alert bei E-Mail-
   Versandfehlern (**OP7**, `alertAdminOfEmailFailure`).
 
-> ⚑ **Gemeinsame Abhängigkeit (F2a/F2c/F3):** Die je Vendor persistierten
-> Verkäufe sind das gemeinsame Fundament für drei Dinge: die Verkaufsrechnung
-> im fremden Namen (F2a), die Provisionsposition der Monatsrechnung (F2c) und
-> das Reporting (F3). In welcher Form liefert flour.io die
-> **einzelnen Verkäufe** pro Vendor? Zwei Kandidaten laufen bereits:
-> `stockPullJob` (alle 5 min, StockItemEntries = POS-Abgänge) und
-> `documentSyncJob` (alle 15 min → `FlourioDocument`, hat bereits
-> Verkaufspositionen mit `vendorId`, Menge, Steuersatz). **Phase-4-Schritt 0:**
-> klären, ob eine dieser Quellen die abrechenbaren Einzelverkäufe *persistent*
-> und *je Vendor zuordenbar* enthält. Wichtig: prüfen, ob `stockPullJob` die
-> Verkäufe nur als Bestands-Update verarbeitet (dann keine abrechenbaren
-> Einzelposten) oder speichert. Falls keine Quelle passt, ist das Persistieren
-> der Einzelverkäufe der erste Teilschritt von F2a.
+> ⚑ **Datenquellen-Befund (2026-07-06, im Code verifiziert):** Fundament für
+> F2a/F2c/F3 sind die je Vendor persistierten Verkäufe. Ergebnis der Prüfung:
+> - **StockItemEntries scheiden aus.** Laut Code sind das Wareneingänge
+>   („Article X is stored in Warehouse Y", type „I"=Inbound); `stockPullJob`
+>   cached daraus nur `Product.flourioStock` (aktueller Bestand, wird je Lauf
+>   überschrieben) — keine Verkäufe.
+> - **flour.io modelliert Verkäufe als „Documents"** (`/v3/documents`, type
+>   invoice/order/…). `documentSyncJob` zieht sie alle 15 min in
+>   `FlourioDocument` (upsert), inkl. Positionen mit `flourioArticleId`,
+>   **`productId`**, Menge, `unitPrice`, `taxRate`, `total`.
+> - **Vendor-Zuordnung auf ZEILENEBENE ist auflösbar** und muss dort erfolgen:
+>   `FlourioDocument.items[].productId → Product.vendorId`. NICHT über
+>   `document.businessPartnerId` (das ist bei einem Kassenverkauf der
+>   End**kunde**, nicht der Vendor). Ein Kassenbon kann Produkte **mehrerer**
+>   Vendors enthalten → pro Beleg nach Vendor aufsplitten.
+>
+> Konsequenz für die Umsetzung (Phase 4): Die Datenquelle **existiert** und ist
+> auflösbar. Noch zu bauen: (a) **Vendor-Steuerstatus** am User-Model (F2a
+> Krit. 4); (b) **Abrechnungs-Status je Verkauf/Position** in Mongo für
+> Idempotenz (F2a Krit. 2 + F2c) — auf `FlourioDocument`/Positionen gibt es
+> aktuell KEINE „bereits abgerechnet"-Markierung; (c) die Gruppierungs-/
+> Aggregationslogik (Beleg→Vendor-Positionen, Netto je Vendor); (d) Filter auf
+> den richtigen Beleg-`type` (nur echte Verkäufe, nicht order/quote/delivery);
+> (e) Takt für F2a auf 5 min bringen (Document-Pull läuft mit 15 min).
 
 ## Bewusst NICHT im Scope
 
