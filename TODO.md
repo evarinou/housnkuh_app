@@ -101,7 +101,10 @@
   OP1 globale Exception-Handler (index.ts), OP2 DB-Verbindungs-Events (db.ts),
   OP3 flour.io im Health-Check (healthCheckService), OP4 Retry bei
   Netzwerkfehlern (RateLimitHandler, 4 Tests). Build grün.
-- [ ] **T3.2 – Deployment & Backups** (FEATURES F5 / AUDIT OP12/OP13). systemd-
+- [x] **T3.2 – Deployment & Backups** (FEATURES F5 / AUDIT OP12/OP13). ✅
+  ecosystem.config.js (PM2, Single-Instance), backupJob (mongodump+Retention,
+  3 Tests), docs/DEPLOYMENT_OPERATIONS.md (inkl. Kiosk/WiegePC + Puppeteer-
+  Chrome-Falle). Ursprüngliche Beschreibung: systemd-
   Unit oder PM2-Config im Repo (Autostart nach Reboot); automatische
   `mongodump`-Backups mit Retention; dokumentierte Kiosk-Einrichtung
   (Ubuntu-Autostart-Browser) + Update-/Wartungsweg; WiegePC-Setup dokumentiert.
@@ -123,10 +126,17 @@
 - [ ] **T4.3 – F7 Echtzeit-Updates via WebSocket.** `useBookingUpdates`/
   `useDashboardMessages` von Polling auf WebSocket umstellen. *Fertig, wenn:*
   Dashboard-Updates ohne 30/60-s-Polling ankommen, Fallback bei Verbindungsverlust.
-- [ ] **T4.4 – F8 kleine Lücken.** Vendor-Mail bei Ablehnung einer Buchung
+- [x] **T4.4 – F8 kleine Lücken.** ✅ `sendBookingRejectionEmail` (DB-Template
+  `booking_rejection` + Hardcoded-Fallback) in `rejectPendingBooking` verdrahtet
+  — nicht-blockierend, mit Ablehnungsgrund aus `req.body.reason`;
+  `emailQueue.alertAdminOfEmailFailure` ruft jetzt
+  `AlertingService.alertEmailDeliveryFailure` (Admin-Empfänger aus DB,
+  15-min-Cooldown, E-Mail/Webhook/DB-Alert-Pipeline). 5 neue Tests grün;
+  nebenbei Spy-Leak in alertingService.test.ts gefixt (restoreAllMocks).
+  ~~Vendor-Mail bei Ablehnung einer Buchung
   (`rejectPendingBooking`-TODO); Admin-Alert bei E-Mail-Versandfehlern (AUDIT
   OP7). *Fertig, wenn:* abgelehnte Vendors werden benachrichtigt; wiederholte
-  Mail-Fehler erreichen den Admin.
+  Mail-Fehler erreichen den Admin.~~
 
 ## Stufe 5 – Konsistenz & Aufräumen (Audit Stufe 3/4)
 

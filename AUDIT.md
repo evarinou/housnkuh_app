@@ -234,9 +234,10 @@ selbst verifiziert; Agent-Einschätzungen wo nötig korrigiert.
   Retry-Zähler/Wiedervorlage (warehouseSyncService u. a.). Fehler-Items
   bleiben liegen bis manuelles Admin-Retry. → `flourioSyncRetryCount`/
   `lastAttempt`, gezielte Wiederholung im nächsten Lauf.
-- [ ] **OP7 (W)** `emailQueue.ts:533` — `alertAdminOfEmailFailure()` ist nur ein
-  TODO. Nach 3 Fehlversuchen (z. B. Rechnungs-Mail) wird niemand informiert →
-  stiller Verlust. → Admin-Benachrichtigung implementieren.
+- [x] **OP7 (W) ✅ (T4.4)** `alertAdminOfEmailFailure()` ruft jetzt
+  `AlertingService.alertEmailDeliveryFailure` (Admin-Empfänger, 15-min-Cooldown,
+  E-Mail/Webhook/DB-Alert). Alt: war nur ein TODO — nach 3 Fehlversuchen
+  (z. B. Rechnungs-Mail) wurde niemand informiert → stiller Verlust.
 - [ ] **OP8 (W)** `emailQueue.ts` — Fällt Redis aus, geht die Queue in einen
   In-Memory-Fallback: E-Mails im RAM, bei Neustart verloren. → Redis als
   erforderlich behandeln oder persistente Fallback-Queue.
