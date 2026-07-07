@@ -20,6 +20,7 @@ import {
   Tag
 } from 'lucide-react';
 import axios from 'axios';
+import { apiUtils } from '../../utils/auth';
 
 /**
  * @interface Mietfach
@@ -167,7 +168,7 @@ const MietfaecherPage: React.FC = () => {
       
       try {
         // Von der API abrufen mit Vertragsinformationen
-        const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+        const apiUrl = apiUtils.getApiUrl();
         const response = await axios.get(`${apiUrl}/mietfaecher/with-contracts`);
         
         if (response.data && response.data.length > 0) {
@@ -267,7 +268,7 @@ const MietfaecherPage: React.FC = () => {
       }
       
       // Über die API löschen
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+      const apiUrl = apiUtils.getApiUrl();
       await axios.delete(`${apiUrl}/mietfaecher/${id}`);
       
       // Aus dem lokalen State entfernen
@@ -296,7 +297,7 @@ const MietfaecherPage: React.FC = () => {
       }
       
       // Über die API aktualisieren
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+      const apiUrl = apiUtils.getApiUrl();
       await axios.put(`${apiUrl}/mietfaecher/${id}`, { 
         verfuegbar: !currentStatus 
       });
@@ -477,7 +478,7 @@ const MietfaecherPage: React.FC = () => {
       if (featuresArray.length > 0) updateData.features = featuresArray;
       
       // Über die API aktualisieren
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+      const apiUrl = apiUtils.getApiUrl();
       console.log('Updating mietfach via API:', updateData);
       await axios.put(`${apiUrl}/mietfaecher/${currentMietfach._id}`, updateData);
       
@@ -549,7 +550,7 @@ const MietfaecherPage: React.FC = () => {
       if (featuresArray.length > 0) newMietfachData.features = featuresArray;
       
       // An die API senden
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+      const apiUrl = apiUtils.getApiUrl();
       console.log('Sending mietfach data to server:', newMietfachData);
       const response = await axios.post(`${apiUrl}/mietfaecher`, newMietfachData);
       

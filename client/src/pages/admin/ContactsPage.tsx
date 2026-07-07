@@ -9,6 +9,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { apiUtils } from '../../utils/auth';
 
 /**
  * @interface Contact
@@ -59,7 +60,7 @@ const ContactsPage: React.FC = () => {
   const fetchContacts = async () => {
     try {
       setLoading(true);
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+      const apiUrl = apiUtils.getApiUrl();
       
       const response = await axios.get(`${apiUrl}/contact/admin`, {
         headers: {
@@ -86,7 +87,7 @@ const ContactsPage: React.FC = () => {
     // Wenn die Anfrage noch nicht gelesen wurde, als gelesen markieren
     if (!contact.isRead) {
       try {
-        const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+        const apiUrl = apiUtils.getApiUrl();
         
         await axios.put(`${apiUrl}/contact/admin/${contact._id}`, {
           isRead: true
@@ -106,7 +107,7 @@ const ContactsPage: React.FC = () => {
   
   const toggleResolvedStatus = async (contactId: string, currentStatus: boolean) => {
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+      const apiUrl = apiUtils.getApiUrl();
       
       await axios.put(`${apiUrl}/contact/admin/${contactId}`, {
         isResolved: !currentStatus
@@ -137,7 +138,7 @@ const ContactsPage: React.FC = () => {
     }
     
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+      const apiUrl = apiUtils.getApiUrl();
       
       await axios.delete(`${apiUrl}/contact/admin/${contactId}`, {
         headers: {

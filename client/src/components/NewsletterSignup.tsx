@@ -7,6 +7,7 @@
 import React, { useState } from 'react';
 import { Send, Check, AlertCircle } from 'lucide-react';
 import axios from 'axios';
+import { apiUtils } from '../utils/auth';
 
 /**
  * Newsletter subscription component with type selection and comprehensive status handling.
@@ -41,7 +42,7 @@ const NewsletterSignup: React.FC = () => {
     setDebugInfo('');
     
     // Debug-Informationen sammeln
-    const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+    const apiUrl = apiUtils.getApiUrl();
     const requestData = { email, name, type };
     
     console.log('Newsletter submission:', {

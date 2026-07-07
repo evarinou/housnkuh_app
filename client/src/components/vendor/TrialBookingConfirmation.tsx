@@ -9,6 +9,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Gift, CheckCircle, Info, Calendar, Euro, Star } from 'lucide-react';
 import { useVendorAuth } from '../../contexts/VendorAuthContext';
+import { apiUtils } from '../../utils/auth';
 
 /**
  * Interface for booking data required for trial confirmation
@@ -182,7 +183,7 @@ const TrialBookingConfirmation: React.FC<TrialBookingConfirmationProps> = ({
 
     setIsSubmitting(true);
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+      const apiUrl = apiUtils.getApiUrl();
       const response = await fetch(`${apiUrl}/vendor-auth/bookings/confirm`, {
         method: 'POST',
         headers: {

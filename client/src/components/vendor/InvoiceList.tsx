@@ -11,6 +11,7 @@ import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import StatusBadge from '../ui/StatusBadge';
 import { PriceFormatter } from '../../utils/priceFormatting';
+import { apiUtils } from '../../utils/auth';
 
 interface InvoiceItem {
   id: string;
@@ -72,7 +73,7 @@ const InvoiceList: React.FC<InvoiceListProps> = ({ className = '' }) => {
         ...(filters.dateTo && { dateTo: filters.dateTo })
       });
 
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+      const apiUrl = apiUtils.getApiUrl();
       const token = localStorage.getItem('vendorToken');
       
       const response = await fetch(`${apiUrl}/invoices?${params}`, {
@@ -132,7 +133,7 @@ const InvoiceList: React.FC<InvoiceListProps> = ({ className = '' }) => {
 
   const handleDownload = async (invoiceId: string) => {
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+      const apiUrl = apiUtils.getApiUrl();
       const token = localStorage.getItem('vendorToken');
       
       const response = await fetch(`${apiUrl}/invoices/${invoiceId}/pdf`, {

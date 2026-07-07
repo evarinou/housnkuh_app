@@ -5,6 +5,8 @@
  * @modified 2025-08-05
  */
 
+import { apiUtils } from './auth';
+
 /**
  * Resolves image URLs to ensure they are complete URLs
  * 
@@ -23,7 +25,7 @@ export const resolveImageUrl = (url: string): string => {
   }
   
   // If URL is relative, prepend the server base URL
-  const baseUrl = process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:4000';
+  const baseUrl = apiUtils.getApiUrl().replace('/api', '');
   return `${baseUrl}${url}`;
 };
 

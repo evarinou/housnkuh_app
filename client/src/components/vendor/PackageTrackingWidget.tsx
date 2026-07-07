@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
+import { apiUtils } from '../../utils/auth';
 
 /**
  * Package tracking data interface for Zusatzleistungen
@@ -119,7 +120,7 @@ const PackageTrackingWidget: React.FC = () => {
    */
   const fetchContractsWithPackages = async () => {
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+      const apiUrl = apiUtils.getApiUrl();
       const token = localStorage.getItem('vendorToken');
       
       if (!token) {

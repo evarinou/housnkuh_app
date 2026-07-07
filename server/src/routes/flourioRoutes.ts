@@ -52,7 +52,6 @@ router.get('/tags', adminOrVendorAuth, getTags);
  * @deprecated Since 2025-11-14 - Endpoint deprecated, returns HTTP 410 Gone
  * Tags are now synced automatically when Articles are created
  */
-// router.post('/tags/sync', adminAuth, syncTags);
 
 /**
  * GET /api/admin/flourio/categories

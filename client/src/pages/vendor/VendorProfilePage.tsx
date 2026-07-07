@@ -13,6 +13,7 @@ import { useVendorAuth } from '../../contexts/VendorAuthContext';
 import VendorLayout from '../../components/vendor/VendorLayout';
 import axios from 'axios';
 import { resolveImageUrl } from '../../utils/imageUtils';
+import { apiUtils } from '../../utils/auth';
 
 /**
  * Tag interface for product categorization and vendor profile tagging
@@ -195,7 +196,7 @@ const VendorProfilePage: React.FC = () => {
       if (!user || !user.id) return;
       
       try {
-        const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+        const apiUrl = apiUtils.getApiUrl();
         const token = localStorage.getItem('vendorToken');
         
         if (!token) {
@@ -263,7 +264,7 @@ const VendorProfilePage: React.FC = () => {
     const loadAvailableTags = async () => {
       setLoadingTags(true);
       try {
-        const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+        const apiUrl = apiUtils.getApiUrl();
         const response = await axios.get(`${apiUrl}/tags?active=true`);
         
         console.log('Tags API response:', response.data);
@@ -354,7 +355,7 @@ const VendorProfilePage: React.FC = () => {
     
     setIsUploading(true);
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+      const apiUrl = apiUtils.getApiUrl();
       const token = localStorage.getItem('vendorToken');
       
       if (!token) {
@@ -394,7 +395,7 @@ const VendorProfilePage: React.FC = () => {
     
     setIsBannerUploading(true);
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+      const apiUrl = apiUtils.getApiUrl();
       const token = localStorage.getItem('vendorToken');
       
       if (!token) {
@@ -507,7 +508,7 @@ const VendorProfilePage: React.FC = () => {
         }
       };
       
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+      const apiUrl = apiUtils.getApiUrl();
       const token = localStorage.getItem('vendorToken');
       
       if (!token) {
@@ -641,7 +642,7 @@ const VendorProfilePage: React.FC = () => {
 
     setIsCreatingTag(true);
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+      const apiUrl = apiUtils.getApiUrl();
       const token = localStorage.getItem('vendorToken');
 
       if (!token) {

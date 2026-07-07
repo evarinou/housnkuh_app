@@ -10,6 +10,7 @@ import React, { useState, useEffect } from 'react';
 import { Eye, EyeOff, Edit, Trash2, Plus, Search, Filter, CheckCircle, AlertCircle, XCircle, User, UserCheck, UserX, Building } from 'lucide-react';
 import axios from 'axios';
 import VendorDetailModal from '../../components/admin/VendorDetailModal';
+import { apiUtils } from '../../utils/auth';
 
 /**
  * @interface UserData
@@ -98,7 +99,7 @@ const UsersPage: React.FC = () => {
     setError('');
     
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+      const apiUrl = apiUtils.getApiUrl();
       const token = localStorage.getItem('adminToken');
       const response = await axios.get(`${apiUrl}/admin/users`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -224,7 +225,7 @@ const UsersPage: React.FC = () => {
     }
     
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+      const apiUrl = apiUtils.getApiUrl();
       const token = localStorage.getItem('adminToken');
       await axios.delete(`${apiUrl}/admin/users/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -239,7 +240,7 @@ const UsersPage: React.FC = () => {
   // Benutzer Status ändern
   const toggleUserStatus = async (id: string, currentStatus: boolean) => {
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+      const apiUrl = apiUtils.getApiUrl();
       const token = localStorage.getItem('adminToken');
       await axios.patch(`${apiUrl}/admin/users/${id}`, 
         { isActive: !currentStatus },
@@ -259,7 +260,7 @@ const UsersPage: React.FC = () => {
   // Vendor Sichtbarkeit ändern
   const toggleVendorVisibility = async (id: string, currentVisibility: boolean) => {
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+      const apiUrl = apiUtils.getApiUrl();
       const token = localStorage.getItem('adminToken');
       await axios.patch(`${apiUrl}/admin/vendors/${id}/visibility`, 
         { isPubliclyVisible: !currentVisibility },
@@ -324,7 +325,7 @@ const UsersPage: React.FC = () => {
     }
     
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+      const apiUrl = apiUtils.getApiUrl();
       const token = localStorage.getItem('adminToken');
       
       await axios.patch(`${apiUrl}/admin/vendors/bulk-visibility`, 
@@ -359,7 +360,7 @@ const UsersPage: React.FC = () => {
     }
     
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+      const apiUrl = apiUtils.getApiUrl();
       const token = localStorage.getItem('adminToken');
       
       const promises = selectedUsers.map(userId =>

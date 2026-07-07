@@ -17,6 +17,7 @@ import { TrialAccessGuard } from '../components/vendor/TrialAccessGuard';
 import PackageTrackingWidget from '../components/vendor/PackageTrackingWidget';
 import useDashboardMessages from '../hooks/useDashboardMessages';
 import axios from 'axios';
+import { apiUtils } from '../utils/auth';
 
 /**
  * Vendor dashboard page component with comprehensive business management features
@@ -51,7 +52,7 @@ const VendorDashboardPage: React.FC = () => {
   useEffect(() => {
     const fetchStoreOpening = async () => {
       try {
-        const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+        const apiUrl = apiUtils.getApiUrl();
         const response = await axios.get(`${apiUrl}/public/store-opening`);
         
         if (response.data.success && response.data.storeOpening.enabled && response.data.storeOpening.openingDate) {
@@ -72,7 +73,7 @@ const VendorDashboardPage: React.FC = () => {
       if (!user?.id) return;
       
       try {
-        const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+        const apiUrl = apiUtils.getApiUrl();
         const response = await axios.get(`${apiUrl}/vendor/contracts/zusatzleistungen`, {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('vendorToken')}`
@@ -484,7 +485,7 @@ const VendorDashboardPage: React.FC = () => {
                 onClick={async () => {
                   setIsCancelling(true);
                   try {
-                    const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+                    const apiUrl = apiUtils.getApiUrl();
                     const response = await axios.post(
                       `${apiUrl}/vendor-auth/cancel/${user?.id}`,
                       { reason: cancellationReason },

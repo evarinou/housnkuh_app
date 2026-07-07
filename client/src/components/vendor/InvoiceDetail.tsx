@@ -12,6 +12,7 @@ import { de } from 'date-fns/locale';
 import StatusBadge from '../ui/StatusBadge';
 import { PriceFormatter } from '../../utils/priceFormatting';
 import './InvoiceDetail.css';
+import { apiUtils } from '../../utils/auth';
 
 interface InvoiceItem {
   description: string;
@@ -78,7 +79,7 @@ const InvoiceDetail: React.FC<InvoiceDetailProps> = ({ className = '' }) => {
     setError(null);
 
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+      const apiUrl = apiUtils.getApiUrl();
       const token = localStorage.getItem('vendorToken');
       
       const response = await fetch(`${apiUrl}/invoices/${id}`, {
@@ -129,7 +130,7 @@ const InvoiceDetail: React.FC<InvoiceDetailProps> = ({ className = '' }) => {
 
     setDownloading(true);
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+      const apiUrl = apiUtils.getApiUrl();
       const token = localStorage.getItem('vendorToken');
       
       const response = await fetch(`${apiUrl}/invoices/${invoice.id}/pdf`, {

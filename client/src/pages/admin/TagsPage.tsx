@@ -9,6 +9,7 @@
 import React, { useState, useEffect } from 'react';
 import { Tag, Search, Filter, Edit, Trash2, Plus, CheckCircle, AlertCircle, XCircle, Save, X } from 'lucide-react';
 import axios from 'axios';
+import { apiUtils } from '../../utils/auth';
 
 /**
  * Tag data structure
@@ -103,7 +104,7 @@ const TagsPage: React.FC = () => {
   const loadTags = async () => {
     setIsLoading(true);
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+      const apiUrl = apiUtils.getApiUrl();
       const token = localStorage.getItem('adminToken');
       
       const response = await axios.get(`${apiUrl}/tags`, {
@@ -210,7 +211,7 @@ const TagsPage: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+      const apiUrl = apiUtils.getApiUrl();
       const token = localStorage.getItem('adminToken');
       
       if (currentTag) {
@@ -266,7 +267,7 @@ const TagsPage: React.FC = () => {
    */
   const toggleTagStatus = async (tag: TagData) => {
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+      const apiUrl = apiUtils.getApiUrl();
       const token = localStorage.getItem('adminToken');
       
       const response = await axios.put(`${apiUrl}/tags/${tag._id}`, {
@@ -303,7 +304,7 @@ const TagsPage: React.FC = () => {
     }
 
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+      const apiUrl = apiUtils.getApiUrl();
       const token = localStorage.getItem('adminToken');
       
       const response = await axios.delete(`${apiUrl}/tags/${tag._id}`, {

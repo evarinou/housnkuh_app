@@ -6,6 +6,7 @@
  */
 import React, { useState } from 'react';
 import axios from 'axios';
+import { apiUtils } from '../utils/auth';
 
 /**
  * Props for ContactForm component
@@ -119,7 +120,7 @@ const ContactForm: React.FC<ContactFormProps> = ({ className }) => {
     setLoading(true);
     
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+      const apiUrl = apiUtils.getApiUrl();
       const response = await axios.post(`${apiUrl}/contact`, formData);
       
       setFormStatus({

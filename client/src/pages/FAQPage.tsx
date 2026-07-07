@@ -9,6 +9,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { HelpCircle, ChevronDown, Search, Phone, Mail, MessageCircle, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
+import { apiUtils } from '../utils/auth';
 
 /**
  * Interface for FAQ item data structure
@@ -47,7 +48,7 @@ const FAQPage: React.FC = () => {
    */
   const fetchFAQs = useCallback(async () => {
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+      const apiUrl = apiUtils.getApiUrl();
       const response = await axios.get(`${apiUrl}/faqs/public`);
       
       if (response.data.success) {

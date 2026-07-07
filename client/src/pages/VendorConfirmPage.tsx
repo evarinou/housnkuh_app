@@ -12,6 +12,7 @@ import axios from 'axios';
 import { PriceBreakdownDisplay } from '../components/common/PriceBreakdownDisplay';
 import { PriceCalculationService } from '../services/priceCalculationService';
 import { Zusatzleistungen } from '../types';
+import { apiUtils } from '../utils/auth';
 //import { useVendorAuth } from '../contexts/VendorAuthContext';
 
 /**
@@ -381,7 +382,7 @@ const VendorConfirmPage: React.FC = () => {
       }
       
       try {
-        const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+        const apiUrl = apiUtils.getApiUrl();
         
         // Using the token as a path parameter to match the API's route definition
         // The email sends a URL with query parameter ?token=xyz but we need to use it in the path /:token

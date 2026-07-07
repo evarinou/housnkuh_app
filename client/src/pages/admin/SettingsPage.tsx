@@ -9,6 +9,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Calendar, AlertCircle, CheckCircle, Save } from 'lucide-react';
 import axios from 'axios';
+import { apiUtils } from '../../utils/auth';
 
 /**
  * @component SettingsPage
@@ -36,7 +37,7 @@ const SettingsPage: React.FC = () => {
 
   const fetchSettings = async () => {
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+      const apiUrl = apiUtils.getApiUrl();
       const token = localStorage.getItem('adminToken');
       
       if (!token) {
@@ -76,7 +77,7 @@ const SettingsPage: React.FC = () => {
     setSaving(true);
 
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+      const apiUrl = apiUtils.getApiUrl();
       const token = localStorage.getItem('adminToken');
       
       if (!token) {

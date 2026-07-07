@@ -8,6 +8,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import MietfachAssignmentModal from './MietfachAssignmentModal';
+import { apiUtils } from '../../utils/auth';
 
 /**
  * Mietfach assignment data structure
@@ -77,7 +78,7 @@ const PendingBookingsPage: React.FC = () => {
   const fetchPendingBookings = async () => {
     try {
       const token = localStorage.getItem('adminToken');
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+      const apiUrl = apiUtils.getApiUrl();
       
       const response = await axios.get(`${apiUrl}/admin/pending-bookings`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -128,7 +129,7 @@ const PendingBookingsPage: React.FC = () => {
 
     try {
       const token = localStorage.getItem('adminToken');
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+      const apiUrl = apiUtils.getApiUrl();
       
       const assignedMietfaecher = assignments.map(a => a.mietfachId);
       
@@ -177,7 +178,7 @@ const PendingBookingsPage: React.FC = () => {
   const handleReject = async (userId: string) => {
     try {
       const token = localStorage.getItem('adminToken');
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+      const apiUrl = apiUtils.getApiUrl();
       
       await axios.post(`${apiUrl}/admin/pending-bookings/reject/${userId}`, {}, {
         headers: { Authorization: `Bearer ${token}` }

@@ -10,6 +10,7 @@ import { Link } from 'react-router-dom';
 import { MapPin, Search, Phone, Info, ArrowLeft, ChevronDown, ChevronUp, Filter } from 'lucide-react';
 import axios from 'axios';
 import SimpleMapComponent from '../components/SimpleMapComponent';
+import { apiUtils } from '../utils/auth';
 
 /**
  * Geographic coordinates for vendor locations
@@ -80,7 +81,7 @@ const VendorStandorteMapPage: React.FC = () => {
       try {
         // API-Aufruf für Standort-Daten (wenn verfügbar)
         try {
-          const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+          const apiUrl = apiUtils.getApiUrl();
           const response = await axios.get(`${apiUrl}/standorte`);
           if (response.data && response.data.success) {
             setStandorte(response.data.data || []);

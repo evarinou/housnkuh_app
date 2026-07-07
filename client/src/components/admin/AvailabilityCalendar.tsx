@@ -10,6 +10,7 @@ import 'react-calendar/dist/Calendar.css';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import axios from 'axios';
+import { apiUtils } from '../../utils/auth';
 
 /**
  * Props for the AvailabilityCalendar component
@@ -74,7 +75,7 @@ const AvailabilityCalendar: React.FC<AvailabilityCalendarProps> = ({
     setLoading(true);
     try {
       const token = localStorage.getItem('adminToken');
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+      const apiUrl = apiUtils.getApiUrl();
       
       // Get availability for the next 3 months
       const endDate = new Date();

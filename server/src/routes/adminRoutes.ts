@@ -18,7 +18,6 @@ import * as bookingAdminController from '../controllers/admin/bookingAdminContro
 import * as storeMapAdminController from '../controllers/admin/storeMapAdminController';
 import * as vertragController from '../controllers/vertragController';
 import { adminAuth } from '../middleware/auth';
-// import { cacheMiddleware, cacheInvalidationMiddleware } from '../middleware/cacheMiddleware';
 import ScheduledJobs from '../services/scheduledJobs';
 import AppError from '../utils/AppError';
 
@@ -63,12 +62,8 @@ router.post('/pending-bookings/reject/:userId',
   bookingAdminController.rejectPendingBooking
 );
 
-// M005 Implementation: Mietfach Availability API
-// router.get('/mietfaecher/availability', noCacheHeaders, adminController.getMietfachAvailability);
 router.post('/check-mietfach-availability', bookingAdminController.checkMietfachAvailability);
 
-// M005 Implementation: Booking Schedule Management API
-// router.put('/bookings/:bookingId/schedule', adminController.updateBookingSchedule);
 router.post('/bookings/:bookingId/confirm-with-schedule', bookingAdminController.confirmPendingBookingWithSchedule);
 
 // Ladenkarte: Mietfach-Positionen für den 2D-Editor verwalten
@@ -165,14 +160,12 @@ router.get('/monitoring/dashboard', adminController.getTrialMonitoringDashboard)
 // Trial Monitoring Routes
 router.get('/monitoring/trials', adminController.getTrialMonitoringDashboard);
 router.get('/monitoring/trials/metrics', adminController.getTrialMetrics);
-// router.get('/monitoring/trials/health', adminController.getTrialHealthMetrics);
 
 // Trial Management Routes
 router.post('/trials/extend/:userId', adminController.extendVendorTrial);
 router.post('/trials/bulk-update', adminController.bulkUpdateTrials);
 router.get('/trials/audit-log', adminController.getTrialAuditLog);
 router.get('/trials/expiring', adminController.getExpiringTrials);
-// router.get('/trials/search', adminController.searchTrialVendors);
 
 // Feature Flag Management Routes
 router.get('/feature-flags', adminController.getFeatureFlags);

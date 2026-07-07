@@ -7,6 +7,7 @@
 import React, { useState, useEffect } from 'react';
 import { Clock, Users, CheckCircle, AlertCircle, RefreshCw, Rocket, Timer, Package } from 'lucide-react';
 import axios from 'axios';
+import { apiUtils } from '../../utils/auth';
 
 /**
  * Complete launch day metrics data structure
@@ -81,7 +82,7 @@ const LaunchDayMonitor: React.FC = () => {
   const fetchMetrics = async () => {
     setError('');
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+      const apiUrl = apiUtils.getApiUrl();
       const response = await axios.get(`${apiUrl}/admin/launch-day/metrics`);
       
       if (response.data.success) {
@@ -137,7 +138,7 @@ const LaunchDayMonitor: React.FC = () => {
 
   const triggerManualActivation = async () => {
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+      const apiUrl = apiUtils.getApiUrl();
       const response = await axios.post(`${apiUrl}/admin/trials/activate`);
       
       if (response.data.success) {

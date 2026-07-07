@@ -12,6 +12,7 @@ import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { format, addMonths } from 'date-fns';
 import { de } from 'date-fns/locale';
+import { apiUtils } from '../../utils/auth';
 
 /**
  * Mietfach data structure
@@ -219,7 +220,7 @@ const MietfachAssignmentModal: React.FC<MietfachAssignmentModalProps> = ({
     setLoadingAvailability(true);
     try {
       const token = localStorage.getItem('adminToken');
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+      const apiUrl = apiUtils.getApiUrl();
       const duration = user.pendingBooking.packageData.rentalDuration || 1;
       const requestedTypes = getRequestedMietfachTypes();
       
@@ -272,7 +273,7 @@ const MietfachAssignmentModal: React.FC<MietfachAssignmentModalProps> = ({
   const fetchAvailableMietfaecher = async () => {
     try {
       const token = localStorage.getItem('adminToken');
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+      const apiUrl = apiUtils.getApiUrl();
       
       const response = await axios.get(`${apiUrl}/admin/available-mietfaecher`, {
         headers: { Authorization: `Bearer ${token}` }

@@ -13,6 +13,7 @@ import axios from 'axios';
 import { resolveImageUrl } from '../utils/imageUtils';
 import SimpleMapComponent from '../components/SimpleMapComponent';
 import StoreMapEmbed from '../components/storemap/StoreMapEmbed';
+import { apiUtils } from '../utils/auth';
 
 /**
  * Tag/category information for direct marketers
@@ -131,7 +132,7 @@ const DirektvermarkterDetailPage: React.FC = () => {
       }
       
       try {
-        const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+        const apiUrl = apiUtils.getApiUrl();
         const response = await axios.get(`${apiUrl}/vendor-auth/public/profile/${id}`);
         
         if (response.data.success) {

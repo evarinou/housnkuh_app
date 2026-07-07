@@ -12,6 +12,7 @@ import { AlertCircle, Shield } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import axios from 'axios';
 import logo from '../../assets/images/logo.svg';
+import { apiUtils } from '../../utils/auth';
 
 /**
  * @component SetupPage
@@ -65,7 +66,7 @@ const SetupPage: React.FC = () => {
   
 const checkAdminSetup = async () => {
   try {
-    const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+    const apiUrl = apiUtils.getApiUrl();
     const response = await axios.get(`${apiUrl}/auth/setup-status`);
     
     if (response.data.success) {
@@ -96,7 +97,7 @@ const checkAdminSetup = async () => {
     setError('');
     
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+      const apiUrl = apiUtils.getApiUrl();
       
       const requestData = {
         username,

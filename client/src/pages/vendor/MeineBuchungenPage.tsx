@@ -13,6 +13,7 @@ import StatusFilterTabs from '../../components/vendor/StatusFilterTabs';
 import BookingDetailModal from '../../components/vendor/BookingDetailModal';
 import { Package, Truck, CheckCircle, Clock, MapPin } from 'lucide-react';
 import axios from 'axios';
+import { apiUtils } from '../../utils/auth';
 
 /**
  * Status counts interface for booking status filter tabs
@@ -90,7 +91,7 @@ const MeineBuchungenPage: React.FC = () => {
     if (!user?.id) return;
     
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+      const apiUrl = apiUtils.getApiUrl();
       const response = await axios.get(`${apiUrl}/vendor/contracts/zusatzleistungen`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('vendorToken')}`

@@ -9,6 +9,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Filter, Eye, Edit, FileText, AlertCircle, CheckCircle, Clock, XCircle, Plus, Download } from 'lucide-react';
 import axios from 'axios';
+import { apiUtils } from '../../utils/auth';
 
 /**
  * @interface Vertrag
@@ -195,7 +196,7 @@ const VertraegeePage: React.FC = () => {
       
       try {
         // const token = localStorage.getItem('adminToken');
-        const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+        const apiUrl = apiUtils.getApiUrl();
         
         const response = await axios.get(`${apiUrl}/vertraege`);
         
@@ -256,7 +257,7 @@ const VertraegeePage: React.FC = () => {
   const handleCancelVertrag = async (vertragId: string) => {
     if (!window.confirm('Vertrag wirklich stornieren? Diese Aktion kann nicht rückgängig gemacht werden.')) return;
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+      const apiUrl = apiUtils.getApiUrl();
       const token = localStorage.getItem('adminToken');
       const response = await axios.patch(`${apiUrl}/admin/vertraege/${vertragId}/cancel`, {}, {
         headers: { 'Authorization': `Bearer ${token}`, 'x-auth-token': token || '' }
@@ -276,7 +277,7 @@ const VertraegeePage: React.FC = () => {
   // Vertrag aktivieren
   const handleActivateVertrag = async (vertragId: string) => {
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+      const apiUrl = apiUtils.getApiUrl();
       const token = localStorage.getItem('adminToken');
       const response = await axios.patch(`${apiUrl}/admin/vertraege/${vertragId}/activate`, {}, {
         headers: { 'Authorization': `Bearer ${token}`, 'x-auth-token': token || '' }

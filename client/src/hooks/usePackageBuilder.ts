@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { Zusatzleistungen, PriceCalculation } from '../types';
 import { createNavigationHelper } from '../utils/navigation';
 import axios from 'axios';
+import { apiUtils } from '../utils/auth';
 
 /**
  * Commission/provision type configuration
@@ -346,7 +347,7 @@ export const usePackageBuilder = () => {
     setBookingInProgress(true);
     
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+      const apiUrl = apiUtils.getApiUrl();
       const token = localStorage.getItem('vendorToken');
       
       const bookingData = {

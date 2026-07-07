@@ -11,6 +11,7 @@ import { Phone, Mail, MapPin, ExternalLink, Search, Map, X, ChevronDown, Chevron
 import axios from 'axios';
 import { resolveImageUrl } from '../utils/imageUtils';
 import VendorListPreview from '../components/VendorListPreview';
+import { apiUtils } from '../utils/auth';
 
 /**
  * Custom debounce hook for delayed function execution
@@ -297,7 +298,7 @@ const DirektvermarkterUebersichtPage: React.FC = () => {
   const fetchData = useCallback(async (currentFilters: VendorFilters) => {
     try {
       setLoading(true);
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+      const apiUrl = apiUtils.getApiUrl();
       
       const params = new URLSearchParams();
       if (currentFilters.search) params.set('search', currentFilters.search);

@@ -10,6 +10,7 @@ import { Link } from 'react-router-dom';
 import { Search, Phone, Mail, ExternalLink, ArrowLeft, ChevronDown, ChevronUp, Filter } from 'lucide-react';
 import VendorListPreview from '../components/VendorListPreview';
 import SimpleMapComponent from '../components/SimpleMapComponent';
+import { apiUtils } from '../utils/auth';
 
 /**
  * Location coordinates interface for direct marketer locations
@@ -173,7 +174,7 @@ const DirektvermarkterMapPage: React.FC = () => {
   useEffect(() => {
     const fetchDirektvermarkter = async () => {
       try {
-        const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+        const apiUrl = apiUtils.getApiUrl();
         const response = await fetch(`${apiUrl}/vendor-auth/public/profiles?limit=100`);
         const data = await response.json();
         

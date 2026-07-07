@@ -8,6 +8,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { FileText, RefreshCw, Filter, X } from 'lucide-react';
 import axios from 'axios';
 import { PriceFormatter } from '../../utils/priceFormatting';
+import { apiUtils } from '../../utils/auth';
 
 interface FlourioDocItem {
   flourioArticleId: string;
@@ -72,7 +73,7 @@ const FlourioDocumentsPage: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState('');
 
   const token = localStorage.getItem('adminToken');
-  const apiUrl = process.env.REACT_APP_API_URL || '/api';
+  const apiUrl = apiUtils.getApiUrl();
 
   const getHeaders = () => ({
     'Authorization': `Bearer ${token}`,

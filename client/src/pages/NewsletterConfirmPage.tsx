@@ -9,6 +9,7 @@ import React, { useEffect, useState } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import { Check, AlertCircle, Loader } from 'lucide-react';
 import axios from 'axios';
+import { apiUtils } from '../utils/auth';
 
 /**
  * Newsletter confirmation page component for email subscription verification
@@ -32,7 +33,7 @@ const NewsletterConfirmPage: React.FC = () => {
       }
       
       try {
-        const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+        const apiUrl = apiUtils.getApiUrl();
         
         // Using the token as a path parameter to match the API's route definition
         const response = await axios.get(`${apiUrl}/newsletter/confirm/${token}`);

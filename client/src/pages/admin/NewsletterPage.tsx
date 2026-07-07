@@ -8,6 +8,7 @@
 import React, { useState, useEffect } from 'react';
 import { Trash2, Filter, Download, Check, X, Search } from 'lucide-react';
 import axios from 'axios';
+import { apiUtils } from '../../utils/auth';
 
 /**
  * @interface Subscriber
@@ -47,7 +48,7 @@ const NewsletterPage: React.FC = () => {
       setError('');
       
       try {
-        const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+        const apiUrl = apiUtils.getApiUrl();
         const response = await axios.get(`${apiUrl}/admin/newsletter/subscribers`);
         
         if (response.data.success) {
@@ -96,7 +97,7 @@ const NewsletterPage: React.FC = () => {
     }
     
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+      const apiUrl = apiUtils.getApiUrl();
       const response = await axios.delete(`${apiUrl}/admin/newsletter/subscribers/${id}`);
       
       if (response.data.success) {
