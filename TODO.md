@@ -97,11 +97,10 @@
 
 ## Stufe 3 – Produktionsreife (nötig für „fertig")
 
-- [ ] **T3.1 – Betriebs-Robustheit** (FEATURES F6 / AUDIT OP1–OP4). Globaler
-  `uncaughtException`/`unhandledRejection`-Handler; MongoDB-Reconnect;
-  flour.io-Health-Check; Retry auch bei flour.io-Netzwerkfehlern (nicht nur 429).
-  *Fertig, wenn:* Prozess überlebt unerwartete Rejections geloggt, DB-Verlust
-  wird recovered, `/health/detailed` zeigt flour.io-Status.
+- [x] **T3.1 – Betriebs-Robustheit** (FEATURES F6 / AUDIT OP1–OP4). ✅
+  OP1 globale Exception-Handler (index.ts), OP2 DB-Verbindungs-Events (db.ts),
+  OP3 flour.io im Health-Check (healthCheckService), OP4 Retry bei
+  Netzwerkfehlern (RateLimitHandler, 4 Tests). Build grün.
 - [ ] **T3.2 – Deployment & Backups** (FEATURES F5 / AUDIT OP12/OP13). systemd-
   Unit oder PM2-Config im Repo (Autostart nach Reboot); automatische
   `mongodump`-Backups mit Retention; dokumentierte Kiosk-Einrichtung

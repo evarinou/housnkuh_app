@@ -206,21 +206,21 @@ selbst verifiziert; Agent-Einschätzungen wo nötig korrigiert.
 
 ### Kritisch
 
-- [ ] **OP1 (K)** `server/src/index.ts` — kein `process.on('uncaughtException')`
+- [x] **OP1 ✅ (T3.1) globale uncaughtException/unhandledRejection-Handler in index.ts. (K)** `server/src/index.ts` — kein `process.on('uncaughtException')`
   / `unhandledRejection`. SIGTERM/SIGINT-Shutdown existiert, aber eine
   unbehandelte Rejection in irgendeinem async-Pfad reißt den Prozess ohne Log
   ab (→ housnkuh-Backend offline, Kiosk-Kasse selbst läuft weiter, da Cloud).
   Hinweis: die flour.io-Sync-Jobs sind selbst try/catch-gekapselt (s. OK-Liste),
   das Risiko liegt bei anderen Pfaden. → globale Handler mit Logging + kontrolliertem Neustart.
-- [ ] **OP2 (K)** `server/src/config/db.ts` — `mongoose.connect()` einmalig,
+- [x] **OP2 ✅ (T3.1) MongoDB-Verbindungs-Event-Handler (disconnected/reconnected/error). (K)** `server/src/config/db.ts` — `mongoose.connect()` einmalig,
   keine Reconnect-/Monitoring-Konfiguration. Bei DB-Verbindungsverlust laufen
   Requests dauerhaft in Fehler statt zu recovern. → Reconnect/serverMonitoring
   konfigurieren, Verbindungs-Events loggen.
-- [ ] **OP3 (K)** `healthCheckService.ts` prüft DB, E-Mail, Jobs, Memory, Disk —
+- [x] **OP3 ✅ (T3.1) checkFlourio im Health-Check. (K)** `healthCheckService.ts` prüft DB, E-Mail, Jobs, Memory, Disk —
   **aber nicht flour.io**. Ein flour.io-Ausfall (veraltete Bestände → Kasse
   verkauft nicht Verfügbares) bleibt unbemerkt. → `checkFlourioConnection()`
   ergänzen und in `/health/detailed` aufnehmen.
-- [ ] **OP4 (K)** `flourio/client/RateLimitHandler.ts` + `errorHandler.ts` —
+- [x] **OP4 ✅ (T3.1) RateLimitHandler wiederholt auch Netzwerkfehler. (K)** `flourio/client/RateLimitHandler.ts` + `errorHandler.ts` —
   Retry/Backoff greift nur bei HTTP 429; echte Netzwerkfehler (ECONNREFUSED/
   ETIMEDOUT) werden geworfen, nicht wiederholt. → Netzwerkfehler in die
   Retry-Logik aufnehmen.
