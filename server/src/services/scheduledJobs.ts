@@ -13,6 +13,7 @@ import HealthCheckService from './healthCheckService';
 import AlertingService from './alertingService';
 import StockPullJob from '../jobs/stockPullJob';
 import DocumentSyncJob from '../jobs/documentSyncJob';
+import SalesInvoiceJob from '../jobs/salesInvoiceJob';
 import { performanceMonitor } from '../utils/performanceMonitor';
 import Settings from '../models/Settings';
 import logger from '../utils/logger';
@@ -63,6 +64,9 @@ export class ScheduledJobs {
 
     // Job 8: Flourio Document Sync (every 15 minutes)
     this.scheduleDocumentSync();
+
+    // Job 9: Vendor sales invoicing (F2a) — every 5 minutes
+    this.scheduleSalesInvoicing();
 
     // Run Vertrag activation once at startup
     try {
@@ -319,6 +323,32 @@ export class ScheduledJobs {
   }
 
   /**
+   * @description Schedule vendor sales invoicing (F2a) - every 5 minutes
+   */
+  private static scheduleSalesInvoicing(): void {
+    SalesInvoiceJob.init();
+    logger.info('📅 Vendor sales invoicing job scheduled (every 5 minutes)');
+  }
+
+  /**
+   * @description Manually trigger vendor sales invoicing (for admin use)
+   */
+  static async triggerSalesInvoicing(): Promise<any> {
+    try {
+      logger.info('🔧 Manual vendor sales invoicing triggered');
+      await SalesInvoiceJob.run();
+      return { success: true, timestamp: new Date() };
+    } catch (error) {
+      logger.error('❌ Manual vendor sales invoicing failed:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: new Date()
+      };
+    }
+  }
+
+  /**
    * @description Manually trigger Flourio document sync (for admin use)
    */
   static async triggerDocumentSync(): Promise<any> {
@@ -379,7 +409,10 @@ export class ScheduledJobs {
 
     // Stop the document sync job
     DocumentSyncJob.stop();
-    
+
+    // Stop the vendor sales invoicing job
+    SalesInvoiceJob.stop();
+
     // Stop the invoice generation job separately
     const { InvoiceGenerationJob } = require('../jobs/invoiceGenerationJob');
     InvoiceGenerationJob.stop();

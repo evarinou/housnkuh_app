@@ -77,6 +77,41 @@ export class SalesInvoicePdfService {
     }
   }
 
+  /**
+   * Erzeugt PDFs für alle Rechnungen ohne pdfPath mit EINEM geteilten Browser.
+   * Self-healing: schlägt eine PDF-Erzeugung fehl, bleibt pdfPath null und der
+   * nächste Lauf versucht es erneut. Fehler werden pro Rechnung isoliert.
+   */
+  static async generatePending(limit = 200): Promise<{ generated: number; failed: number }> {
+    const pending: any[] = await SalesInvoice.find({ pdfPath: { $in: [null, undefined] } })
+      .select('_id').limit(limit).lean();
+    if (!pending.length) return { generated: 0, failed: 0 };
+
+    const browser = await puppeteer.launch({
+      headless: true,
+      args: PUPPETEER_ARGS,
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined
+    });
+    let generated = 0;
+    let failed = 0;
+    try {
+      for (const inv of pending) {
+        try {
+          await SalesInvoicePdfService.generate(inv._id, { browser });
+          generated++;
+        } catch (err: any) {
+          failed++;
+          logger.error('[SalesInvoicePdf] PDF-Erzeugung fehlgeschlagen', {
+            salesInvoiceId: String(inv._id), error: err.message
+          });
+        }
+      }
+    } finally {
+      await browser.close();
+    }
+    return { generated, failed };
+  }
+
   private static async store(buffer: Buffer, invoice: any): Promise<string | undefined> {
     try {
       const issue = new Date(invoice.issueDate);
