@@ -82,9 +82,11 @@
   vorbestehend falsch (`totalAmount=subtotal*(1+tax)` mit absolutem tax) → die
   ausgewiesene USt/Gesamtsumme stimmt erst nach diesem Fix. Betrifft alle
   Monatsrechnungen, bewusst außerhalb F2c.
-- [ ] **T2.3 – F2b housnkuh-Rechnungsansicht anbinden.** `VendorHousnkuhInvoices-
-  Page` an das bestehende Invoice-Backend hängen (Liste + Detail + PDF-Download).
-  *Fertig, wenn:* Vendor sieht seine Monatsrechnungen und kann PDFs laden.
+- [x] **T2.3 – F2b housnkuh-Rechnungsansicht anbinden.** ✅ `VendorHousnkuhInvoices-
+  Page` nutzt jetzt die `InvoiceList`-Komponente (lädt `/invoices` mit
+  Vendor-Token, Filter/Sortierung/Download), Detail via VendorInvoiceDetailPage.
+  Build grün. Hinweis: InvoiceList navigiert zum Detail unter `/vendor/customer-
+  invoices/:id` (funktioniert, aber Routen-Benennung mit T2.4 aufräumen).
 - [ ] **T2.4 – F3 Vendor-Reporting.** `VendorReportsPage` mit Umsatz-/
   Verkaufsstatistik aus dem Verkaufs-Ledger (T1.2). *Fertig, wenn:* Vendor
   seine Umsätze/Verkäufe pro Zeitraum sieht (Zahlen konsistent mit F2a).
