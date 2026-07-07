@@ -206,34 +206,34 @@ Einige Agent-Einstufungen wurden nach Prüfung angepasst (Begründung dabei).
   Tests auf Soll-Werte umgestellt (tax 23,75 €/total 148,75 €). Alt: `tax: 0.19`
   (Satz) → Pre-Save-Hook machte daraus Rechnungen mit 0,19 € „Steuer" im
   Ad-hoc/Bulk-Pfad (`generateInvoice`/`generateInvoiceWithPdf`).
-- [ ] **BUG-INV-RESEND (W)** `resendInvoiceEmail` prüft `vendor.isActive` — das
+- [x] **BUG-INV-RESEND (W)** ✅ gefixt 2026-07-08 (registrationStatus statt isActive). `resendInvoiceEmail` prüft `vendor.isActive` — das
   Feld existiert im User-Schema nicht (strict mode) → Endpoint antwortet für
   jeden Vendor 400 „Vendor ist nicht aktiv"; E-Mail-Resend faktisch tot.
-- [ ] **BUG-PDF-RACE (W)** `invoicePdfService`: geteilte Browser-Instanz +
+- [x] **BUG-PDF-RACE (W)** ✅ gefixt 2026-07-08 (Browser-Promise, close nur in cleanup, inFlight-Guard; Parallel-Tests grün). `invoicePdfService`: geteilte Browser-Instanz +
   `closeBrowser()` im `finally` → parallele PDF-Aufrufe racen (ProtocolError).
   Betrifft auch Batch-Läufe, falls je parallelisiert.
-- [ ] **BUG-INV-DUP (W)** Duplikatsprüfung in `generateMonthlyInvoice` ist nicht
+- [x] **BUG-INV-DUP (W)** ✅ gefixt 2026-07-08 (Unique-Index vendor+period, E11000→AppError 400, Claim-Rollback). Duplikatsprüfung in `generateMonthlyInvoice` ist nicht
   atomar (find-then-insert, kein Unique-Index vendor+period) → parallele Läufe
   können Doppel-Rechnungen erzeugen; Controller antwortet bei „already exists"
   mit 500 statt 400.
-- [ ] **BUG-INV-JOB-NULL (W)** `InvoiceGenerationJob.run()` liest
+- [x] **BUG-INV-JOB-NULL (W)** ✅ gefixt 2026-07-08 (null→Skip, totalAmount statt amount). `InvoiceGenerationJob.run()` liest
   `invoice.amount` — bei „keine abrechenbaren Positionen" gibt
   `generateMonthlyInvoice` `null` zurück → TypeError wird als Vendor-Fehler
   gezählt statt sauber übersprungen; `amount` existiert am Model ohnehin nicht
   (`totalAmount`).
-- [ ] **BUG-BP-SYNC-QUERY (W)** `businessPartnerSyncService.ts:78` nutzt
+- [x] **BUG-BP-SYNC-QUERY (W)** ✅ gefixt 2026-07-08 ($expr-Feldvergleich). `businessPartnerSyncService.ts:78` nutzt
   `{ updatedAt: { $gt: '$flourioLastSyncAt' } }` in normaler Query — der String
   wird nicht als Feldreferenz aufgelöst (bräuchte `$expr`); der Zweig „synced,
   aber seither geändert" greift via DB-Query nie (In-Memory-Prüfung
   `hasVendorChanged` kompensiert teilweise).
-- [ ] **BUG-ALERT-STATS (W)** `AlertingService.getAlertStatistics()`:
+- [x] **BUG-ALERT-STATS (W)** ✅ gefixt 2026-07-08 (deklariertes Shape aus DB-Pfad; unawaited-Promise-Folgebug in getMonitoringStatistics mitgefixt). `AlertingService.getAlertStatistics()`:
   deklarierter Typ verspricht `bySeverity: {…}` (nur aktive), DB-Pfad liefert
   flache Struktur über ALLE Alerts der letzten 30 Tage → Konsumenten von
   `stats.bySeverity.x` bekommen `undefined`.
-- [ ] **BUG-INVDASH-CURRENCY (W, Client)** `InvoiceDashboard.tsx` StatCard:
+- [x] **BUG-INVDASH-CURRENCY (W, Client)** ✅ gefixt 2026-07-08 (isCurrency-Prop statt Titel-Heuristik). `InvoiceDashboard.tsx` StatCard:
   Währungsformatierung nur bei `title.includes('revenue')` — Titel sind deutsch
   („Gesamt Umsatz") → Umsätze erscheinen als rohe Zahl statt „25.000,50 €".
-- [ ] **KON-MANUALINV (S, Client)** `ManualInvoiceGenerator.tsx`: hartkodierte
+- [x] **KON-MANUALINV (S, Client)** ✅ gefixt 2026-07-08 (apiUtils/tokenStorage; toter useAuth-Import weg). `ManualInvoiceGenerator.tsx`: hartkodierte
   `/api/...`-URLs + direkter `localStorage`-Zugriff statt
   `apiUtils.getApiUrl()`/`tokenStorage` (Stil des T0.4-Fixes nachziehen);
   dazu toter `useAuth`-Import in `InvoiceDashboard.tsx`.
