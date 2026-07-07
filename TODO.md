@@ -123,9 +123,19 @@
   (Service existiert); Warehouse-Sync mitklären. *Fertig, wenn:* neuer Vendor
   landet automatisch als BusinessPartner in flour.io, Fehler werden geloggt
   (kein Registrierungs-Abbruch bei Sync-Fehler).
-- [ ] **T4.3 – F7 Echtzeit-Updates via WebSocket.** `useBookingUpdates`/
+- [x] **T4.3 – F7 Echtzeit-Updates via WebSocket.** ✅ socket.io auf dem
+  bestehenden HTTP-Server: `socketService` (JWT-Handshake-Auth wie vendorAuth,
+  Raum je Vendor, bookingEvents-Brücke, Shutdown-Close; 6 Tests inkl. echter
+  Socket-Verbindungen). confirm + reject emittieren jetzt beide Status-Events
+  (neu: `BookingStatus.REJECTED`, nur für Events). Client: gemeinsamer
+  `vendorSocket` (Token aus localStorage, Disconnect bei Logout), Hooks
+  refetchen auf `dashboard:refresh`/`booking:updated`; 30/60-s-Polling nur
+  noch als Fallback ohne Verbindung, Auto-Reconnect via socket.io (7 Hook-
+  Tests). Nginx: `location /socket.io` in setup-vps.sh + Hinweis für
+  Bestandsinstallationen in DEPLOYMENT_OPERATIONS.md. Smoke-Test gegen
+  kompilierten Server grün. ~~`useBookingUpdates`/
   `useDashboardMessages` von Polling auf WebSocket umstellen. *Fertig, wenn:*
-  Dashboard-Updates ohne 30/60-s-Polling ankommen, Fallback bei Verbindungsverlust.
+  Dashboard-Updates ohne 30/60-s-Polling ankommen, Fallback bei Verbindungsverlust.~~
 - [x] **T4.4 – F8 kleine Lücken.** ✅ `sendBookingRejectionEmail` (DB-Template
   `booking_rejection` + Hardcoded-Fallback) in `rejectPendingBooking` verdrahtet
   — nicht-blockierend, mit Ablehnungsgrund aus `req.body.reason`;
