@@ -7,7 +7,8 @@
  * für die sie eine aktive Buchung (Vertrag) haben.
  */
 
-import { Request, Response } from 'express';
+import { Response } from 'express';
+import { AuthRequest } from '../../middleware/auth';
 import { Product } from '../../models/Product';
 import Mietfach from '../../models/Mietfach';
 import mongoose from 'mongoose';
@@ -20,6 +21,10 @@ import {
 
 // Dynamic import to avoid loading Flourio at module level
 const getVertragModel = () => mongoose.model('Vertrag');
+
+/** Extract a human-readable message from an unknown error (kept identical to previous `error.message` responses). */
+const getErrorMessage = (error: unknown): string =>
+  error instanceof Error ? error.message : String(error);
 
 /**
  * Get all Mietfächer that a vendor has active bookings for.
@@ -62,21 +67,22 @@ async function getVendorActiveMietfaecher(vendorId: string) {
  * GET /api/vendor-auth/mietfaecher
  * Returns Mietfächer the vendor has active bookings for.
  */
-export const getVendorMietfaecher = async (req: any, res: Response): Promise<void> => {
+export const getVendorMietfaecher = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const vendorId = req.user.id;
+    // vendorAuth middleware guarantees req.user is set on these routes
+    const vendorId = req.user!.id;
     const mietfaecher = await getVendorActiveMietfaecher(vendorId);
 
     res.json({
       success: true,
       data: mietfaecher
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('Error fetching vendor Mietfaecher:', error);
     res.status(500).json({
       success: false,
       message: 'Fehler beim Laden der Mietfächer',
-      error: error.message
+      error: getErrorMessage(error)
     });
   }
 };
@@ -86,9 +92,10 @@ export const getVendorMietfaecher = async (req: any, res: Response): Promise<voi
  * Create a product for the authenticated vendor.
  * Optionally books initial stock to a Mietfach.
  */
-export const createProduct = async (req: any, res: Response): Promise<void> => {
+export const createProduct = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const vendorId = req.user.id;
+    // vendorAuth middleware guarantees req.user is set on these routes
+    const vendorId = req.user!.id;
     const { initialStock } = req.body; // optional: { mietfachId, amount }
 
     // If initialStock provided, validate Mietfach access
@@ -142,10 +149,10 @@ export const createProduct = async (req: any, res: Response): Promise<void> => {
             mietfachId: initialStock.mietfachId,
             amount: initialStock.amount
           });
-        } catch (error: any) {
+        } catch (error: unknown) {
           logger.error('[VendorProduct] Failed to book initial stock', {
             productId: product._id,
-            error: error.message
+            error: getErrorMessage(error)
           });
         }
       });
@@ -159,12 +166,12 @@ export const createProduct = async (req: any, res: Response): Promise<void> => {
       data: populatedProduct,
       message: 'Produkt erfolgreich erstellt'
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('Error creating product:', error);
     res.status(500).json({
       success: false,
       message: 'Fehler beim Erstellen des Produkts',
-      error: error.message
+      error: getErrorMessage(error)
     });
   }
 };
@@ -174,9 +181,10 @@ export const createProduct = async (req: any, res: Response): Promise<void> => {
  * Update an existing product. Only the owning vendor can edit.
  * Triggers Flourio re-sync via post-save hook if relevant fields change.
  */
-export const updateProduct = async (req: any, res: Response): Promise<void> => {
+export const updateProduct = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const vendorId = req.user.id;
+    // vendorAuth middleware guarantees req.user is set on these routes
+    const vendorId = req.user!.id;
     const { id } = req.params;
 
     // Verify ownership
@@ -200,12 +208,12 @@ export const updateProduct = async (req: any, res: Response): Promise<void> => {
       data: updated,
       message: 'Produkt erfolgreich aktualisiert'
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('Error updating product:', error);
     res.status(500).json({
       success: false,
       message: 'Fehler beim Aktualisieren des Produkts',
-      error: error.message
+      error: getErrorMessage(error)
     });
   }
 };
@@ -215,9 +223,10 @@ export const updateProduct = async (req: any, res: Response): Promise<void> => {
  * Book stock for a product onto a Mietfach.
  * Validates vendor has active booking for the Mietfach.
  */
-export const bookStock = async (req: any, res: Response): Promise<void> => {
+export const bookStock = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const vendorId = req.user.id;
+    // vendorAuth middleware guarantees req.user is set on these routes
+    const vendorId = req.user!.id;
     const { id: productId } = req.params;
     const { mietfachId, amount } = req.body;
 
@@ -298,12 +307,12 @@ export const bookStock = async (req: any, res: Response): Promise<void> => {
       data: stockEntry,
       message: `${amount} Stk. auf ${mietfach.bezeichnung} gebucht`
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('Error booking stock:', error);
     res.status(500).json({
       success: false,
       message: 'Fehler beim Buchen des Bestands',
-      error: error.message
+      error: getErrorMessage(error)
     });
   }
 };

@@ -12,7 +12,7 @@
  * @requires services/scheduledJobs
  */
 
-import { Router } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import * as adminController from '../controllers/adminController';
 import * as bookingAdminController from '../controllers/admin/bookingAdminController';
 import * as storeMapAdminController from '../controllers/admin/storeMapAdminController';
@@ -30,7 +30,7 @@ import AppError from '../utils/AppError';
 const router = Router();
 
 // Add no-cache headers middleware for debugging
-const noCacheHeaders = (req: any, res: any, next: any) => {
+const noCacheHeaders = (_req: Request, res: Response, next: NextFunction) => {
   res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
   res.set('Pragma', 'no-cache');
   res.set('Expires', '0');

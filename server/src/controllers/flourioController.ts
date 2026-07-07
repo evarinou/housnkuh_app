@@ -5,6 +5,7 @@
  */
 
 import { Request, Response } from 'express';
+import { AuthRequest } from '../middleware/auth';
 import { FlourioClient } from '../services/flourio/client/FlourioClient';
 import { flourioConfig } from '../services/flourio/client/config';
 import { TagSyncService } from '../services/flourio/services/TagSyncService';
@@ -27,6 +28,23 @@ const flourioClient = new FlourioClient(flourioConfig);
 const tagSyncService = new TagSyncService(flourioClient);
 const articleService = new ArticleService(flourioClient);
 
+/** Extract a human-readable message from an unknown error (kept identical to previous `error.message` responses). */
+const getErrorMessage = (error: unknown): string =>
+  error instanceof Error ? error.message : String(error);
+
+/**
+ * Axios-style error shape used by the flour.io client: details live in `error.response`
+ * (API contract – see CLAUDE.md). Narrowing helper only, no change to error logic.
+ */
+interface FlourioHttpError {
+  message?: string;
+  stack?: string;
+  response?: { data?: unknown };
+}
+
+const asFlourioError = (error: unknown): FlourioHttpError =>
+  (typeof error === 'object' && error !== null ? error : {}) as FlourioHttpError;
+
 /**
  * GET /api/admin/flourio/tags
  * Get FlourIO synced tags
@@ -41,12 +59,12 @@ export const getTags = async (req: Request, res: Response): Promise<void> => {
       data: tags,
       stats
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('Error fetching tags:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch tags',
-      error: error.message
+      error: getErrorMessage(error)
     });
   }
 };
@@ -91,12 +109,12 @@ export const getCategories = async (req: Request, res: Response): Promise<void> 
       success: true,
       data: categories
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('Error fetching categories:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch categories',
-      error: error.message
+      error: getErrorMessage(error)
     });
   }
 };
@@ -119,7 +137,7 @@ export const syncCategories = async (_req: Request, res: Response): Promise<void
  * Get products with sync status filtering
  * Vendors see only their own products, Admins see all
  */
-export const getProducts = async (req: any, res: Response): Promise<void> => {
+export const getProducts = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { search, syncStatus, category } = req.query;
     const user = req.user;
@@ -164,12 +182,12 @@ export const getProducts = async (req: any, res: Response): Promise<void> => {
       success: true,
       data: products
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('Error fetching products:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch products',
-      error: error.message
+      error: getErrorMessage(error)
     });
   }
 };
@@ -179,7 +197,7 @@ export const getProducts = async (req: any, res: Response): Promise<void> => {
  * Sync single product to FlourIO article
  * Vendors can only sync their own products
  */
-export const syncProduct = async (req: any, res: Response): Promise<void> => {
+export const syncProduct = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const user = req.user;
@@ -219,16 +237,17 @@ export const syncProduct = async (req: any, res: Response): Promise<void> => {
       },
       message: syncResult.created ? 'Article created successfully' : 'Article updated successfully'
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const flourioError = asFlourioError(error);
     logger.error('Error syncing product:', {
-      message: error.message,
-      stack: error.stack?.split('\n')[1]?.trim(),
-      response: error.response?.data
+      message: flourioError.message,
+      stack: flourioError.stack?.split('\n')[1]?.trim(),
+      response: flourioError.response?.data
     });
     res.status(500).json({
       success: false,
       message: 'Failed to sync product',
-      error: error.message
+      error: getErrorMessage(error)
     });
   }
 };
@@ -238,7 +257,7 @@ export const syncProduct = async (req: any, res: Response): Promise<void> => {
  * Bulk sync multiple products
  * Vendors can only sync their own products
  */
-export const syncBulkProducts = async (req: any, res: Response): Promise<void> => {
+export const syncBulkProducts = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { productIds } = req.body;
     const user = req.user;
@@ -277,12 +296,12 @@ export const syncBulkProducts = async (req: any, res: Response): Promise<void> =
       data: result,
       message: `Sync completed: ${result.synced} synced, ${result.failed} failed`
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('Error bulk syncing products:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to bulk sync products',
-      error: error.message
+      error: getErrorMessage(error)
     });
   }
 };
@@ -315,12 +334,12 @@ export const getStockLevels = async (req: Request, res: Response): Promise<void>
       data: products,
       stats
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('Error fetching stock levels:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch stock levels',
-      error: error.message
+      error: getErrorMessage(error)
     });
   }
 };
@@ -338,12 +357,12 @@ export const triggerStockPull = async (req: Request, res: Response): Promise<voi
       data: result,
       message: result.success ? 'Stock pull completed' : 'Stock pull failed'
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('Error triggering stock pull:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to trigger stock pull',
-      error: error.message
+      error: getErrorMessage(error)
     });
   }
 };
@@ -354,7 +373,7 @@ export const triggerStockPull = async (req: Request, res: Response): Promise<voi
  * GET /api/admin/flourio/documents
  * List documents (Admin: all, Vendor: own)
  */
-export const getDocuments = async (req: any, res: Response): Promise<void> => {
+export const getDocuments = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { type, status, fromDate, toDate } = req.query;
     const user = req.user;
@@ -384,12 +403,12 @@ export const getDocuments = async (req: any, res: Response): Promise<void> => {
       success: true,
       data: documents
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('Error fetching documents:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch documents',
-      error: error.message
+      error: getErrorMessage(error)
     });
   }
 };
@@ -424,12 +443,12 @@ export const getDocumentStats = async (req: Request, res: Response): Promise<voi
         lastPulledAt: lastPull?.lastPulledAt
       }
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('Error fetching document stats:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch document stats',
-      error: error.message
+      error: getErrorMessage(error)
     });
   }
 };
@@ -438,7 +457,7 @@ export const getDocumentStats = async (req: Request, res: Response): Promise<voi
  * GET /api/admin/flourio/documents/:id
  * Get single document detail (Admin: any, Vendor: own)
  */
-export const getDocumentById = async (req: any, res: Response): Promise<void> => {
+export const getDocumentById = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const user = req.user;
@@ -459,12 +478,12 @@ export const getDocumentById = async (req: any, res: Response): Promise<void> =>
     }
 
     res.json({ success: true, data: document });
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('Error fetching document:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch document',
-      error: error.message
+      error: getErrorMessage(error)
     });
   }
 };
@@ -482,12 +501,12 @@ export const triggerDocumentSync = async (req: Request, res: Response): Promise<
       data: result,
       message: result.success ? 'Document sync completed' : 'Document sync failed'
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('Error triggering document sync:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to trigger document sync',
-      error: error.message
+      error: getErrorMessage(error)
     });
   }
 };

@@ -41,7 +41,7 @@ export const authRateLimit = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   handler: rateLimitHandler,
-  skip: (req: any) => {
+  skip: (req: Request) => {
     // Skip rate limiting for admin setup if no admin exists yet
     if (req.path === '/admin/setup') {
       return false; // Don't skip, still apply rate limiting

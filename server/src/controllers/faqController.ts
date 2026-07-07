@@ -5,6 +5,7 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
+import mongoose from 'mongoose';
 import FAQ from '../models/FAQ';
 import logger from '../utils/logger';
 import AppError from '../utils/AppError';
@@ -130,12 +131,12 @@ export const faqController = {
         message: 'FAQ erfolgreich erstellt',
         faq: newFAQ
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error creating FAQ:', error);
-      
+
       // Handle validation errors
-      if (error.name === 'ValidationError') {
-        const messages = Object.values(error.errors).map((err: any) => err.message);
+      if (error instanceof Error && error.name === 'ValidationError') {
+        const messages = Object.values((error as mongoose.Error.ValidationError).errors).map((err) => err.message);
         return res.status(400).json({
           success: false,
           message: messages.join(', ')
@@ -178,12 +179,12 @@ export const faqController = {
         message: 'FAQ erfolgreich aktualisiert',
         faq: updatedFAQ
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error updating FAQ:', error);
-      
+
       // Handle validation errors
-      if (error.name === 'ValidationError') {
-        const messages = Object.values(error.errors).map((err: any) => err.message);
+      if (error instanceof Error && error.name === 'ValidationError') {
+        const messages = Object.values((error as mongoose.Error.ValidationError).errors).map((err) => err.message);
         return res.status(400).json({
           success: false,
           message: messages.join(', ')

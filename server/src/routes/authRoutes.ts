@@ -14,7 +14,7 @@
  * @since 1.0.0
  */
 
-import { Router } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import * as authController from '../controllers/authController';
 import { adminAuth } from '../middleware/auth';
 import { validateAdminLogin } from '../middleware/validation';
@@ -24,13 +24,13 @@ import logger from '../utils/logger';
 const router = Router();
 
 // Test endpoint to see if we get any requests
-router.all('/test-setup', (req: any, res: any) => {
+router.all('/test-setup', (req: Request, res: Response) => {
   logger.debug('TEST SETUP ENDPOINT HIT', { method: req.method, body: req.body });
   res.json({ message: 'Test endpoint hit', body: req.body });
 });
 
 router.post('/login', authRateLimit, validateAdminLogin, authController.login);
-router.post('/setup', adminSetupRateLimit, (req: any, res: any, next: any) => {
+router.post('/setup', adminSetupRateLimit, (req: Request, _res: Response, next: NextFunction) => {
   logger.debug('Setup route hit', { body: req.body, headers: req.headers });
   next();
 }, authController.setupAdmin); // Temporarily removed validateAdminSetup

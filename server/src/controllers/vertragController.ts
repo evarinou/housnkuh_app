@@ -849,9 +849,9 @@ export const cancelVertrag = async (req: Request, res: Response): Promise<void> 
       data: vertrag,
       message: 'Vertrag erfolgreich storniert'
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('Fehler beim Stornieren des Vertrags:', error);
-    res.status(500).json({ success: false, message: 'Fehler beim Stornieren', error: error.message });
+    res.status(500).json({ success: false, message: 'Fehler beim Stornieren', error: error instanceof Error ? error.message : String(error) });
   }
 };
 
@@ -890,8 +890,8 @@ export const activateVertrag = async (req: Request, res: Response): Promise<void
       data: vertrag,
       message: 'Vertrag erfolgreich aktiviert'
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('Fehler beim Aktivieren des Vertrags:', error);
-    res.status(500).json({ success: false, message: 'Fehler beim Aktivieren', error: error.message });
+    res.status(500).json({ success: false, message: 'Fehler beim Aktivieren', error: error instanceof Error ? error.message : String(error) });
   }
 };
