@@ -429,9 +429,8 @@ describe('AlertingService', () => {
         total: 10,
         active: 3,
         resolved: 7,
-        warning: 2,
-        critical: 1,
-        emergency: 0
+        bySeverity: { warning: 2, critical: 1, emergency: 0 },
+        last24Hours: 4
       };
 
       (AlertModel.getAlertStatistics as jest.Mock).mockResolvedValue(mockStats);

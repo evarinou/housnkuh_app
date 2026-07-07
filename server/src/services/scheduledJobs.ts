@@ -707,10 +707,12 @@ export class ScheduledJobs {
    * @complexity Medium - Statistics aggregation from multiple sources
    * @returns {any} Statistics object with monitoring data
    */
-  static getMonitoringStatistics(): any {
+  static async getMonitoringStatistics(): Promise<any> {
     try {
       const performanceSummary = performanceMonitor.getPerformanceSummary();
-      const alertStats = AlertingService.getAlertStatistics();
+      // BUG-ALERT-STATS-Folge: der Aufruf war unawaited → 'alerts' war ein
+      // (leer serialisiertes) Promise statt der Statistik
+      const alertStats = await AlertingService.getAlertStatistics();
       const cachedHealth = HealthCheckService.getCachedHealth();
       
       return {

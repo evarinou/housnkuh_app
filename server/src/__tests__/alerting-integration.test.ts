@@ -249,18 +249,17 @@ describe('Invoice Alerting Integration', () => {
         await alert.save();
       }
 
-      // Hinweis: Der DB-Pfad (AlertModel.getAlertStatistics) liefert eine flache
-      // Struktur { warning, critical, emergency } und zählt pro Severity ALLE
-      // Alerts der letzten 30 Tage (aktiv + gelöst) – abweichend vom deklarierten
-      // Rückgabetyp des Service (bySeverity), der nur im Memory-Fallback gilt.
-      const stats: any = await AlertingService.getAlertStatistics();
+      // BUG-ALERT-STATS gefixt: DB-Pfad liefert das deklarierte Shape —
+      // bySeverity zählt nur AKTIVE Alerts, plus last24Hours
+      const stats = await AlertingService.getAlertStatistics();
 
       expect(stats.total).toBe(3);
       expect(stats.active).toBe(2);
       expect(stats.resolved).toBe(1);
-      expect(stats.warning).toBe(2); // 1 aktiv + 1 gelöst
-      expect(stats.critical).toBe(1);
-      expect(stats.emergency).toBe(0);
+      expect(stats.bySeverity.warning).toBe(1); // nur der aktive Warning-Alert
+      expect(stats.bySeverity.critical).toBe(1);
+      expect(stats.bySeverity.emergency).toBe(0);
+      expect(stats.last24Hours).toBe(3);
     });
 
     it('should cleanup old resolved alerts', async () => {

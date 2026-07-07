@@ -127,9 +127,9 @@ router.post('/monitoring/performance-check', async (_req, res, next) => {
   }
 });
 
-router.get('/monitoring/statistics', (_req, res, next) => {
+router.get('/monitoring/statistics', async (_req, res, next) => {
   try {
-    const stats = ScheduledJobs.getMonitoringStatistics();
+    const stats = await ScheduledJobs.getMonitoringStatistics();
     res.json(stats);
   } catch (error) {
     next(new AppError(error instanceof Error ? error.message : 'Unknown error', 500, error));

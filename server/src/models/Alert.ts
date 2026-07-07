@@ -210,6 +210,20 @@ AlertSchema.statics.findAlertsByTimeRange = function(startDate: Date, endDate: D
 AlertSchema.statics.getAlertStatistics = async function(days: number = 30): Promise<any> {
   const startDate = new Date();
   startDate.setDate(startDate.getDate() - days);
+  const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+  // BUG-ALERT-STATS: Shape entspricht jetzt dem deklarierten Rückgabetyp von
+  // AlertingService.getAlertStatistics — bySeverity zählt nur AKTIVE Alerts
+  // (wie der Memory-Fallback), plus last24Hours.
+  const activeWithSeverity = (severity: string) => ({
+    $sum: {
+      $cond: [
+        { $and: [{ $eq: ['$resolved', false] }, { $eq: ['$severity', severity] }] },
+        1,
+        0
+      ]
+    }
+  });
 
   const pipeline = [
     {
@@ -231,19 +245,12 @@ AlertSchema.statics.getAlertStatistics = async function(days: number = 30): Prom
             $cond: [{ $eq: ['$resolved', true] }, 1, 0]
           }
         },
-        warning: {
+        warning: activeWithSeverity('warning'),
+        critical: activeWithSeverity('critical'),
+        emergency: activeWithSeverity('emergency'),
+        last24Hours: {
           $sum: {
-            $cond: [{ $eq: ['$severity', 'warning'] }, 1, 0]
-          }
-        },
-        critical: {
-          $sum: {
-            $cond: [{ $eq: ['$severity', 'critical'] }, 1, 0]
-          }
-        },
-        emergency: {
-          $sum: {
-            $cond: [{ $eq: ['$severity', 'emergency'] }, 1, 0]
+            $cond: [{ $gte: ['$timestamp', oneDayAgo] }, 1, 0]
           }
         }
       }
@@ -251,13 +258,17 @@ AlertSchema.statics.getAlertStatistics = async function(days: number = 30): Prom
   ];
 
   const result = await this.aggregate(pipeline);
-  return result[0] || {
-    total: 0,
-    active: 0,
-    resolved: 0,
-    warning: 0,
-    critical: 0,
-    emergency: 0
+  const r = result[0] || { total: 0, active: 0, resolved: 0, warning: 0, critical: 0, emergency: 0, last24Hours: 0 };
+  return {
+    total: r.total,
+    active: r.active,
+    resolved: r.resolved,
+    bySeverity: {
+      warning: r.warning,
+      critical: r.critical,
+      emergency: r.emergency
+    },
+    last24Hours: r.last24Hours
   };
 };
 
