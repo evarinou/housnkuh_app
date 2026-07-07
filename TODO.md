@@ -159,8 +159,17 @@
 - [ ] **T5.4 – Toten Code & Altlasten entfernen** (AUDIT S1/S2/S3/S6–S12,
   KON4 require→import): getrackte Debug-Skripte/Backups/Bilder enttracken,
   verwaiste Dateien löschen — nach Freigabe.
-- [ ] **T5.5 – Test-Drift-Cleanup** (AUDIT S5): untracked Tests reparieren/
-  löschen/committen; danach ist ein `git push` (mit grüner Suite) möglich.
+- [x] **T5.5 – Test-Drift-Cleanup** (AUDIT S5). ✅ Alle 25 gedrifteten Suiten
+  repariert (flour.io 8, Invoice 9, E-Mail/Alerting 3, Client 5), alle
+  untracked Tests committet. Nur 5 Client-Tests gelöscht (testeten belegt
+  entfernte/nie existierende UI: Tag-Kategorien, Verfügbarkeits-Feld,
+  Auto-Sync-Checkbox). Jest-Worker auf 50 % begrenzt (MongoMemoryServer/
+  Puppeteer-Ressourcensturm). **Beide Suiten komplett grün: Server 62 Suiten/
+  897 Tests, Client 29 Suiten/303 Tests.** 9 dabei gefundene Produktionsbugs
+  in AUDIT.md („Beim Test-Drift-Cleanup T5.5 gefunden") dokumentiert —
+  wichtigster: BUG-INV-TAX-REST (generateInvoice setzt noch tax=0.19 als
+  Satz; vor Rechnungs-Go-live fixen). ~~untracked Tests reparieren/
+  löschen/committen; danach ist ein `git push` (mit grüner Suite) möglich.~~
 
 ---
 

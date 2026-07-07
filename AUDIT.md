@@ -198,6 +198,46 @@ Einige Agent-Einstufungen wurden nach Prüfung angepasst (Begründung dabei).
   Integrationstests prüfen Endsummen. Offen: falls bereits Bestandsrechnungen in
   Prod existieren, deren totalAmount einmalig neu berechnen (hier keine bekannt).
 
+### Beim Test-Drift-Cleanup T5.5 gefunden (2026-07-07, verifiziert, NICHT gefixt)
+
+- [ ] **BUG-INV-TAX-REST (K)** `invoiceGenerationService.generateInvoice()`
+  (~Z. 229/242) setzt weiterhin `tax: 0.19` (Satz statt Betrag) und
+  `totalAmount = subtotal*1.19`; der Pre-Save-Hook überschreibt dann
+  `totalAmount = subtotal + 0.19` → Rechnungen mit 0,19 € „Steuer". Betrifft
+  `generateInvoice`/`generateInvoiceWithPdf` (Ad-hoc/Bulk-Pfad); der Monatslauf
+  `generateMonthlyInvoice` ist korrekt. **Vor Rechnungs-Go-live fixen.**
+- [ ] **BUG-INV-RESEND (W)** `resendInvoiceEmail` prüft `vendor.isActive` — das
+  Feld existiert im User-Schema nicht (strict mode) → Endpoint antwortet für
+  jeden Vendor 400 „Vendor ist nicht aktiv"; E-Mail-Resend faktisch tot.
+- [ ] **BUG-PDF-RACE (W)** `invoicePdfService`: geteilte Browser-Instanz +
+  `closeBrowser()` im `finally` → parallele PDF-Aufrufe racen (ProtocolError).
+  Betrifft auch Batch-Läufe, falls je parallelisiert.
+- [ ] **BUG-INV-DUP (W)** Duplikatsprüfung in `generateMonthlyInvoice` ist nicht
+  atomar (find-then-insert, kein Unique-Index vendor+period) → parallele Läufe
+  können Doppel-Rechnungen erzeugen; Controller antwortet bei „already exists"
+  mit 500 statt 400.
+- [ ] **BUG-INV-JOB-NULL (W)** `InvoiceGenerationJob.run()` liest
+  `invoice.amount` — bei „keine abrechenbaren Positionen" gibt
+  `generateMonthlyInvoice` `null` zurück → TypeError wird als Vendor-Fehler
+  gezählt statt sauber übersprungen; `amount` existiert am Model ohnehin nicht
+  (`totalAmount`).
+- [ ] **BUG-BP-SYNC-QUERY (W)** `businessPartnerSyncService.ts:78` nutzt
+  `{ updatedAt: { $gt: '$flourioLastSyncAt' } }` in normaler Query — der String
+  wird nicht als Feldreferenz aufgelöst (bräuchte `$expr`); der Zweig „synced,
+  aber seither geändert" greift via DB-Query nie (In-Memory-Prüfung
+  `hasVendorChanged` kompensiert teilweise).
+- [ ] **BUG-ALERT-STATS (W)** `AlertingService.getAlertStatistics()`:
+  deklarierter Typ verspricht `bySeverity: {…}` (nur aktive), DB-Pfad liefert
+  flache Struktur über ALLE Alerts der letzten 30 Tage → Konsumenten von
+  `stats.bySeverity.x` bekommen `undefined`.
+- [ ] **BUG-INVDASH-CURRENCY (W, Client)** `InvoiceDashboard.tsx` StatCard:
+  Währungsformatierung nur bei `title.includes('revenue')` — Titel sind deutsch
+  („Gesamt Umsatz") → Umsätze erscheinen als rohe Zahl statt „25.000,50 €".
+- [ ] **KON-MANUALINV (S, Client)** `ManualInvoiceGenerator.tsx`: hartkodierte
+  `/api/...`-URLs + direkter `localStorage`-Zugriff statt
+  `apiUtils.getApiUrl()`/`tokenStorage` (Stil des T0.4-Fixes nachziehen);
+  dazu toter `useAuth`-Import in `InvoiceDashboard.tsx`.
+
 ## Betrieb & Robustheit (Durchlauf 1d)
 
 Kontext: Kasse läuft in flour.io-Cloud, Kiosk-Terminals sind reine Browser
