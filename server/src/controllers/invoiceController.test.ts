@@ -759,7 +759,7 @@ describe('invoiceController', () => {
         status: 'sent',
         vendor: {
           kontakt: { email: 'vendor@test.com', name: 'Test Vendor' },
-          isActive: true
+          registrationStatus: 'active'
         },
         totalAmount: 100.50,
         dueDate: new Date('2024-10-15'),
@@ -812,7 +812,7 @@ describe('invoiceController', () => {
     });
 
     it('should prevent resending for inactive vendors', async () => {
-      mockInvoice.vendor.isActive = false;
+      mockInvoice.vendor.registrationStatus = 'cancelled';
 
       await resendInvoiceEmail(req as AuthRequest, res as Response, next);
 

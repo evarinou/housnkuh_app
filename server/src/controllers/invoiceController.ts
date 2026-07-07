@@ -726,7 +726,7 @@ export const resendInvoiceEmail = async (req: AuthRequest, res: Response, next: 
     }
 
     const invoice = await Invoice.findById(id)
-      .populate('vendor', 'kontakt.name kontakt.email isActive');
+      .populate('vendor', 'kontakt.name kontakt.email registrationStatus');
 
     if (!invoice) {
       res.status(404).json({
@@ -748,8 +748,9 @@ export const resendInvoiceEmail = async (req: AuthRequest, res: Response, next: 
     // Type assertion for populated vendor data
     const vendorData = invoice.vendor as any;
     
-    // Check if vendor is still active
-    if (!vendorData.isActive) {
+    // Check if vendor is still active (BUG-INV-RESEND: das frühere Feld
+    // vendorData.isActive existiert im User-Schema nicht — jeder Resend lief in 400)
+    if (vendorData.registrationStatus === 'cancelled') {
       res.status(400).json({
         success: false,
         message: 'Rechnung kann nicht versendet werden - Vendor ist nicht aktiv'
