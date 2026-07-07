@@ -200,14 +200,34 @@ describe('InvoiceGenerationJob', () => {
 
       expect(mockInvoiceGenerationService.generateMonthlyInvoice).toHaveBeenCalledWith('vendor1', 2025, 1);
       expect(mockLogger.info).toHaveBeenCalledWith(
-        'Invoice generated successfully for vendor',
-        { vendorId: 'vendor1' }
+        'Single vendor invoice generation completed',
+        expect.objectContaining({ vendorId: 'vendor1', invoiceAmount: 119, skipped: false })
       );
       expect(mockMonitoring.completeInvoiceGeneration).toHaveBeenCalledWith(
         'gen-corr-id',
         'batch-corr-id',
         true,
+        119
+      );
+    });
+
+    it('skips gracefully when nothing is billable (service returns null, BUG-INV-JOB-NULL)', async () => {
+      mockUser.findById.mockReturnValue({
+        select: jest.fn().mockResolvedValue({ kontakt: { name: 'Trial Vendor' } })
+      } as any);
+      mockInvoiceGenerationService.generateMonthlyInvoice.mockResolvedValue(null);
+
+      await expect(InvoiceGenerationJob.generateForVendor('vendor1', 2025, 1)).resolves.not.toThrow();
+
+      expect(mockMonitoring.completeInvoiceGeneration).toHaveBeenCalledWith(
+        'gen-corr-id',
+        'batch-corr-id',
+        true,
         undefined
+      );
+      expect(mockLogger.info).toHaveBeenCalledWith(
+        'Single vendor invoice generation completed',
+        expect.objectContaining({ skipped: true, invoiceAmount: null })
       );
     });
 

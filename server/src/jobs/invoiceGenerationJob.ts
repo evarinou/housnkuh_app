@@ -82,16 +82,20 @@ export class InvoiceGenerationJob {
               lastMonth.getMonth() + 1
             );
             
-            // Complete monitoring with success
+            // BUG-INV-JOB-NULL: null = nichts abrechenbar (Trial/kein Vertrag) → Skip, kein Fehler
             invoiceMonitoringService.completeInvoiceGeneration(
               generationCorrelationId,
               batchCorrelationId,
               true,
-              invoice.amount
+              invoice ? invoice.totalAmount : undefined
             );
             
             successCount++;
-            logger.info('Invoice generated successfully for vendor', { vendorName });
+            if (invoice) {
+              logger.info('Invoice generated successfully for vendor', { vendorName });
+            } else {
+              logger.info('No billable items for vendor - skipped', { vendorName });
+            }
             
           } catch (vendorError) {
             const errorMessage = vendorError instanceof Error ? vendorError.message : 'Unknown error';
@@ -229,16 +233,20 @@ export class InvoiceGenerationJob {
             month
           );
           
-          // Complete monitoring with success
+          // BUG-INV-JOB-NULL: null = nichts abrechenbar → Skip, kein Fehler
           invoiceMonitoringService.completeInvoiceGeneration(
             generationCorrelationId,
             batchCorrelationId,
             true,
-            invoice.amount
+            invoice ? invoice.totalAmount : undefined
           );
           
           successCount++;
-          logger.info('Invoice generated for vendor', { vendorName });
+          if (invoice) {
+            logger.info('Invoice generated for vendor', { vendorName });
+          } else {
+            logger.info('No billable items for vendor - skipped', { vendorName });
+          }
         } catch (vendorError) {
           const errorMessage = vendorError instanceof Error ? vendorError.message : 'Unknown error';
           
@@ -300,21 +308,21 @@ export class InvoiceGenerationJob {
       try {
         const invoice = await invoiceGenerationService.generateMonthlyInvoice(vendorId, year, month);
         
-        // Complete monitoring with success
+        // BUG-INV-JOB-NULL: null = nichts abrechenbar → Skip, kein Fehler
         invoiceMonitoringService.completeInvoiceGeneration(
           generationCorrelationId,
           batchCorrelationId,
           true,
-          invoice.amount
+          invoice ? invoice.totalAmount : undefined
         );
         
-        logger.info('Invoice generated successfully for vendor', { vendorId });
         logger.info('Single vendor invoice generation completed', {
           vendorId,
           vendorName,
           year,
           month,
-          invoiceAmount: invoice.amount,
+          invoiceAmount: invoice ? invoice.totalAmount : null,
+          skipped: !invoice,
           generationCorrelationId,
           batchCorrelationId
         });
