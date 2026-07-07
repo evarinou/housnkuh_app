@@ -250,11 +250,11 @@ selbst verifiziert; Agent-Einschätzungen wo nötig korrigiert.
 - [ ] **OP11 (W)** `alertingService` — unklar, ob Alerts tatsächlich zugestellt
   werden (E-Mail/Kanal) oder nur als DB-Eintrag existieren. → Zustellweg
   verifizieren/implementieren (hängt mit OP7 zusammen).
-- [ ] **OP12 (W)** Backup: `.env.example` dokumentiert `BACKUP_SCHEDULE` etc.,
+- [x] **OP12 (W) ✅ (T3.2) backupJob** — mongodump+Retention. Alt: `.env.example` dokumentiert `BACKUP_SCHEDULE` etc.,
   aber es gibt **keinen** Backup-Job im Code. Kein automatisches mongodump →
   bei Datenverlust keine Wiederherstellung. → Backup-Job oder dokumentierten
   systemd-Timer mit `mongodump`.
-- [ ] **OP13 (W)** Kein Deployment-Artefakt im Repo (keine systemd-Unit, kein
+- [x] **OP13 (W) ✅ (T3.2) ecosystem.config.js + Ops-Doku.** Alt: kein Deployment-Artefakt im Repo (keine systemd-Unit, kein
   PM2-`ecosystem.config.js`, kein Start-Skript). Nach Reboot kein Autostart. →
   systemd-Unit oder PM2-Config versionieren (verbindet sich mit der offenen
   Deployment-/Kiosk-Update-Frage aus ARCHITECTURE.md).
