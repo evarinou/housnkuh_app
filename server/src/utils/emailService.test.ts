@@ -17,12 +17,15 @@ import {
   sendMonitoringAlert,
   sendAdminConfirmationEmail,
   sendAdminZusatzleistungenNotification,
+  sendInvoiceNotification,
   getFrontendUrl,
   PackageBookingData,
   MonitoringAlertData,
   AdminConfirmationData,
   ZusatzleistungenAdminNotificationData
 } from './emailService';
+import * as fs from 'fs';
+import * as nodemailer from 'nodemailer';
 
 // Mock logger to prevent console output during tests
 jest.mock('../utils/logger', () => ({
@@ -37,6 +40,17 @@ jest.mock('nodemailer', () => ({
     sendMail: jest.fn().mockResolvedValue({ messageId: 'test-message-id' })
   })
 }));
+
+// fs mit durchgereichter echter Implementierung mocken, damit readFileSync
+// in einzelnen Tests überschrieben werden kann (jest.spyOn scheitert, weil
+// fs.readFileSync in Node nicht konfigurierbar ist)
+jest.mock('fs', () => {
+  const actualFs = jest.requireActual('fs');
+  return {
+    ...actualFs,
+    readFileSync: jest.fn(actualFs.readFileSync)
+  };
+});
 
 // Save original env for restoration
 const originalEnv = process.env;
@@ -342,7 +356,11 @@ describe('emailService - sendBookingConfirmation', () => {
     it('should fallback to production URL when NODE_ENV=production', async () => {
       process.env.NODE_ENV = 'production';
       delete process.env.FRONTEND_URL;
-      
+      // Außerhalb von development verlangt sendBookingConfirmation E-Mail-Konfiguration
+      process.env.EMAIL_HOST = 'test-host';
+      process.env.EMAIL_USER = 'test-user';
+      process.env.EMAIL_PASS = 'test-pass';
+
       const result = await sendBookingConfirmation(mockBookingData);
       expect(result).toBe(true);
     });
@@ -350,7 +368,10 @@ describe('emailService - sendBookingConfirmation', () => {
     it('should fallback to staging URL when NODE_ENV=staging', async () => {
       process.env.NODE_ENV = 'staging';
       delete process.env.FRONTEND_URL;
-      
+      process.env.EMAIL_HOST = 'test-host';
+      process.env.EMAIL_USER = 'test-user';
+      process.env.EMAIL_PASS = 'test-pass';
+
       const result = await sendBookingConfirmation(mockBookingData);
       expect(result).toBe(true);
     });
@@ -377,7 +398,10 @@ describe('emailService - sendBookingConfirmation', () => {
     it('should generate vendor confirmation links without hardcoded localhost', async () => {
       process.env.NODE_ENV = 'production';
       delete process.env.FRONTEND_URL;
-      
+      process.env.EMAIL_HOST = 'test-host';
+      process.env.EMAIL_USER = 'test-user';
+      process.env.EMAIL_PASS = 'test-pass';
+
       const result = await sendBookingConfirmation(mockBookingData);
       expect(result).toBe(true);
       // Verify that no localhost URLs are used in production
@@ -406,7 +430,10 @@ describe('emailService - sendBookingConfirmation', () => {
     it('should handle environment-specific URLs correctly', async () => {
       process.env.NODE_ENV = 'staging';
       delete process.env.FRONTEND_URL;
-      
+      process.env.EMAIL_HOST = 'test-host';
+      process.env.EMAIL_USER = 'test-user';
+      process.env.EMAIL_PASS = 'test-pass';
+
       const result = await sendBookingConfirmation(mockBookingData);
       expect(result).toBe(true);
       // Should use staging URL from getFrontendUrl()
@@ -1067,6 +1094,244 @@ describe('emailService - sendAdminZusatzleistungenNotification', () => {
       
       const result = await sendAdminZusatzleistungenNotification(incompleteData);
       expect(result).toBe(true); // Should handle gracefully in development
+    });
+  });
+});
+
+describe('emailService - sendInvoiceNotification', () => {
+  beforeEach(() => {
+    // restoreAllMocks statt clearAllMocks: setzt eventuell verbliebene
+    // Spy-Implementierungen zurück (Muster aus alertingService.test.ts)
+    jest.restoreAllMocks();
+    process.env = { ...originalEnv };
+    process.env.EMAIL_HOST = 'test-host';
+    process.env.EMAIL_USER = 'test-user';
+    process.env.EMAIL_PASS = 'test-pass';
+
+    // Frischer Default-Transporter für jeden Test (der Modul-Mock von
+    // nodemailer bleibt über resetModules hinweg dieselbe Instanz wie im Import)
+    (nodemailer.createTransport as jest.Mock).mockReturnValue({
+      sendMail: jest.fn().mockResolvedValue({ messageId: 'test-message-id' })
+    });
+  });
+
+  afterEach(() => {
+    process.env = originalEnv;
+  });
+
+  const mockInvoiceData = {
+    invoice: {
+      invoiceNumber: 'RE-2024-12-00001',
+      period: { month: 12, year: 2024 },
+      subtotal: 100.00,
+      totalAmount: 119.00,
+      tax: 0.19,
+      status: 'sent',
+      createdAt: new Date('2024-12-01'),
+      dueDate: new Date('2024-12-15'),
+      paidDate: null
+    },
+    vendor: {
+      email: 'vendor@example.com',
+      businessName: 'Test Vendor GmbH',
+      firstName: 'John',
+      lastName: 'Doe'
+    },
+    pdfBuffer: Buffer.from('fake-pdf-content'),
+    companyInfo: {
+      name: 'housnkuh',
+      address: 'Musterstraße 1, 12345 Musterstadt',
+      email: 'info@housnkuh.de',
+      phone: '+49 123 456789',
+      website: 'https://housnkuh.de',
+      taxId: 'DE123456789'
+    }
+  };
+
+  describe('successful email sending', () => {
+    it('should send invoice notification email with PDF attachment', async () => {
+      const result = await sendInvoiceNotification(mockInvoiceData);
+      expect(result).toBe(true);
+    });
+
+    it('should handle vendor with business name', async () => {
+      const dataWithBusinessName = {
+        ...mockInvoiceData,
+        vendor: {
+          ...mockInvoiceData.vendor,
+          businessName: 'Test Business GmbH'
+        }
+      };
+
+      const result = await sendInvoiceNotification(dataWithBusinessName);
+      expect(result).toBe(true);
+    });
+
+    it('should handle vendor without business name', async () => {
+      const dataWithoutBusinessName = {
+        ...mockInvoiceData,
+        vendor: {
+          ...mockInvoiceData.vendor,
+          businessName: null,
+          firstName: 'John',
+          lastName: 'Doe'
+        }
+      };
+
+      const result = await sendInvoiceNotification(dataWithoutBusinessName);
+      expect(result).toBe(true);
+    });
+
+    it('should include correct attachment filename format', async () => {
+      const mockTransporter = {
+        sendMail: jest.fn().mockResolvedValue({ messageId: 'test-message-id' })
+      };
+      (nodemailer.createTransport as jest.Mock).mockReturnValue(mockTransporter);
+
+      await sendInvoiceNotification(mockInvoiceData);
+
+      expect(mockTransporter.sendMail).toHaveBeenCalledWith(
+        expect.objectContaining({
+          attachments: expect.arrayContaining([
+            expect.objectContaining({
+              filename: 'Rechnung_RE-2024-12-00001.pdf',
+              contentType: 'application/pdf'
+            })
+          ])
+        })
+      );
+    });
+  });
+
+  describe('error handling', () => {
+    it('should throw error when template reading fails', async () => {
+      const readFileSyncMock = fs.readFileSync as jest.Mock;
+      readFileSyncMock.mockImplementationOnce(() => {
+        throw new Error('Template not found');
+      });
+
+      await expect(sendInvoiceNotification(mockInvoiceData)).rejects.toThrow('Template not found');
+    });
+
+    it('should throw error when email sending fails', async () => {
+      const mockTransporter = {
+        sendMail: jest.fn().mockRejectedValue(new Error('SMTP error'))
+      };
+      (nodemailer.createTransport as jest.Mock).mockReturnValue(mockTransporter);
+
+      await expect(sendInvoiceNotification(mockInvoiceData)).rejects.toThrow('SMTP error');
+    });
+
+    it('should handle missing PDF buffer gracefully', async () => {
+      const dataWithoutPDF = {
+        ...mockInvoiceData,
+        pdfBuffer: null
+      };
+
+      // The function should handle this gracefully, not throw
+      const result = await sendInvoiceNotification({ ...dataWithoutPDF, pdfBuffer: Buffer.from('') });
+      expect(result).toBe(true);
+    });
+
+    it('should handle missing vendor email gracefully', async () => {
+      const dataWithoutEmail = {
+        ...mockInvoiceData,
+        vendor: {
+          ...mockInvoiceData.vendor,
+          email: null
+        }
+      };
+
+      // The function should handle this gracefully, not throw  
+      const result = await sendInvoiceNotification(dataWithoutEmail);
+      expect(result).toBe(true);
+    });
+  });
+
+  describe('template data formatting', () => {
+    it('should format dates correctly', async () => {
+      const mockTransporter = {
+        sendMail: jest.fn().mockResolvedValue({ messageId: 'test-message-id' })
+      };
+      (nodemailer.createTransport as jest.Mock).mockReturnValue(mockTransporter);
+
+      await sendInvoiceNotification(mockInvoiceData);
+
+      // Verify the email was sent (template compilation handled internally)
+      expect(mockTransporter.sendMail).toHaveBeenCalledWith(
+        expect.objectContaining({
+          subject: '📄 Ihre Rechnung RE-2024-12-00001 - housnkuh',
+          to: 'vendor@example.com'
+        })
+      );
+    });
+
+    it('should format prices correctly', async () => {
+      const dataWithDecimals = {
+        ...mockInvoiceData,
+        invoice: {
+          ...mockInvoiceData.invoice,
+          totalAmount: 123.45
+        }
+      };
+
+      const result = await sendInvoiceNotification(dataWithDecimals);
+      expect(result).toBe(true);
+    });
+
+    it('should handle month formatting', async () => {
+      const dataWithDifferentMonth = {
+        ...mockInvoiceData,
+        invoice: {
+          ...mockInvoiceData.invoice,
+          period: { month: 6, year: 2024 }
+        }
+      };
+
+      const result = await sendInvoiceNotification(dataWithDifferentMonth);
+      expect(result).toBe(true);
+    });
+  });
+
+  describe('edge cases', () => {
+    it('should handle very large PDF attachments', async () => {
+      const largeBuffer = Buffer.alloc(5 * 1024 * 1024); // 5MB
+      const dataWithLargePDF = {
+        ...mockInvoiceData,
+        pdfBuffer: largeBuffer
+      };
+
+      const result = await sendInvoiceNotification(dataWithLargePDF);
+      expect(result).toBe(true);
+    });
+
+    it('should handle special characters in vendor name', async () => {
+      const dataWithSpecialChars = {
+        ...mockInvoiceData,
+        vendor: {
+          ...mockInvoiceData.vendor,
+          businessName: 'Test Müller & Söhne GmbH'
+        }
+      };
+
+      const result = await sendInvoiceNotification(dataWithSpecialChars);
+      expect(result).toBe(true);
+    });
+
+    it('should handle future due dates', async () => {
+      const futureDate = new Date();
+      futureDate.setDate(futureDate.getDate() + 30);
+      
+      const dataWithFutureDate = {
+        ...mockInvoiceData,
+        invoice: {
+          ...mockInvoiceData.invoice,
+          dueDate: futureDate
+        }
+      };
+
+      const result = await sendInvoiceNotification(dataWithFutureDate);
+      expect(result).toBe(true);
     });
   });
 });

@@ -188,7 +188,12 @@ describe('Email Service Integration Tests', () => {
     it('should maintain URL consistency across all emails in production', async () => {
       process.env.NODE_ENV = 'production';
       delete process.env.FRONTEND_URL;
-      
+      // Außerhalb von development verlangt sendBookingConfirmation eine
+      // E-Mail-Konfiguration (sonst return false) – nodemailer ist gemockt
+      process.env.EMAIL_HOST = 'test-host';
+      process.env.EMAIL_USER = 'test-user';
+      process.env.EMAIL_PASS = 'test-pass';
+
       const expectedUrl = 'https://housnkuh.de';
       
       // Test all email functions use the same production URL
