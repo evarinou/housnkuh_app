@@ -15,6 +15,9 @@ import logger from '../utils/logger';
 
 export class StockPullJob {
   private static task: cron.ScheduledTask | null = null;
+  // Überlappungssicher (AUDIT OP9): hängt ein Lauf länger als das Intervall,
+  // startet kein zweiter parallel (Race beim Bestands-Update)
+  private static running = false;
 
   // Every 5 minutes
   static schedule = '*/5 * * * *';
@@ -23,6 +26,11 @@ export class StockPullJob {
    * Run the stock pull
    */
   static async run(): Promise<void> {
+    if (StockPullJob.running) {
+      logger.warn('[StockPullJob] Vorheriger Lauf ist noch aktiv — dieser Lauf wird übersprungen');
+      return;
+    }
+    StockPullJob.running = true;
     logger.info('[StockPullJob] Starting stock pull from Flourio...');
 
     try {
@@ -48,6 +56,8 @@ export class StockPullJob {
       logger.error('[StockPullJob] Stock pull failed', {
         error: error.message
       });
+    } finally {
+      StockPullJob.running = false;
     }
   }
 

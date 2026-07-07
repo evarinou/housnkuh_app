@@ -17,10 +17,18 @@ export class DocumentSyncJob {
   // Every 15 minutes
   static schedule = '*/15 * * * *';
 
+  // Überlappungssicher (AUDIT OP9): kein Parallel-Lauf bei hängendem Pull
+  private static running = false;
+
   /**
    * Run the document pull
    */
   static async run(): Promise<void> {
+    if (DocumentSyncJob.running) {
+      logger.warn('[DocumentSyncJob] Vorheriger Lauf ist noch aktiv — dieser Lauf wird übersprungen');
+      return;
+    }
+    DocumentSyncJob.running = true;
     logger.info('[DocumentSyncJob] Starting document pull from Flourio...');
 
     try {
@@ -61,6 +69,8 @@ export class DocumentSyncJob {
       logger.error('[DocumentSyncJob] Document pull failed', {
         error: error.message
       });
+    } finally {
+      DocumentSyncJob.running = false;
     }
   }
 
