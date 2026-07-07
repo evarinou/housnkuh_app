@@ -554,11 +554,8 @@ class InvoiceGenerationService {
       const { base: provisionBase } = await ProvisionService.claimForInvoice(vendorId, invoiceId, period);
 
       try {
-        // Provisionsposition (Netto-Umsatz × Satz) als weitere Position ergänzen.
-        // Summen/USt rechnet der Invoice-Pre-Save-Hook aus den items neu — die
-        // Provision fließt dadurch konsistent wie Miete/Zusatzleistungen ein.
-        // (Hinweis: tax-Semantik im Modell ist vorbestehend inkonsistent, siehe
-        // AUDIT KON-Invoice-Tax — hier NICHT im F2c-Scope korrigiert.)
+        // Provisionsposition (Netto-Umsatz × Satz) ergänzen. tax ist ein absoluter
+        // USt-Betrag (19 % auf die neue Zwischensumme, housnkuh-Umsatz).
         if (provisionBase > 0) {
           const provisionAmount = Math.round(provisionBase * provisionssatz) / 100;
           invoiceData.items.push({
@@ -569,6 +566,8 @@ class InvoiceGenerationService {
             type: 'provision'
           } as any);
           invoiceData.subtotal = Math.round((invoiceData.subtotal + provisionAmount) * 100) / 100;
+          invoiceData.tax = Math.round(invoiceData.subtotal * 0.19 * 100) / 100;
+          invoiceData.totalAmount = Math.round((invoiceData.subtotal + invoiceData.tax) * 100) / 100;
         }
 
         // Generate invoice number

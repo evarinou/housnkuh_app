@@ -181,8 +181,9 @@ InvoiceSchema.pre('save', function(next) {
       return sum + itemTotalPrice;
     }, 0);
     
-    // Calculate total amount with tax
-    this.totalAmount = Math.round(this.subtotal * (1 + this.tax) * 100) / 100;
+    // tax ist ein absoluter USt-BETRAG (nicht ein Satz) — konsistent mit
+    // invoiceCalculationService, dem Client und calculateMonthlyCharges.
+    this.totalAmount = Math.round((this.subtotal + this.tax) * 100) / 100;
   }
   next();
 });

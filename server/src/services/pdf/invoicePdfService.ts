@@ -477,8 +477,8 @@ class InvoicePdfService {
                         <td class="text-right">${formatCurrency(invoice.subtotal)}</td>
                     </tr>
                     <tr>
-                        <td>Umsatzsteuer (${Math.round(invoice.tax * 100)}%):</td>
-                        <td class="text-right">${formatCurrency(invoice.subtotal * invoice.tax)}</td>
+                        <td>Umsatzsteuer (${invoice.subtotal ? Math.round(invoice.tax / invoice.subtotal * 100) : 19}%):</td>
+                        <td class="text-right">${formatCurrency(invoice.tax)}</td>
                     </tr>
                     <tr class="total-row">
                         <td><strong>Gesamtbetrag (brutto):</strong></td>

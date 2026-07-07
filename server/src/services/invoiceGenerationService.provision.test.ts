@@ -57,8 +57,10 @@ describe('generateMonthlyInvoice – Provision (F2c)', () => {
     const provItem = invoice.items.find((i: any) => i.type === 'provision');
     expect(provItem).toBeDefined();
     expect(provItem.unitPrice).toBe(21); // 300 × 7% = 21,00 €
-    // Subtotal wird vom Invoice-Hook aus den Positionen gebildet: 50 (Miete) + 21.
+    // 50 (Miete) + 21 (Provision) = 71; USt 19% = 13,49; Gesamt 84,49
     expect(invoice.subtotal).toBe(71);
+    expect(invoice.tax).toBe(13.49);
+    expect(invoice.totalAmount).toBe(84.49);
 
     // Alle Verkäufe tragen jetzt die Rechnungs-Id als Provisions-Marker
     const sales = await VendorSale.find({ vendorId: vendor._id });
@@ -75,5 +77,8 @@ describe('generateMonthlyInvoice – Provision (F2c)', () => {
     const invoice: any = await invoiceGenerationService.generateMonthlyInvoice(String(vendor._id), 2026, 7);
     expect(invoice.items.some((i: any) => i.type === 'provision')).toBe(false);
     expect(invoice.subtotal).toBe(50);
+    // Hook-Fix: totalAmount = subtotal + tax (tax als Betrag): 50 + 9,50 = 59,50
+    expect(invoice.tax).toBe(9.5);
+    expect(invoice.totalAmount).toBe(59.5);
   });
 });
