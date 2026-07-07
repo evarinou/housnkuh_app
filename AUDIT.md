@@ -61,7 +61,7 @@
   BookingDetailModal, ProductCard, InvoiceDetail/List, VendorContractsPage,
   FlourioDocumentsPage, ProductLabelPrintModal …) statt `priceFormatting.ts`
   (siehe S8). → auf zentrale Utility migrieren.
-- [ ] **S14 (W)** API-Basis-URL-Ermittlung in 41 Client-Dateien inline
+- [x] **S14 (W)** ✅ (2026-07-08: 66 Stellen in 32 Dateien auf apiUtils.getApiUrl migriert) API-Basis-URL-Ermittlung in 41 Client-Dateien inline
   (`process.env.REACT_APP_API_URL || …`) statt `apiUtils.getApiUrl()` aus
   `utils/auth.ts`. Folgeproblem: divergierende Fallbacks (`:4000` vs `:5000`
   vs `/api`) — Detail in Durchlauf 1c. → zentrale Helper-Nutzung.
@@ -92,7 +92,7 @@
 - [ ] **S20 (W)** console.log/error in 62 Client-Dateien (Hotspot:
   MietfachAssignmentModal „CRITICAL DEBUG"). → Lint-Regel `no-console`
   (warn) + Aufräum-Pass.
-- [ ] **S21 (k)** Auskommentierte Routen/Importe in `adminRoutes.ts`
+- [x] **S21 (k)** ✅ (2026-07-08: entfernt) Auskommentierte Routen/Importe in `adminRoutes.ts`
   (M005-Routen, cacheMiddleware) und `flourioRoutes.ts`
   (`/tags/sync`, sauber als @deprecated markiert). → entfernen.
 - [x] **S22 (k)** ✅ (T4.3: WebSocket ist gebaut, TODOs weg) TODO-Marker für nie gebaute WebSocket-Anbindung in
@@ -281,7 +281,7 @@ selbst verifiziert; Agent-Einschätzungen wo nötig korrigiert.
 - [ ] **OP8 (W)** `emailQueue.ts` — Fällt Redis aus, geht die Queue in einen
   In-Memory-Fallback: E-Mails im RAM, bei Neustart verloren. → Redis als
   erforderlich behandeln oder persistente Fallback-Queue.
-- [ ] **OP9 (W)** stockPullJob/documentSyncJob ohne Ausführungs-Lock: `isRunning()`
+- [x] **OP9 (W)** ✅ (2026-07-08: running-Lock in stockPullJob+documentSyncJob wie salesInvoiceJob, 4 Tests; Call-Timeout weiterhin offen → OP14/Robustheit) stockPullJob/documentSyncJob ohne Ausführungs-Lock: `isRunning()`
   prüft nur, ob der Cron *geplant* ist, nicht ob ein Lauf *aktiv* ist. Hängt ein
   Lauf länger als das Intervall, startet der nächste parallel → Race beim
   Bestands-Update. Auch kein Call-Timeout (AbortController). → Lauf-Flag + Timeout.
