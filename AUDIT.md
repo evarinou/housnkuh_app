@@ -322,12 +322,14 @@ Agent-Schätzung.
 
 ### Wichtig
 
-- [ ] **KON1 (W)** Fehlerbehandlung uneinheitlich: 214× direktes
-  `res.status(500)` in Controllern, nur 3× `next(err)` — die zentrale
-  `errorHandler`-Middleware (`middleware/security.ts:180`) wird praktisch
-  umgangen. Response-Shapes gemischt (`{success:false,message}` /
-  `{message}` / `{error}`). → schrittweise auf `next(err)` + einheitliches
-  Shape umstellen (großer, aber mechanischer Hebel; gut in Phase 3 Konsistenz).
+- [x] **KON1 (W)** ✅ (T5.1, 2026-07-07) 183 catch-500er auf
+  `next(new AppError(message, 500, cause))` migriert; errorHandler sendet
+  einheitliches Shape `{success:false, message}` und loggt zentral.
+  Rest (~22 Stellen, dokumentiert im T5.1-Commit): Handler mit
+  client-sichtbarem `error`-Zusatzfeld (flourio-/produkt-Controller —
+  Follow-up: darf das Detail-Leak entfallen?), Monitoring-Formate,
+  500er außerhalb von catch. Alt: 214× direktes `res.status(500)`,
+  Shapes gemischt.
 - [ ] **KON2 (W)** `any` weit verbreitet: ~464× Server, ~172× Client. Hotspots
   mit `req: any`/`res: any` (flourioController, vendorProductController,
   einzelne Routes) — dort am wertvollsten zu typisieren. → Express-Handler
@@ -339,10 +341,11 @@ Agent-Schätzung.
 - [ ] **KON4 (W)** 53× inline `require(...)` in `.ts` (statt `import`),
   meist in if-Zweigen/Funktionen — Verdacht: Umgehung zirkulärer Importe. →
   Ursache (Zyklen) beheben und auf `import` umstellen; nicht blind ersetzen.
-- [ ] **KON5 (W)** Services teils ohne eigenes try/catch (z. B.
-  `storeMapService`, `productService.createProductForVendor`) — verlassen sich
-  auf Caller. In Kombination mit KON1 (Caller macht eigenes 500) meist okay,
-  aber fragil. → mit KON1 zusammen angehen.
+- [x] **KON5 (W)** ✅ (mit T5.1/KON1 erledigt) Services ohne eigenes try/catch
+  sind jetzt strukturell abgesichert: Controller-catches leiten via
+  `next(new AppError(...))` an den zentralen errorHandler (loggt Stack+cause),
+  für Handler ohne try/catch existiert `asyncHandler`. Services bleiben
+  bewusst throw-basiert.
 
 ### Kosmetisch
 

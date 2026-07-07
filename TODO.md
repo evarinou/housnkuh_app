@@ -150,8 +150,16 @@
 
 ## Stufe 5 – Konsistenz & Aufräumen (Audit Stufe 3/4)
 
-- [ ] **T5.1 – Fehlerbehandlung vereinheitlichen** (AUDIT KON1/KON5): zentrale
-  `errorHandler`-Middleware nutzen, einheitliches Response-Shape.
+- [x] **T5.1 – Fehlerbehandlung vereinheitlichen** (AUDIT KON1/KON5). ✅
+  Fundament: AppError (statusCode+cause), errorHandler mit Standard-Shape
+  `{success:false, message}` (AppError unmaskiert, nackte Errors in Prod
+  maskiert, zentrales Logging mit cause-Stack), asyncHandler,
+  apiResponse.fail mit top-level message. 183 catch-500er in Controllern/
+  Routes/Middleware auf `next(new AppError(...))` migriert —
+  verhaltenserhaltend (Status/Shape/Message identisch). ~22 dokumentierte
+  Ausnahmen (client-sichtbare error-Zusatzfelder in flourio-/produkt-
+  Controllern, Monitoring-Formate, Nicht-catch-500er) — Follow-up, wenn
+  das error-Detail-Feld entfallen darf. Volle Suite grün.
 - [ ] **T5.2 – Preisformatierung zentralisieren** (AUDIT S13/S8): auf
   `PriceFormatter` migrieren.
 - [ ] **T5.3 – `any`-Hotspots typisieren** (AUDIT KON2): Express-Handler,
