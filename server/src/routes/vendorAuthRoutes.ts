@@ -90,6 +90,13 @@ router.get('/invoices/summary', vendorAuth, vendorBookingController.getVendorInv
 router.get('/invoices/:id', vendorAuth, vendorBookingController.getVendorInvoiceById);
 router.get('/invoices/:id/download', vendorAuth, vendorBookingController.downloadVendorInvoicePdf);
 
+// Vendor Sales Invoices (F2a, Gutschrift) + Sales Reporting (F3)
+import * as vendorSalesInvoiceController from '../controllers/vendor/vendorSalesInvoiceController';
+router.get('/sales-report', vendorAuth, vendorSalesInvoiceController.getVendorSalesReport);
+router.get('/sales-invoices', vendorAuth, vendorSalesInvoiceController.getVendorSalesInvoices);
+router.get('/sales-invoices/:id', vendorAuth, vendorSalesInvoiceController.getVendorSalesInvoiceById);
+router.get('/sales-invoices/:id/download', vendorAuth, vendorSalesInvoiceController.downloadVendorSalesInvoicePdf);
+
 // Flourio Documents & Products for Vendors (vendor-auth path avoids global adminAuth)
 import { getDocuments, getProducts, syncProduct, syncBulkProducts } from '../controllers/flourioController';
 router.get('/flourio/documents', vendorAuth, getDocuments);
