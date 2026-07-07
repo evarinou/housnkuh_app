@@ -176,27 +176,34 @@ export const requestLogger = (req: Request, res: Response, next: NextFunction) =
   next();
 };
 
-// Error handling middleware
+// Error handling middleware — sendet das projektweite Fehler-Shape
+// { success: false, message } (AUDIT KON1). AppError trägt eine kuratierte,
+// client-taugliche Message und wird nie maskiert; nackte Errors werden in
+// Produktion maskiert (interne Details gehören nicht zum Client).
 export const errorHandler = (err: Error, req: Request, res: Response, next: NextFunction) => {
+  const isAppError = err.name === 'AppError';
+  const cause = (err as any).cause;
+
   logger.error('Unhandled error', {
     error: err.message,
     stack: err.stack,
+    ...(cause instanceof Error && { cause: cause.message, causeStack: cause.stack }),
     method: req.method,
     url: req.url,
     userAgent: req.get('User-Agent'),
     ip: req.ip
   });
-  
+
   if (res.headersSent) {
     return next(err);
   }
-  
+
   const statusCode = (err as any).statusCode || 500;
-  const message = process.env.NODE_ENV === 'production' 
-    ? 'Internal Server Error' 
-    : err.message;
-  
-  res.status(statusCode).json({ error: message });
+  const message = isAppError || process.env.NODE_ENV !== 'production'
+    ? err.message
+    : 'Ein Serverfehler ist aufgetreten';
+
+  res.status(statusCode).json({ success: false, message });
 };
 
 // Security audit middleware

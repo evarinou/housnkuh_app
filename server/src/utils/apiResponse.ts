@@ -23,9 +23,12 @@ export interface ApiSuccessResponse<T> {
 
 /**
  * Standard error response shape
+ * `message` liegt zusätzlich top-level, weil der Client durchgängig
+ * `response.data.message` liest (AUDIT KON1: einheitliches Shape).
  */
 export interface ApiErrorResponse {
   success: false;
+  message: string;
   error: {
     code: string;
     message: string;
@@ -58,6 +61,7 @@ export const noContent = (res: Response): void => {
 export const fail = (res: Response, status: number, code: string, message: string, details?: unknown): void => {
   res.status(status).json({
     success: false,
+    message,
     error: { code, message, ...(details !== undefined && { details }) },
   });
 };
