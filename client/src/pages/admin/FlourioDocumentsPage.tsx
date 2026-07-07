@@ -7,6 +7,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { FileText, RefreshCw, Filter, X } from 'lucide-react';
 import axios from 'axios';
+import { PriceFormatter } from '../../utils/priceFormatting';
 
 interface FlourioDocItem {
   flourioArticleId: string;
@@ -122,10 +123,6 @@ const FlourioDocumentsPage: React.FC = () => {
     return doc.vendorId.vendorProfile?.unternehmen || doc.vendorId.kontakt?.name || 'Unbekannt';
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(amount);
-  };
-
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString('de-DE');
   };
@@ -236,7 +233,7 @@ const FlourioDocumentsPage: React.FC = () => {
                   <td className="px-6 py-4 text-sm text-gray-600">{typeLabels[doc.type] || doc.type}</td>
                   <td className="px-6 py-4 text-sm text-gray-600">{formatDate(doc.date)}</td>
                   <td className="px-6 py-4 text-sm text-gray-600">{getVendorName(doc)}</td>
-                  <td className="px-6 py-4 text-sm font-semibold text-gray-900 text-right">{formatCurrency(doc.total)}</td>
+                  <td className="px-6 py-4 text-sm font-semibold text-gray-900 text-right">{PriceFormatter.formatCurrency(doc.total)}</td>
                   <td className="px-6 py-4">
                     <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${statusColors[doc.status] || 'bg-gray-100'}`}>
                       {statusLabels[doc.status] || doc.status}
@@ -305,9 +302,9 @@ const FlourioDocumentsPage: React.FC = () => {
                         {(item.productId as any)?.name || item.flourioArticleId}
                       </td>
                       <td className="px-4 py-2 text-sm text-right">{item.quantity}</td>
-                      <td className="px-4 py-2 text-sm text-right">{formatCurrency(item.unitPrice)}</td>
+                      <td className="px-4 py-2 text-sm text-right">{PriceFormatter.formatCurrency(item.unitPrice)}</td>
                       <td className="px-4 py-2 text-sm text-right">{item.taxRate}%</td>
-                      <td className="px-4 py-2 text-sm text-right font-medium">{formatCurrency(item.total)}</td>
+                      <td className="px-4 py-2 text-sm text-right font-medium">{PriceFormatter.formatCurrency(item.total)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -317,15 +314,15 @@ const FlourioDocumentsPage: React.FC = () => {
               <div className="border-t pt-4 space-y-1 text-sm">
                 <div className="flex justify-between">
                   <span className="text-gray-500">Netto:</span>
-                  <span>{formatCurrency(selectedDoc.subtotal)}</span>
+                  <span>{PriceFormatter.formatCurrency(selectedDoc.subtotal)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500">MwSt:</span>
-                  <span>{formatCurrency(selectedDoc.taxTotal)}</span>
+                  <span>{PriceFormatter.formatCurrency(selectedDoc.taxTotal)}</span>
                 </div>
                 <div className="flex justify-between font-bold text-lg">
                   <span>Gesamt:</span>
-                  <span>{formatCurrency(selectedDoc.total)}</span>
+                  <span>{PriceFormatter.formatCurrency(selectedDoc.total)}</span>
                 </div>
               </div>
             </div>

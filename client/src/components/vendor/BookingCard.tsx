@@ -8,6 +8,7 @@
 import React, { useCallback } from 'react';
 import { IBooking, IPackageData } from '../../types/booking';
 import BookingStatusBadge from './BookingStatusBadge';
+import { PriceFormatter } from '../../utils/priceFormatting';
 
 /**
  * Props interface for the BookingCard component
@@ -53,10 +54,7 @@ const formatPriceWithBreakdown = (packageData?: IPackageData): {
   const price = packageData?.totalPrice || packageData?.totalCost?.monthly;
   if (!price) return { formatted: 'Preis nicht verfügbar', hasZusatzleistungen: false };
   
-  const formatted = new Intl.NumberFormat('de-DE', {
-    style: 'currency',
-    currency: 'EUR'
-  }).format(price);
+  const formatted = PriceFormatter.formatCurrency(price);
   
   const breakdown = packageData?.priceBreakdown;
   const zusatzleistungen = packageData?.zusatzleistungen;

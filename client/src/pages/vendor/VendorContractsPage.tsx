@@ -9,6 +9,7 @@ import { Link } from 'react-router-dom';
 import { useVendorAuth } from '../../contexts/VendorAuthContext';
 import { apiUtils } from '../../utils/auth';
 import VendorLayout from '../../components/vendor/VendorLayout';
+import { PriceFormatter } from '../../utils/priceFormatting';
 
 /**
  * Mietfach (rental unit) interface
@@ -105,18 +106,6 @@ const VendorContractsPage: React.FC = () => {
     return date.toLocaleDateString('de-DE');
   };
 
-  /**
-   * Formats number as currency in German locale (EUR)
-   * @param {number} amount - Amount to format as currency
-   * @returns {string} Formatted currency string
-   */
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('de-DE', {
-      style: 'currency',
-      currency: 'EUR'
-    }).format(amount);
-  };
-
   return (
     <VendorLayout>
       <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
@@ -204,7 +193,7 @@ const VendorContractsPage: React.FC = () => {
                               {formatDate(service.mietende)}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                              {formatCurrency(service.monatspreis)}
+                              {PriceFormatter.formatCurrency(service.monatspreis)}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
@@ -224,7 +213,7 @@ const VendorContractsPage: React.FC = () => {
                             Gesamtpreis pro Monat:
                           </td>
                           <td className="px-6 py-3 text-sm font-bold text-gray-900">
-                            {formatCurrency(vertrag.gesamtpreis)}
+                            {PriceFormatter.formatCurrency(vertrag.gesamtpreis)}
                           </td>
                           <td></td>
                         </tr>

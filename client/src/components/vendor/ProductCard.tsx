@@ -11,6 +11,7 @@ import { Edit2, RefreshCw, Package, BarChart3, Printer } from 'lucide-react';
 import SyncStatusBadge, { SyncStatus } from '../ui/SyncStatusBadge';
 import StockLevelBadge from '../ui/StockLevelBadge';
 import TagBadge from '../ui/TagBadge';
+import { PriceFormatter } from '../../utils/priceFormatting';
 
 export interface Product {
   _id: string;
@@ -88,7 +89,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onSync, onEdit, onBo
   };
 
   const formatPrice = (price: number, unit: string) => {
-    return `${price.toFixed(2)}€/${unitLabels[unit] || unit}`;
+    return `${PriceFormatter.formatShort(price)}/${unitLabels[unit] || unit}`;
   };
 
   const getSyncStatus = (): SyncStatus => {

@@ -45,6 +45,7 @@ import StatusBadge, { InvoiceStatus } from '../../components/ui/StatusBadge';
 import ManualInvoiceGenerator from '../../components/admin/ManualInvoiceGenerator';
 import { useAuth } from '../../contexts/AuthContext';
 import { tokenStorage, apiUtils } from '../../utils/auth';
+import { PriceFormatter } from '../../utils/priceFormatting';
 
 // Types and interfaces
 interface Invoice {
@@ -126,13 +127,6 @@ const MONTH_NAMES = [
 ];
 
 // Utility functions
-const formatCurrency = (amount: number): string => {
-  return new Intl.NumberFormat('de-DE', {
-    style: 'currency',
-    currency: 'EUR'
-  }).format(amount);
-};
-
 const formatDate = (dateString: string): string => {
   return new Date(dateString).toLocaleDateString('de-DE');
 };
@@ -165,7 +159,7 @@ const StatCard: React.FC<StatCardProps> = ({
           <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider">{title}</h3>
           <p className="text-3xl font-bold text-gray-900 mt-2">
             {typeof value === 'number' && title.toLowerCase().includes('revenue') 
-              ? formatCurrency(value)
+              ? PriceFormatter.formatCurrency(value)
               : value
             }
           </p>
@@ -217,10 +211,10 @@ const MonthlyRevenueChart: React.FC<{ data: InvoiceStats['monthlyStats'] }> = ({
             <BarChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="month" />
-              <YAxis tickFormatter={(value) => formatCurrency(value)} />
+              <YAxis tickFormatter={(value) => PriceFormatter.formatCurrency(value)} />
               <Tooltip 
                 formatter={(value: number, name: string) => [
-                  name === 'revenue' ? formatCurrency(value) : value,
+                  name === 'revenue' ? PriceFormatter.formatCurrency(value) : value,
                   name === 'revenue' ? 'Umsatz' : 'Anzahl'
                 ]}
                 labelFormatter={(label) => `Monat: ${label}`}
@@ -269,7 +263,7 @@ const StatusBreakdownChart: React.FC<{ data: InvoiceStats['statusBreakdown'] }> 
               </Pie>
               <Tooltip 
                 formatter={(value: number, name: string, props: any) => [
-                  `${value} (${formatCurrency(props.payload.amount)})`,
+                  `${value} (${PriceFormatter.formatCurrency(props.payload.amount)})`,
                   'Anzahl'
                 ]}
               />
@@ -336,7 +330,7 @@ const RecentInvoicesTable: React.FC<{
                   />
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {formatCurrency(invoice.totalAmount)}
+                  {PriceFormatter.formatCurrency(invoice.totalAmount)}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {formatDate(invoice.createdAt)}

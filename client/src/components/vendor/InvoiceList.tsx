@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import StatusBadge from '../ui/StatusBadge';
+import { PriceFormatter } from '../../utils/priceFormatting';
 
 interface InvoiceItem {
   id: string;
@@ -160,13 +161,6 @@ const InvoiceList: React.FC<InvoiceListProps> = ({ className = '' }) => {
 
   const handleViewDetail = (invoiceId: string) => {
     navigate(`/vendor/customer-invoices/${invoiceId}`);
-  };
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('de-DE', {
-      style: 'currency',
-      currency: 'EUR'
-    }).format(amount);
   };
 
   const formatPeriod = (period: { month: number; year: number }) => {
@@ -357,7 +351,7 @@ const InvoiceList: React.FC<InvoiceListProps> = ({ className = '' }) => {
                       {formatPeriod(invoice.period)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {formatCurrency(invoice.totalAmount)}
+                      {PriceFormatter.formatCurrency(invoice.totalAmount)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <StatusBadge 
@@ -425,7 +419,7 @@ const InvoiceList: React.FC<InvoiceListProps> = ({ className = '' }) => {
               <div className="flex justify-between items-center">
                 <div>
                   <div className="text-lg font-semibold text-gray-900">
-                    {formatCurrency(invoice.totalAmount)}
+                    {PriceFormatter.formatCurrency(invoice.totalAmount)}
                   </div>
                   <div className="text-xs text-gray-500">
                     Fällig: {format(new Date(invoice.dueDate), 'dd.MM.yyyy', { locale: de })}

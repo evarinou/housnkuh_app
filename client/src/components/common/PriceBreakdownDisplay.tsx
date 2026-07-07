@@ -7,6 +7,7 @@
 
 import React from 'react';
 import { PriceBreakdown } from '../../services/priceCalculationService';
+import { PriceFormatter } from '../../utils/priceFormatting';
 
 /**
  * Additional services configuration for price breakdown display
@@ -63,24 +64,6 @@ export const PriceBreakdownDisplay: React.FC<PriceBreakdownProps> = ({
   className = '',
   zusatzleistungen
 }) => {
-  /**
-   * Formats a price number to German currency format with Euro symbol
-   * @param {number} price - Price value to format
-   * @returns {string} Formatted price string (e.g., "25.50€")
-   */
-  const formatPrice = (price: number): string => {
-    return `${price.toFixed(2)}€`;
-  };
-
-  /**
-   * Formats a price change with appropriate sign prefix for positive values
-   * @param {number} price - Price change value to format
-   * @returns {string} Formatted price change string (e.g., "+5.00€" or "-2.50€")
-   */
-  const formatPriceChange = (price: number): string => {
-    return price > 0 ? `+${formatPrice(price)}` : formatPrice(price);
-  };
-
   return (
     <div className={`price-breakdown bg-gray-50 p-4 rounded-lg ${className}`}>
       {showDetails && (
@@ -91,18 +74,18 @@ export const PriceBreakdownDisplay: React.FC<PriceBreakdownProps> = ({
             <div className="space-y-1">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Grundpreis Mietfächer</span>
-                <span>{formatPrice(breakdown.packageCosts)}</span>
+                <span>{PriceFormatter.formatShort(breakdown.packageCosts)}</span>
               </div>
               {breakdown.addonCosts > 0 && (
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Zusatzoptionen</span>
-                  <span>{formatPrice(breakdown.addonCosts)}</span>
+                  <span>{PriceFormatter.formatShort(breakdown.addonCosts)}</span>
                 </div>
               )}
             </div>
             <div className="flex justify-between font-medium mt-2 pt-2 border-t border-gray-200">
               <span>Basis Gesamt:</span>
-              <span>{formatPrice(breakdown.packageCosts + breakdown.addonCosts)}</span>
+              <span>{PriceFormatter.formatShort(breakdown.packageCosts + breakdown.addonCosts)}</span>
             </div>
           </div>
 
@@ -118,7 +101,7 @@ export const PriceBreakdownDisplay: React.FC<PriceBreakdownProps> = ({
                       Lagerservice (20€/Monat)
                     </span>
                     <span className="text-green-600">
-                      {formatPriceChange(20)}
+                      {PriceFormatter.formatChange(20)}
                     </span>
                   </div>
                 )}
@@ -129,14 +112,14 @@ export const PriceBreakdownDisplay: React.FC<PriceBreakdownProps> = ({
                       Versandservice (5€/Monat)
                     </span>
                     <span className="text-blue-600">
-                      {formatPriceChange(5)}
+                      {PriceFormatter.formatChange(5)}
                     </span>
                   </div>
                 )}
               </div>
               <div className="flex justify-between font-medium mt-2 pt-2 border-t border-gray-200">
                 <span>Zusatzleistungen Gesamt:</span>
-                <span>{formatPrice(breakdown.zusatzleistungenCosts)}</span>
+                <span>{PriceFormatter.formatShort(breakdown.zusatzleistungenCosts)}</span>
               </div>
             </div>
           )}
@@ -144,14 +127,14 @@ export const PriceBreakdownDisplay: React.FC<PriceBreakdownProps> = ({
           {/* Zwischensumme */}
           <div className="flex justify-between font-medium py-2 border-t border-gray-300">
             <span>Zwischensumme:</span>
-            <span>{formatPrice(breakdown.subtotal)}</span>
+            <span>{PriceFormatter.formatShort(breakdown.subtotal)}</span>
           </div>
 
           {/* Rabatt */}
           {breakdown.discountAmount > 0 && (
             <div className="flex justify-between text-red-600 text-sm">
               <span>Rabatt ({breakdown.discount.toFixed(0)}%):</span>
-              <span>-{formatPrice(breakdown.discountAmount)}</span>
+              <span>-{PriceFormatter.formatShort(breakdown.discountAmount)}</span>
             </div>
           )}
         </>
@@ -161,7 +144,7 @@ export const PriceBreakdownDisplay: React.FC<PriceBreakdownProps> = ({
       <div className="flex justify-between text-lg font-bold pt-3 border-t-2 border-gray-400">
         <span>Gesamt:</span>
         <span className="text-green-600">
-          {formatPrice(breakdown.monthlyTotal)}/Monat
+          {PriceFormatter.formatMonthly(breakdown.monthlyTotal)}
         </span>
       </div>
     </div>

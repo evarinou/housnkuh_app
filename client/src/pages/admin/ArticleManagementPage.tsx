@@ -14,6 +14,7 @@ import { tokenStorage, apiUtils } from '../../utils/auth';
 import AssignCategoryModal from '../../components/admin/AssignCategoryModal';
 import ProductCreationModal from '../../components/admin/ProductCreationModal';
 import ProductLabelPrintModal from '../../components/ui/ProductLabelPrintModal';
+import { PriceFormatter } from '../../utils/priceFormatting';
 
 // Types
 interface Product {
@@ -77,13 +78,6 @@ const ProductArticleRow: React.FC<{
     }
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('de-DE', {
-      style: 'currency',
-      currency: 'EUR'
-    }).format(amount);
-  };
-
   const syncStatus = product.flourioSync?.status || 'never';
 
   return (
@@ -124,7 +118,7 @@ const ProductArticleRow: React.FC<{
         )}
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-        {formatCurrency(product.price)}
+        {PriceFormatter.formatCurrency(product.price)}
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">
         {product.ean || '-'}

@@ -11,6 +11,7 @@
 import React, { useEffect, useState } from 'react';
 import { X, Printer } from 'lucide-react';
 import ProductBarcode from './ProductBarcode';
+import { PriceFormatter } from '../../utils/priceFormatting';
 
 export interface LabelProduct {
   name: string;
@@ -45,8 +46,7 @@ const unitLabels: Record<string, string> = {
 };
 
 const formatPrice = (price: number, unit: string): string => {
-  const formatted = new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(price);
-  return `${formatted} / ${unitLabels[unit] || unit}`;
+  return `${PriceFormatter.formatCurrency(price)} / ${unitLabels[unit] || unit}`;
 };
 
 const ProductLabelPrintModal: React.FC<ProductLabelPrintModalProps> = ({ isOpen, onClose, product }) => {

@@ -10,6 +10,7 @@ import { X, Package, Home, Clock, CheckCircle, AlertCircle, Truck } from 'lucide
 import { IBooking, IPackageData } from '../../types/booking';
 import BookingStatusBadge from './BookingStatusBadge';
 import PriceBreakdownDisplay from '../common/PriceBreakdownDisplay';
+import { PriceFormatter } from '../../utils/priceFormatting';
 
 /**
  * Props interface for the BookingDetailModal component
@@ -55,10 +56,7 @@ const formatDate = (date: Date | string): string => {
  */
 const formatPrice = (price?: number): string => {
   if (!price) return 'Preis nicht verfügbar';
-  return new Intl.NumberFormat('de-DE', {
-    style: 'currency',
-    currency: 'EUR'
-  }).format(price);
+  return PriceFormatter.formatCurrency(price);
 };
 
 /**

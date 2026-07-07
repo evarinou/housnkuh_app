@@ -10,6 +10,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import StatusBadge from '../ui/StatusBadge';
+import { PriceFormatter } from '../../utils/priceFormatting';
 import './InvoiceDetail.css';
 
 interface InvoiceItem {
@@ -107,13 +108,6 @@ const InvoiceDetail: React.FC<InvoiceDetailProps> = ({ className = '' }) => {
   useEffect(() => {
     fetchInvoice();
   }, [fetchInvoice]);
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('de-DE', {
-      style: 'currency',
-      currency: 'EUR'
-    }).format(amount);
-  };
 
   const formatPeriod = (period: { month: number; year: number }) => {
     const date = new Date(period.year, period.month - 1);
@@ -374,10 +368,10 @@ const InvoiceDetail: React.FC<InvoiceDetailProps> = ({ className = '' }) => {
                       {new Intl.NumberFormat('de-DE').format(item.quantity)}
                     </td>
                     <td className="py-3 px-4 text-right text-sm">
-                      {formatCurrency(item.unitPrice)}
+                      {PriceFormatter.formatCurrency(item.unitPrice)}
                     </td>
                     <td className="py-3 px-4 text-right font-medium">
-                      {formatCurrency(item.totalPrice)}
+                      {PriceFormatter.formatCurrency(item.totalPrice)}
                     </td>
                   </tr>
                 ))}
@@ -392,15 +386,15 @@ const InvoiceDetail: React.FC<InvoiceDetailProps> = ({ className = '' }) => {
             <div className="w-full max-w-xs space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Zwischensumme:</span>
-                <span className="font-medium">{formatCurrency(invoice.subtotal)}</span>
+                <span className="font-medium">{PriceFormatter.formatCurrency(invoice.subtotal)}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Mehrwertsteuer (19%):</span>
-                <span className="font-medium">{formatCurrency(invoice.tax)}</span>
+                <span className="font-medium">{PriceFormatter.formatCurrency(invoice.tax)}</span>
               </div>
               <div className="flex justify-between text-lg font-bold border-t border-gray-200 pt-2">
                 <span>Gesamtbetrag:</span>
-                <span>{formatCurrency(invoice.totalAmount)}</span>
+                <span>{PriceFormatter.formatCurrency(invoice.totalAmount)}</span>
               </div>
             </div>
           </div>
