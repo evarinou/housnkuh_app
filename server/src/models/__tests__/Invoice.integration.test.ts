@@ -238,10 +238,11 @@ describe('Invoice Integration Tests', () => {
       expect(firstNumber).toBe('RE-2025-08-00001');
       expect(secondNumber).toBe('RE-2025-08-00002');
 
-      // Create second invoice
+      // Create second invoice (anderer Vendor — Unique-Index erlaubt nur
+      // EINE Rechnung je Vendor+Periode; getestet wird hier die Nummern-Sequenz)
       const invoice2 = new Invoice({
         invoiceNumber: secondNumber,
-        vendor: testVendorId,
+        vendor: new mongoose.Types.ObjectId(),
         period: { month: 8, year: 2025 },
         items: [{ description: 'Service 2', quantity: 1, unitPrice: 75, totalPrice: 75, type: 'mietfach' }],
         subtotal: 75,
@@ -253,6 +254,21 @@ describe('Invoice Integration Tests', () => {
       // Verify both invoices exist
       const invoices = await Invoice.find({ 'period.month': 8, 'period.year': 2025 });
       expect(invoices).toHaveLength(2);
+    });
+
+    it('rejects a second invoice for the same vendor and period (unique index, BUG-INV-DUP)', async () => {
+      const makeInvoice = (nr: string) => new Invoice({
+        invoiceNumber: nr,
+        vendor: testVendorId,
+        period: { month: 9, year: 2025 },
+        items: [{ description: 'Miete', quantity: 1, unitPrice: 50, totalPrice: 50, type: 'mietfach' }],
+        subtotal: 50,
+        tax: 9.50,
+        totalAmount: 59.50
+      });
+
+      await makeInvoice('RE-2025-09-00001').save();
+      await expect(makeInvoice('RE-2025-09-00002').save()).rejects.toMatchObject({ code: 11000 });
     });
 
     it('should restart numbering for different months', async () => {

@@ -171,6 +171,10 @@ InvoiceSchema.index({ status: 1 });
 InvoiceSchema.index({ 'period.year': 1, 'period.month': 1 });
 InvoiceSchema.index({ vendor: 1, status: 1 });
 InvoiceSchema.index({ dueDate: 1, status: 1 });
+// BUG-INV-DUP: genau EINE Monatsrechnung je Vendor+Periode — macht die
+// find-then-insert-Duplikatsprüfung im Service atomar (E11000 beim Race).
+// Bewusst ohne Storno-Ausnahme: Re-Ausstellung nach Storno wäre ein eigener Flow.
+InvoiceSchema.index({ vendor: 1, 'period.year': 1, 'period.month': 1 }, { unique: true });
 
 // Pre-save middleware to calculate totals
 InvoiceSchema.pre('save', function(next) {

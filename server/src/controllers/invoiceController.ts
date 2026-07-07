@@ -352,6 +352,11 @@ export const generateInvoices = async (req: AuthRequest, res: Response, next: Ne
       message: 'Rechnungsgenerierung erfolgreich gestartet'
     });
   } catch (err) {
+    // Fachfehler aus dem Service (z. B. "Invoice already exists" → 400) durchreichen
+    if (err instanceof AppError) {
+      next(err);
+      return;
+    }
     next(new AppError('Serverfehler bei der Rechnungsgenerierung', 500, err));
   }
 };

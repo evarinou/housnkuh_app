@@ -9,6 +9,7 @@ import mongoose from 'mongoose';
 import Invoice from '../models/Invoice';
 import { invoicePdfService, PdfResult } from './pdf/invoicePdfService';
 import logger from '../utils/logger';
+import AppError from '../utils/AppError';
 
 // Define the interface locally since it's not exported from Invoice model
 interface IInvoiceDocument extends mongoose.Document {
@@ -522,10 +523,11 @@ class InvoiceGenerationService {
         throw new Error(`Vendor not found: ${vendorId}`);
       }
 
-      // Check if invoice already exists
+      // Check if invoice already exists (Vorab-Check für die schöne Meldung;
+      // atomar abgesichert durch den Unique-Index vendor+period, s. u.)
       const existingInvoice = await this.findExistingInvoice(vendorId, year, month);
       if (existingInvoice) {
-        throw new Error(`Invoice already exists for vendor ${vendor.kontakt?.name} for ${month}/${year}`);
+        throw new AppError(`Invoice already exists for vendor ${vendor.kontakt?.name} for ${month}/${year}`, 400);
       }
 
       // Calculate invoice data for the period
@@ -610,6 +612,11 @@ class InvoiceGenerationService {
         // Rollback: Provisions-Reservierung lösen, damit die Verkäufe im nächsten
         // Lauf erneut drankommen.
         await ProvisionService.releaseClaim(invoiceId);
+        // Race verloren (paralleler Lauf hat zuerst gespeichert): Unique-Index
+        // vendor+period schlägt mit E11000 zu → gleiche Fach-Meldung wie der Vorab-Check
+        if ((innerError as any)?.code === 11000) {
+          throw new AppError(`Invoice already exists for vendor ${vendor.kontakt?.name} for ${month}/${year}`, 400);
+        }
         throw innerError;
       }
     } catch (error) {
