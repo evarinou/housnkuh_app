@@ -48,16 +48,20 @@ export interface PdfResult {
 }
 
 class InvoicePdfService {
-  private browser: Browser | null = null;
+  // BUG-PDF-RACE: Browser-Promise statt Instanz-Feld — parallele Aufrufe teilen
+  // sich genau EINEN Launch; geschlossen wird nur noch in cleanup(), nicht mehr
+  // pro Aufruf (das riss parallelen Generierungen den Browser weg → ProtocolError).
+  private browserPromise: Promise<Browser> | null = null;
+  private inFlight = 0;
   private readonly storageDir = 'storage/invoices';
 
   /**
-   * Initialize puppeteer browser instance
+   * Get (lazily launched) shared puppeteer browser instance
    * @private
    */
-  private async initBrowser(): Promise<void> {
-    if (!this.browser) {
-      this.browser = await puppeteer.launch({
+  private getBrowser(): Promise<Browser> {
+    if (!this.browserPromise) {
+      this.browserPromise = puppeteer.launch({
         headless: true,
         args: [
           '--no-sandbox',
@@ -69,18 +73,27 @@ class InvoicePdfService {
           '--single-process',
           '--disable-gpu'
         ]
+      }).catch((err) => {
+        // Fehlgeschlagenen Launch nicht cachen — nächster Aufruf versucht es neu
+        this.browserPromise = null;
+        throw err;
       });
     }
+    return this.browserPromise;
   }
 
   /**
-   * Close browser instance
+   * Close browser instance (only when no generation is in flight)
    * @private
    */
   private async closeBrowser(): Promise<void> {
-    if (this.browser) {
-      await this.browser.close();
-      this.browser = null;
+    const pending = this.browserPromise;
+    this.browserPromise = null;
+    if (pending) {
+      const browser = await pending.catch(() => null);
+      if (browser) {
+        await browser.close();
+      }
     }
   }
 
@@ -94,9 +107,8 @@ class InvoicePdfService {
     invoiceId: string | mongoose.Types.ObjectId,
     options: PdfGenerationOptions = {}
   ): Promise<PdfResult> {
+    this.inFlight++;
     try {
-      await this.initBrowser();
-
       // Fetch invoice with populated vendor data
       const invoiceData = await this.getInvoiceData(invoiceId);
       if (!invoiceData) {
@@ -121,8 +133,8 @@ class InvoicePdfService {
         path: storagePath
       };
     } finally {
-      // Clean up browser resources
-      await this.closeBrowser();
+      // Browser bleibt für weitere/parallele Aufrufe offen; Schließen macht cleanup()
+      this.inFlight--;
     }
   }
 
@@ -520,11 +532,8 @@ class InvoicePdfService {
    * @private
    */
   private async htmlToPdf(html: string, options: PdfGenerationOptions): Promise<Buffer> {
-    if (!this.browser) {
-      throw new Error('Browser not initialized');
-    }
-
-    const page: Page = await this.browser.newPage();
+    const browser = await this.getBrowser();
+    const page: Page = await browser.newPage();
     
     try {
       await page.setContent(html, { waitUntil: 'networkidle0' });
@@ -619,9 +628,14 @@ class InvoicePdfService {
   }
 
   /**
-   * Clean up resources
+   * Clean up resources. Läuft eine Generierung, wird das Schließen übersprungen —
+   * der nächste cleanup()-Aufruf (Batch-Ende/Shutdown) räumt dann auf.
    */
   async cleanup(): Promise<void> {
+    if (this.inFlight > 0) {
+      logger.debug('PDF cleanup deferred: generation in flight', { inFlight: this.inFlight });
+      return;
+    }
     await this.closeBrowser();
   }
 }

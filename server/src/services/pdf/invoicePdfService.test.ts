@@ -190,7 +190,7 @@ describe('InvoicePdfService', () => {
       const testInvoiceSpecial = new Invoice({
         invoiceNumber: 'RE-2025-09-00005',
         vendor: testVendorId,
-        period: { month: 9, year: 2025 },
+        period: { month: 8, year: 2025 }, // Fixture belegt 9/2025 (Unique-Index)
         items: [{
           description: 'Größere Menge für €29,99 - Heiße Getränke & süße Leckereien (Österreich/Schweiz)',
           quantity: 1,
@@ -239,7 +239,7 @@ describe('InvoicePdfService', () => {
       const invoiceWithoutAddress = new Invoice({
         invoiceNumber: 'RE-2025-09-00002',
         vendor: savedVendor._id,
-        period: { month: 9, year: 2025 },
+        period: { month: 8, year: 2025 }, // Fixture belegt 9/2025 (Unique-Index)
         items: [{
           description: 'Test Item',
           quantity: 1,
@@ -265,7 +265,7 @@ describe('InvoicePdfService', () => {
       const testInvoiceUmlaut = new Invoice({
         invoiceNumber: 'RE-2025-09-00003',
         vendor: testVendorId,
-        period: { month: 9, year: 2025 },
+        period: { month: 8, year: 2025 }, // Fixture belegt 9/2025 (Unique-Index)
         items: [{
           description: 'Rösti mit Gemüse - Spezialität',
           quantity: 1,
@@ -298,7 +298,7 @@ describe('InvoicePdfService', () => {
       const invoiceWithBadVendor = new Invoice({
         invoiceNumber: 'RE-2025-09-00004',
         vendor: new mongoose.Types.ObjectId(),
-        period: { month: 9, year: 2025 },
+        period: { month: 8, year: 2025 }, // Fixture belegt 9/2025 (Unique-Index)
         items: [{
           description: 'Test Item',
           quantity: 1,
@@ -329,7 +329,7 @@ describe('InvoicePdfService', () => {
         _id: rawId,
         invoiceNumber: 'RE-2025-09-00008',
         vendor: testVendorId,
-        period: { month: 9, year: 2025 },
+        period: { month: 8, year: 2025 }, // Fixture belegt 9/2025 (Unique-Index)
         items: [], // Empty items array
         subtotal: 0.00,
         tax: 0.00,
@@ -349,7 +349,7 @@ describe('InvoicePdfService', () => {
       const invoiceWithNulls = new Invoice({
         invoiceNumber: 'RE-2025-09-00009',
         vendor: testVendorId,
-        period: { month: 9, year: 2025 },
+        period: { month: 8, year: 2025 }, // Fixture belegt 9/2025 (Unique-Index)
         items: [{
           description: 'Test Item',
           quantity: 1,
@@ -405,7 +405,7 @@ describe('InvoicePdfService', () => {
       const minimalInvoice = new Invoice({
         invoiceNumber: 'RE-2025-09-00010',
         vendor: savedVendor._id,
-        period: { month: 9, year: 2025 },
+        period: { month: 8, year: 2025 }, // Fixture belegt 9/2025 (Unique-Index)
         items: [{
           description: 'Minimal Item',
           quantity: 1,
@@ -429,14 +429,9 @@ describe('InvoicePdfService', () => {
 
   describe('Layout consistency tests', () => {
     it('should generate consistent PDF size across multiple runs', async () => {
-      // Bewusst sequenziell: generateInvoicePdf() schließt im finally den
-      // GETEILTEN Browser – parallele Aufrufe racen dadurch gegeneinander
-      // (ProtocolError "No target with given id found"). Bekannte
-      // Produktions-Einschränkung, siehe Testbericht.
-      const results: Buffer[] = [];
-      for (let i = 0; i < 3; i++) {
-        results.push(await invoicePdfService.generatePdfBuffer(testInvoiceId));
-      }
+      const results: Buffer[] = await Promise.all(
+        [0, 1, 2].map(() => invoicePdfService.generatePdfBuffer(testInvoiceId))
+      );
 
       // All PDFs should have similar sizes (within 5% variance)
       const sizes = results.map(buffer => buffer.length);
@@ -453,7 +448,7 @@ describe('InvoicePdfService', () => {
       const manyItemsInvoice = new Invoice({
         invoiceNumber: 'RE-2025-09-00006',
         vendor: testVendorId,
-        period: { month: 9, year: 2025 },
+        period: { month: 8, year: 2025 }, // Fixture belegt 9/2025 (Unique-Index)
         items: Array.from({ length: 10 }, (_, i) => ({
           description: `Test Item ${i + 1}`,
           quantity: 1,
@@ -482,7 +477,7 @@ describe('InvoicePdfService', () => {
       const longTextInvoice = new Invoice({
         invoiceNumber: 'RE-2025-09-00007',
         vendor: testVendorId,
-        period: { month: 9, year: 2025 },
+        period: { month: 8, year: 2025 }, // Fixture belegt 9/2025 (Unique-Index)
         items: [{
           description: 'Dies ist eine sehr lange Beschreibung für einen Artikel, die potentiell Zeilenumbrüche und Layout-Probleme verursachen könnte. Sie enthält verschiedene deutsche Sonderzeichen wie ä, ö, ü, ß und das Euro-Symbol €. Diese Beschreibung testet die Fähigkeit des PDF-Generators, mit längeren Textinhalten umzugehen und dabei ein konsistentes Layout beizubehalten.',
           quantity: 1,
@@ -542,14 +537,11 @@ describe('InvoicePdfService', () => {
     }, 30000);
 
     it('should handle repeated PDF generation', async () => {
-      // Bewusst sequenziell statt parallel: der Service teilt sich eine
-      // Browser-Instanz und schließt sie nach jedem Aufruf – echte
-      // Parallelität ist damit nicht deterministisch möglich (bekannte
-      // Produktions-Einschränkung, siehe Testbericht).
-      const results: Buffer[] = [];
-      for (let i = 0; i < 3; i++) {
-        results.push(await invoicePdfService.generatePdfBuffer(testInvoiceId));
-      }
+      // Parallel — der geteilte Browser bleibt offen (BUG-PDF-RACE-Fix),
+      // gleichzeitige Generierungen dürfen sich nicht mehr stören
+      const results: Buffer[] = await Promise.all(
+        [0, 1, 2].map(() => invoicePdfService.generatePdfBuffer(testInvoiceId))
+      );
 
       results.forEach(buffer => {
         expect(buffer).toBeInstanceOf(Buffer);
