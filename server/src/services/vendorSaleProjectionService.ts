@@ -15,8 +15,9 @@ import { VendorSale } from '../models/VendorSale';
 import logger from '../utils/logger';
 
 // Welche flour.io-Belegtypen sind echte Endkunden-Verkäufe?
-// ⚑ Vor F2a-Go-live mit realen flour.io-Daten bestätigen (Kassenbon = 'invoice'?).
-const BILLABLE_DOCUMENT_TYPES = ['invoice'];
+// ✅ 2026-07-08 gegen die Live-API verifiziert: Kassenbon/Rechnung = 'R';
+// 'Belegabbruch' sind abgebrochene Belege. Stornos laufen über isVoided.
+const BILLABLE_DOCUMENT_TYPES = ['R'];
 
 export interface ProjectionResult {
   documents: number;      // betrachtete Belege
@@ -36,7 +37,12 @@ export class VendorSaleProjectionService {
    */
   static async project(options?: { since?: Date }): Promise<ProjectionResult> {
     const start = Date.now();
-    const query: Record<string, unknown> = { type: { $in: BILLABLE_DOCUMENT_TYPES } };
+    const query: Record<string, unknown> = {
+      type: { $in: BILLABLE_DOCUMENT_TYPES },
+      // Stornierte Belege und Gutschriften sind keine abrechenbaren Verkäufe
+      isVoided: { $ne: true },
+      credit: { $ne: true }
+    };
     if (options?.since) query.updatedAt = { $gte: options.since };
 
     const docs = await FlourioDocument.find(query)
@@ -64,14 +70,17 @@ export class VendorSaleProjectionService {
     for (const doc of docs) {
       (doc.items || []).forEach((item: IFlourioDocumentItem, lineIndex: number) => {
         processedLines++;
+        // Stornierte Einzelpositionen überspringen
+        if (item.cancelled) { return; }
         const vendorId = item.productId
           ? productToVendor.get(String(item.productId))
           : undefined;
         if (!vendorId) { skippedNoVendor++; return; }
 
-        // Siehe Netto/Brutto-Annahme im VendorSale-Modell.
-        const netAmount = item.total;
-        const grossAmount = round2(netAmount * (1 + (item.taxRate || 0) / 100));
+        // Keine Netto/Brutto-Annahme mehr nötig: flour.io liefert beide Werte
+        // getrennt (item.totalExVat/totalIncVat → netTotal/grossTotal).
+        const netAmount = item.netTotal;
+        const grossAmount = item.grossTotal ?? round2(netAmount * (1 + (item.taxRate || 0) / 100));
 
         ops.push({
           updateOne: {

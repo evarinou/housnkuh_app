@@ -7,29 +7,33 @@
 import mongoose, { Schema, Document as MongoDocument } from 'mongoose';
 
 export interface IFlourioDocumentItem {
-  flourioArticleId: string;
+  flourioArticleId: string;       // flour.io item.ref (article._id)
   productId?: mongoose.Types.ObjectId;
-  quantity: number;
-  unitPrice: number;
+  title?: string;
+  quantity: number;               // flour.io item.amount
+  unitPrice: number;              // flour.io item.price (gemäß taxType)
   taxRate: number;
   discount?: number;
-  total: number;
+  netTotal: number;               // flour.io item.totalExVat
+  grossTotal: number;             // flour.io item.totalIncVat
+  cancelled?: boolean;
 }
 
 export interface IFlourioDocument extends MongoDocument {
-  flourioId: string;
-  type: 'invoice' | 'order' | 'delivery' | 'quote';
+  flourioId: string;              // flour.io doc._id
+  type: string;                   // echter Vertrag: 'R', 'Belegabbruch', … (kein Enum)
   number: string;
   date: Date;
-  dueDate?: Date;
-  flourioBusinessPartnerId: string;
+  flourioBusinessPartnerId?: string; // flour.io doc.businesspartner (= Endkunde)
   vendorId?: mongoose.Types.ObjectId;
   items: IFlourioDocumentItem[];
-  subtotal: number;
-  taxTotal: number;
-  total: number;
+  netTotal: number;               // flour.io totalExVat
+  grossTotal: number;             // flour.io totalIncVat
   currency: string;
-  status: 'draft' | 'sent' | 'paid' | 'cancelled';
+  status?: string;
+  paymentStatus?: string;
+  isVoided: boolean;              // storniert (flour.io isVoided/isVoid)
+  credit: boolean;                // Gutschrift
   notes?: string;
   lastPulledAt: Date;
   flourioCreatedAt: Date;
@@ -41,11 +45,14 @@ export interface IFlourioDocument extends MongoDocument {
 const FlourioDocumentItemSchema = new Schema({
   flourioArticleId: { type: String, required: true },
   productId: { type: Schema.Types.ObjectId, ref: 'Product' },
+  title: { type: String },
   quantity: { type: Number, required: true },
   unitPrice: { type: Number, required: true },
   taxRate: { type: Number, required: true },
   discount: { type: Number },
-  total: { type: Number, required: true }
+  netTotal: { type: Number, required: true },
+  grossTotal: { type: Number, required: true },
+  cancelled: { type: Boolean, default: false }
 }, { _id: false });
 
 const FlourioDocumentSchema = new Schema({
@@ -55,10 +62,10 @@ const FlourioDocumentSchema = new Schema({
     unique: true,
     index: true
   },
+  // Echter flour.io-Vertrag (2026-07-08): 'R', 'Belegabbruch', … — bewusst kein Enum
   type: {
     type: String,
-    required: true,
-    enum: ['invoice', 'order', 'delivery', 'quote']
+    required: true
   },
   number: {
     type: String,
@@ -68,10 +75,9 @@ const FlourioDocumentSchema = new Schema({
     type: Date,
     required: true
   },
-  dueDate: { type: Date },
+  // Endkunde; kann bei anonymen Kassenbons fehlen
   flourioBusinessPartnerId: {
     type: String,
-    required: true,
     index: true
   },
   vendorId: {
@@ -80,15 +86,13 @@ const FlourioDocumentSchema = new Schema({
     index: true
   },
   items: [FlourioDocumentItemSchema],
-  subtotal: { type: Number, required: true },
-  taxTotal: { type: Number, required: true },
-  total: { type: Number, required: true },
+  netTotal: { type: Number, required: true },
+  grossTotal: { type: Number, required: true },
   currency: { type: String, default: 'EUR' },
-  status: {
-    type: String,
-    required: true,
-    enum: ['draft', 'sent', 'paid', 'cancelled']
-  },
+  status: { type: String },
+  paymentStatus: { type: String },
+  isVoided: { type: Boolean, default: false },
+  credit: { type: Boolean, default: false },
   notes: { type: String },
   lastPulledAt: { type: Date, required: true },
   flourioCreatedAt: { type: Date, required: true },

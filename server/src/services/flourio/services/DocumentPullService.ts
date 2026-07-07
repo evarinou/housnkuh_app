@@ -70,40 +70,51 @@ export class DocumentPullService {
       const now = new Date();
       for (const doc of documents) {
         try {
-          const vendorId = partnerToVendor.get(doc.businessPartnerId) || undefined;
+          // doc.businesspartner ist der ENDKUNDE des Kassenbons — die
+          // abrechnungsrelevante Vendor-Zuordnung läuft auf Zeilenebene
+          // (item.ref → Product.vendorId); das doc-Level-vendorId ist informativ.
+          const vendorId = doc.businesspartner
+            ? partnerToVendor.get(doc.businesspartner) || undefined
+            : undefined;
 
+          // Echter flour.io-Vertrag (2026-07-08): ref/amount/price/totalExVat/
+          // totalIncVat statt der früher angenommenen articleId/quantity/total
           const items = (doc.items || []).map(item => ({
-            flourioArticleId: item.articleId,
-            productId: articleToProduct.get(item.articleId) || undefined,
-            quantity: item.quantity,
-            unitPrice: item.unitPrice,
+            flourioArticleId: item.ref || '',
+            productId: item.ref ? articleToProduct.get(item.ref) || undefined : undefined,
+            title: item.title,
+            quantity: item.amount,
+            unitPrice: item.price,
             taxRate: item.taxRate,
             discount: item.discount,
-            total: item.total
+            netTotal: item.totalExVat,
+            grossTotal: item.totalIncVat,
+            cancelled: item.cancelled === true
           }));
 
           const upsertData = {
-            flourioId: doc.id,
+            flourioId: doc._id,
             type: doc.type,
-            number: doc.number,
+            number: String(doc.number ?? ''),
             date: new Date(doc.date),
-            dueDate: doc.dueDate ? new Date(doc.dueDate) : undefined,
-            flourioBusinessPartnerId: doc.businessPartnerId,
+            flourioBusinessPartnerId: doc.businesspartner,
             vendorId,
             items,
-            subtotal: doc.subtotal,
-            taxTotal: doc.taxTotal,
-            total: doc.total,
-            currency: doc.currency || 'EUR',
-            status: doc.status,
-            notes: doc.notes,
+            netTotal: doc.totalExVat,
+            grossTotal: doc.totalIncVat,
+            currency: doc.currency?.iso || 'EUR', // flour.io liefert ein Currency-Objekt
+            status: doc.status != null ? String(doc.status) : undefined,
+            paymentStatus: doc.paymentStatus != null ? String(doc.paymentStatus) : undefined,
+            isVoided: doc.isVoided === true || doc.isVoid === true,
+            credit: doc.credit === true,
+            notes: doc.description,
             lastPulledAt: now,
             flourioCreatedAt: new Date(doc.createdAt),
             flourioUpdatedAt: new Date(doc.updatedAt)
           };
 
           const existing = await FlourioDocument.findOneAndUpdate(
-            { flourioId: doc.id },
+            { flourioId: doc._id },
             { $set: upsertData },
             { upsert: true, new: true }
           );
@@ -115,11 +126,11 @@ export class DocumentPullService {
           }
         } catch (error: any) {
           result.errors.push({
-            flourioId: doc.id,
+            flourioId: doc._id,
             error: error.message
           });
           logger.warn('[DocumentPullService] Failed to upsert document', {
-            flourioId: doc.id,
+            flourioId: doc._id,
             error: error.message
           });
         }

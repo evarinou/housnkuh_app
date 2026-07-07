@@ -156,31 +156,46 @@ export interface Address {
   additionalInfo?: string;
 }
 
+/**
+ * Echter flour.io-Beleg-Vertrag — verifiziert 2026-07-08 gegen GET /documents
+ * der Live-API (die frühere Fassung war erdacht: id/businessPartnerId/
+ * item.total existieren nicht). Nur die von uns genutzten Felder sind typisiert.
+ */
 export interface Document {
-  id: string;
-  type: 'invoice' | 'order' | 'delivery' | 'quote';
-  number: string;
+  _id: string;                    // flour.io nutzt _id, nicht id
+  type: string;                   // 'R' = Rechnung/Kassenbon, 'Belegabbruch' = Abbruch, …
+  number?: string | number;
   date: string;
-  dueDate?: string;
-  businessPartnerId: string;
+  businesspartner?: string;       // Endkunden-BusinessPartner (klein geschrieben!)
   items: DocumentItem[];
-  subtotal: number;
-  taxTotal: number;
-  total: number;
-  currency: string;
-  status: 'draft' | 'sent' | 'paid' | 'cancelled';
-  notes?: string;
+  totalExVat: number;             // Netto-Belegsumme
+  totalIncVat: number;            // Brutto-Belegsumme
+  currency?: { iso?: string; symbol?: string; factor?: number; ref?: string }; // Objekt, kein String!
+  status?: number | string;
+  paymentStatus?: number | string;
+  isVoided?: boolean;             // storniert
+  isVoid?: boolean;
+  credit?: boolean;               // Gutschrift
+  description?: string;
   createdAt: string;
   updatedAt: string;
 }
 
 export interface DocumentItem {
-  articleId: string;
-  quantity: number;
-  unitPrice: number;
+  _id?: string;
+  ref?: string;                   // Artikel-Referenz (article._id)
+  title?: string;
+  ean?: string;
+  amount: number;                 // Menge (nicht 'quantity')
+  quantityPerUnit?: number;
+  price: number;                  // Einzelpreis gemäß taxType
   taxRate: number;
+  taxType?: string;               // 'brutto' | 'netto'
   discount?: number;
-  total: number;
+  totalExVat: number;             // Netto-Zeilensumme
+  totalIncVat: number;            // Brutto-Zeilensumme
+  cancelled?: boolean;            // Position storniert
+  type?: string;                  // 'article', …
 }
 
 // ============================================================================

@@ -12,35 +12,37 @@ import { PriceFormatter } from '../../utils/priceFormatting';
 interface FlourioDocItem {
   flourioArticleId: string;
   productId?: { _id: string; name: string };
+  title?: string;
   quantity: number;
   unitPrice: number;
   taxRate: number;
   discount?: number;
-  total: number;
+  netTotal: number;
+  grossTotal: number;
+  cancelled?: boolean;
 }
 
 interface FlourioDoc {
   _id: string;
   flourioId: string;
-  type: 'invoice' | 'order' | 'delivery' | 'quote';
+  type: string;
   number: string;
   date: string;
-  dueDate?: string;
   vendorId?: { _id: string; kontakt?: { name: string }; vendorProfile?: { unternehmen: string } };
   items: FlourioDocItem[];
-  subtotal: number;
-  taxTotal: number;
-  total: number;
+  netTotal: number;
+  grossTotal: number;
   currency: string;
-  status: 'draft' | 'sent' | 'paid' | 'cancelled';
+  status: string;
+  isVoided?: boolean;
+  credit?: boolean;
+  paymentStatus?: string;
   lastPulledAt: string;
 }
 
 const typeLabels: Record<string, string> = {
-  invoice: 'Rechnung',
-  order: 'Bestellung',
-  delivery: 'Lieferschein',
-  quote: 'Angebot'
+  R: 'Rechnung (Kassenbon)',
+  Belegabbruch: 'Belegabbruch'
 };
 
 const statusColors: Record<string, string> = {
@@ -167,10 +169,8 @@ const FlourioDocumentsPage: React.FC = () => {
             className="px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-emerald-500"
           >
             <option value="">Alle Typen</option>
-            <option value="invoice">Rechnungen</option>
-            <option value="order">Bestellungen</option>
-            <option value="delivery">Lieferscheine</option>
-            <option value="quote">Angebote</option>
+            <option value="R">Rechnung (Kassenbon)</option>
+            <option value="Belegabbruch">Belegabbruch</option>
           </select>
           <select
             value={statusFilter}
@@ -229,11 +229,18 @@ const FlourioDocumentsPage: React.FC = () => {
                   onClick={() => setSelectedDoc(doc)}
                   className="hover:bg-gray-50 cursor-pointer transition-colors"
                 >
-                  <td className="px-6 py-4 text-sm font-medium text-gray-900">{doc.number}</td>
+                  <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                    {doc.number}
+                    {doc.isVoided && (
+                      <span className="ml-2 inline-block px-2 py-0.5 text-xs font-medium rounded-full bg-red-100 text-red-700">
+                        Storniert
+                      </span>
+                    )}
+                  </td>
                   <td className="px-6 py-4 text-sm text-gray-600">{typeLabels[doc.type] || doc.type}</td>
                   <td className="px-6 py-4 text-sm text-gray-600">{formatDate(doc.date)}</td>
                   <td className="px-6 py-4 text-sm text-gray-600">{getVendorName(doc)}</td>
-                  <td className="px-6 py-4 text-sm font-semibold text-gray-900 text-right">{PriceFormatter.formatCurrency(doc.total)}</td>
+                  <td className={`px-6 py-4 text-sm font-semibold text-gray-900 text-right ${doc.isVoided ? 'line-through text-gray-400' : ''}`}>{PriceFormatter.formatCurrency(doc.grossTotal)}</td>
                   <td className="px-6 py-4">
                     <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${statusColors[doc.status] || 'bg-gray-100'}`}>
                       {statusLabels[doc.status] || doc.status}
@@ -253,7 +260,12 @@ const FlourioDocumentsPage: React.FC = () => {
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-bold text-gray-900">
-                  {typeLabels[selectedDoc.type]} {selectedDoc.number}
+                  {typeLabels[selectedDoc.type] || selectedDoc.type} {selectedDoc.number}
+                  {selectedDoc.isVoided && (
+                    <span className="ml-2 inline-block px-2 py-0.5 text-xs font-medium rounded-full bg-red-100 text-red-700 align-middle">
+                      Storniert
+                    </span>
+                  )}
                 </h2>
                 <button onClick={() => setSelectedDoc(null)} className="text-gray-400 hover:text-gray-600">
                   <X className="w-6 h-6" />
@@ -265,20 +277,14 @@ const FlourioDocumentsPage: React.FC = () => {
                   <span className="text-gray-500">Datum:</span>
                   <span className="ml-2 font-medium">{formatDate(selectedDoc.date)}</span>
                 </div>
-                {selectedDoc.dueDate && (
-                  <div>
-                    <span className="text-gray-500">Fällig:</span>
-                    <span className="ml-2 font-medium">{formatDate(selectedDoc.dueDate)}</span>
-                  </div>
-                )}
                 <div>
                   <span className="text-gray-500">Vendor:</span>
                   <span className="ml-2 font-medium">{getVendorName(selectedDoc)}</span>
                 </div>
                 <div>
                   <span className="text-gray-500">Status:</span>
-                  <span className={`ml-2 inline-block px-2 py-1 text-xs font-medium rounded-full ${statusColors[selectedDoc.status]}`}>
-                    {statusLabels[selectedDoc.status]}
+                  <span className={`ml-2 inline-block px-2 py-1 text-xs font-medium rounded-full ${statusColors[selectedDoc.status] || 'bg-gray-100 text-gray-700'}`}>
+                    {statusLabels[selectedDoc.status] || selectedDoc.status}
                   </span>
                 </div>
               </div>
@@ -297,14 +303,19 @@ const FlourioDocumentsPage: React.FC = () => {
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {selectedDoc.items.map((item, i) => (
-                    <tr key={i}>
+                    <tr key={i} className={item.cancelled ? 'line-through text-gray-400' : ''}>
                       <td className="px-4 py-2 text-sm">
-                        {(item.productId as any)?.name || item.flourioArticleId}
+                        {item.title || item.productId?.name || item.flourioArticleId}
+                        {item.cancelled && (
+                          <span className="ml-2 inline-block px-2 py-0.5 text-xs font-medium rounded-full bg-red-100 text-red-700 no-underline">
+                            Storniert
+                          </span>
+                        )}
                       </td>
                       <td className="px-4 py-2 text-sm text-right">{item.quantity}</td>
                       <td className="px-4 py-2 text-sm text-right">{PriceFormatter.formatCurrency(item.unitPrice)}</td>
                       <td className="px-4 py-2 text-sm text-right">{item.taxRate}%</td>
-                      <td className="px-4 py-2 text-sm text-right font-medium">{PriceFormatter.formatCurrency(item.total)}</td>
+                      <td className="px-4 py-2 text-sm text-right font-medium">{PriceFormatter.formatCurrency(item.grossTotal)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -314,15 +325,15 @@ const FlourioDocumentsPage: React.FC = () => {
               <div className="border-t pt-4 space-y-1 text-sm">
                 <div className="flex justify-between">
                   <span className="text-gray-500">Netto:</span>
-                  <span>{PriceFormatter.formatCurrency(selectedDoc.subtotal)}</span>
+                  <span>{PriceFormatter.formatCurrency(selectedDoc.netTotal)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500">MwSt:</span>
-                  <span>{PriceFormatter.formatCurrency(selectedDoc.taxTotal)}</span>
+                  <span>{PriceFormatter.formatCurrency(selectedDoc.grossTotal - selectedDoc.netTotal)}</span>
                 </div>
                 <div className="flex justify-between font-bold text-lg">
                   <span>Gesamt:</span>
-                  <span>{PriceFormatter.formatCurrency(selectedDoc.total)}</span>
+                  <span>{PriceFormatter.formatCurrency(selectedDoc.grossTotal)}</span>
                 </div>
               </div>
             </div>

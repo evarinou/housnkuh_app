@@ -14,26 +14,32 @@ import { PriceFormatter } from '../../utils/priceFormatting';
 interface FlourioDoc {
   _id: string;
   flourioId: string;
-  type: 'invoice' | 'order' | 'delivery' | 'quote';
+  type: string;
   number: string;
   date: string;
-  dueDate?: string;
   items: Array<{
     flourioArticleId: string;
+    productId?: { _id: string; name: string };
+    title?: string;
     quantity: number;
     unitPrice: number;
     taxRate: number;
-    total: number;
+    discount?: number;
+    netTotal: number;
+    grossTotal: number;
+    cancelled?: boolean;
   }>;
-  subtotal: number;
-  taxTotal: number;
-  total: number;
+  netTotal: number;
+  grossTotal: number;
   currency: string;
-  status: 'draft' | 'sent' | 'paid' | 'cancelled';
+  status: string;
+  isVoided?: boolean;
+  credit?: boolean;
+  paymentStatus?: string;
 }
 
 const typeLabels: Record<string, string> = {
-  invoice: 'Rechnung', order: 'Bestellung', delivery: 'Lieferschein', quote: 'Angebot'
+  R: 'Rechnung (Kassenbon)', Belegabbruch: 'Belegabbruch'
 };
 
 const statusColors: Record<string, string> = {
@@ -116,10 +122,8 @@ const VendorFlourioDocumentsPage: React.FC = () => {
               className="px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-emerald-500"
             >
               <option value="">Alle Typen</option>
-              <option value="invoice">Rechnungen</option>
-              <option value="order">Bestellungen</option>
-              <option value="delivery">Lieferscheine</option>
-              <option value="quote">Angebote</option>
+              <option value="R">Rechnung (Kassenbon)</option>
+              <option value="Belegabbruch">Belegabbruch</option>
             </select>
             {typeFilter && (
               <button onClick={() => setTypeFilter('')} className="text-sm text-gray-500 hover:text-gray-700">
@@ -156,13 +160,20 @@ const VendorFlourioDocumentsPage: React.FC = () => {
               <tbody className="divide-y divide-gray-200">
                 {documents.map((doc) => (
                   <tr key={doc._id} onClick={() => setSelectedDoc(doc)} className="hover:bg-gray-50 cursor-pointer transition-colors">
-                    <td className="px-6 py-4 text-sm font-medium text-gray-900">{doc.number}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{typeLabels[doc.type]}</td>
+                    <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                      {doc.number}
+                      {doc.isVoided && (
+                        <span className="ml-2 inline-block px-2 py-0.5 text-xs font-medium rounded-full bg-red-100 text-red-700">
+                          Storniert
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-600">{typeLabels[doc.type] || doc.type}</td>
                     <td className="px-6 py-4 text-sm text-gray-600">{formatDate(doc.date)}</td>
-                    <td className="px-6 py-4 text-sm font-semibold text-right">{PriceFormatter.formatCurrency(doc.total)}</td>
+                    <td className={`px-6 py-4 text-sm font-semibold text-right ${doc.isVoided ? 'line-through text-gray-400' : ''}`}>{PriceFormatter.formatCurrency(doc.grossTotal)}</td>
                     <td className="px-6 py-4">
-                      <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${statusColors[doc.status]}`}>
-                        {statusLabels[doc.status]}
+                      <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${statusColors[doc.status] || 'bg-gray-100 text-gray-700'}`}>
+                        {statusLabels[doc.status] || doc.status}
                       </span>
                     </td>
                   </tr>
@@ -178,22 +189,28 @@ const VendorFlourioDocumentsPage: React.FC = () => {
             <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
               <div className="p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl font-bold">{typeLabels[selectedDoc.type]} {selectedDoc.number}</h2>
+                  <h2 className="text-xl font-bold">
+                    {typeLabels[selectedDoc.type] || selectedDoc.type} {selectedDoc.number}
+                    {selectedDoc.isVoided && (
+                      <span className="ml-2 inline-block px-2 py-0.5 text-xs font-medium rounded-full bg-red-100 text-red-700 align-middle">
+                        Storniert
+                      </span>
+                    )}
+                  </h2>
                   <button onClick={() => setSelectedDoc(null)} className="text-gray-400 hover:text-gray-600"><X className="w-6 h-6" /></button>
                 </div>
                 <div className="grid grid-cols-2 gap-4 mb-6 text-sm">
                   <div><span className="text-gray-500">Datum:</span> <span className="font-medium">{formatDate(selectedDoc.date)}</span></div>
-                  {selectedDoc.dueDate && <div><span className="text-gray-500">Fällig:</span> <span className="font-medium">{formatDate(selectedDoc.dueDate)}</span></div>}
                   <div>
-                    <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${statusColors[selectedDoc.status]}`}>
-                      {statusLabels[selectedDoc.status]}
+                    <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${statusColors[selectedDoc.status] || 'bg-gray-100 text-gray-700'}`}>
+                      {statusLabels[selectedDoc.status] || selectedDoc.status}
                     </span>
                   </div>
                 </div>
                 <table className="min-w-full divide-y divide-gray-200 mb-4">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-4 py-2 text-left text-xs text-gray-500">Pos.</th>
+                      <th className="px-4 py-2 text-left text-xs text-gray-500">Artikel</th>
                       <th className="px-4 py-2 text-right text-xs text-gray-500">Menge</th>
                       <th className="px-4 py-2 text-right text-xs text-gray-500">Preis</th>
                       <th className="px-4 py-2 text-right text-xs text-gray-500">Gesamt</th>
@@ -201,19 +218,26 @@ const VendorFlourioDocumentsPage: React.FC = () => {
                   </thead>
                   <tbody className="divide-y divide-gray-100">
                     {selectedDoc.items.map((item, i) => (
-                      <tr key={i}>
-                        <td className="px-4 py-2 text-sm">{i + 1}</td>
+                      <tr key={i} className={item.cancelled ? 'line-through text-gray-400' : ''}>
+                        <td className="px-4 py-2 text-sm">
+                          {item.title || item.productId?.name || item.flourioArticleId}
+                          {item.cancelled && (
+                            <span className="ml-2 inline-block px-2 py-0.5 text-xs font-medium rounded-full bg-red-100 text-red-700">
+                              Storniert
+                            </span>
+                          )}
+                        </td>
                         <td className="px-4 py-2 text-sm text-right">{item.quantity}</td>
                         <td className="px-4 py-2 text-sm text-right">{PriceFormatter.formatCurrency(item.unitPrice)}</td>
-                        <td className="px-4 py-2 text-sm text-right font-medium">{PriceFormatter.formatCurrency(item.total)}</td>
+                        <td className="px-4 py-2 text-sm text-right font-medium">{PriceFormatter.formatCurrency(item.grossTotal)}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
                 <div className="border-t pt-4 space-y-1 text-sm">
-                  <div className="flex justify-between"><span className="text-gray-500">Netto:</span><span>{PriceFormatter.formatCurrency(selectedDoc.subtotal)}</span></div>
-                  <div className="flex justify-between"><span className="text-gray-500">MwSt:</span><span>{PriceFormatter.formatCurrency(selectedDoc.taxTotal)}</span></div>
-                  <div className="flex justify-between font-bold text-lg"><span>Gesamt:</span><span>{PriceFormatter.formatCurrency(selectedDoc.total)}</span></div>
+                  <div className="flex justify-between"><span className="text-gray-500">Netto:</span><span>{PriceFormatter.formatCurrency(selectedDoc.netTotal)}</span></div>
+                  <div className="flex justify-between"><span className="text-gray-500">MwSt:</span><span>{PriceFormatter.formatCurrency(selectedDoc.grossTotal - selectedDoc.netTotal)}</span></div>
+                  <div className="flex justify-between font-bold text-lg"><span>Gesamt:</span><span>{PriceFormatter.formatCurrency(selectedDoc.grossTotal)}</span></div>
                 </div>
               </div>
             </div>

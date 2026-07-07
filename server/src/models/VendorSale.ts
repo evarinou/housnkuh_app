@@ -29,12 +29,11 @@ export interface IVendorSale extends Document {
   taxRate: number;
   discount: number;
 
-  // Beträge. ANNAHME (⚑ vor F2a-Go-live mit echten flour.io-Daten validieren):
-  // FlourioDocument-Positions-`total` ist der NETTO-Zeilenbetrag (Doc-Ebene hat
-  // subtotal=Netto, taxTotal, total=Brutto → Positionssumme = subtotal). Falls
-  // sich das als Brutto herausstellt, nur hier die Ableitung anpassen.
+  // Beträge. ✅ 2026-07-08 gegen die Live-API verifiziert: flour.io liefert
+  // Netto und Brutto GETRENNT (item.totalExVat/totalIncVat) — keine Annahme
+  // mehr nötig, beide Werte kommen exakt aus dem Beleg.
   netAmount: number;   // Netto-Zeilenbetrag (Basis für Provision F2c, netto)
-  grossAmount: number; // Brutto-Zeilenbetrag (netto + USt)
+  grossAmount: number; // Brutto-Zeilenbetrag (aus totalIncVat)
 
   saleDate: Date;
   currency: string;

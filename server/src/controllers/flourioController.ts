@@ -422,7 +422,7 @@ export const getDocumentStats = async (req: Request, res: Response): Promise<voi
     const [total, byType, byStatus] = await Promise.all([
       FlourioDocument.countDocuments(),
       FlourioDocument.aggregate([
-        { $group: { _id: '$type', count: { $sum: 1 }, totalAmount: { $sum: '$total' } } }
+        { $group: { _id: '$type', count: { $sum: 1 }, totalAmount: { $sum: '$grossTotal' } } }
       ]),
       FlourioDocument.aggregate([
         { $group: { _id: '$status', count: { $sum: 1 } } }

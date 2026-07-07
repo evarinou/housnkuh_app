@@ -31,22 +31,23 @@ const makeProduct = (vendorId: mongoose.Types.ObjectId, articleId: string) =>
     flourioSync: { articleId }
   } as any);
 
-const makeSalesDoc = (flourioId: string, items: any[]) =>
+// Echter flour.io-Vertrag (2026-07-08 verifiziert): type 'R' = Kassenbon,
+// Items mit netTotal/grossTotal (aus totalExVat/totalIncVat)
+const makeSalesDoc = (flourioId: string, items: any[], overrides: any = {}) =>
   FlourioDocument.create({
     flourioId,
-    type: 'invoice',
+    type: 'R',
     number: `RE-${flourioId}`,
     date: new Date('2026-07-01T10:00:00Z'),
     flourioBusinessPartnerId: 'customer-1',
     items,
-    subtotal: 100,
-    taxTotal: 7,
-    total: 107,
+    netTotal: 100,
+    grossTotal: 107,
     currency: 'EUR',
-    status: 'paid',
     lastPulledAt: new Date(),
     flourioCreatedAt: new Date(),
-    flourioUpdatedAt: new Date()
+    flourioUpdatedAt: new Date(),
+    ...overrides
   } as any);
 
 describe('VendorSaleProjectionService', () => {
@@ -55,10 +56,10 @@ describe('VendorSaleProjectionService', () => {
     const pB = await makeProduct(vendorB, 'ART-B');
 
     await makeSalesDoc('DOC-1', [
-      { flourioArticleId: 'ART-A', productId: pA._id, quantity: 2, unitPrice: 10, taxRate: 7, total: 20 },
-      { flourioArticleId: 'ART-B', productId: pB._id, quantity: 1, unitPrice: 30, taxRate: 7, total: 30 },
+      { flourioArticleId: 'ART-A', productId: pA._id, quantity: 2, unitPrice: 10, taxRate: 7, netTotal: 20, grossTotal: 21.4 },
+      { flourioArticleId: 'ART-B', productId: pB._id, quantity: 1, unitPrice: 30, taxRate: 7, netTotal: 30, grossTotal: 32.1 },
       // Zeile ohne productId → kein Vendor → wird übersprungen
-      { flourioArticleId: 'ART-X', quantity: 1, unitPrice: 5, taxRate: 7, total: 5 }
+      { flourioArticleId: 'ART-X', quantity: 1, unitPrice: 5, taxRate: 7, netTotal: 5, grossTotal: 5.35 }
     ]);
 
     const result = await VendorSaleProjectionService.project();
@@ -72,7 +73,7 @@ describe('VendorSaleProjectionService', () => {
     expect(salesA).toHaveLength(1);
     expect(salesB).toHaveLength(1);
     expect(salesA[0].netAmount).toBe(20);
-    // Brutto = netto * 1,07
+    // Brutto kommt exakt aus dem Beleg (totalIncVat), keine Berechnung
     expect(salesA[0].grossAmount).toBeCloseTo(21.4, 2);
     expect(salesA[0].lineIndex).toBe(0);
     expect(salesB[0].lineIndex).toBe(1);
@@ -81,7 +82,7 @@ describe('VendorSaleProjectionService', () => {
   it('ist idempotent und erhält gesetzte Abrechnungs-Zustände über Läufe hinweg', async () => {
     const pA = await makeProduct(vendorA, 'ART-A');
     await makeSalesDoc('DOC-1', [
-      { flourioArticleId: 'ART-A', productId: pA._id, quantity: 2, unitPrice: 10, taxRate: 7, total: 20 }
+      { flourioArticleId: 'ART-A', productId: pA._id, quantity: 2, unitPrice: 10, taxRate: 7, netTotal: 20, grossTotal: 21.4 }
     ]);
 
     const first = await VendorSaleProjectionService.project();
@@ -102,5 +103,28 @@ describe('VendorSaleProjectionService', () => {
     expect(all).toHaveLength(1);
     // Abrechnungs-Zustand darf NICHT überschrieben worden sein
     expect(String(all[0].salesInvoice)).toBe(String(invoiceId));
+  });
+
+  it('überspringt Belegabbrüche, Stornos, Gutschriften und stornierte Positionen', async () => {
+    const pA = await makeProduct(vendorA, 'ART-A');
+    const item = { flourioArticleId: 'ART-A', productId: pA._id, quantity: 1, unitPrice: 10, taxRate: 7, netTotal: 10, grossTotal: 10.7 };
+
+    await makeSalesDoc('DOC-ABBRUCH', [item], { type: 'Belegabbruch' });
+    await makeSalesDoc('DOC-VOIDED', [item], { isVoided: true });
+    await makeSalesDoc('DOC-CREDIT', [item], { credit: true });
+    await makeSalesDoc('DOC-CANCELLED-ITEM', [{ ...item, cancelled: true }]);
+    await makeSalesDoc('DOC-OK', [item]);
+
+    const result = await VendorSaleProjectionService.project();
+
+    // Nur der reguläre Beleg wird abrechenbar; die stornierte Position
+    // des vierten Belegs zählt weder als Ledger-Zeile noch als "ohne Vendor"
+    expect(result.documents).toBe(2); // DOC-CANCELLED-ITEM + DOC-OK (Typ R, nicht storniert)
+    expect(result.created).toBe(1);
+    expect(result.skippedNoVendor).toBe(0);
+
+    const sales = await VendorSale.find({});
+    expect(sales).toHaveLength(1);
+    expect(sales[0].flourioDocumentFlourioId).toBe('DOC-OK');
   });
 });
