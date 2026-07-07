@@ -87,9 +87,13 @@
   Vendor-Token, Filter/Sortierung/Download), Detail via VendorInvoiceDetailPage.
   Build grün. Hinweis: InvoiceList navigiert zum Detail unter `/vendor/customer-
   invoices/:id` (funktioniert, aber Routen-Benennung mit T2.4 aufräumen).
-- [ ] **T2.4 – F3 Vendor-Reporting.** `VendorReportsPage` mit Umsatz-/
-  Verkaufsstatistik aus dem Verkaufs-Ledger (T1.2). *Fertig, wenn:* Vendor
-  seine Umsätze/Verkäufe pro Zeitraum sieht (Zahlen konsistent mit F2a).
+- [x] **T2.4 – Verkaufsrechnungen-Anzeige (F2a) + F3 Vendor-Reporting.** ✅
+  Backend: `vendorSalesInvoiceController` (Liste/Detail/PDF-Download der eigenen
+  SalesInvoice + `/sales-report`-Aggregation), 3 Tests. Frontend:
+  `VendorCustomerInvoicesPage` (Gutschriften-Liste + PDF-Download),
+  `VendorReportsPage` (Kennzahlen, Monatsverlauf, Top-Produkte). Build grün.
+  Offen (klein, T5): Routen-Benennung `customer-invoices/:id`-Detail vs.
+  Sales-Invoices vs. housnkuh-Invoices sauber trennen.
 
 ## Stufe 3 – Produktionsreife (nötig für „fertig")
 
