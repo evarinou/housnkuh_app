@@ -13,6 +13,9 @@ import logger from '../utils/logger';
 // Mock dependencies
 jest.mock('../models/Mietfach');
 jest.mock('../models/Vertrag');
+jest.mock('../models/Invoice');
+jest.mock('../services/invoiceGenerationService');
+jest.mock('../utils/emailQueue');
 jest.mock('../utils/logger');
 
 describe('adminController', () => {
