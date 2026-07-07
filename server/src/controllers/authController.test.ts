@@ -50,25 +50,27 @@ describe('authController', () => {
   let res: Partial<Response>;
   let jsonMock: jest.Mock;
   let statusMock: jest.Mock;
+  let next: jest.Mock;
 
   beforeEach(() => {
     jsonMock = jest.fn().mockReturnThis();
     statusMock = jest.fn().mockReturnValue({ json: jsonMock });
     res = { json: jsonMock, status: statusMock } as Partial<Response>;
+    next = jest.fn();
     jest.clearAllMocks();
   });
 
   describe('login', () => {
     it('should return 400 if username is missing', async () => {
       req = { body: { password: 'test123' } };
-      await login(req as Request, res as Response);
+      await login(req as Request, res as Response, next);
       expect(statusMock).toHaveBeenCalledWith(400);
       expect(jsonMock).toHaveBeenCalledWith(expect.objectContaining({ success: false }));
     });
 
     it('should return 400 if password is missing', async () => {
       req = { body: { username: 'admin' } };
-      await login(req as Request, res as Response);
+      await login(req as Request, res as Response, next);
       expect(statusMock).toHaveBeenCalledWith(400);
     });
 
@@ -76,7 +78,7 @@ describe('authController', () => {
       req = { body: { username: 'admin', password: 'test123' } };
       MockedUser.findOne = jest.fn().mockResolvedValue(null) as any;
 
-      await login(req as Request, res as Response);
+      await login(req as Request, res as Response, next);
       expect(statusMock).toHaveBeenCalledWith(401);
       expect(jsonMock).toHaveBeenCalledWith(
         expect.objectContaining({ message: 'Ungültige Anmeldeinformationen' }),
@@ -94,7 +96,7 @@ describe('authController', () => {
       }) as any;
       (mockedBcrypt.compare as jest.Mock).mockResolvedValue(false);
 
-      await login(req as Request, res as Response);
+      await login(req as Request, res as Response, next);
       expect(statusMock).toHaveBeenCalledWith(401);
     });
 
@@ -109,7 +111,7 @@ describe('authController', () => {
       }) as any;
       (mockedBcrypt.compare as jest.Mock).mockResolvedValue(true);
 
-      await login(req as Request, res as Response);
+      await login(req as Request, res as Response, next);
       expect(statusMock).toHaveBeenCalledWith(403);
       expect(jsonMock).toHaveBeenCalledWith(
         expect.objectContaining({ message: 'Keine Administratorrechte' }),
@@ -129,7 +131,7 @@ describe('authController', () => {
       (mockedBcrypt.compare as jest.Mock).mockResolvedValue(true);
       (mockedJwt.sign as jest.Mock).mockReturnValue('mock-jwt-token');
 
-      await login(req as Request, res as Response);
+      await login(req as Request, res as Response, next);
 
       expect(jsonMock).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -143,12 +145,15 @@ describe('authController', () => {
       );
     });
 
-    it('should return 500 on server error', async () => {
+    it('should forward AppError(500) to error handler on server error', async () => {
       req = { body: { username: 'admin', password: 'test' } };
       MockedUser.findOne = jest.fn().mockRejectedValue(new Error('DB error')) as any;
 
-      await login(req as Request, res as Response);
-      expect(statusMock).toHaveBeenCalledWith(500);
+      await login(req as Request, res as Response, next);
+      expect(next).toHaveBeenCalledWith(expect.objectContaining({
+        statusCode: 500,
+        message: 'Serverfehler bei der Anmeldung'
+      }));
     });
   });
 
@@ -177,7 +182,7 @@ describe('authController', () => {
       // Mock collection.dropIndex to not throw
       MockedUser.collection = { dropIndex: jest.fn().mockResolvedValue(undefined) } as any;
 
-      await setupAdmin(req as Request, res as Response);
+      await setupAdmin(req as Request, res as Response, next);
       expect(statusMock).toHaveBeenCalledWith(400);
       expect(jsonMock).toHaveBeenCalledWith(
         expect.objectContaining({ message: 'Admin-Account existiert bereits' }),
@@ -197,7 +202,7 @@ describe('authController', () => {
       MockedUser.findOne = jest.fn().mockResolvedValue(null) as any;
       MockedUser.collection = { dropIndex: jest.fn().mockResolvedValue(undefined) } as any;
 
-      await setupAdmin(req as Request, res as Response);
+      await setupAdmin(req as Request, res as Response, next);
       expect(statusMock).toHaveBeenCalledWith(401);
       expect(jsonMock).toHaveBeenCalledWith(
         expect.objectContaining({ message: 'Ungültiger Setup-Schlüssel' }),
@@ -209,7 +214,7 @@ describe('authController', () => {
       MockedUser.findOne = jest.fn().mockResolvedValue(null) as any;
       MockedUser.collection = { dropIndex: jest.fn().mockResolvedValue(undefined) } as any;
 
-      await setupAdmin(req as Request, res as Response);
+      await setupAdmin(req as Request, res as Response, next);
       expect(statusMock).toHaveBeenCalledWith(400);
       expect(jsonMock).toHaveBeenCalledWith(
         expect.objectContaining({ message: 'Alle Felder sind erforderlich' }),
@@ -238,7 +243,7 @@ describe('authController', () => {
         kontakt: { name: 'New Admin' },
       });
 
-      await setupAdmin(req as Request, res as Response);
+      await setupAdmin(req as Request, res as Response, next);
       expect(statusMock).toHaveBeenCalledWith(201);
       expect(jsonMock).toHaveBeenCalledWith(
         expect.objectContaining({

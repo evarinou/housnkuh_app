@@ -4,7 +4,7 @@
  * Handles pre-registration, trial activation, booking management, and vendor profile operations
  */
 
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import User from '../models/User';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
@@ -15,6 +15,7 @@ import Settings from '../models/Settings';
 import { BookingStatus } from '../types/modelTypes';
 import { syncVendorToFlourio } from '../services/flourio/services/businessPartnerSyncService';
 import logger from '../utils/logger';
+import AppError from '../utils/AppError';
 
 /**
  * Pre-registration for vendors before store opening
@@ -24,7 +25,7 @@ import logger from '../utils/logger';
  * @returns Promise<void> - Resolves with success status or error message
  * @complexity O(1) - Single database operation with email sending
  */
-export const preRegisterVendor = async (req: Request, res: Response): Promise<void> => {
+export const preRegisterVendor = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const {
       // Persönliche Daten
@@ -168,16 +169,12 @@ export const preRegisterVendor = async (req: Request, res: Response): Promise<vo
     });
     
   } catch (err) {
-    logger.error('Fehler bei der Pre-Registrierung:', err);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Ein Serverfehler ist aufgetreten' 
-    });
+    next(new AppError('Ein Serverfehler ist aufgetreten', 500, err));
   }
 };
 
 // Registrierung für Direktvermarkter mit Package-Buchung
-export const registerVendorWithBooking = async (req: Request, res: Response): Promise<void> => {
+export const registerVendorWithBooking = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     logger.info('=== VENDOR REGISTRATION WITH BOOKING START ===');
     logger.debug('Request body keys:', { keys: Object.keys(req.body) });
@@ -457,16 +454,12 @@ export const registerVendorWithBooking = async (req: Request, res: Response): Pr
       userId: user._id 
     });
   } catch (err) {
-    logger.error('Fehler bei der Vendor-Registrierung:', err);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Ein Serverfehler ist aufgetreten' 
-    });
+    next(new AppError('Ein Serverfehler ist aufgetreten', 500, err));
   }
 };
 
 // Login für Direktvermarkter
-export const loginVendor = async (req: Request, res: Response): Promise<void> => {
+export const loginVendor = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { email, password } = req.body;
     
@@ -538,16 +531,12 @@ export const loginVendor = async (req: Request, res: Response): Promise<void> =>
       }
     });
   } catch (err) {
-    logger.error('Login-Fehler:', err);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Serverfehler bei der Anmeldung' 
-    });
+    next(new AppError('Serverfehler bei der Anmeldung', 500, err));
   }
 };
 
 // E-Mail-Bestätigung für Direktvermarkter
-export const confirmVendorEmail = async (req: Request, res: Response): Promise<void> => {
+export const confirmVendorEmail = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   const securityLogger = require('../utils/securityLogger').default;
   
   try {
@@ -732,19 +721,15 @@ export const confirmVendorEmail = async (req: Request, res: Response): Promise<v
       }
     });
   } catch (err) {
-    logger.error('Fehler bei der E-Mail-Bestätigung:', err);
-    securityLogger.logEmailConfirmation(req, req.params.token || 'unknown', false, undefined, { 
-      error: err instanceof Error ? err.message : 'Unknown error' 
+    securityLogger.logEmailConfirmation(req, req.params.token || 'unknown', false, undefined, {
+      error: err instanceof Error ? err.message : 'Unknown error'
     });
-    res.status(500).json({ 
-      success: false, 
-      message: 'Ein Serverfehler ist aufgetreten' 
-    });
+    next(new AppError('Ein Serverfehler ist aufgetreten', 500, err));
   }
 };
 
 // Passwort ändern (authentifizierter Vendor)
-export const changeVendorPassword = async (req: Request, res: Response): Promise<void> => {
+export const changeVendorPassword = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const userId = (req as any).userId;
     const { currentPassword, newPassword } = req.body;
@@ -787,13 +772,12 @@ export const changeVendorPassword = async (req: Request, res: Response): Promise
     logger.info('Vendor password changed successfully', { userId });
     res.json({ success: true, message: 'Passwort erfolgreich geändert' });
   } catch (err) {
-    logger.error('Fehler beim Passwort-Ändern:', err);
-    res.status(500).json({ success: false, message: 'Serverfehler beim Passwort-Ändern' });
+    next(new AppError('Serverfehler beim Passwort-Ändern', 500, err));
   }
 };
 
 // Passwort-Reset anfordern (öffentlich)
-export const requestPasswordReset = async (req: Request, res: Response): Promise<void> => {
+export const requestPasswordReset = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   const securityLogger = require('../utils/securityLogger').default;
 
   try {
@@ -864,13 +848,12 @@ export const requestPasswordReset = async (req: Request, res: Response): Promise
     securityLogger.logPasswordReset(req, email, true, { reason: 'reset_email_sent' });
     res.json({ success: true, message: successMessage });
   } catch (err) {
-    logger.error('Fehler bei Passwort-Reset-Anforderung:', err);
-    res.status(500).json({ success: false, message: 'Serverfehler' });
+    next(new AppError('Serverfehler', 500, err));
   }
 };
 
 // Passwort zurücksetzen mit Token (öffentlich)
-export const resetPassword = async (req: Request, res: Response): Promise<void> => {
+export const resetPassword = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   const securityLogger = require('../utils/securityLogger').default;
 
   try {
@@ -906,13 +889,12 @@ export const resetPassword = async (req: Request, res: Response): Promise<void> 
 
     res.json({ success: true, message: 'Passwort erfolgreich zurückgesetzt. Du kannst dich jetzt anmelden.' });
   } catch (err) {
-    logger.error('Fehler beim Passwort-Zurücksetzen:', err);
-    res.status(500).json({ success: false, message: 'Serverfehler beim Passwort-Zurücksetzen' });
+    next(new AppError('Serverfehler beim Passwort-Zurücksetzen', 500, err));
   }
 };
 
 // Bestätigungslink erneut senden (öffentlich)
-export const resendConfirmationEmail = async (req: Request, res: Response): Promise<void> => {
+export const resendConfirmationEmail = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { email } = req.body;
 
@@ -982,8 +964,7 @@ export const resendConfirmationEmail = async (req: Request, res: Response): Prom
     logger.info('Confirmation email resent', { email });
     res.json({ success: true, message: 'Ein neuer Bestätigungslink wurde gesendet. Bitte prüfe dein E-Mail-Postfach.' });
   } catch (err) {
-    logger.error('Fehler beim erneuten Senden der Bestätigungs-E-Mail:', err);
-    res.status(500).json({ success: false, message: 'Serverfehler' });
+    next(new AppError('Serverfehler', 500, err));
   }
 };
 

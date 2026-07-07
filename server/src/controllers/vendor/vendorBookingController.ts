@@ -5,7 +5,7 @@
  * @created 2026-03-26
  */
 
-import { Response } from 'express';
+import { Response, NextFunction } from 'express';
 import User from '../../models/User';
 import Vertrag from '../../models/Vertrag';
 import mongoose, { Types } from 'mongoose';
@@ -16,9 +16,10 @@ import fs from 'fs';
 import path from 'path';
 import { sendBookingConfirmation, sendCancellationConfirmationEmail } from '../../utils/emailService';
 import { AuthRequest } from '../../middleware/auth';
+import AppError from '../../utils/AppError';
 
 // Buchung nach E-Mail-Bestätigung abschließen
-export const completeBooking = async (req: AuthRequest, res: Response): Promise<void> => {
+export const completeBooking = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { userId } = req.params;
 
@@ -71,16 +72,12 @@ export const completeBooking = async (req: AuthRequest, res: Response): Promise<
       message: 'Buchung erfolgreich abgeschlossen'
     });
   } catch (err) {
-    logger.error('Fehler beim Abschließen der Buchung:', err);
-    res.status(500).json({
-      success: false,
-      message: 'Ein Serverfehler ist aufgetreten'
-    });
+    next(new AppError('Ein Serverfehler ist aufgetreten', 500, err));
   }
 };
 
 // Vendor Verträge abrufen
-export const getVendorContracts = async (req: AuthRequest, res: Response): Promise<void> => {
+export const getVendorContracts = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
                try {
                  const { userId } = req.params;
 
@@ -113,13 +110,12 @@ export const getVendorContracts = async (req: AuthRequest, res: Response): Promi
 
                  res.json({ vertraege: formattedVertraege });
                } catch (error) {
-                 logger.error("Fehler beim Abrufen der Vendor-Verträge:", error);
-                 res.status(500).json({ error: "Fehler beim Abrufen der Verträge" });
+                 next(new AppError("Fehler beim Abrufen der Verträge", 500, error));
                }
              };
 
 // Zusätzliche Buchung für authentifizierte Vendors
-export const additionalBooking = async (req: AuthRequest, res: Response): Promise<void> => {
+export const additionalBooking = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { userId, packageData } = req.body;
 
@@ -291,16 +287,12 @@ Status: Pending Admin Review`;
     });
 
   } catch (error) {
-    logger.error('Additional booking error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to process additional booking'
-    });
+    next(new AppError('Failed to process additional booking', 500, error));
   }
 };
 
 // M005 Implementation: Get vendor bookings with status
-export const getVendorBookings = async (req: AuthRequest, res: Response): Promise<void> => {
+export const getVendorBookings = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { userId } = req.params;
     const { status, page = 1, limit = 10 } = req.query;
@@ -425,16 +417,12 @@ export const getVendorBookings = async (req: AuthRequest, res: Response): Promis
     });
 
   } catch (error) {
-    logger.error('Error getting vendor bookings:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Fehler beim Abrufen der Buchungen'
-    });
+    next(new AppError('Fehler beim Abrufen der Buchungen', 500, error));
   }
 };
 
 // M005 Implementation: Get specific vendor booking by ID
-export const getVendorBookingById = async (req: AuthRequest, res: Response): Promise<void> => {
+export const getVendorBookingById = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { userId, bookingId } = req.params;
 
@@ -521,16 +509,12 @@ export const getVendorBookingById = async (req: AuthRequest, res: Response): Pro
     });
 
   } catch (error) {
-    logger.error('Error getting vendor booking by ID:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Fehler beim Abrufen der Buchung'
-    });
+    next(new AppError('Fehler beim Abrufen der Buchung', 500, error));
   }
 };
 
 // M005 Implementation: Get dashboard messages for vendor
-export const getDashboardMessages = async (req: AuthRequest, res: Response): Promise<void> => {
+export const getDashboardMessages = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { userId } = req.params;
 
@@ -604,16 +588,12 @@ export const getDashboardMessages = async (req: AuthRequest, res: Response): Pro
     });
 
   } catch (error) {
-    logger.error('Error getting dashboard messages:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Fehler beim Abrufen der Dashboard-Nachrichten'
-    });
+    next(new AppError('Fehler beim Abrufen der Dashboard-Nachrichten', 500, error));
   }
 };
 
 // M005 Implementation: Dismiss dashboard message
-export const dismissDashboardMessage = async (req: AuthRequest, res: Response): Promise<void> => {
+export const dismissDashboardMessage = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { messageId } = req.params;
 
@@ -635,16 +615,12 @@ export const dismissDashboardMessage = async (req: AuthRequest, res: Response): 
     });
 
   } catch (error) {
-    logger.error('Error dismissing dashboard message:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Fehler beim Ausblenden der Nachricht'
-    });
+    next(new AppError('Fehler beim Ausblenden der Nachricht', 500, error));
   }
 };
 
 // M006 S004 Implementation: Get trial status and trial bookings
-export const getTrialStatus = async (req: AuthRequest, res: Response): Promise<void> => {
+export const getTrialStatus = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     if (!req.user) {
       res.status(403).json({
@@ -704,16 +680,12 @@ export const getTrialStatus = async (req: AuthRequest, res: Response): Promise<v
     });
 
   } catch (error) {
-    logger.error('Error getting trial status:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Fehler beim Abrufen des Probemonat-Status'
-    });
+    next(new AppError('Fehler beim Abrufen des Probemonat-Status', 500, error));
   }
 };
 
 // M006 S004 Implementation: Cancel trial booking
-export const cancelTrialBooking = async (req: AuthRequest, res: Response): Promise<void> => {
+export const cancelTrialBooking = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { bookingId } = req.params;
     const { reason } = req.body;
@@ -790,16 +762,12 @@ export const cancelTrialBooking = async (req: AuthRequest, res: Response): Promi
     });
 
   } catch (error) {
-    logger.error('Error cancelling trial booking:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Fehler beim Stornieren der Trial-Buchung'
-    });
+    next(new AppError('Fehler beim Stornieren der Trial-Buchung', 500, error));
   }
 };
 
 // M006 S004 Implementation: Confirm trial booking
-export const confirmTrialBooking = async (req: AuthRequest, res: Response): Promise<void> => {
+export const confirmTrialBooking = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { mietfachId, startdatum, istProbemonatBuchung: _istProbemonatBuchung } = req.body;
 
@@ -896,18 +864,14 @@ export const confirmTrialBooking = async (req: AuthRequest, res: Response): Prom
     });
 
   } catch (error) {
-    logger.error('Error confirming trial booking:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Fehler bei der Buchungsbestätigung'
-    });
+    next(new AppError('Fehler bei der Buchungsbestätigung', 500, error));
   }
 };
 /**
  * TASK-014: Vendor invoice endpoints implementation
  * GET /api/vendor/invoices - list vendor's invoices
  */
-export const getVendorInvoices = async (req: AuthRequest, res: Response): Promise<void> => {
+export const getVendorInvoices = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { page = 1, limit = 10, status, month, year } = req.query;
 
@@ -970,18 +934,14 @@ export const getVendorInvoices = async (req: AuthRequest, res: Response): Promis
       }
     });
   } catch (err) {
-    logger.error('Error fetching vendor invoices:', err);
-    res.status(500).json({
-      success: false,
-      message: 'Serverfehler beim Abrufen der Rechnungen'
-    });
+    next(new AppError('Serverfehler beim Abrufen der Rechnungen', 500, err));
   }
 };
 
 /**
  * GET /api/vendor/invoices/:id - get specific vendor invoice
  */
-export const getVendorInvoiceById = async (req: AuthRequest, res: Response): Promise<void> => {
+export const getVendorInvoiceById = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id } = req.params;
 
@@ -1028,18 +988,14 @@ export const getVendorInvoiceById = async (req: AuthRequest, res: Response): Pro
       data: invoice
     });
   } catch (err) {
-    logger.error('Error fetching vendor invoice:', err);
-    res.status(500).json({
-      success: false,
-      message: 'Serverfehler beim Abrufen der Rechnung'
-    });
+    next(new AppError('Serverfehler beim Abrufen der Rechnung', 500, err));
   }
 };
 
 /**
  * GET /api/vendor/invoices/:id/download - download vendor invoice PDF
  */
-export const downloadVendorInvoicePdf = async (req: AuthRequest, res: Response): Promise<void> => {
+export const downloadVendorInvoicePdf = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id } = req.params;
 
@@ -1112,18 +1068,14 @@ export const downloadVendorInvoicePdf = async (req: AuthRequest, res: Response):
     fileStream.pipe(res);
 
   } catch (err) {
-    logger.error('Error downloading vendor invoice PDF:', err);
-    res.status(500).json({
-      success: false,
-      message: 'Serverfehler beim Herunterladen der PDF'
-    });
+    next(new AppError('Serverfehler beim Herunterladen der PDF', 500, err));
   }
 };
 
 /**
  * GET /api/vendor/invoices/summary - get vendor billing summary
  */
-export const getVendorInvoiceSummary = async (req: AuthRequest, res: Response): Promise<void> => {
+export const getVendorInvoiceSummary = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { year = new Date().getFullYear(), month } = req.query;
 
@@ -1193,10 +1145,6 @@ export const getVendorInvoiceSummary = async (req: AuthRequest, res: Response): 
       data: summary
     });
   } catch (err) {
-    logger.error('Error fetching vendor invoice summary:', err);
-    res.status(500).json({
-      success: false,
-      message: 'Serverfehler beim Abrufen der Rechnungsübersicht'
-    });
+    next(new AppError('Serverfehler beim Abrufen der Rechnungsübersicht', 500, err));
   }
 };

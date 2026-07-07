@@ -41,7 +41,7 @@ jest.mock('../../utils/logger', () => ({
   },
 }));
 
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import {
   getPendingBookings,
   getAvailableMietfaecher,
@@ -59,11 +59,13 @@ describe('bookingAdminController', () => {
   let res: Partial<Response>;
   let jsonMock: jest.Mock;
   let statusMock: jest.Mock;
+  let next: jest.Mock;
 
   beforeEach(() => {
     jsonMock = jest.fn().mockReturnThis();
     statusMock = jest.fn().mockReturnValue({ json: jsonMock });
     res = { json: jsonMock, status: statusMock } as Partial<Response>;
+    next = jest.fn();
     jest.clearAllMocks();
   });
 
@@ -101,7 +103,7 @@ describe('bookingAdminController', () => {
         .mockImplementationOnce(findAllMock)
         .mockImplementationOnce(findPendingMock) as any;
 
-      await getPendingBookings(req as Request, res as Response);
+      await getPendingBookings(req as Request, res as Response, next as unknown as NextFunction);
 
       expect(jsonMock).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -117,7 +119,7 @@ describe('bookingAdminController', () => {
         select: jest.fn().mockResolvedValue([]),
       }) as any;
 
-      await getPendingBookings(req as Request, res as Response);
+      await getPendingBookings(req as Request, res as Response, next as unknown as NextFunction);
 
       expect(jsonMock).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -128,14 +130,19 @@ describe('bookingAdminController', () => {
       );
     });
 
-    it('should return 500 on error', async () => {
+    it('should forward 500 AppError to next on error', async () => {
       req = {};
       MockedUser.find = jest.fn().mockReturnValue({
         select: jest.fn().mockRejectedValue(new Error('DB error')),
       }) as any;
 
-      await getPendingBookings(req as Request, res as Response);
-      expect(statusMock).toHaveBeenCalledWith(500);
+      await getPendingBookings(req as Request, res as Response, next as unknown as NextFunction);
+      expect(next).toHaveBeenCalledWith(
+        expect.objectContaining({
+          statusCode: 500,
+          message: 'Serverfehler beim Abrufen der ausstehenden Buchungen',
+        }),
+      );
     });
   });
 
@@ -150,7 +157,7 @@ describe('bookingAdminController', () => {
         select: jest.fn().mockResolvedValue(mockMietfaecher),
       }) as any;
 
-      await getAvailableMietfaecher(req as Request, res as Response);
+      await getAvailableMietfaecher(req as Request, res as Response, next as unknown as NextFunction);
 
       expect(jsonMock).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -160,14 +167,19 @@ describe('bookingAdminController', () => {
       );
     });
 
-    it('should return 500 on error', async () => {
+    it('should forward 500 AppError to next on error', async () => {
       req = {};
       MockedMietfach.find = jest.fn().mockReturnValue({
         select: jest.fn().mockRejectedValue(new Error('DB error')),
       }) as any;
 
-      await getAvailableMietfaecher(req as Request, res as Response);
-      expect(statusMock).toHaveBeenCalledWith(500);
+      await getAvailableMietfaecher(req as Request, res as Response, next as unknown as NextFunction);
+      expect(next).toHaveBeenCalledWith(
+        expect.objectContaining({
+          statusCode: 500,
+          message: 'Serverfehler beim Abrufen der Mietfächer',
+        }),
+      );
     });
   });
 
@@ -175,7 +187,7 @@ describe('bookingAdminController', () => {
     it('should return 400 if no Mietfaecher assigned', async () => {
       req = { params: { userId: 'user1' }, body: {} };
 
-      await confirmPendingBooking(req as Request, res as Response);
+      await confirmPendingBooking(req as Request, res as Response, next as unknown as NextFunction);
 
       expect(statusMock).toHaveBeenCalledWith(400);
       expect(jsonMock).toHaveBeenCalledWith(
@@ -188,7 +200,7 @@ describe('bookingAdminController', () => {
     it('should return 400 if Mietfaecher is empty array', async () => {
       req = { params: { userId: 'user1' }, body: { assignedMietfaecher: [] } };
 
-      await confirmPendingBooking(req as Request, res as Response);
+      await confirmPendingBooking(req as Request, res as Response, next as unknown as NextFunction);
 
       expect(statusMock).toHaveBeenCalledWith(400);
     });
@@ -202,7 +214,7 @@ describe('bookingAdminController', () => {
         pendingBooking: null,
       }) as any;
 
-      await confirmPendingBooking(req as Request, res as Response);
+      await confirmPendingBooking(req as Request, res as Response, next as unknown as NextFunction);
 
       expect(statusMock).toHaveBeenCalledWith(404);
       expect(jsonMock).toHaveBeenCalledWith(
@@ -219,7 +231,7 @@ describe('bookingAdminController', () => {
       };
       MockedUser.findById = jest.fn().mockResolvedValue(null) as any;
 
-      await confirmPendingBooking(req as Request, res as Response);
+      await confirmPendingBooking(req as Request, res as Response, next as unknown as NextFunction);
 
       expect(statusMock).toHaveBeenCalledWith(404);
     });
@@ -230,7 +242,7 @@ describe('bookingAdminController', () => {
       req = { params: { userId: 'nonexistent' }, body: {} };
       MockedUser.findById = jest.fn().mockResolvedValue(null) as any;
 
-      await rejectPendingBooking(req as Request, res as Response);
+      await rejectPendingBooking(req as Request, res as Response, next as unknown as NextFunction);
 
       expect(statusMock).toHaveBeenCalledWith(404);
     });
@@ -242,7 +254,7 @@ describe('bookingAdminController', () => {
         kontakt: { email: 'test@test.com' },
       }) as any;
 
-      await rejectPendingBooking(req as Request, res as Response);
+      await rejectPendingBooking(req as Request, res as Response, next as unknown as NextFunction);
 
       expect(statusMock).toHaveBeenCalledWith(404);
     });
@@ -263,7 +275,7 @@ describe('bookingAdminController', () => {
         save: saveMock,
       }) as any;
 
-      await rejectPendingBooking(req as Request, res as Response);
+      await rejectPendingBooking(req as Request, res as Response, next as unknown as NextFunction);
 
       expect(saveMock).toHaveBeenCalled();
       expect(jsonMock).toHaveBeenCalledWith(expect.objectContaining({ success: true }));
@@ -282,7 +294,7 @@ describe('bookingAdminController', () => {
         save: jest.fn().mockResolvedValue(true),
       }) as any;
 
-      await rejectPendingBooking(req as Request, res as Response);
+      await rejectPendingBooking(req as Request, res as Response, next as unknown as NextFunction);
 
       expect(sendBookingRejectionEmail).toHaveBeenCalledWith('vendor@test.com', {
         name: 'Vendor',
@@ -303,7 +315,7 @@ describe('bookingAdminController', () => {
         save: saveMock,
       }) as any;
 
-      await rejectPendingBooking(req as Request, res as Response);
+      await rejectPendingBooking(req as Request, res as Response, next as unknown as NextFunction);
 
       expect(saveMock).toHaveBeenCalled();
       expect(statusMock).not.toHaveBeenCalledWith(500);

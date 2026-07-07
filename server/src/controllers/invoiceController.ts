@@ -5,11 +5,12 @@
  * @modified 2025-09-05
  */
 
-import { Response } from 'express';
+import { Response, NextFunction } from 'express';
 import { Types } from 'mongoose';
 import Invoice from '../models/Invoice';
 import { AuthRequest } from '../middleware/auth';
 import logger from '../utils/logger';
+import AppError from '../utils/AppError';
 import { invoiceGenerationService } from '../services/invoiceGenerationService';
 import path from 'path';
 import fs from 'fs';
@@ -20,7 +21,7 @@ import fs from 'fs';
  * Admin: sees all invoices
  * Vendor: sees only their own invoices
  */
-export const getInvoices = async (req: AuthRequest, res: Response): Promise<void> => {
+export const getInvoices = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { page = 1, limit = 10, status, vendor, month, year } = req.query;
     const userId = req.userId;
@@ -77,11 +78,7 @@ export const getInvoices = async (req: AuthRequest, res: Response): Promise<void
       }
     });
   } catch (err) {
-    logger.error('Error fetching invoices:', err);
-    res.status(500).json({
-      success: false,
-      message: 'Serverfehler beim Abrufen der Rechnungen'
-    });
+    next(new AppError('Serverfehler beim Abrufen der Rechnungen', 500, err));
   }
 };
 
@@ -90,7 +87,7 @@ export const getInvoices = async (req: AuthRequest, res: Response): Promise<void
  * Get single invoice by ID
  * Authorization: Admin can see all, vendors only their own
  */
-export const getInvoiceById = async (req: AuthRequest, res: Response): Promise<void> => {
+export const getInvoiceById = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id } = req.params;
     const userId = req.userId;
@@ -131,11 +128,7 @@ export const getInvoiceById = async (req: AuthRequest, res: Response): Promise<v
       data: invoice
     });
   } catch (err) {
-    logger.error('Error fetching invoice:', err);
-    res.status(500).json({
-      success: false,
-      message: 'Serverfehler beim Abrufen der Rechnung'
-    });
+    next(new AppError('Serverfehler beim Abrufen der Rechnung', 500, err));
   }
 };
 
@@ -145,7 +138,7 @@ export const getInvoiceById = async (req: AuthRequest, res: Response): Promise<v
  * Admin: can update all invoices
  * Vendor: can mark their own invoices as paid
  */
-export const updateInvoiceStatus = async (req: AuthRequest, res: Response): Promise<void> => {
+export const updateInvoiceStatus = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id } = req.params;
     const { status } = req.body;
@@ -215,11 +208,7 @@ export const updateInvoiceStatus = async (req: AuthRequest, res: Response): Prom
       message: `Rechnungsstatus erfolgreich auf "${status}" aktualisiert`
     });
   } catch (err) {
-    logger.error('Error updating invoice status:', err);
-    res.status(500).json({
-      success: false,
-      message: 'Serverfehler beim Aktualisieren des Status'
-    });
+    next(new AppError('Serverfehler beim Aktualisieren des Status', 500, err));
   }
 };
 
@@ -228,7 +217,7 @@ export const updateInvoiceStatus = async (req: AuthRequest, res: Response): Prom
  * Download invoice PDF
  * Authorization: Admin can download all, vendors only their own
  */
-export const downloadInvoicePdf = async (req: AuthRequest, res: Response): Promise<void> => {
+export const downloadInvoicePdf = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id } = req.params;
     const userId = req.userId;
@@ -299,11 +288,7 @@ export const downloadInvoicePdf = async (req: AuthRequest, res: Response): Promi
     fileStream.pipe(res);
 
   } catch (err) {
-    logger.error('Error downloading invoice PDF:', err);
-    res.status(500).json({
-      success: false,
-      message: 'Serverfehler beim Herunterladen der PDF'
-    });
+    next(new AppError('Serverfehler beim Herunterladen der PDF', 500, err));
   }
 };
 
@@ -312,7 +297,7 @@ export const downloadInvoicePdf = async (req: AuthRequest, res: Response): Promi
  * Manually trigger invoice generation
  * Admin only
  */
-export const generateInvoices = async (req: AuthRequest, res: Response): Promise<void> => {
+export const generateInvoices = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const isAdmin = req.user?.isAdmin;
 
@@ -367,11 +352,7 @@ export const generateInvoices = async (req: AuthRequest, res: Response): Promise
       message: 'Rechnungsgenerierung erfolgreich gestartet'
     });
   } catch (err) {
-    logger.error('Error generating invoices:', err);
-    res.status(500).json({
-      success: false,
-      message: 'Serverfehler bei der Rechnungsgenerierung'
-    });
+    next(new AppError('Serverfehler bei der Rechnungsgenerierung', 500, err));
   }
 };
 
@@ -380,7 +361,7 @@ export const generateInvoices = async (req: AuthRequest, res: Response): Promise
  * Get invoice statistics for admin dashboard
  * Admin only
  */
-export const getInvoiceStats = async (req: AuthRequest, res: Response): Promise<void> => {
+export const getInvoiceStats = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const isAdmin = req.user?.isAdmin;
 
@@ -459,11 +440,7 @@ export const getInvoiceStats = async (req: AuthRequest, res: Response): Promise<
       }
     });
   } catch (err) {
-    logger.error('Error fetching invoice statistics:', err);
-    res.status(500).json({
-      success: false,
-      message: 'Serverfehler beim Abrufen der Statistiken'
-    });
+    next(new AppError('Serverfehler beim Abrufen der Statistiken', 500, err));
   }
 };
 
@@ -472,7 +449,7 @@ export const getInvoiceStats = async (req: AuthRequest, res: Response): Promise<
  * Generate invoices for multiple vendors at once
  * Admin only
  */
-export const bulkGenerateInvoices = async (req: AuthRequest, res: Response): Promise<void> => {
+export const bulkGenerateInvoices = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const isAdmin = req.user?.isAdmin;
 
@@ -582,11 +559,7 @@ export const bulkGenerateInvoices = async (req: AuthRequest, res: Response): Pro
       message: `Bulk-Generierung abgeschlossen: ${successCount} erfolgreich, ${errorCount} Fehler`
     });
   } catch (err) {
-    logger.error('Error in bulk invoice generation:', err);
-    res.status(500).json({
-      success: false,
-      message: 'Serverfehler bei der Bulk-Rechnungsgenerierung'
-    });
+    next(new AppError('Serverfehler bei der Bulk-Rechnungsgenerierung', 500, err));
   }
 };
 
@@ -595,7 +568,7 @@ export const bulkGenerateInvoices = async (req: AuthRequest, res: Response): Pro
  * Edit invoice with restricted fields
  * Admin only - can only edit notes, dueDate, and limited fields
  */
-export const editInvoice = async (req: AuthRequest, res: Response): Promise<void> => {
+export const editInvoice = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const isAdmin = req.user?.isAdmin;
 
@@ -720,11 +693,7 @@ export const editInvoice = async (req: AuthRequest, res: Response): Promise<void
       auditTrail: auditEntry
     });
   } catch (err) {
-    logger.error('Error editing invoice:', err);
-    res.status(500).json({
-      success: false,
-      message: 'Serverfehler beim Bearbeiten der Rechnung'
-    });
+    next(new AppError('Serverfehler beim Bearbeiten der Rechnung', 500, err));
   }
 };
 
@@ -733,7 +702,7 @@ export const editInvoice = async (req: AuthRequest, res: Response): Promise<void
  * Resend invoice email notification
  * Admin only
  */
-export const resendInvoiceEmail = async (req: AuthRequest, res: Response): Promise<void> => {
+export const resendInvoiceEmail = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const isAdmin = req.user?.isAdmin;
 
@@ -872,26 +841,17 @@ export const resendInvoiceEmail = async (req: AuthRequest, res: Response): Promi
       invoice.lastEmailAttempt = now;
       await invoice.save();
 
-      logger.error('Failed to resend invoice email:', emailError);
-
-      res.status(500).json({
-        success: false,
-        message: 'E-Mail konnte nicht versendet werden: ' + (emailError instanceof Error ? emailError.message : 'Unbekannter Fehler')
-      });
+      next(new AppError('E-Mail konnte nicht versendet werden: ' + (emailError instanceof Error ? emailError.message : 'Unbekannter Fehler'), 500, emailError));
     }
 
   } catch (err) {
-    logger.error('Error resending invoice email:', err);
-    res.status(500).json({
-      success: false,
-      message: 'Serverfehler beim Erneut-Versenden der E-Mail'
-    });
+    next(new AppError('Serverfehler beim Erneut-Versenden der E-Mail', 500, err));
   }
 };
 /**
  * Export invoices to CSV format
  */
-export const exportInvoices = async (req: AuthRequest, res: Response): Promise<void> => {
+export const exportInvoices = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const isAdmin = req.user?.isAdmin;
 
@@ -971,11 +931,7 @@ export const exportInvoices = async (req: AuthRequest, res: Response): Promise<v
     res.end();
 
   } catch (err) {
-    logger.error('Error exporting invoices:', err);
-    res.status(500).json({
-      success: false,
-      message: 'Serverfehler beim Export der Rechnungen'
-    });
+    next(new AppError('Serverfehler beim Export der Rechnungen', 500, err));
   }
 };
 
@@ -984,7 +940,7 @@ export const exportInvoices = async (req: AuthRequest, res: Response): Promise<v
  * Soft delete (cancel) invoice
  * Admin only
  */
-export const cancelInvoice = async (req: AuthRequest, res: Response): Promise<void> => {
+export const cancelInvoice = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const isAdmin = req.user?.isAdmin;
 
@@ -1083,10 +1039,6 @@ export const cancelInvoice = async (req: AuthRequest, res: Response): Promise<vo
     });
 
   } catch (err) {
-    logger.error('Error cancelling invoice:', err);
-    res.status(500).json({
-      success: false,
-      message: 'Serverfehler beim Stornieren der Rechnung'
-    });
+    next(new AppError('Serverfehler beim Stornieren der Rechnung', 500, err));
   }
 };

@@ -16,16 +16,16 @@
 
 import express from 'express';
 import VendorService from '../services/vendorService';
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { cacheMiddleware } from '../middleware/cacheMiddleware';
 import { getStoreMapData } from '../services/storeMapService';
 import { searchPublicProducts } from '../services/publicProductService';
-import logger from '../utils/logger';
+import AppError from '../utils/AppError';
 
 const router = express.Router();
 
 // Öffentliche Produktsuche für Käufer (F1) — cached 5 min.
-router.get('/products', cacheMiddleware(300), async (req: Request, res: Response): Promise<void> => {
+router.get('/products', cacheMiddleware(300), async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const categories = req.query.categories
       ? (req.query.categories as string).split(',').filter(Boolean)
@@ -40,13 +40,12 @@ router.get('/products', cacheMiddleware(300), async (req: Request, res: Response
     });
     res.json({ success: true, data: result });
   } catch (error) {
-    logger.error('Error searching public products', { error });
-    res.status(500).json({ success: false, message: 'Serverfehler' });
+    next(new AppError('Serverfehler', 500, error));
   }
 });
 
 // Get public vendor listings with optimized performance (cached for 5 minutes)
-router.get('/vendors', cacheMiddleware(300), async (req: Request, res: Response): Promise<void> => {
+router.get('/vendors', cacheMiddleware(300), async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const page = parseInt(req.query.page as string) || 1;
     const limit = Math.min(parseInt(req.query.limit as string) || 20, 50); // Max 50 per page
@@ -69,16 +68,12 @@ router.get('/vendors', cacheMiddleware(300), async (req: Request, res: Response)
       ...result
     });
   } catch (error) {
-    logger.error('Error getting public vendors', { error });
-    res.status(500).json({
-      success: false,
-      message: 'Fehler beim Abrufen der Direktvermarkter'
-    });
+    next(new AppError('Fehler beim Abrufen der Direktvermarkter', 500, error));
   }
 });
 
 // Get single vendor details (cached for 10 minutes)
-router.get('/vendors/:id', cacheMiddleware(600), async (req: Request, res: Response): Promise<void> => {
+router.get('/vendors/:id', cacheMiddleware(600), async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id } = req.params;
     
@@ -97,16 +92,12 @@ router.get('/vendors/:id', cacheMiddleware(600), async (req: Request, res: Respo
       vendor
     });
   } catch (error) {
-    logger.error('Error getting vendor details', { error });
-    res.status(500).json({
-      success: false,
-      message: 'Fehler beim Abrufen der Direktvermarkter-Details'
-    });
+    next(new AppError('Fehler beim Abrufen der Direktvermarkter-Details', 500, error));
   }
 });
 
 // Get store map data: positioned Mietfächer with public-safe occupancy (cached for 5 minutes)
-router.get('/store-map', cacheMiddleware(300), async (_req: Request, res: Response): Promise<void> => {
+router.get('/store-map', cacheMiddleware(300), async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const mietfaecher = await getStoreMapData();
     res.json({
@@ -114,16 +105,12 @@ router.get('/store-map', cacheMiddleware(300), async (_req: Request, res: Respon
       mietfaecher
     });
   } catch (error) {
-    logger.error('Error getting store map data', { error });
-    res.status(500).json({
-      success: false,
-      message: 'Fehler beim Abrufen der Ladenkarte'
-    });
+    next(new AppError('Fehler beim Abrufen der Ladenkarte', 500, error));
   }
 });
 
 // Get vendor statistics (public summary) (cached for 5 minutes)
-router.get('/stats', cacheMiddleware(300), async (req: Request, res: Response): Promise<void> => {
+router.get('/stats', cacheMiddleware(300), async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const stats = await VendorService.getVendorStatistics();
     
@@ -137,11 +124,7 @@ router.get('/stats', cacheMiddleware(300), async (req: Request, res: Response): 
       }
     });
   } catch (error) {
-    logger.error('Error getting public vendor stats', { error });
-    res.status(500).json({
-      success: false,
-      message: 'Fehler beim Abrufen der Statistiken'
-    });
+    next(new AppError('Fehler beim Abrufen der Statistiken', 500, error));
   }
 });
 

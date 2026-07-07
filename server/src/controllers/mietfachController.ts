@@ -4,9 +4,10 @@
  * Handles all Mietfach operations including availability queries, contract management, and pricing
  */
 
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import Mietfach from '../models/Mietfach';
 import logger from '../utils/logger';
+import AppError from '../utils/AppError';
 
 /**
  * Retrieves all rental units (Mietfächer)
@@ -16,17 +17,17 @@ import logger from '../utils/logger';
  * @returns Promise<void> - Resolves with complete Mietfächer list or error message
  * @complexity O(n) where n is the number of Mietfächer
  */
-export const getAllMietfaecher = async (req: Request, res: Response): Promise<void> => {
+export const getAllMietfaecher = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const mietfaecher = await Mietfach.find();
     res.json(mietfaecher);
-  } catch (_err) {
-    res.status(500).json({ message: 'Serverfehler beim Abrufen der Mietfächer' });
+  } catch (err) {
+    next(new AppError('Serverfehler beim Abrufen der Mietfächer', 500, err));
   }
 };
 
 // Alle Mietfächer mit Vertragsinformationen abrufen
-export const getAllMietfaecherWithContracts = async (req: Request, res: Response): Promise<void> => {
+export const getAllMietfaecherWithContracts = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const mongoose = require('mongoose');
     const Vertrag = mongoose.model('Vertrag');
@@ -73,13 +74,12 @@ export const getAllMietfaecherWithContracts = async (req: Request, res: Response
 
     res.json(result);
   } catch (err) {
-    logger.error('Fehler beim Abrufen der Mietfächer mit Verträgen:', err);
-    res.status(500).json({ message: 'Serverfehler beim Abrufen der Mietfächer' });
+    next(new AppError('Serverfehler beim Abrufen der Mietfächer', 500, err));
   }
 };
 
 // Mietfach nach ID abrufen
-export const getMietfachById = async (req: Request, res: Response): Promise<void> => {
+export const getMietfachById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const mietfach = await Mietfach.findById(req.params.id);
     if (!mietfach) {
@@ -87,8 +87,8 @@ export const getMietfachById = async (req: Request, res: Response): Promise<void
       return;
     }
     res.json(mietfach);
-  } catch (_err) {
-    res.status(500).json({ message: 'Serverfehler beim Abrufen des Mietfachs' });
+  } catch (err) {
+    next(new AppError('Serverfehler beim Abrufen des Mietfachs', 500, err));
   }
 };
 
@@ -165,7 +165,7 @@ export const updateMietfach = async (req: Request, res: Response): Promise<void>
 };
 
 // Mietfach löschen
-export const deleteMietfach = async (req: Request, res: Response): Promise<void> => {
+export const deleteMietfach = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const deletedMietfach = await Mietfach.findByIdAndDelete(req.params.id);
     
@@ -175,18 +175,18 @@ export const deleteMietfach = async (req: Request, res: Response): Promise<void>
     }
     
     res.json({ message: 'Mietfach erfolgreich gelöscht' });
-  } catch (_err) {
-    res.status(500).json({ message: 'Serverfehler beim Löschen des Mietfachs' });
+  } catch (err) {
+    next(new AppError('Serverfehler beim Löschen des Mietfachs', 500, err));
   }
 };
 
 // Mietfächer nach Typ filtern
-export const getMietfaecherByTyp = async (req: Request, res: Response): Promise<void> => {
+export const getMietfaecherByTyp = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { typ } = req.query;
     const mietfaecher = await Mietfach.find({ typ });
     res.json(mietfaecher);
-  } catch (_err) {
-    res.status(500).json({ message: 'Serverfehler beim Filtern der Mietfächer' });
+  } catch (err) {
+    next(new AppError('Serverfehler beim Filtern der Mietfächer', 500, err));
   }
 };

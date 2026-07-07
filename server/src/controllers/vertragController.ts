@@ -4,7 +4,7 @@
  * Handles all contract operations including creation, pricing calculations, and service management
  */
 
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import Vertrag from '../models/Vertrag';
 import User from '../models/User';
 import mongoose from 'mongoose';
@@ -17,6 +17,7 @@ import {
   MietfachTyp
 } from '../types/zusatzleistungenTypes';
 import logger from '../utils/logger';
+import AppError from '../utils/AppError';
 
 /**
  * Retrieves all contracts with populated user and Mietfach data
@@ -26,7 +27,7 @@ import logger from '../utils/logger';
  * @returns Promise<void> - Resolves with contract list including pricing calculations or error message
  * @complexity O(n*m) where n is number of contracts and m is average services per contract
  */
-export const getAllVertraege = async (req: Request, res: Response): Promise<void> => {
+export const getAllVertraege = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const vertraege = await Vertrag.find()
       .populate('user', 'username kontakt.name kontakt.email')
@@ -116,16 +117,12 @@ export const getAllVertraege = async (req: Request, res: Response): Promise<void
       vertraege: transformedVertraege
     });
   } catch (err) {
-    logger.error('Fehler beim Abrufen der Verträge:', err);
-    res.status(500).json({ 
-      success: false,
-      message: 'Serverfehler beim Abrufen der Verträge' 
-    });
+    next(new AppError('Serverfehler beim Abrufen der Verträge', 500, err));
   }
 };
 
 // Vertrag nach ID abrufen
-export const getVertragById = async (req: Request, res: Response): Promise<void> => {
+export const getVertragById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const vertrag = await Vertrag.findById(req.params.id)
       .populate('user', 'username kontakt.name adressen')
@@ -144,11 +141,7 @@ export const getVertragById = async (req: Request, res: Response): Promise<void>
       vertrag
     });
   } catch (err) {
-    logger.error('Fehler beim Abrufen des Vertrags:', err);
-    res.status(500).json({ 
-      success: false,
-      message: 'Serverfehler beim Abrufen des Vertrags' 
-    });
+    next(new AppError('Serverfehler beim Abrufen des Vertrags', 500, err));
   }
 };
 
@@ -212,7 +205,7 @@ export const updateVertrag = async (req: Request, res: Response): Promise<void> 
 };
 
 // Vertrag löschen
-export const deleteVertrag = async (req: Request, res: Response): Promise<void> => {
+export const deleteVertrag = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const deletedVertrag = await Vertrag.findByIdAndDelete(req.params.id);
     
@@ -229,16 +222,12 @@ export const deleteVertrag = async (req: Request, res: Response): Promise<void> 
       message: 'Vertrag erfolgreich gelöscht' 
     });
   } catch (err) {
-    logger.error('Fehler beim Löschen des Vertrags:', err);
-    res.status(500).json({ 
-      success: false,
-      message: 'Serverfehler beim Löschen des Vertrags' 
-    });
+    next(new AppError('Serverfehler beim Löschen des Vertrags', 500, err));
   }
 };
 
 // Verträge nach Benutzer abrufen
-export const getVertraegeByUser = async (req: Request, res: Response): Promise<void> => {
+export const getVertraegeByUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { userId } = req.params;
     const vertraege = await Vertrag.find({ user: userId })
@@ -249,11 +238,7 @@ export const getVertraegeByUser = async (req: Request, res: Response): Promise<v
       vertraege
     });
   } catch (err) {
-    logger.error('Fehler beim Abrufen der Verträge für den Benutzer:', err);
-    res.status(500).json({ 
-      success: false,
-      message: 'Serverfehler beim Abrufen der Verträge für diesen Benutzer' 
-    });
+    next(new AppError('Serverfehler beim Abrufen der Verträge für diesen Benutzer', 500, err));
   }
 };
 
@@ -537,7 +522,7 @@ export const createVertragFromPendingBooking = async (
 };
 
 // Price calculation endpoint with Zusatzleistungen support
-export const calculatePriceWithZusatzleistungen = async (req: Request, res: Response): Promise<void> => {
+export const calculatePriceWithZusatzleistungen = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { mietfachTyp, laufzeitMonate, provisionssatz, zusatzleistungen }: PriceCalculationRequest = req.body;
 
@@ -590,16 +575,12 @@ export const calculatePriceWithZusatzleistungen = async (req: Request, res: Resp
       });
     }
   } catch (error) {
-    logger.error('Fehler bei Preisberechnung:', error);
-    res.status(500).json({ 
-      success: false,
-      error: 'Fehler bei der Preisberechnung' 
-    });
+    next(new AppError('Fehler bei der Preisberechnung', 500, error));
   }
 };
 
 // Update Zusatzleistungen for existing contract (Vendor endpoint)
-export const updateZusatzleistungen = async (req: Request, res: Response): Promise<void> => {
+export const updateZusatzleistungen = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id } = req.params;
     const { lagerservice, versandservice } = req.body;
@@ -709,16 +690,12 @@ export const updateZusatzleistungen = async (req: Request, res: Response): Promi
     });
 
   } catch (error) {
-    logger.error('Fehler beim Aktualisieren der Zusatzleistungen:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Interner Serverfehler beim Aktualisieren der Zusatzleistungen'
-    });
+    next(new AppError('Interner Serverfehler beim Aktualisieren der Zusatzleistungen', 500, error));
   }
 };
 
 // Enhanced contract creation with Zusatzleistungen support
-export const createVertragWithZusatzleistungen = async (req: Request, res: Response): Promise<void> => {
+export const createVertragWithZusatzleistungen = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { mietfachId, laufzeitMonate, provisionssatz, zusatzleistungen }: CreateVertragRequest = req.body;
     const vendorId = (req as any).user?._id;
@@ -834,11 +811,7 @@ export const createVertragWithZusatzleistungen = async (req: Request, res: Respo
       }
     });
   } catch (error) {
-    logger.error('Fehler beim Erstellen des Vertrags:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Interner Serverfehler beim Erstellen des Vertrags'
-    });
+    next(new AppError('Interner Serverfehler beim Erstellen des Vertrags', 500, error));
   }
 };
 

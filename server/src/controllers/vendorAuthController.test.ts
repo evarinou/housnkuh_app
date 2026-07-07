@@ -12,7 +12,7 @@ jest.mock('fs');
 jest.mock('path');
 jest.mock('../utils/logger');
 
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { Types } from 'mongoose';
 import {
   getVendorInvoices,
@@ -38,6 +38,7 @@ describe('vendorAuthController - Invoice Endpoints', () => {
   let jsonMock: jest.Mock;
   let statusMock: jest.Mock;
   let setHeaderMock: jest.Mock;
+  let next: jest.Mock;
 
   const mockVendorId = new Types.ObjectId().toString();
   const mockInvoiceId = new Types.ObjectId().toString();
@@ -47,6 +48,7 @@ describe('vendorAuthController - Invoice Endpoints', () => {
     jsonMock = jest.fn().mockReturnThis();
     statusMock = jest.fn().mockReturnThis();
     setHeaderMock = jest.fn().mockReturnThis();
+    next = jest.fn();
 
     res = {
       json: jsonMock,
@@ -96,7 +98,7 @@ describe('vendorAuthController - Invoice Endpoints', () => {
     });
 
     it('should return vendor invoices with pagination', async () => {
-      await getVendorInvoices(req as AuthRequest, res as Response);
+      await getVendorInvoices(req as AuthRequest, res as Response, next as NextFunction);
 
       expect(MockedUser.findById).toHaveBeenCalledWith(mockVendorId);
       expect(MockedInvoice.find).toHaveBeenCalledWith({ vendor: mockVendorId });
@@ -117,7 +119,7 @@ describe('vendorAuthController - Invoice Endpoints', () => {
     it('should filter by status when provided', async () => {
       req.query = { status: 'paid' };
 
-      await getVendorInvoices(req as AuthRequest, res as Response);
+      await getVendorInvoices(req as AuthRequest, res as Response, next as NextFunction);
 
       expect(MockedInvoice.find).toHaveBeenCalledWith({ vendor: mockVendorId, status: 'paid' });
     });
@@ -125,7 +127,7 @@ describe('vendorAuthController - Invoice Endpoints', () => {
     it('should filter by month and year when provided', async () => {
       req.query = { month: '12', year: '2024' };
 
-      await getVendorInvoices(req as AuthRequest, res as Response);
+      await getVendorInvoices(req as AuthRequest, res as Response, next as NextFunction);
 
       expect(MockedInvoice.find).toHaveBeenCalledWith({
         vendor: mockVendorId,
@@ -137,7 +139,7 @@ describe('vendorAuthController - Invoice Endpoints', () => {
     it('should return 403 when user not authenticated', async () => {
       req.user = undefined;
 
-      await getVendorInvoices(req as AuthRequest, res as Response);
+      await getVendorInvoices(req as AuthRequest, res as Response, next as NextFunction);
 
       expect(statusMock).toHaveBeenCalledWith(403);
       expect(jsonMock).toHaveBeenCalledWith({
@@ -151,7 +153,7 @@ describe('vendorAuthController - Invoice Endpoints', () => {
         select: jest.fn().mockResolvedValue({ isVendor: false })
       });
 
-      await getVendorInvoices(req as AuthRequest, res as Response);
+      await getVendorInvoices(req as AuthRequest, res as Response, next as NextFunction);
 
       expect(statusMock).toHaveBeenCalledWith(404);
       expect(jsonMock).toHaveBeenCalledWith({
@@ -178,7 +180,7 @@ describe('vendorAuthController - Invoice Endpoints', () => {
     });
 
     it('should return specific vendor invoice', async () => {
-      await getVendorInvoiceById(req as AuthRequest, res as Response);
+      await getVendorInvoiceById(req as AuthRequest, res as Response, next as NextFunction);
 
       expect(MockedInvoice.findById).toHaveBeenCalledWith(mockInvoiceId);
       expect(jsonMock).toHaveBeenCalledWith({
@@ -190,7 +192,7 @@ describe('vendorAuthController - Invoice Endpoints', () => {
     it('should return 400 for invalid ObjectId', async () => {
       req.params = { id: 'invalid-id' };
 
-      await getVendorInvoiceById(req as AuthRequest, res as Response);
+      await getVendorInvoiceById(req as AuthRequest, res as Response, next as NextFunction);
 
       expect(statusMock).toHaveBeenCalledWith(400);
       expect(jsonMock).toHaveBeenCalledWith({
@@ -204,7 +206,7 @@ describe('vendorAuthController - Invoice Endpoints', () => {
         populate: jest.fn().mockResolvedValue(null)
       });
 
-      await getVendorInvoiceById(req as AuthRequest, res as Response);
+      await getVendorInvoiceById(req as AuthRequest, res as Response, next as NextFunction);
 
       expect(statusMock).toHaveBeenCalledWith(404);
       expect(jsonMock).toHaveBeenCalledWith({
@@ -222,7 +224,7 @@ describe('vendorAuthController - Invoice Endpoints', () => {
         populate: jest.fn().mockResolvedValue(otherVendorInvoice)
       });
 
-      await getVendorInvoiceById(req as AuthRequest, res as Response);
+      await getVendorInvoiceById(req as AuthRequest, res as Response, next as NextFunction);
 
       expect(statusMock).toHaveBeenCalledWith(403);
       expect(jsonMock).toHaveBeenCalledWith({
@@ -252,7 +254,7 @@ describe('vendorAuthController - Invoice Endpoints', () => {
     });
 
     it('should download PDF when authorized', async () => {
-      await downloadVendorInvoicePdf(req as AuthRequest, res as Response);
+      await downloadVendorInvoicePdf(req as AuthRequest, res as Response, next as NextFunction);
 
       expect(setHeaderMock).toHaveBeenCalledWith('Content-Type', 'application/pdf');
       expect(setHeaderMock).toHaveBeenCalledWith('Content-Disposition', 'attachment; filename="INV-2025-001.pdf"');
@@ -262,7 +264,7 @@ describe('vendorAuthController - Invoice Endpoints', () => {
     it('should return 404 when PDF file does not exist', async () => {
       mockedFs.existsSync = jest.fn().mockReturnValue(false);
 
-      await downloadVendorInvoicePdf(req as AuthRequest, res as Response);
+      await downloadVendorInvoicePdf(req as AuthRequest, res as Response, next as NextFunction);
 
       expect(statusMock).toHaveBeenCalledWith(404);
       expect(jsonMock).toHaveBeenCalledWith({
@@ -280,7 +282,7 @@ describe('vendorAuthController - Invoice Endpoints', () => {
         populate: jest.fn().mockResolvedValue(otherVendorInvoice)
       });
 
-      await downloadVendorInvoicePdf(req as AuthRequest, res as Response);
+      await downloadVendorInvoicePdf(req as AuthRequest, res as Response, next as NextFunction);
 
       expect(statusMock).toHaveBeenCalledWith(403);
       expect(jsonMock).toHaveBeenCalledWith({
@@ -307,7 +309,7 @@ describe('vendorAuthController - Invoice Endpoints', () => {
     });
 
     it('should return vendor invoice summary', async () => {
-      await getVendorInvoiceSummary(req as AuthRequest, res as Response);
+      await getVendorInvoiceSummary(req as AuthRequest, res as Response, next as NextFunction);
 
       expect(MockedInvoice.find).toHaveBeenCalledWith({
         vendor: mockVendorId,
@@ -340,7 +342,7 @@ describe('vendorAuthController - Invoice Endpoints', () => {
     it('should filter by year and month when provided', async () => {
       req.query = { year: '2024', month: '12' };
 
-      await getVendorInvoiceSummary(req as AuthRequest, res as Response);
+      await getVendorInvoiceSummary(req as AuthRequest, res as Response, next as NextFunction);
 
       expect(MockedInvoice.find).toHaveBeenCalledWith({
         vendor: mockVendorId,

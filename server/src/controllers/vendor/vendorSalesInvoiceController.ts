@@ -8,17 +8,17 @@
  * (Ownership über req.user.id).
  */
 
-import { Response } from 'express';
+import { NextFunction, Response } from 'express';
 import mongoose, { Types } from 'mongoose';
 import fs from 'fs';
 import path from 'path';
 import { AuthRequest } from '../../middleware/auth';
 import { SalesInvoice } from '../../models/SalesInvoice';
 import { VendorSale } from '../../models/VendorSale';
-import logger from '../../utils/logger';
+import { AppError } from '../../utils/AppError';
 
 /** GET /vendor-auth/sales-invoices — Verkaufsrechnungen des Vendors (paginiert). */
-export const getVendorSalesInvoices = async (req: AuthRequest, res: Response): Promise<void> => {
+export const getVendorSalesInvoices = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     if (!req.user?.id) {
       res.status(403).json({ success: false, message: 'Keine Berechtigung' });
@@ -50,13 +50,12 @@ export const getVendorSalesInvoices = async (req: AuthRequest, res: Response): P
       }
     });
   } catch (error) {
-    logger.error('[vendorSalesInvoices] Liste fehlgeschlagen', { error });
-    res.status(500).json({ success: false, message: 'Serverfehler' });
+    next(new AppError('Serverfehler', 500, error));
   }
 };
 
 /** GET /vendor-auth/sales-invoices/:id — Detail einer eigenen Verkaufsrechnung. */
-export const getVendorSalesInvoiceById = async (req: AuthRequest, res: Response): Promise<void> => {
+export const getVendorSalesInvoiceById = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     if (!req.user?.id) {
       res.status(403).json({ success: false, message: 'Keine Berechtigung' });
@@ -74,13 +73,12 @@ export const getVendorSalesInvoiceById = async (req: AuthRequest, res: Response)
     }
     res.json({ success: true, data: invoice });
   } catch (error) {
-    logger.error('[vendorSalesInvoices] Detail fehlgeschlagen', { error });
-    res.status(500).json({ success: false, message: 'Serverfehler' });
+    next(new AppError('Serverfehler', 500, error));
   }
 };
 
 /** GET /vendor-auth/sales-invoices/:id/download — PDF der eigenen Verkaufsrechnung. */
-export const downloadVendorSalesInvoicePdf = async (req: AuthRequest, res: Response): Promise<void> => {
+export const downloadVendorSalesInvoicePdf = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     if (!req.user?.id) {
       res.status(403).json({ success: false, message: 'Keine Berechtigung' });
@@ -107,8 +105,7 @@ export const downloadVendorSalesInvoicePdf = async (req: AuthRequest, res: Respo
     }
     res.download(absPath, `${invoice.invoiceNumber}.pdf`);
   } catch (error) {
-    logger.error('[vendorSalesInvoices] Download fehlgeschlagen', { error });
-    res.status(500).json({ success: false, message: 'Serverfehler' });
+    next(new AppError('Serverfehler', 500, error));
   }
 };
 
@@ -117,7 +114,7 @@ export const downloadVendorSalesInvoicePdf = async (req: AuthRequest, res: Respo
  * Optional: ?from=YYYY-MM-DD&to=YYYY-MM-DD (Standard: alle).
  * Liefert Gesamtsummen, Monatsverlauf und Top-Produkte (Netto).
  */
-export const getVendorSalesReport = async (req: AuthRequest, res: Response): Promise<void> => {
+export const getVendorSalesReport = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     if (!req.user?.id) {
       res.status(403).json({ success: false, message: 'Keine Berechtigung' });
@@ -183,7 +180,6 @@ export const getVendorSalesReport = async (req: AuthRequest, res: Response): Pro
       }
     });
   } catch (error) {
-    logger.error('[vendorSalesReport] Report fehlgeschlagen', { error });
-    res.status(500).json({ success: false, message: 'Serverfehler' });
+    next(new AppError('Serverfehler', 500, error));
   }
 };

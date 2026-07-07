@@ -4,16 +4,16 @@
  * @created 2026-03-29
  */
 
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
+import AppError from '../../utils/AppError';
 import User from '../../models/User';
-import logger from '../../utils/logger';
 
 // ===== NEWSLETTER MANAGEMENT =====
 
 /**
  * Retrieves all confirmed newsletter subscribers
  */
-export const getNewsletterSubscribers = async (req: Request, res: Response): Promise<void> => {
+export const getNewsletterSubscribers = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const subscribers = await User.find({
       'kontakt.mailNewsletter': true,
@@ -26,11 +26,7 @@ export const getNewsletterSubscribers = async (req: Request, res: Response): Pro
       subscribers,
     });
   } catch (err) {
-    logger.error('Fehler beim Abrufen der Newsletter-Abonnenten:', err);
-    res.status(500).json({
-      success: false,
-      message: 'Serverfehler beim Abrufen der Newsletter-Abonnenten',
-    });
+    next(new AppError('Serverfehler beim Abrufen der Newsletter-Abonnenten', 500, err));
   }
 };
 
@@ -40,6 +36,7 @@ export const getNewsletterSubscribers = async (req: Request, res: Response): Pro
 export const getNewsletterSubscribersByType = async (
   req: Request,
   res: Response,
+  next: NextFunction,
 ): Promise<void> => {
   try {
     const { type } = req.params;
@@ -56,18 +53,14 @@ export const getNewsletterSubscribersByType = async (
       subscribers,
     });
   } catch (err) {
-    logger.error('Fehler beim Abrufen der Newsletter-Abonnenten nach Typ:', err);
-    res.status(500).json({
-      success: false,
-      message: 'Serverfehler beim Abrufen der Newsletter-Abonnenten nach Typ',
-    });
+    next(new AppError('Serverfehler beim Abrufen der Newsletter-Abonnenten nach Typ', 500, err));
   }
 };
 
 /**
  * Delete newsletter subscriber (or deactivate if full account)
  */
-export const deleteNewsletterSubscriber = async (req: Request, res: Response): Promise<void> => {
+export const deleteNewsletterSubscriber = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id } = req.params;
 
@@ -96,11 +89,7 @@ export const deleteNewsletterSubscriber = async (req: Request, res: Response): P
       message: 'Newsletter-Abonnent erfolgreich entfernt',
     });
   } catch (err) {
-    logger.error('Fehler beim Löschen des Newsletter-Abonnenten:', err);
-    res.status(500).json({
-      success: false,
-      message: 'Serverfehler beim Löschen des Newsletter-Abonnenten',
-    });
+    next(new AppError('Serverfehler beim Löschen des Newsletter-Abonnenten', 500, err));
   }
 };
 
@@ -109,7 +98,7 @@ export const deleteNewsletterSubscriber = async (req: Request, res: Response): P
 /**
  * Toggle vendor public visibility (R004)
  */
-export const toggleVendorVisibility = async (req: Request, res: Response): Promise<void> => {
+export const toggleVendorVisibility = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { vendorId } = req.params;
     const { isPubliclyVisible } = req.body;
@@ -146,18 +135,14 @@ export const toggleVendorVisibility = async (req: Request, res: Response): Promi
       },
     });
   } catch (err) {
-    logger.error('Error toggling vendor visibility:', err);
-    res.status(500).json({
-      success: false,
-      message: 'Server error toggling vendor visibility',
-    });
+    next(new AppError('Server error toggling vendor visibility', 500, err));
   }
 };
 
 /**
  * Bulk toggle vendor visibility (R004)
  */
-export const bulkToggleVendorVisibility = async (req: Request, res: Response): Promise<void> => {
+export const bulkToggleVendorVisibility = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { vendorIds, isPubliclyVisible } = req.body;
 
@@ -185,18 +170,14 @@ export const bulkToggleVendorVisibility = async (req: Request, res: Response): P
       modifiedCount: result.modifiedCount,
     });
   } catch (err) {
-    logger.error('Error bulk toggling vendor visibility:', err);
-    res.status(500).json({
-      success: false,
-      message: 'Server error bulk toggling vendor visibility',
-    });
+    next(new AppError('Server error bulk toggling vendor visibility', 500, err));
   }
 };
 
 /**
  * Update vendor verification status (R007)
  */
-export const updateVendorVerification = async (req: Request, res: Response): Promise<void> => {
+export const updateVendorVerification = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { vendorId } = req.params;
     const { verifyStatus } = req.body;
@@ -239,10 +220,6 @@ export const updateVendorVerification = async (req: Request, res: Response): Pro
       verifyStatus: verifyStatus,
     });
   } catch (err) {
-    logger.error('Error updating vendor verification:', err);
-    res.status(500).json({
-      success: false,
-      message: 'Server error updating vendor verification',
-    });
+    next(new AppError('Server error updating vendor verification', 500, err));
   }
 };

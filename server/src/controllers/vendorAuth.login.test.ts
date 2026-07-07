@@ -52,7 +52,7 @@ jest.mock('../utils/logger', () => ({
   },
 }));
 
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { loginVendor, confirmVendorEmail, changeVendorPassword, requestPasswordReset, resetPassword, resendConfirmationEmail } from './vendorAuthController';
 import User from '../models/User';
 import bcrypt from 'bcrypt';
@@ -65,18 +65,20 @@ describe('vendorAuthController - Login & Email Confirmation', () => {
   let res: Partial<Response>;
   let jsonMock: jest.Mock;
   let statusMock: jest.Mock;
+  let next: jest.Mock;
 
   beforeEach(() => {
     jsonMock = jest.fn().mockReturnThis();
     statusMock = jest.fn().mockReturnValue({ json: jsonMock });
     res = { json: jsonMock, status: statusMock } as Partial<Response>;
+    next = jest.fn();
     jest.clearAllMocks();
   });
 
   describe('loginVendor', () => {
     it('should return 400 if email is missing', async () => {
       req = { body: { password: 'test123' } };
-      await loginVendor(req as Request, res as Response);
+      await loginVendor(req as Request, res as Response, next as unknown as NextFunction);
       expect(statusMock).toHaveBeenCalledWith(400);
       expect(jsonMock).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -88,7 +90,7 @@ describe('vendorAuthController - Login & Email Confirmation', () => {
 
     it('should return 400 if password is missing', async () => {
       req = { body: { email: 'vendor@test.com' } };
-      await loginVendor(req as Request, res as Response);
+      await loginVendor(req as Request, res as Response, next as unknown as NextFunction);
       expect(statusMock).toHaveBeenCalledWith(400);
     });
 
@@ -96,7 +98,7 @@ describe('vendorAuthController - Login & Email Confirmation', () => {
       req = { body: { email: 'unknown@test.com', password: 'test123' } };
       MockedUser.findOne = jest.fn().mockResolvedValue(null) as any;
 
-      await loginVendor(req as Request, res as Response);
+      await loginVendor(req as Request, res as Response, next as unknown as NextFunction);
       expect(statusMock).toHaveBeenCalledWith(401);
       expect(jsonMock).toHaveBeenCalledWith(
         expect.objectContaining({ message: 'Ungültige Anmeldedaten' }),
@@ -117,7 +119,7 @@ describe('vendorAuthController - Login & Email Confirmation', () => {
         },
       }) as any;
 
-      await loginVendor(req as Request, res as Response);
+      await loginVendor(req as Request, res as Response, next as unknown as NextFunction);
       expect(statusMock).toHaveBeenCalledWith(401);
       expect(jsonMock).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -141,7 +143,7 @@ describe('vendorAuthController - Login & Email Confirmation', () => {
       }) as any;
       (bcrypt.compare as jest.Mock).mockResolvedValue(false);
 
-      await loginVendor(req as Request, res as Response);
+      await loginVendor(req as Request, res as Response, next as unknown as NextFunction);
       expect(statusMock).toHaveBeenCalledWith(401);
       expect(jsonMock).toHaveBeenCalledWith(
         expect.objectContaining({ message: 'Ungültige Anmeldedaten' }),
@@ -169,7 +171,7 @@ describe('vendorAuthController - Login & Email Confirmation', () => {
       (bcrypt.compare as jest.Mock).mockResolvedValue(true);
       (jwt.sign as jest.Mock).mockReturnValue('mock-vendor-token');
 
-      await loginVendor(req as Request, res as Response);
+      await loginVendor(req as Request, res as Response, next as unknown as NextFunction);
 
       expect(jsonMock).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -187,15 +189,15 @@ describe('vendorAuthController - Login & Email Confirmation', () => {
       req = { body: { email: 'vendor@test.com', password: 'test' } };
       MockedUser.findOne = jest.fn().mockRejectedValue(new Error('DB error')) as any;
 
-      await loginVendor(req as Request, res as Response);
-      expect(statusMock).toHaveBeenCalledWith(500);
+      await loginVendor(req as Request, res as Response, next as unknown as NextFunction);
+      expect(next).toHaveBeenCalledWith(expect.objectContaining({ statusCode: 500 }));
     });
   });
 
   describe('confirmVendorEmail', () => {
     it('should return 400 for empty token', async () => {
       req = { params: { token: '' } };
-      await confirmVendorEmail(req as Request, res as Response);
+      await confirmVendorEmail(req as Request, res as Response, next as unknown as NextFunction);
       expect(statusMock).toHaveBeenCalledWith(400);
       expect(jsonMock).toHaveBeenCalledWith(
         expect.objectContaining({ message: 'Ungültiger Bestätigungs-Link' }),
@@ -211,7 +213,7 @@ describe('vendorAuthController - Login & Email Confirmation', () => {
         .mockResolvedValueOnce(null)
         .mockResolvedValueOnce({ _id: 'vendor-id', isVendor: true });
 
-      await confirmVendorEmail(req as Request, res as Response);
+      await confirmVendorEmail(req as Request, res as Response, next as unknown as NextFunction);
       expect(statusMock).toHaveBeenCalledWith(400);
       expect(jsonMock).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -239,7 +241,7 @@ describe('vendorAuthController - Login & Email Confirmation', () => {
       };
       MockedUser.findOne = jest.fn().mockResolvedValueOnce(mockUser) as any;
 
-      await confirmVendorEmail(req as Request, res as Response);
+      await confirmVendorEmail(req as Request, res as Response, next as unknown as NextFunction);
 
       expect(mockUser.kontakt.newsletterConfirmed).toBe(true);
       expect(mockUser.kontakt.status).toBe('aktiv');
@@ -269,7 +271,7 @@ describe('vendorAuthController - Login & Email Confirmation', () => {
       };
       MockedUser.findOne = jest.fn().mockResolvedValueOnce(mockUser) as any;
 
-      await confirmVendorEmail(req as Request, res as Response);
+      await confirmVendorEmail(req as Request, res as Response, next as unknown as NextFunction);
       expect(jsonMock).toHaveBeenCalledWith(
         expect.objectContaining({
           success: true,
@@ -282,15 +284,15 @@ describe('vendorAuthController - Login & Email Confirmation', () => {
       req = { params: { token: 'valid-token' } };
       MockedUser.findOne = jest.fn().mockRejectedValue(new Error('DB error')) as any;
 
-      await confirmVendorEmail(req as Request, res as Response);
-      expect(statusMock).toHaveBeenCalledWith(500);
+      await confirmVendorEmail(req as Request, res as Response, next as unknown as NextFunction);
+      expect(next).toHaveBeenCalledWith(expect.objectContaining({ statusCode: 500 }));
     });
   });
 
   describe('changeVendorPassword', () => {
     it('should return 400 if passwords are missing', async () => {
       req = { body: {}, userId: 'vendor-id' } as any;
-      await changeVendorPassword(req as Request, res as Response);
+      await changeVendorPassword(req as Request, res as Response, next as unknown as NextFunction);
       expect(statusMock).toHaveBeenCalledWith(400);
     });
 
@@ -303,7 +305,7 @@ describe('vendorAuthController - Login & Email Confirmation', () => {
       }) as any;
       (bcrypt.compare as jest.Mock).mockResolvedValue(false);
 
-      await changeVendorPassword(req as Request, res as Response);
+      await changeVendorPassword(req as Request, res as Response, next as unknown as NextFunction);
       expect(statusMock).toHaveBeenCalledWith(401);
       expect(jsonMock).toHaveBeenCalledWith(
         expect.objectContaining({ message: 'Das aktuelle Passwort ist nicht korrekt' }),
@@ -322,7 +324,7 @@ describe('vendorAuthController - Login & Email Confirmation', () => {
       (bcrypt.genSalt as jest.Mock).mockResolvedValue('salt');
       (bcrypt.hash as jest.Mock).mockResolvedValue('new-hashed');
 
-      await changeVendorPassword(req as Request, res as Response);
+      await changeVendorPassword(req as Request, res as Response, next as unknown as NextFunction);
       expect(saveMock).toHaveBeenCalled();
       expect(jsonMock).toHaveBeenCalledWith(
         expect.objectContaining({ success: true, message: 'Passwort erfolgreich geändert' }),
@@ -335,7 +337,7 @@ describe('vendorAuthController - Login & Email Confirmation', () => {
       req = { body: { email: 'unknown@test.com' }, ip: '127.0.0.1', headers: {} };
       MockedUser.findOne = jest.fn().mockResolvedValue(null) as any;
 
-      await requestPasswordReset(req as Request, res as Response);
+      await requestPasswordReset(req as Request, res as Response, next as unknown as NextFunction);
       expect(jsonMock).toHaveBeenCalledWith(
         expect.objectContaining({ success: true }),
       );
@@ -350,7 +352,7 @@ describe('vendorAuthController - Login & Email Confirmation', () => {
         save: saveMock,
       }) as any;
 
-      await requestPasswordReset(req as Request, res as Response);
+      await requestPasswordReset(req as Request, res as Response, next as unknown as NextFunction);
 
       expect(saveMock).toHaveBeenCalled();
       expect(jsonMock).toHaveBeenCalledWith(
@@ -364,7 +366,7 @@ describe('vendorAuthController - Login & Email Confirmation', () => {
       req = { body: { token: 'invalid-token', newPassword: 'NewPass1!' } };
       MockedUser.findOne = jest.fn().mockResolvedValue(null) as any;
 
-      await resetPassword(req as Request, res as Response);
+      await resetPassword(req as Request, res as Response, next as unknown as NextFunction);
       expect(statusMock).toHaveBeenCalledWith(400);
       expect(jsonMock).toHaveBeenCalledWith(
         expect.objectContaining({ message: expect.stringContaining('Ungültiger oder abgelaufener') }),
@@ -382,7 +384,7 @@ describe('vendorAuthController - Login & Email Confirmation', () => {
       (bcrypt.genSalt as jest.Mock).mockResolvedValue('salt');
       (bcrypt.hash as jest.Mock).mockResolvedValue('new-hashed');
 
-      await resetPassword(req as Request, res as Response);
+      await resetPassword(req as Request, res as Response, next as unknown as NextFunction);
       expect(saveMock).toHaveBeenCalled();
       expect(jsonMock).toHaveBeenCalledWith(
         expect.objectContaining({ success: true, message: expect.stringContaining('erfolgreich zurückgesetzt') }),
@@ -395,7 +397,7 @@ describe('vendorAuthController - Login & Email Confirmation', () => {
       req = { body: { email: 'unknown@test.com' } };
       MockedUser.findOne = jest.fn().mockResolvedValue(null) as any;
 
-      await resendConfirmationEmail(req as Request, res as Response);
+      await resendConfirmationEmail(req as Request, res as Response, next as unknown as NextFunction);
       expect(jsonMock).toHaveBeenCalledWith(
         expect.objectContaining({ success: true }),
       );
@@ -407,7 +409,7 @@ describe('vendorAuthController - Login & Email Confirmation', () => {
         kontakt: { email: 'vendor@test.com', name: 'Test', newsletterConfirmed: true, status: 'aktiv' },
       }) as any;
 
-      await resendConfirmationEmail(req as Request, res as Response);
+      await resendConfirmationEmail(req as Request, res as Response, next as unknown as NextFunction);
       expect(jsonMock).toHaveBeenCalledWith(
         expect.objectContaining({ message: expect.stringContaining('bereits bestätigt') }),
       );
@@ -421,7 +423,7 @@ describe('vendorAuthController - Login & Email Confirmation', () => {
         save: saveMock,
       }) as any;
 
-      await resendConfirmationEmail(req as Request, res as Response);
+      await resendConfirmationEmail(req as Request, res as Response, next as unknown as NextFunction);
       expect(saveMock).toHaveBeenCalled();
       expect(jsonMock).toHaveBeenCalledWith(
         expect.objectContaining({ success: true, message: expect.stringContaining('Bestätigungslink') }),

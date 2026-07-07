@@ -4,13 +4,14 @@
  * @created 2026-03-29
  */
 
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
+import AppError from '../../utils/AppError';
 import logger from '../../utils/logger';
 
 /**
  * Get comprehensive invoice statistics for admin dashboard
  */
-export const getInvoiceStats = async (req: Request, res: Response): Promise<void> => {
+export const getInvoiceStats = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const Invoice = (await import('../../models/Invoice')).default;
 
@@ -87,18 +88,14 @@ export const getInvoiceStats = async (req: Request, res: Response): Promise<void
       data: stats,
     });
   } catch (error) {
-    logger.error('Fehler beim Abrufen der Invoice-Statistiken:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Interner Serverfehler beim Abrufen der Invoice-Statistiken',
-    });
+    next(new AppError('Interner Serverfehler beim Abrufen der Invoice-Statistiken', 500, error));
   }
 };
 
 /**
  * Generate invoices for multiple vendors (bulk operation)
  */
-export const bulkGenerateInvoices = async (req: Request, res: Response): Promise<void> => {
+export const bulkGenerateInvoices = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { vendorIds, period } = req.body;
 
@@ -176,18 +173,14 @@ export const bulkGenerateInvoices = async (req: Request, res: Response): Promise
       },
     });
   } catch (error) {
-    logger.error('Fehler bei der Bulk-Invoice-Generierung:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Interner Serverfehler bei der Bulk-Invoice-Generierung',
-    });
+    next(new AppError('Interner Serverfehler bei der Bulk-Invoice-Generierung', 500, error));
   }
 };
 
 /**
  * Edit invoice (limited fields for admin)
  */
-export const editInvoice = async (req: Request, res: Response): Promise<void> => {
+export const editInvoice = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id } = req.params;
     const { dueDate, status, notes } = req.body;
@@ -237,18 +230,14 @@ export const editInvoice = async (req: Request, res: Response): Promise<void> =>
       data: updatedInvoice,
     });
   } catch (error) {
-    logger.error('Fehler beim Bearbeiten der Invoice:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Interner Serverfehler beim Bearbeiten der Invoice',
-    });
+    next(new AppError('Interner Serverfehler beim Bearbeiten der Invoice', 500, error));
   }
 };
 
 /**
  * Resend invoice email
  */
-export const resendInvoiceEmail = async (req: Request, res: Response): Promise<void> => {
+export const resendInvoiceEmail = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id } = req.params;
 
@@ -298,18 +287,14 @@ export const resendInvoiceEmail = async (req: Request, res: Response): Promise<v
       message: 'Email erfolgreich zur Warteschlange hinzugefügt',
     });
   } catch (error) {
-    logger.error('Fehler beim Erneuten Senden der Invoice-Email:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Interner Serverfehler beim Erneuten Senden der Invoice-Email',
-    });
+    next(new AppError('Interner Serverfehler beim Erneuten Senden der Invoice-Email', 500, error));
   }
 };
 
 /**
  * Cancel invoice (soft delete)
  */
-export const cancelInvoice = async (req: Request, res: Response): Promise<void> => {
+export const cancelInvoice = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id } = req.params;
     const { reason } = req.body;
@@ -360,10 +345,6 @@ export const cancelInvoice = async (req: Request, res: Response): Promise<void> 
       data: updatedInvoice,
     });
   } catch (error) {
-    logger.error('Fehler beim Stornieren der Invoice:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Interner Serverfehler beim Stornieren der Invoice',
-    });
+    next(new AppError('Interner Serverfehler beim Stornieren der Invoice', 500, error));
   }
 };

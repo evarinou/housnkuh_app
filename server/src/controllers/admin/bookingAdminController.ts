@@ -6,7 +6,8 @@
  * @created 2026-03-25
  */
 
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
+import AppError from '../../utils/AppError';
 import User from '../../models/User';
 import Mietfach from '../../models/Mietfach';
 import Vertrag from '../../models/Vertrag';
@@ -16,7 +17,7 @@ import { PriceCalculationService } from '../../services/priceCalculationService'
 import logger from '../../utils/logger';
 
 // Alle Users mit ausstehenden Buchungen abrufen
-export const getPendingBookings = async (req: Request, res: Response): Promise<void> => {
+export const getPendingBookings = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     logger.info('Getting pending bookings...');
 
@@ -106,16 +107,12 @@ export const getPendingBookings = async (req: Request, res: Response): Promise<v
       pendingBookings: pendingBookingsWithCorrectPrices
     });
   } catch (err) {
-    logger.error('Fehler beim Abrufen der ausstehenden Buchungen:', err);
-    res.status(500).json({
-      success: false,
-      message: 'Serverfehler beim Abrufen der ausstehenden Buchungen'
-    });
+    next(new AppError('Serverfehler beim Abrufen der ausstehenden Buchungen', 500, err));
   }
 };
 
 // Verfügbare Mietfächer für eine Buchung abrufen
-export const getAvailableMietfaecher = async (req: Request, res: Response): Promise<void> => {
+export const getAvailableMietfaecher = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     // Find truly available Mietfächer that can be assigned to bookings
     const availableMietfaecher = await Mietfach.find({
@@ -131,16 +128,12 @@ export const getAvailableMietfaecher = async (req: Request, res: Response): Prom
       mietfaecher: availableMietfaecher
     });
   } catch (err) {
-    logger.error('Fehler beim Abrufen der verfügbaren Mietfächer:', err);
-    res.status(500).json({
-      success: false,
-      message: 'Serverfehler beim Abrufen der Mietfächer'
-    });
+    next(new AppError('Serverfehler beim Abrufen der Mietfächer', 500, err));
   }
 };
 
 // Eine ausstehende Buchung bestätigen mit Mietfach-Zuordnung
-export const confirmPendingBooking = async (req: Request, res: Response): Promise<void> => {
+export const confirmPendingBooking = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { userId } = req.params;
     const { assignedMietfaecher, priceAdjustments, scheduledStartDate, zusatzleistungenData } = req.body; // Array von Mietfach-IDs und optionale Preisanpassungen
@@ -375,8 +368,6 @@ export const confirmPendingBooking = async (req: Request, res: Response): Promis
       scheduledStartDate: scheduledStartDate ? new Date(scheduledStartDate) : new Date()
     });
   } catch (err) {
-    logger.error('Fehler beim Bestätigen der Buchung:', err);
-    logger.error('Error stack:', (err as Error).stack);
     logger.error('Error details:', {
       message: (err as Error).message,
       name: (err as Error).name,
@@ -387,15 +378,12 @@ export const confirmPendingBooking = async (req: Request, res: Response): Promis
         scheduledStartDate: req.body.scheduledStartDate
       }
     });
-    res.status(500).json({
-      success: false,
-      message: `Serverfehler: ${(err as Error).message}`
-    });
+    next(new AppError(`Serverfehler: ${(err as Error).message}`, 500, err));
   }
 };
 
 // Eine ausstehende Buchung ablehnen
-export const rejectPendingBooking = async (req: Request, res: Response): Promise<void> => {
+export const rejectPendingBooking = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { userId } = req.params;
     const { reason } = req.body;
@@ -440,11 +428,7 @@ export const rejectPendingBooking = async (req: Request, res: Response): Promise
       message: 'Buchung abgelehnt'
     });
   } catch (err) {
-    logger.error('Fehler beim Ablehnen der Buchung:', err);
-    res.status(500).json({
-      success: false,
-      message: 'Ein Serverfehler ist aufgetreten'
-    });
+    next(new AppError('Ein Serverfehler ist aufgetreten', 500, err));
   }
 };
 /**
@@ -456,7 +440,7 @@ export const rejectPendingBooking = async (req: Request, res: Response): Promise
  * @complexity O(n*m) where n is number of Mietfächer and m is booking checks per unit
  * @security Validates input parameters and handles error cases
  */
-export const checkMietfachAvailability = async (req: Request, res: Response): Promise<void> => {
+export const checkMietfachAvailability = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { startDate, duration, requestedTypes } = req.body;
 
@@ -638,15 +622,11 @@ export const checkMietfachAvailability = async (req: Request, res: Response): Pr
     });
 
   } catch (err) {
-    logger.error('Fehler bei der Mietfach-Verfügbarkeitsprüfung:', err);
-    res.status(500).json({
-      success: false,
-      message: 'Serverfehler bei der Verfügbarkeitsprüfung'
-    });
+    next(new AppError('Serverfehler bei der Verfügbarkeitsprüfung', 500, err));
   }
 };
 
-export const confirmPendingBookingWithSchedule = async (req: Request, res: Response): Promise<void> => {
+export const confirmPendingBookingWithSchedule = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { userId } = req.params;
     const { mietfachId, startDate, priceAdjustments } = req.body;
@@ -745,11 +725,7 @@ export const confirmPendingBookingWithSchedule = async (req: Request, res: Respo
       });
 
   } catch (error) {
-    logger.error('Error confirming booking with schedule:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Fehler beim Bestätigen der Buchung'
-    });
+    next(new AppError('Fehler beim Bestätigen der Buchung', 500, error));
   }
 };
 
@@ -759,7 +735,7 @@ export const confirmPendingBookingWithSchedule = async (req: Request, res: Respo
 // ===============================================
 
 // Get contracts with Zusatzleistungen for admin overview
-export const getContractsWithZusatzleistungen = async (req: Request, res: Response): Promise<void> => {
+export const getContractsWithZusatzleistungen = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { service_type, status } = req.query;
 
@@ -807,16 +783,12 @@ export const getContractsWithZusatzleistungen = async (req: Request, res: Respon
       contracts: contractsWithTracking
     });
   } catch (error) {
-    logger.error('Fehler beim Abrufen der Zusatzleistungen-Verträge:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Interner Serverfehler beim Abrufen der Zusatzleistungen-Verträge'
-    });
+    next(new AppError('Interner Serverfehler beim Abrufen der Zusatzleistungen-Verträge', 500, error));
   }
 };
 
 // Confirm package arrival (Admin endpoint)
-export const confirmPackageArrival = async (req: Request, res: Response): Promise<void> => {
+export const confirmPackageArrival = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id } = req.params;
     const { package_typ, notizen } = req.body;
@@ -917,16 +889,12 @@ export const confirmPackageArrival = async (req: Request, res: Response): Promis
     });
 
   } catch (error) {
-    logger.error('Fehler beim Bestätigen der Package-Ankunft:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Interner Serverfehler beim Bestätigen der Package-Ankunft'
-    });
+    next(new AppError('Interner Serverfehler beim Bestätigen der Package-Ankunft', 500, error));
   }
 };
 
 // Update package to stored status
-export const confirmPackageStored = async (req: Request, res: Response): Promise<void> => {
+export const confirmPackageStored = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id } = req.params;
     const { notizen } = req.body;
@@ -982,16 +950,12 @@ export const confirmPackageStored = async (req: Request, res: Response): Promise
     });
 
   } catch (error) {
-    logger.error('Fehler beim Einlagern des Packages:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Interner Serverfehler beim Einlagern des Packages'
-    });
+    next(new AppError('Interner Serverfehler beim Einlagern des Packages', 500, error));
   }
 };
 
 // Admin update contract zusatzleistungen
-export const adminUpdateZusatzleistungen = async (req: Request, res: Response): Promise<void> => {
+export const adminUpdateZusatzleistungen = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id } = req.params;
     const { lagerservice, versandservice, versandservice_aktiv } = req.body;
@@ -1052,10 +1016,6 @@ export const adminUpdateZusatzleistungen = async (req: Request, res: Response): 
     });
 
   } catch (error) {
-    logger.error('Fehler beim Admin-Update der Zusatzleistungen:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Interner Serverfehler beim Aktualisieren der Zusatzleistungen'
-    });
+    next(new AppError('Interner Serverfehler beim Aktualisieren der Zusatzleistungen', 500, error));
   }
 };

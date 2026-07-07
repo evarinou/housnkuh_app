@@ -4,7 +4,7 @@
  * @created 2026-03-26
  */
 
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import User from '../../models/User';
 import { Tag } from '../../models/Tag';
 import fs from 'fs';
@@ -12,9 +12,10 @@ import path from 'path';
 import multer from 'multer';
 import mongoose from 'mongoose';
 import logger from '../../utils/logger';
+import AppError from '../../utils/AppError';
 
 // Vendor Profile abrufen
-export const getVendorProfile = async (req: Request, res: Response): Promise<void> => {
+export const getVendorProfile = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { userId } = req.params;
     const requestingUserId = (req as any).user?.id;
@@ -108,16 +109,12 @@ export const getVendorProfile = async (req: Request, res: Response): Promise<voi
       profile: profileData
     });
   } catch (err) {
-    logger.error('Fehler beim Abrufen des Vendor-Profils:', err);
-    res.status(500).json({
-      success: false,
-      message: 'Ein Serverfehler ist aufgetreten'
-    });
+    next(new AppError('Ein Serverfehler ist aufgetreten', 500, err));
   }
 };
 
 // Vendor Profile aktualisieren
-export const updateVendorProfile = async (req: Request, res: Response): Promise<void> => {
+export const updateVendorProfile = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { userId } = req.params;
     const requestingUserId = (req as any).user?.id;
@@ -332,11 +329,7 @@ export const updateVendorProfile = async (req: Request, res: Response): Promise<
       message: 'Profil erfolgreich aktualisiert'
     });
   } catch (err) {
-    logger.error('Fehler beim Aktualisieren des Vendor-Profils:', err);
-    res.status(500).json({
-      success: false,
-      message: 'Ein Serverfehler ist aufgetreten'
-    });
+    next(new AppError('Ein Serverfehler ist aufgetreten', 500, err));
   }
 };
 
@@ -376,7 +369,7 @@ const upload = multer({
 });
 
 // Bild-Upload für Vendor-Profile (Profil- und Banner-Bilder)
-export const uploadVendorImage = async (req: Request, res: Response): Promise<void> => {
+export const uploadVendorImage = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     // Multer-Middleware manuell aufrufen
     upload.single('image')(req, res, async (err) => {
@@ -415,16 +408,12 @@ export const uploadVendorImage = async (req: Request, res: Response): Promise<vo
       });
     });
   } catch (err) {
-    logger.error('Fehler beim Bild-Upload:', err);
-    res.status(500).json({
-      success: false,
-      message: 'Ein Serverfehler ist aufgetreten'
-    });
+    next(new AppError('Ein Serverfehler ist aufgetreten', 500, err));
   }
 };
 
 // Alle Vendor-Profile für die öffentliche Übersicht abrufen mit erweiterten Filteroptionen
-export const getAllVendorProfiles = async (req: Request, res: Response): Promise<void> => {
+export const getAllVendorProfiles = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const {
       search,
@@ -674,16 +663,12 @@ export const getAllVendorProfiles = async (req: Request, res: Response): Promise
       availableFilters
     });
   } catch (err) {
-    logger.error('Fehler beim Abrufen der Vendor-Profile:', err);
-    res.status(500).json({
-      success: false,
-      message: 'Ein Serverfehler ist aufgetreten'
-    });
+    next(new AppError('Ein Serverfehler ist aufgetreten', 500, err));
   }
 };
 
 // Einzelnes Vendor-Profil für die öffentliche Anzeige abrufen
-export const getPublicVendorProfile = async (req: Request, res: Response): Promise<void> => {
+export const getPublicVendorProfile = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { vendorId } = req.params;
 
@@ -780,16 +765,12 @@ export const getPublicVendorProfile = async (req: Request, res: Response): Promi
       vendor: publicVendorData
     });
   } catch (err) {
-    logger.error('Fehler beim Abrufen des Vendor-Profils:', err);
-    res.status(500).json({
-      success: false,
-      message: 'Ein Serverfehler ist aufgetreten'
-    });
+    next(new AppError('Ein Serverfehler ist aufgetreten', 500, err));
   }
 };
 
 // Cancel vendor trial/subscription
-export const cancelVendorSubscription = async (req: Request, res: Response): Promise<void> => {
+export const cancelVendorSubscription = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { userId } = req.params;
     const { reason } = req.body;
@@ -852,16 +833,12 @@ export const cancelVendorSubscription = async (req: Request, res: Response): Pro
     });
 
   } catch (error) {
-    logger.error("Fehler beim Kündigen der Vendor-Registrierung:", error);
-    res.status(500).json({
-      success: false,
-      message: "Ein Serverfehler ist aufgetreten"
-    });
+    next(new AppError("Ein Serverfehler ist aufgetreten", 500, error));
   }
 };
 
 // Tag erstellen (für Vendors)
-export const createVendorTag = async (req: Request, res: Response): Promise<void> => {
+export const createVendorTag = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     logger.info('=== CREATE VENDOR TAG REQUEST ===');
     logger.debug('Request body:', { body: req.body });
@@ -951,10 +928,9 @@ export const createVendorTag = async (req: Request, res: Response): Promise<void
     });
 
   } catch (err) {
-    logger.error('Fehler beim Erstellen des Vendor-Tags:', err);
-
     // Spezifische MongoDB Fehler
     if (err instanceof Error && err.message.includes('E11000')) {
+      logger.error('Fehler beim Erstellen des Vendor-Tags:', err);
       res.status(400).json({
         success: false,
         message: 'Ein Tag mit diesem Namen existiert bereits'
@@ -962,9 +938,6 @@ export const createVendorTag = async (req: Request, res: Response): Promise<void
       return;
     }
 
-    res.status(500).json({
-      success: false,
-      message: `Serverfehler: ${err instanceof Error ? err.message : 'Unbekannter Fehler'}`
-    });
+    next(new AppError(`Serverfehler: ${err instanceof Error ? err.message : 'Unbekannter Fehler'}`, 500, err));
   }
 };

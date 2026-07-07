@@ -4,10 +4,11 @@
  * Handles contact form submissions, validation, and admin management
  */
 
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { ContactFormData, sendContactFormEmail } from '../utils/emailService';
 import Contact from '../models/Contact';
 import logger from '../utils/logger';
+import AppError from '../utils/AppError';
 
 /**
  * Validiert die Eingaben des Kontaktformulars
@@ -56,7 +57,7 @@ const validateContactForm = (data: any): { valid: boolean; errors?: string[] } =
 /**
  * Handler für das Absenden eines Kontaktformulars
  */
-export const submitContactForm = async (req: Request, res: Response): Promise<void> => {
+export const submitContactForm = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     logger.debug('Kontaktformular erhalten', { body: req.body });
     
@@ -110,18 +111,14 @@ export const submitContactForm = async (req: Request, res: Response): Promise<vo
     }
     
   } catch (error) {
-    logger.error('Fehler bei der Verarbeitung des Kontaktformulars:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Es ist ein Fehler aufgetreten. Bitte versuche es später noch einmal oder kontaktiere uns direkt telefonisch.'
-    });
+    next(new AppError('Es ist ein Fehler aufgetreten. Bitte versuche es später noch einmal oder kontaktiere uns direkt telefonisch.', 500, error));
   }
 };
 
 /**
  * Gibt alle Kontaktanfragen zurück
  */
-export const getContacts = async (req: Request, res: Response): Promise<void> => {
+export const getContacts = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const contacts = await Contact.find().sort({ createdAt: -1 });
     res.status(200).json({
@@ -130,18 +127,14 @@ export const getContacts = async (req: Request, res: Response): Promise<void> =>
       data: contacts
     });
   } catch (error) {
-    logger.error('Fehler beim Abrufen der Kontaktanfragen:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Fehler beim Abrufen der Kontaktanfragen'
-    });
+    next(new AppError('Fehler beim Abrufen der Kontaktanfragen', 500, error));
   }
 };
 
 /**
  * Gibt eine einzelne Kontaktanfrage zurück
  */
-export const getContact = async (req: Request, res: Response): Promise<void> => {
+export const getContact = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const contact = await Contact.findById(req.params.id);
     
@@ -164,18 +157,14 @@ export const getContact = async (req: Request, res: Response): Promise<void> => 
       data: contact
     });
   } catch (error) {
-    logger.error('Fehler beim Abrufen der Kontaktanfrage:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Fehler beim Abrufen der Kontaktanfrage'
-    });
+    next(new AppError('Fehler beim Abrufen der Kontaktanfrage', 500, error));
   }
 };
 
 /**
  * Aktualisiert eine Kontaktanfrage
  */
-export const updateContact = async (req: Request, res: Response): Promise<void> => {
+export const updateContact = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     // Zulässige Felder für die Aktualisierung
     const updates = {
@@ -203,18 +192,14 @@ export const updateContact = async (req: Request, res: Response): Promise<void> 
       data: contact
     });
   } catch (error) {
-    logger.error('Fehler beim Aktualisieren der Kontaktanfrage:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Fehler beim Aktualisieren der Kontaktanfrage'
-    });
+    next(new AppError('Fehler beim Aktualisieren der Kontaktanfrage', 500, error));
   }
 };
 
 /**
  * Löscht eine Kontaktanfrage
  */
-export const deleteContact = async (req: Request, res: Response): Promise<void> => {
+export const deleteContact = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const contact = await Contact.findByIdAndDelete(req.params.id);
     
@@ -231,11 +216,7 @@ export const deleteContact = async (req: Request, res: Response): Promise<void> 
       message: 'Kontaktanfrage erfolgreich gelöscht'
     });
   } catch (error) {
-    logger.error('Fehler beim Löschen der Kontaktanfrage:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Fehler beim Löschen der Kontaktanfrage'
-    });
+    next(new AppError('Fehler beim Löschen der Kontaktanfrage', 500, error));
   }
 };
 
@@ -243,7 +224,7 @@ export const deleteContact = async (req: Request, res: Response): Promise<void> 
  * Handler für das Absenden eines Vendor-Contest-Formulars
  * (für zukünftige Implementierung)
  */
-export const submitVendorContest = async (req: Request, res: Response): Promise<void> => {
+export const submitVendorContest = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     // Implementierung für Vendor-Contest-Formular
     // TODO: Implementieren, wenn die Feature benötigt wird
@@ -253,10 +234,6 @@ export const submitVendorContest = async (req: Request, res: Response): Promise<
       message: 'Diese Funktion ist noch nicht implementiert.'
     });
   } catch (error) {
-    logger.error('Fehler bei der Verarbeitung des Vendor-Contest-Formulars:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Es ist ein Fehler aufgetreten. Bitte versuche es später noch einmal.'
-    });
+    next(new AppError('Es ist ein Fehler aufgetreten. Bitte versuche es später noch einmal.', 500, error));
   }
 };

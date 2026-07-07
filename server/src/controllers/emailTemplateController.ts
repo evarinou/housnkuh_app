@@ -4,13 +4,14 @@
  * Handles email template creation, modification, and administration
  */
 
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import EmailTemplate from '../models/EmailTemplate';
 import { emailService } from '../utils/emailService';
 import logger from '../utils/logger';
+import AppError from '../utils/AppError';
 
 // GET /api/admin/email-templates - Alle Templates auflisten
-export const getAllEmailTemplates = async (req: Request, res: Response) => {
+export const getAllEmailTemplates = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { category, isActive } = req.query;
     
@@ -28,16 +29,12 @@ export const getAllEmailTemplates = async (req: Request, res: Response) => {
       count: templates.length
     });
   } catch (error) {
-    logger.error('Error fetching email templates:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Fehler beim Laden der Email-Templates'
-    });
+    next(new AppError('Fehler beim Laden der Email-Templates', 500, error));
   }
 };
 
 // GET /api/admin/email-templates/:id - Einzelnes Template laden
-export const getEmailTemplate = async (req: Request, res: Response) => {
+export const getEmailTemplate = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
     
@@ -54,16 +51,12 @@ export const getEmailTemplate = async (req: Request, res: Response) => {
       data: template
     });
   } catch (error) {
-    logger.error('Error fetching email template:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Fehler beim Laden des Email-Templates'
-    });
+    next(new AppError('Fehler beim Laden des Email-Templates', 500, error));
   }
 };
 
 // PUT /api/admin/email-templates/:id - Template bearbeiten
-export const updateEmailTemplate = async (req: Request, res: Response) => {
+export const updateEmailTemplate = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
     const { subject, htmlBody, textBody, variables, description, isActive } = req.body;
@@ -101,11 +94,7 @@ export const updateEmailTemplate = async (req: Request, res: Response) => {
       message: 'Email-Template erfolgreich aktualisiert'
     });
   } catch (error) {
-    logger.error('Error updating email template:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Fehler beim Aktualisieren des Email-Templates'
-    });
+    next(new AppError('Fehler beim Aktualisieren des Email-Templates', 500, error));
   }
 };
 
@@ -208,7 +197,7 @@ export const sendTestEmail = async (req: Request, res: Response) => {
 };
 
 // GET /api/admin/email-templates/variables/:type - Verfügbare Variablen für Template-Typ
-export const getTemplateVariables = async (req: Request, res: Response) => {
+export const getTemplateVariables = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { type } = req.params;
 
@@ -250,10 +239,6 @@ export const getTemplateVariables = async (req: Request, res: Response) => {
       }
     });
   } catch (error) {
-    logger.error('Error fetching template variables:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Fehler beim Laden der Template-Variablen'
-    });
+    next(new AppError('Fehler beim Laden der Template-Variablen', 500, error));
   }
 };

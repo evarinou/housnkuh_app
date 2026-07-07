@@ -4,10 +4,10 @@
  * Handles tag creation, retrieval, updates, deletion, and bulk operations with product integration
  */
 
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { Tag } from '../models/Tag';
 import { Product } from '../models/Product';
-import logger from '../utils/logger';
+import AppError from '../utils/AppError';
 
 /**
  * Retrieves all tags with optional filtering
@@ -18,7 +18,7 @@ import logger from '../utils/logger';
  * @complexity O(n log n) where n is number of matching tags (due to sorting)
  * @security Public endpoint with optional filtering
  */
-export const getAllTags = async (req: Request, res: Response): Promise<void> => {
+export const getAllTags = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { category, active } = req.query;
     
@@ -34,11 +34,7 @@ export const getAllTags = async (req: Request, res: Response): Promise<void> => 
       count: tags.length
     });
   } catch (error) {
-    logger.error('Error fetching tags:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Fehler beim Laden der Tags'
-    });
+    next(new AppError('Fehler beim Laden der Tags', 500, error));
   }
 };
 
@@ -51,7 +47,7 @@ export const getAllTags = async (req: Request, res: Response): Promise<void> => 
  * @complexity O(n) where n is number of active tags
  * @security Public endpoint - only returns active tags
  */
-export const getTagsByCategory = async (req: Request, res: Response): Promise<void> => {
+export const getTagsByCategory = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const tags = await Tag.find({ isActive: true }).sort({ category: 1, name: 1 });
     
@@ -69,11 +65,7 @@ export const getTagsByCategory = async (req: Request, res: Response): Promise<vo
       data: groupedTags
     });
   } catch (error) {
-    logger.error('Error fetching tags by category:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Fehler beim Laden der Tag-Kategorien'
-    });
+    next(new AppError('Fehler beim Laden der Tag-Kategorien', 500, error));
   }
 };
 
@@ -86,7 +78,7 @@ export const getTagsByCategory = async (req: Request, res: Response): Promise<vo
  * @complexity O(1) for tag lookup + O(n) for product count
  * @security Public endpoint with product count aggregation
  */
-export const getTag = async (req: Request, res: Response): Promise<void> => {
+export const getTag = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { identifier } = req.params;
     
@@ -118,11 +110,7 @@ export const getTag = async (req: Request, res: Response): Promise<void> => {
       }
     });
   } catch (error) {
-    logger.error('Error fetching tag:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Fehler beim Laden des Tags'
-    });
+    next(new AppError('Fehler beim Laden des Tags', 500, error));
   }
 };
 
@@ -135,7 +123,7 @@ export const getTag = async (req: Request, res: Response): Promise<void> => {
  * @complexity O(1) - Single database insertion with duplicate check
  * @security Admin only endpoint with duplicate validation
  */
-export const createTag = async (req: Request, res: Response): Promise<void> => {
+export const createTag = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { name, description, category, color, icon } = req.body;
     
@@ -167,11 +155,7 @@ export const createTag = async (req: Request, res: Response): Promise<void> => {
       message: 'Tag erfolgreich erstellt'
     });
   } catch (error) {
-    logger.error('Error creating tag:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Fehler beim Erstellen des Tags'
-    });
+    next(new AppError('Fehler beim Erstellen des Tags', 500, error));
   }
 };
 
@@ -184,7 +168,7 @@ export const createTag = async (req: Request, res: Response): Promise<void> => {
  * @complexity O(1) - Single database update with duplicate check
  * @security Admin only endpoint with existence and duplicate validation
  */
-export const updateTag = async (req: Request, res: Response): Promise<void> => {
+export const updateTag = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id } = req.params;
     const { name, description, category, color, icon, isActive } = req.body;
@@ -231,11 +215,7 @@ export const updateTag = async (req: Request, res: Response): Promise<void> => {
       message: 'Tag erfolgreich aktualisiert'
     });
   } catch (error) {
-    logger.error('Error updating tag:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Fehler beim Aktualisieren des Tags'
-    });
+    next(new AppError('Fehler beim Aktualisieren des Tags', 500, error));
   }
 };
 
@@ -248,7 +228,7 @@ export const updateTag = async (req: Request, res: Response): Promise<void> => {
  * @complexity O(1) for tag lookup + O(n) for product usage check
  * @security Admin only endpoint with product usage validation
  */
-export const deleteTag = async (req: Request, res: Response): Promise<void> => {
+export const deleteTag = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id } = req.params;
     
@@ -278,11 +258,7 @@ export const deleteTag = async (req: Request, res: Response): Promise<void> => {
       message: 'Tag erfolgreich gelöscht'
     });
   } catch (error) {
-    logger.error('Error deleting tag:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Fehler beim Löschen des Tags'
-    });
+    next(new AppError('Fehler beim Löschen des Tags', 500, error));
   }
 };
 
@@ -295,7 +271,7 @@ export const deleteTag = async (req: Request, res: Response): Promise<void> => {
  * @complexity O(n log n) where n is number of matching tags (due to text search scoring)
  * @security Public endpoint with search term validation
  */
-export const searchTags = async (req: Request, res: Response): Promise<void> => {
+export const searchTags = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { q, category, limit = 20 } = req.query;
     
@@ -324,11 +300,7 @@ export const searchTags = async (req: Request, res: Response): Promise<void> => 
       count: tags.length
     });
   } catch (error) {
-    logger.error('Error searching tags:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Fehler bei der Tag-Suche'
-    });
+    next(new AppError('Fehler bei der Tag-Suche', 500, error));
   }
 };
 
@@ -341,7 +313,7 @@ export const searchTags = async (req: Request, res: Response): Promise<void> => 
  * @complexity O(n) where n is number of tag names to process
  * @security Admin endpoint with array validation
  */
-export const bulkCreateTags = async (req: Request, res: Response): Promise<void> => {
+export const bulkCreateTags = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { tagNames, category = 'product' } = req.body;
     
@@ -361,10 +333,6 @@ export const bulkCreateTags = async (req: Request, res: Response): Promise<void>
       message: `${tags.length} Tags verarbeitet`
     });
   } catch (error) {
-    logger.error('Error bulk creating tags:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Fehler beim Erstellen der Tags'
-    });
+    next(new AppError('Fehler beim Erstellen der Tags', 500, error));
   }
 };

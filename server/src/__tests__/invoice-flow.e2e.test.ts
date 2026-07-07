@@ -18,6 +18,7 @@ import Vertrag from '../models/Vertrag';
 import { InvoiceGenerationJob } from '../jobs/invoiceGenerationJob';
 import { ScheduledJobs } from '../services/scheduledJobs';
 import invoiceRoutes from '../routes/invoiceRoutes';
+import { errorHandler } from '../middleware/security';
 import config from '../config/config';
 
 // Mock external services
@@ -31,6 +32,8 @@ const createTestApp = () => {
   const app = express();
   app.use(express.json());
   app.use('/api/invoices', invoiceRoutes);
+  // Zentrale Fehlerbehandlung wie in src/index.ts (AppError → { success, message })
+  app.use(errorHandler);
   return app;
 };
 

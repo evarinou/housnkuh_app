@@ -4,8 +4,9 @@
  * Handles vendor-specific contract operations including trial management and cancellations
  */
 
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { vertragService } from '../services/vertragService';
+import AppError from '../utils/AppError';
 import { sendCancellationConfirmationEmail } from '../utils/emailService';
 import Vertrag from '../models/Vertrag';
 import User from '../models/User';
@@ -89,7 +90,7 @@ export class VendorContractController {
    * GET /api/vendor/contracts/trial-status
    * Get current trial status and bookings
    */
-  async getTrialStatus(req: Request, res: Response): Promise<void> {
+  async getTrialStatus(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const userId = (req as any).user._id;
       
@@ -145,11 +146,7 @@ export class VendorContractController {
         }
       });
     } catch (error) {
-      logger.error('Error getting trial status:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Fehler beim Abrufen des Probemonat-Status'
-      });
+      next(new AppError('Fehler beim Abrufen des Probemonat-Status', 500, error));
     }
   }
 
@@ -157,7 +154,7 @@ export class VendorContractController {
    * GET /api/vendor/contracts/my-bookings
    * Get all bookings for the current vendor
    */
-  async getMyBookings(req: Request, res: Response): Promise<void> {
+  async getMyBookings(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const userId = (req as any).user._id;
       const { status, includeTrialOnly } = req.query;
@@ -206,11 +203,7 @@ export class VendorContractController {
         }
       });
     } catch (error) {
-      logger.error('Error getting vendor bookings:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Fehler beim Abrufen der Buchungen'
-      });
+      next(new AppError('Fehler beim Abrufen der Buchungen', 500, error));
     }
   }
 
@@ -218,7 +211,7 @@ export class VendorContractController {
    * POST /api/vendor/contracts/validate-trial
    * Validate if user can make a trial booking
    */
-  async validateTrialBooking(req: Request, res: Response): Promise<void> {
+  async validateTrialBooking(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const userId = (req as any).user._id;
       
@@ -229,11 +222,7 @@ export class VendorContractController {
         data: result
       });
     } catch (error) {
-      logger.error('Error validating trial booking:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Fehler bei der Validierung der Probemonat-Buchung'
-      });
+      next(new AppError('Fehler bei der Validierung der Probemonat-Buchung', 500, error));
     }
   }
 
@@ -241,7 +230,7 @@ export class VendorContractController {
    * GET /api/vendor/contracts/:contractId
    * Get detailed information about a specific contract
    */
-  async getContractDetails(req: Request, res: Response): Promise<void> {
+  async getContractDetails(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { contractId } = req.params;
       const userId = (req as any).user._id;
@@ -301,16 +290,12 @@ export class VendorContractController {
         data: transformedContract
       });
     } catch (error) {
-      logger.error('Error getting contract details:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Fehler beim Abrufen der Vertragsdetails'
-      });
+      next(new AppError('Fehler beim Abrufen der Vertragsdetails', 500, error));
     }
   }
 
   // Get contracts with zusatzleistungen and packages for vendor
-  async getContractsWithZusatzleistungen(req: Request, res: Response): Promise<void> {
+  async getContractsWithZusatzleistungen(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const vendorId = (req as any).user._id;
 
@@ -347,11 +332,7 @@ export class VendorContractController {
         contracts: contractsWithPackages
       });
     } catch (error) {
-      logger.error('Error getting contracts with zusatzleistungen:', error);
-      res.status(500).json({
-        success: false,
-        error: 'Fehler beim Abrufen der Verträge mit Zusatzleistungen'
-      });
+      next(new AppError('Fehler beim Abrufen der Verträge mit Zusatzleistungen', 500, error));
     }
   }
 }

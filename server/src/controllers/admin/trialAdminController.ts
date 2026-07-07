@@ -4,12 +4,12 @@
  * @created 2026-03-29
  */
 
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
+import AppError from '../../utils/AppError';
 import ScheduledJobs from '../../services/scheduledJobs';
-import logger from '../../utils/logger';
 
 // Get trial statistics for admin dashboard
-export const getTrialStatistics = async (req: Request, res: Response): Promise<void> => {
+export const getTrialStatistics = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const result = await ScheduledJobs.getTrialStatistics();
 
@@ -26,16 +26,12 @@ export const getTrialStatistics = async (req: Request, res: Response): Promise<v
       });
     }
   } catch (err) {
-    logger.error('Error getting trial statistics:', err);
-    res.status(500).json({
-      success: false,
-      message: 'Server error getting trial statistics',
-    });
+    next(new AppError('Server error getting trial statistics', 500, err));
   }
 };
 
 // Manually trigger trial activation check
-export const triggerTrialActivation = async (req: Request, res: Response): Promise<void> => {
+export const triggerTrialActivation = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const result = await ScheduledJobs.triggerTrialActivationCheck();
 
@@ -53,16 +49,12 @@ export const triggerTrialActivation = async (req: Request, res: Response): Promi
       });
     }
   } catch (err) {
-    logger.error('Error triggering trial activation:', err);
-    res.status(500).json({
-      success: false,
-      message: 'Server error triggering trial activation',
-    });
+    next(new AppError('Server error triggering trial activation', 500, err));
   }
 };
 
 // Manually trigger trial status update
-export const triggerTrialStatusUpdate = async (req: Request, res: Response): Promise<void> => {
+export const triggerTrialStatusUpdate = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const result = await ScheduledJobs.triggerTrialStatusUpdate();
 
@@ -80,16 +72,12 @@ export const triggerTrialStatusUpdate = async (req: Request, res: Response): Pro
       });
     }
   } catch (err) {
-    logger.error('Error triggering trial status update:', err);
-    res.status(500).json({
-      success: false,
-      message: 'Server error triggering trial status update',
-    });
+    next(new AppError('Server error triggering trial status update', 500, err));
   }
 };
 
 // Manually activate trial for specific vendor
-export const activateVendorTrial = async (req: Request, res: Response): Promise<void> => {
+export const activateVendorTrial = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { vendorId } = req.params;
 
@@ -117,16 +105,12 @@ export const activateVendorTrial = async (req: Request, res: Response): Promise<
       });
     }
   } catch (err) {
-    logger.error('Error activating vendor trial:', err);
-    res.status(500).json({
-      success: false,
-      message: 'Server error activating vendor trial',
-    });
+    next(new AppError('Server error activating vendor trial', 500, err));
   }
 };
 
 // Extend vendor trial
-export const extendVendorTrial = async (req: Request, res: Response): Promise<void> => {
+export const extendVendorTrial = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { userId } = req.params;
     const { extensionDays, reason } = req.body;
@@ -166,16 +150,12 @@ export const extendVendorTrial = async (req: Request, res: Response): Promise<vo
       });
     }
   } catch (err) {
-    logger.error('Error extending vendor trial:', err);
-    res.status(500).json({
-      success: false,
-      message: 'Server error extending trial',
-    });
+    next(new AppError('Server error extending trial', 500, err));
   }
 };
 
 // Bulk update trials
-export const bulkUpdateTrials = async (req: Request, res: Response): Promise<void> => {
+export const bulkUpdateTrials = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { userIds, action, extensionDays, reason } = req.body;
     const adminUser = (req as any).user;
@@ -210,16 +190,12 @@ export const bulkUpdateTrials = async (req: Request, res: Response): Promise<voi
       data: result,
     });
   } catch (err) {
-    logger.error('Error in bulk trial update:', err);
-    res.status(500).json({
-      success: false,
-      message: 'Server error in bulk update',
-    });
+    next(new AppError('Server error in bulk update', 500, err));
   }
 };
 
 // Get trial audit log
-export const getTrialAuditLog = async (req: Request, res: Response): Promise<void> => {
+export const getTrialAuditLog = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { userId, action, performedBy, startDate, endDate, limit } = req.query;
 
@@ -241,16 +217,12 @@ export const getTrialAuditLog = async (req: Request, res: Response): Promise<voi
       data: auditLog,
     });
   } catch (err) {
-    logger.error('Error getting trial audit log:', err);
-    res.status(500).json({
-      success: false,
-      message: 'Server error getting audit log',
-    });
+    next(new AppError('Server error getting audit log', 500, err));
   }
 };
 
 // Get expiring trials
-export const getExpiringTrials = async (req: Request, res: Response): Promise<void> => {
+export const getExpiringTrials = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { daysAhead } = req.query;
     const days = daysAhead ? parseInt(daysAhead as string) : 7;
@@ -264,10 +236,6 @@ export const getExpiringTrials = async (req: Request, res: Response): Promise<vo
       count: expiringTrials.length,
     });
   } catch (err) {
-    logger.error('Error getting expiring trials:', err);
-    res.status(500).json({
-      success: false,
-      message: 'Server error getting expiring trials',
-    });
+    next(new AppError('Server error getting expiring trials', 500, err));
   }
 };

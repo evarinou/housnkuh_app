@@ -4,8 +4,9 @@
  * Handles user creation, retrieval, updates, and deletion with password security
  */
 
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import User from '../models/User';
+import AppError from '../utils/AppError';
 
 /**
  * Retrieves all users from the database
@@ -16,12 +17,12 @@ import User from '../models/User';
  * @complexity O(n) where n is the number of users
  * @security Excludes password field from response
  */
-export const getAllUsers = async (req: Request, res: Response): Promise<void> => {
+export const getAllUsers = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const users = await User.find().select('-password');
     res.json(users);
-  } catch (_err) {
-    res.status(500).json({ message: 'Serverfehler beim Abrufen der Benutzer' });
+  } catch (err) {
+    next(new AppError('Serverfehler beim Abrufen der Benutzer', 500, err));
   }
 };
 
@@ -34,7 +35,7 @@ export const getAllUsers = async (req: Request, res: Response): Promise<void> =>
  * @complexity O(1) - Single database lookup by ID
  * @security Excludes password field from response
  */
-export const getUserById = async (req: Request, res: Response): Promise<void> => {
+export const getUserById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const user = await User.findById(req.params.id).select('-password');
     if (!user) {
@@ -42,8 +43,8 @@ export const getUserById = async (req: Request, res: Response): Promise<void> =>
       return;
     }
     res.json(user);
-  } catch (_err) {
-    res.status(500).json({ message: 'Serverfehler beim Abrufen des Benutzers' });
+  } catch (err) {
+    next(new AppError('Serverfehler beim Abrufen des Benutzers', 500, err));
   }
 };
 
@@ -117,7 +118,7 @@ export const updateUser = async (req: Request, res: Response): Promise<void> => 
  * @complexity O(1) - Single database deletion by ID
  * @security Validates user existence before deletion
  */
-export const deleteUser = async (req: Request, res: Response): Promise<void> => {
+export const deleteUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const deletedUser = await User.findByIdAndDelete(req.params.id);
     
@@ -127,7 +128,7 @@ export const deleteUser = async (req: Request, res: Response): Promise<void> => 
     }
     
     res.json({ message: 'Benutzer erfolgreich gelöscht' });
-  } catch (_err) {
-    res.status(500).json({ message: 'Serverfehler beim Löschen des Benutzers' });
+  } catch (err) {
+    next(new AppError('Serverfehler beim Löschen des Benutzers', 500, err));
   }
 };

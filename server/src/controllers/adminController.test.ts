@@ -4,7 +4,7 @@
  * @created 2025-08-06
  */
 
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { checkMietfachAvailability } from './adminController';
 import Mietfach from '../models/Mietfach';
 import Vertrag from '../models/Vertrag';
@@ -24,15 +24,17 @@ describe('adminController', () => {
     let res: Partial<Response>;
     let jsonMock: jest.Mock;
     let statusMock: jest.Mock;
+    let next: jest.Mock;
 
     beforeEach(() => {
       // Reset mocks
       jest.clearAllMocks();
-      
+
       // Setup response mocks
       jsonMock = jest.fn();
       statusMock = jest.fn().mockReturnThis();
-      
+      next = jest.fn();
+
       res = {
         json: jsonMock,
         status: statusMock
@@ -80,7 +82,7 @@ describe('adminController', () => {
       (Mietfach.find as jest.Mock).mockReturnValue({ select: selectMock });
 
       // Execute
-      await checkMietfachAvailability(req as Request, res as Response);
+      await checkMietfachAvailability(req as Request, res as Response, next as unknown as NextFunction);
 
       // Verify that find was called WITHOUT verfuegbar filter
       expect(Mietfach.find).toHaveBeenCalledWith({
@@ -128,7 +130,7 @@ describe('adminController', () => {
       (Mietfach.find as jest.Mock).mockReturnValue({ select: selectMock });
 
       // Execute
-      await checkMietfachAvailability(req as Request, res as Response);
+      await checkMietfachAvailability(req as Request, res as Response, next as unknown as NextFunction);
 
       // Verify the Mietfach is included despite verfuegbar: false
       expect(Mietfach.find).toHaveBeenCalledWith({
@@ -192,7 +194,7 @@ describe('adminController', () => {
       (Vertrag.find as jest.Mock).mockReturnValue({ select: conflictSelectMock });
 
       // Execute
-      await checkMietfachAvailability(req as Request, res as Response);
+      await checkMietfachAvailability(req as Request, res as Response, next as unknown as NextFunction);
 
       // Verify response includes conflict information
       expect(jsonMock).toHaveBeenCalledWith({
@@ -225,7 +227,7 @@ describe('adminController', () => {
       const selectMock = jest.fn().mockResolvedValue([]);
       (Mietfach.find as jest.Mock).mockReturnValue({ select: selectMock });
 
-      await checkMietfachAvailability(req as Request, res as Response);
+      await checkMietfachAvailability(req as Request, res as Response, next as unknown as NextFunction);
 
       // Ensure the query does NOT include verfuegbar field
       const findCall = (Mietfach.find as jest.Mock).mock.calls[0][0];
@@ -243,7 +245,7 @@ describe('adminController', () => {
         }
       };
 
-      await checkMietfachAvailability(req as Request, res as Response);
+      await checkMietfachAvailability(req as Request, res as Response, next as unknown as NextFunction);
 
       expect(statusMock).toHaveBeenCalledWith(400);
       expect(jsonMock).toHaveBeenCalledWith({

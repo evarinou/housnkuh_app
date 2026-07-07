@@ -4,12 +4,12 @@
  * @created 2026-06-11
  */
 
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
+import AppError from '../../utils/AppError';
 import mongoose from 'mongoose';
 import Mietfach from '../../models/Mietfach';
 import { getActiveOccupancyMap } from '../../services/storeMapService';
 import { invalidateCache } from '../../middleware/cacheMiddleware';
-import logger from '../../utils/logger';
 
 const MAX_COORD = 100; // Meter — Plausibilitätsgrenze für Ladenmaße
 
@@ -44,7 +44,7 @@ function validatePosition(position: any): string | null {
  * GET /api/admin/store-map
  * All Mietfächer (positioned and unpositioned) with occupancy info for the editor.
  */
-export const getStoreMapAdmin = async (_req: Request, res: Response): Promise<void> => {
+export const getStoreMapAdmin = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const [mietfaecher, occupancy] = await Promise.all([
       Mietfach.find().lean(),
@@ -66,8 +66,7 @@ export const getStoreMapAdmin = async (_req: Request, res: Response): Promise<vo
 
     res.json({ success: true, mietfaecher: result });
   } catch (err) {
-    logger.error('Fehler beim Laden der Ladenkarten-Daten (Admin):', err);
-    res.status(500).json({ success: false, message: 'Serverfehler beim Laden der Ladenkarte' });
+    next(new AppError('Serverfehler beim Laden der Ladenkarte', 500, err));
   }
 };
 
@@ -78,7 +77,7 @@ export const getStoreMapAdmin = async (_req: Request, res: Response): Promise<vo
  * position === null removes the Mietfach from the map ($unset).
  * Uses bulkWrite to bypass the post('save') FlourIO sync hook.
  */
-export const updateStoreMapPositions = async (req: Request, res: Response): Promise<void> => {
+export const updateStoreMapPositions = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { positions } = req.body;
 
@@ -127,7 +126,6 @@ export const updateStoreMapPositions = async (req: Request, res: Response): Prom
       matched: result.matchedCount
     });
   } catch (err) {
-    logger.error('Fehler beim Speichern der Mietfach-Positionen:', err);
-    res.status(500).json({ success: false, message: 'Serverfehler beim Speichern der Positionen' });
+    next(new AppError('Serverfehler beim Speichern der Positionen', 500, err));
   }
 };

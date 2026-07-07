@@ -25,15 +25,17 @@ describe('emailTemplateController', () => {
   let res: Partial<Response>;
   let jsonMock: jest.Mock;
   let statusMock: jest.Mock;
+  let next: jest.Mock;
 
   beforeEach(() => {
     // Reset mocks
     jest.clearAllMocks();
-    
+
     // Setup response mocks
     jsonMock = jest.fn();
     statusMock = jest.fn().mockReturnThis();
-    
+    next = jest.fn();
+
     res = {
       json: jsonMock,
       status: statusMock
@@ -68,7 +70,7 @@ describe('emailTemplateController', () => {
         })
       });
 
-      await getAllEmailTemplates(req as Request, res as Response);
+      await getAllEmailTemplates(req as Request, res as Response, next);
 
       expect(EmailTemplate.find).toHaveBeenCalledWith({
         category: 'vendor_registration',
@@ -90,13 +92,12 @@ describe('emailTemplateController', () => {
         })
       });
 
-      await getAllEmailTemplates(req as Request, res as Response);
+      await getAllEmailTemplates(req as Request, res as Response, next);
 
-      expect(statusMock).toHaveBeenCalledWith(500);
-      expect(jsonMock).toHaveBeenCalledWith({
-        success: false,
+      expect(next).toHaveBeenCalledWith(expect.objectContaining({
+        statusCode: 500,
         message: 'Fehler beim Laden der Email-Templates'
-      });
+      }));
     });
   });
 
@@ -271,7 +272,7 @@ describe('emailTemplateController', () => {
 
       (EmailTemplate.findById as jest.Mock).mockResolvedValue(mockTemplate);
 
-      await getEmailTemplate(req as Request, res as Response);
+      await getEmailTemplate(req as Request, res as Response, next);
 
       expect(EmailTemplate.findById).toHaveBeenCalledWith('template123');
       expect(jsonMock).toHaveBeenCalledWith({
@@ -285,7 +286,7 @@ describe('emailTemplateController', () => {
 
       (EmailTemplate.findById as jest.Mock).mockResolvedValue(null);
 
-      await getEmailTemplate(req as Request, res as Response);
+      await getEmailTemplate(req as Request, res as Response, next);
 
       expect(statusMock).toHaveBeenCalledWith(404);
       expect(jsonMock).toHaveBeenCalledWith({
@@ -319,7 +320,7 @@ describe('emailTemplateController', () => {
 
       (EmailTemplate.findByIdAndUpdate as jest.Mock).mockResolvedValue(mockUpdatedTemplate);
 
-      await updateEmailTemplate(req as Request, res as Response);
+      await updateEmailTemplate(req as Request, res as Response, next);
 
       expect(EmailTemplate.findByIdAndUpdate).toHaveBeenCalledWith(
         'template123',
@@ -342,7 +343,7 @@ describe('emailTemplateController', () => {
     it('should return variables for specific template type', async () => {
       req = { params: { type: 'vendor_registration_confirmation' } };
 
-      await getTemplateVariables(req as Request, res as Response);
+      await getTemplateVariables(req as Request, res as Response, next);
 
       expect(jsonMock).toHaveBeenCalledWith({
         success: true,
@@ -365,7 +366,7 @@ describe('emailTemplateController', () => {
     it('should return default variables for unknown template type', async () => {
       req = { params: { type: 'unknown_type' } };
 
-      await getTemplateVariables(req as Request, res as Response);
+      await getTemplateVariables(req as Request, res as Response, next);
 
       expect(jsonMock).toHaveBeenCalledWith({
         success: true,

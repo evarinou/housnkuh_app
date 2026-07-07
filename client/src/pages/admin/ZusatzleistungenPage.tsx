@@ -86,7 +86,7 @@ const ZusatzleistungenPage: React.FC = () => {
         );
         setPackages(allPackages);
       } else {
-        throw new Error(data.error || 'Unbekannter Fehler');
+        throw new Error(data.message || data.error || 'Unbekannter Fehler');
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Fehler beim Laden der Daten');

@@ -21,7 +21,7 @@ jest.mock('../../utils/logger', () => ({
   },
 }));
 
-import { Response } from 'express';
+import { Response, NextFunction } from 'express';
 import {
   completeBooking,
   getVendorContracts,
@@ -43,11 +43,13 @@ describe('vendorBookingController', () => {
   let res: Partial<Response>;
   let jsonMock: jest.Mock;
   let statusMock: jest.Mock;
+  let next: jest.Mock;
 
   beforeEach(() => {
     jsonMock = jest.fn().mockReturnThis();
     statusMock = jest.fn().mockReturnValue({ json: jsonMock });
     res = { json: jsonMock, status: statusMock } as Partial<Response>;
+    next = jest.fn();
     jest.clearAllMocks();
   });
 
@@ -56,7 +58,7 @@ describe('vendorBookingController', () => {
       req = { params: { userId: 'nonexistent' } };
       MockedUser.findById = jest.fn().mockResolvedValue(null) as any;
 
-      await completeBooking(req as AuthRequest, res as Response);
+      await completeBooking(req as AuthRequest, res as Response, next as unknown as NextFunction);
 
       expect(statusMock).toHaveBeenCalledWith(404);
       expect(jsonMock).toHaveBeenCalledWith(
@@ -72,7 +74,7 @@ describe('vendorBookingController', () => {
         kontakt: { status: 'aktiv' },
       }) as any;
 
-      await completeBooking(req as AuthRequest, res as Response);
+      await completeBooking(req as AuthRequest, res as Response, next as unknown as NextFunction);
 
       expect(statusMock).toHaveBeenCalledWith(404);
     });
@@ -85,7 +87,7 @@ describe('vendorBookingController', () => {
         kontakt: { status: 'pending' },
       }) as any;
 
-      await completeBooking(req as AuthRequest, res as Response);
+      await completeBooking(req as AuthRequest, res as Response, next as unknown as NextFunction);
 
       expect(statusMock).toHaveBeenCalledWith(400);
       expect(jsonMock).toHaveBeenCalledWith(
@@ -97,9 +99,14 @@ describe('vendorBookingController', () => {
       req = { params: { userId: 'user1' } };
       MockedUser.findById = jest.fn().mockRejectedValue(new Error('DB error')) as any;
 
-      await completeBooking(req as AuthRequest, res as Response);
+      await completeBooking(req as AuthRequest, res as Response, next as unknown as NextFunction);
 
-      expect(statusMock).toHaveBeenCalledWith(500);
+      expect(next).toHaveBeenCalledWith(
+        expect.objectContaining({
+          statusCode: 500,
+          message: 'Ein Serverfehler ist aufgetreten',
+        }),
+      );
     });
   });
 
@@ -110,7 +117,7 @@ describe('vendorBookingController', () => {
         user: { id: 'my-user' },
       };
 
-      await getVendorContracts(req as AuthRequest, res as Response);
+      await getVendorContracts(req as AuthRequest, res as Response, next as unknown as NextFunction);
 
       expect(statusMock).toHaveBeenCalledWith(403);
     });
@@ -143,7 +150,7 @@ describe('vendorBookingController', () => {
         }),
       }) as any;
 
-      await getVendorContracts(req as AuthRequest, res as Response);
+      await getVendorContracts(req as AuthRequest, res as Response, next as unknown as NextFunction);
 
       expect(jsonMock).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -170,9 +177,14 @@ describe('vendorBookingController', () => {
         }),
       }) as any;
 
-      await getVendorContracts(req as AuthRequest, res as Response);
+      await getVendorContracts(req as AuthRequest, res as Response, next as unknown as NextFunction);
 
-      expect(statusMock).toHaveBeenCalledWith(500);
+      expect(next).toHaveBeenCalledWith(
+        expect.objectContaining({
+          statusCode: 500,
+          message: 'Fehler beim Abrufen der Verträge',
+        }),
+      );
     });
   });
 
@@ -180,7 +192,7 @@ describe('vendorBookingController', () => {
     it('should return 403 if not authenticated', async () => {
       req = { user: undefined };
 
-      await getTrialStatus(req as AuthRequest, res as Response);
+      await getTrialStatus(req as AuthRequest, res as Response, next as unknown as NextFunction);
 
       expect(statusMock).toHaveBeenCalledWith(403);
     });
@@ -191,7 +203,7 @@ describe('vendorBookingController', () => {
         select: jest.fn().mockResolvedValue(null),
       }) as any;
 
-      await getTrialStatus(req as AuthRequest, res as Response);
+      await getTrialStatus(req as AuthRequest, res as Response, next as unknown as NextFunction);
 
       expect(statusMock).toHaveBeenCalledWith(404);
     });
@@ -212,7 +224,7 @@ describe('vendorBookingController', () => {
         populate: jest.fn().mockResolvedValue([]),
       }) as any;
 
-      await getTrialStatus(req as AuthRequest, res as Response);
+      await getTrialStatus(req as AuthRequest, res as Response, next as unknown as NextFunction);
 
       expect(jsonMock).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -240,7 +252,7 @@ describe('vendorBookingController', () => {
         populate: jest.fn().mockResolvedValue([]),
       }) as any;
 
-      await getTrialStatus(req as AuthRequest, res as Response);
+      await getTrialStatus(req as AuthRequest, res as Response, next as unknown as NextFunction);
 
       expect(jsonMock).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -258,7 +270,7 @@ describe('vendorBookingController', () => {
     it('should return 403 if not authenticated', async () => {
       req = { params: { bookingId: 'b1' }, body: {}, user: undefined };
 
-      await cancelTrialBooking(req as AuthRequest, res as Response);
+      await cancelTrialBooking(req as AuthRequest, res as Response, next as unknown as NextFunction);
 
       expect(statusMock).toHaveBeenCalledWith(403);
     });
@@ -267,7 +279,7 @@ describe('vendorBookingController', () => {
       req = { params: { bookingId: 'b1' }, body: {}, user: { id: 'user1' } };
       MockedUser.findById = jest.fn().mockResolvedValue(null) as any;
 
-      await cancelTrialBooking(req as AuthRequest, res as Response);
+      await cancelTrialBooking(req as AuthRequest, res as Response, next as unknown as NextFunction);
 
       expect(statusMock).toHaveBeenCalledWith(404);
     });
@@ -282,7 +294,7 @@ describe('vendorBookingController', () => {
       }) as any;
       MockedVertrag.findOne = jest.fn().mockResolvedValue(null) as any;
 
-      await cancelTrialBooking(req as AuthRequest, res as Response);
+      await cancelTrialBooking(req as AuthRequest, res as Response, next as unknown as NextFunction);
 
       expect(statusMock).toHaveBeenCalledWith(404);
       expect(jsonMock).toHaveBeenCalledWith(
@@ -303,7 +315,7 @@ describe('vendorBookingController', () => {
         status: 'active',
       }) as any;
 
-      await cancelTrialBooking(req as AuthRequest, res as Response);
+      await cancelTrialBooking(req as AuthRequest, res as Response, next as unknown as NextFunction);
 
       expect(statusMock).toHaveBeenCalledWith(400);
       expect(jsonMock).toHaveBeenCalledWith(
@@ -324,7 +336,7 @@ describe('vendorBookingController', () => {
         status: 'cancelled',
       }) as any;
 
-      await cancelTrialBooking(req as AuthRequest, res as Response);
+      await cancelTrialBooking(req as AuthRequest, res as Response, next as unknown as NextFunction);
 
       expect(statusMock).toHaveBeenCalledWith(400);
       expect(jsonMock).toHaveBeenCalledWith(
@@ -352,7 +364,7 @@ describe('vendorBookingController', () => {
         save: saveMock,
       }) as any;
 
-      await cancelTrialBooking(req as AuthRequest, res as Response);
+      await cancelTrialBooking(req as AuthRequest, res as Response, next as unknown as NextFunction);
 
       expect(saveMock).toHaveBeenCalled();
       expect(jsonMock).toHaveBeenCalledWith(
@@ -368,7 +380,7 @@ describe('vendorBookingController', () => {
     it('should return 403 if not authenticated', async () => {
       req = { body: {}, user: undefined };
 
-      await confirmTrialBooking(req as AuthRequest, res as Response);
+      await confirmTrialBooking(req as AuthRequest, res as Response, next as unknown as NextFunction);
 
       expect(statusMock).toHaveBeenCalledWith(403);
     });
@@ -377,7 +389,7 @@ describe('vendorBookingController', () => {
       req = { body: { mietfachId: 'm1' }, user: { id: 'user1' } };
       MockedUser.findById = jest.fn().mockResolvedValue(null) as any;
 
-      await confirmTrialBooking(req as AuthRequest, res as Response);
+      await confirmTrialBooking(req as AuthRequest, res as Response, next as unknown as NextFunction);
 
       expect(statusMock).toHaveBeenCalledWith(404);
     });
@@ -390,7 +402,7 @@ describe('vendorBookingController', () => {
         registrationStatus: 'active',
       }) as any;
 
-      await confirmTrialBooking(req as AuthRequest, res as Response);
+      await confirmTrialBooking(req as AuthRequest, res as Response, next as unknown as NextFunction);
 
       expect(statusMock).toHaveBeenCalledWith(400);
       expect(jsonMock).toHaveBeenCalledWith(
@@ -405,7 +417,7 @@ describe('vendorBookingController', () => {
     it('should return 403 if not authenticated', async () => {
       req = { params: { messageId: 'm1' }, user: undefined };
 
-      await dismissDashboardMessage(req as AuthRequest, res as Response);
+      await dismissDashboardMessage(req as AuthRequest, res as Response, next as unknown as NextFunction);
 
       expect(statusMock).toHaveBeenCalledWith(403);
     });
@@ -413,7 +425,7 @@ describe('vendorBookingController', () => {
     it('should dismiss message successfully', async () => {
       req = { params: { messageId: 'm1' }, user: { id: 'user1' } };
 
-      await dismissDashboardMessage(req as AuthRequest, res as Response);
+      await dismissDashboardMessage(req as AuthRequest, res as Response, next as unknown as NextFunction);
 
       expect(jsonMock).toHaveBeenCalledWith(
         expect.objectContaining({ success: true }),

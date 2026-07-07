@@ -4,10 +4,10 @@
  * Handles vendor-specific trial operations including status checking, conversion, extension, and cancellation
  */
 
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import User from '../models/User';
 import Vertrag from '../models/Vertrag';
-import logger from '../utils/logger';
+import AppError from '../utils/AppError';
 import { TrialService } from '../services/trialService';
 import { sendTrialConversionEmail } from '../utils/emailService';
 
@@ -24,7 +24,7 @@ interface VendorRequest extends Request {
  * @complexity O(n) where n is number of active contracts
  * @security Requires vendor authentication
  */
-export const getTrialStatus = async (req: VendorRequest, res: Response): Promise<void> => {
+export const getTrialStatus = async (req: VendorRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const userId = req.userId;
     
@@ -71,11 +71,7 @@ export const getTrialStatus = async (req: VendorRequest, res: Response): Promise
       }
     });
   } catch (error) {
-    logger.error('Error getting trial status:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Internal server error'
-    });
+    next(new AppError('Internal server error', 500, error));
   }
 };
 
@@ -88,7 +84,7 @@ export const getTrialStatus = async (req: VendorRequest, res: Response): Promise
  * @complexity O(1) - Single user lookup and service call
  * @security Requires vendor authentication and trial status validation
  */
-export const convertTrialToRegular = async (req: VendorRequest, res: Response): Promise<void> => {
+export const convertTrialToRegular = async (req: VendorRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const userId = req.userId;
     
@@ -145,11 +141,7 @@ export const convertTrialToRegular = async (req: VendorRequest, res: Response): 
       }
     });
   } catch (error) {
-    logger.error('Error converting trial:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Internal server error'
-    });
+    next(new AppError('Internal server error', 500, error));
   }
 };
 
@@ -162,7 +154,7 @@ export const convertTrialToRegular = async (req: VendorRequest, res: Response): 
  * @complexity O(1) - Single user lookup and service call
  * @security Requires vendor authentication and extension days validation
  */
-export const extendTrial = async (req: VendorRequest, res: Response): Promise<void> => {
+export const extendTrial = async (req: VendorRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const userId = req.userId;
     const { extensionDays } = req.body;
@@ -213,11 +205,7 @@ export const extendTrial = async (req: VendorRequest, res: Response): Promise<vo
       }
     });
   } catch (error) {
-    logger.error('Error extending trial:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Internal server error'
-    });
+    next(new AppError('Internal server error', 500, error));
   }
 };
 
@@ -230,7 +218,7 @@ export const extendTrial = async (req: VendorRequest, res: Response): Promise<vo
  * @complexity O(1) - Single user lookup and service call
  * @security Requires vendor authentication
  */
-export const cancelTrial = async (req: VendorRequest, res: Response): Promise<void> => {
+export const cancelTrial = async (req: VendorRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const userId = req.userId;
     const { reason } = req.body;
@@ -273,11 +261,7 @@ export const cancelTrial = async (req: VendorRequest, res: Response): Promise<vo
       }
     });
   } catch (error) {
-    logger.error('Error cancelling trial:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Internal server error'
-    });
+    next(new AppError('Internal server error', 500, error));
   }
 };
 
@@ -290,7 +274,7 @@ export const cancelTrial = async (req: VendorRequest, res: Response): Promise<vo
  * @complexity O(n) where n is number of historical trial events
  * @security Requires vendor authentication
  */
-export const getTrialHistory = async (req: VendorRequest, res: Response): Promise<void> => {
+export const getTrialHistory = async (req: VendorRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const userId = req.userId;
     
@@ -325,10 +309,6 @@ export const getTrialHistory = async (req: VendorRequest, res: Response): Promis
       }
     });
   } catch (error) {
-    logger.error('Error getting trial history:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Internal server error'
-    });
+    next(new AppError('Internal server error', 500, error));
   }
 };

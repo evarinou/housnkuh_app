@@ -8,7 +8,7 @@
  */
 
 // server/src/routes/index.ts - Erweitert für Kontaktformular
-import { Router, Request, Response } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import userRoutes from './userRoutes';
 import mietfachRoutes from './mietfachRoutes';
 import vertragRoutes from './vertragRoutes';
@@ -29,7 +29,7 @@ import invoiceRoutes from './invoiceRoutes'; // Invoice management
 import flourioRoutes from './flourioRoutes'; // FlourIO integration (Article Management)
 import Settings from '../models/Settings';
 import HealthCheckService from '../services/healthCheckService';
-import logger from '../utils/logger';
+import AppError from '../utils/AppError';
 import invoiceMonitoringService from '../services/invoiceMonitoringService';
 
 /**
@@ -63,16 +63,12 @@ router.use('/invoices', invoiceRoutes); // Invoice management
 router.use('/admin/flourio', flourioRoutes); // FlourIO integration (Article Management)
 
 // Public health check endpoint (no authentication required)
-router.get('/health', async (req: Request, res: Response) => {
+router.get('/health', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const simpleStatus = await HealthCheckService.getSimpleStatus();
     res.json(simpleStatus);
-  } catch (_error) {
-    res.status(500).json({
-      status: 'error',
-      timestamp: new Date(),
-      message: 'Health check failed'
-    });
+  } catch (error) {
+    next(new AppError('Health check failed', 500, error));
   }
 });
 
@@ -97,22 +93,18 @@ router.get('/health/detailed', async (req: Request, res: Response) => {
 });
 
 // Prometheus metrics endpoint
-router.get('/metrics', async (_req: Request, res: Response) => {
+router.get('/metrics', async (_req: Request, res: Response, next: NextFunction) => {
   try {
     const metrics = await invoiceMonitoringService.getPrometheusMetrics();
     res.set('Content-Type', 'text/plain');
     res.send(metrics);
   } catch (error) {
-    logger.error('Error getting Prometheus metrics:', error);
-    res.status(500).json({
-      error: 'Failed to get metrics',
-      timestamp: new Date()
-    });
+    next(new AppError('Failed to get metrics', 500, error));
   }
 });
 
 // Invoice monitoring metrics summary (JSON format for dashboards)
-router.get('/metrics/invoice-summary', async (_req: Request, res: Response) => {
+router.get('/metrics/invoice-summary', async (_req: Request, res: Response, next: NextFunction) => {
   try {
     const summary = invoiceMonitoringService.getMetricsSummary();
     res.json({
@@ -121,17 +113,12 @@ router.get('/metrics/invoice-summary', async (_req: Request, res: Response) => {
       ...summary
     });
   } catch (error) {
-    logger.error('Error getting invoice metrics summary:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to get invoice metrics summary',
-      timestamp: new Date()
-    });
+    next(new AppError('Failed to get invoice metrics summary', 500, error));
   }
 });
 
 // Public endpoint for store opening date
-router.get('/public/store-opening', async (_req: Request, res: Response) => {
+router.get('/public/store-opening', async (_req: Request, res: Response, next: NextFunction) => {
   try {
     const settings = await Settings.getSettings();
     
@@ -144,11 +131,7 @@ router.get('/public/store-opening', async (_req: Request, res: Response) => {
       }
     });
   } catch (err) {
-    logger.error('Error fetching public store opening:', err);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Server error fetching store opening information' 
-    });
+    next(new AppError('Server error fetching store opening information', 500, err));
   }
 });
 

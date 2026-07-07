@@ -63,7 +63,7 @@ export const AssignCategoryModal: React.FC<AssignCategoryModalProps> = ({
       const data = await response.json();
 
       if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Fehler beim Zuweisen der Kategorie');
+        throw new Error(data.message || data.error || 'Fehler beim Zuweisen der Kategorie');
       }
 
       onSuccess();

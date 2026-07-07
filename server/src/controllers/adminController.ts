@@ -5,7 +5,8 @@
  * @modified 2026-03-29
  */
 
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
+import AppError from '../utils/AppError';
 import mongoose from 'mongoose';
 import User from '../models/User';
 import Mietfach from '../models/Mietfach';
@@ -19,7 +20,7 @@ import logger from '../utils/logger';
 /**
  * Retrieves comprehensive dashboard overview with system statistics
  */
-export const getDashboardOverview = async (req: Request, res: Response): Promise<void> => {
+export const getDashboardOverview = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const overview = await cache.getOrSet(
       CACHE_KEYS.ADMIN_STATS,
@@ -103,17 +104,13 @@ export const getDashboardOverview = async (req: Request, res: Response): Promise
       overview,
     });
   } catch (err) {
-    logger.error('Fehler beim Abrufen der Dashboard-Übersicht:', err);
-    res.status(500).json({
-      success: false,
-      message: 'Serverfehler beim Abrufen der Dashboard-Übersicht',
-    });
+    next(new AppError('Serverfehler beim Abrufen der Dashboard-Übersicht', 500, err));
   }
 };
 
 // ===== USER MANAGEMENT =====
 
-export const getAllUsers = async (req: Request, res: Response): Promise<void> => {
+export const getAllUsers = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const users = await User.find({})
       .select(
@@ -140,17 +137,13 @@ export const getAllUsers = async (req: Request, res: Response): Promise<void> =>
       users: formattedUsers,
     });
   } catch (err) {
-    logger.error('Fehler beim Abrufen der User:', err);
-    res.status(500).json({
-      success: false,
-      message: 'Serverfehler beim Abrufen der User',
-    });
+    next(new AppError('Serverfehler beim Abrufen der User', 500, err));
   }
 };
 
 // ===== STORE SETTINGS =====
 
-export const getStoreOpeningSettings = async (req: Request, res: Response): Promise<void> => {
+export const getStoreOpeningSettings = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const settings = await Settings.getSettings();
 
@@ -167,15 +160,11 @@ export const getStoreOpeningSettings = async (req: Request, res: Response): Prom
       },
     });
   } catch (err) {
-    logger.error('Fehler beim Abrufen der Store Opening Settings:', err);
-    res.status(500).json({
-      success: false,
-      message: 'Serverfehler beim Abrufen der Store Opening Settings',
-    });
+    next(new AppError('Serverfehler beim Abrufen der Store Opening Settings', 500, err));
   }
 };
 
-export const updateStoreOpeningSettings = async (req: Request, res: Response): Promise<void> => {
+export const updateStoreOpeningSettings = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { openingDate, openingTime, enabled } = req.body;
     const modifiedBy = (req as any).user?.email || (req as any).user?.id || 'admin';
@@ -251,11 +240,7 @@ export const updateStoreOpeningSettings = async (req: Request, res: Response): P
       },
     });
   } catch (err) {
-    logger.error('Fehler beim Aktualisieren der Store Opening Settings:', err);
-    res.status(500).json({
-      success: false,
-      message: 'Serverfehler beim Aktualisieren der Store Opening Settings',
-    });
+    next(new AppError('Serverfehler beim Aktualisieren der Store Opening Settings', 500, err));
   }
 };
 
@@ -264,7 +249,7 @@ export const updateStoreOpeningSettings = async (req: Request, res: Response): P
 /**
  * Assign FlourIO category tag to products (bulk operation)
  */
-export const assignCategoryToProducts = async (req: Request, res: Response): Promise<void> => {
+export const assignCategoryToProducts = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { productIds, categoryTagId } = req.body;
 
@@ -364,11 +349,7 @@ export const assignCategoryToProducts = async (req: Request, res: Response): Pro
       message: `Successfully assigned category to ${newlyAssigned} products (${alreadyHadTag} already had the tag)`,
     });
   } catch (error) {
-    logger.error('Error assigning category to products:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Internal server error during category assignment',
-    });
+    next(new AppError('Internal server error during category assignment', 500, error));
   }
 };
 

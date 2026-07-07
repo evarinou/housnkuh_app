@@ -11,6 +11,7 @@ import { Request, Response, NextFunction } from 'express';
 import User from '../models/User';
 import { TrialService } from '../services/trialService';
 import logger from '../utils/logger';
+import AppError from '../utils/AppError';
 
 /**
  * Interface extending Request with trial-related properties
@@ -136,11 +137,7 @@ export const requireActiveTrial = async (req: TrialRequest, res: Response, next:
 
     next();
   } catch (error) {
-    logger.error('Error in require active trial', { error });
-    res.status(500).json({
-      success: false,
-      message: 'Internal server error'
-    });
+    next(new AppError('Internal server error', 500, error));
   }
 };
 

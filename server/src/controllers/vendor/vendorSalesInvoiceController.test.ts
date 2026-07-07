@@ -22,6 +22,8 @@ const mockRes = () => {
   return res;
 };
 
+const next = jest.fn();
+
 const makeInvoice = (vendor: mongoose.Types.ObjectId, number: string) =>
   SalesInvoice.create({
     vendor, invoiceNumber: number, issueDate: new Date('2026-07-07'),
@@ -49,7 +51,7 @@ describe('vendorSalesInvoiceController', () => {
 
     const req: any = { user: { id: String(vendorA) }, query: {} };
     const res = mockRes();
-    await getVendorSalesInvoices(req, res);
+    await getVendorSalesInvoices(req, res, next);
 
     const payload = res.json.mock.calls[0][0];
     expect(payload.success).toBe(true);
@@ -65,7 +67,7 @@ describe('vendorSalesInvoiceController', () => {
 
     const req: any = { user: { id: String(vendorA) }, query: {} };
     const res = mockRes();
-    await getVendorSalesReport(req, res);
+    await getVendorSalesReport(req, res, next);
 
     const payload = res.json.mock.calls[0][0];
     expect(payload.data.totals.net).toBe(300);
@@ -79,7 +81,7 @@ describe('vendorSalesInvoiceController', () => {
   it('getVendorSalesInvoices lehnt ohne Auth ab', async () => {
     const req: any = { query: {} };
     const res = mockRes();
-    await getVendorSalesInvoices(req, res);
+    await getVendorSalesInvoices(req, res, next);
     expect(res.status).toHaveBeenCalledWith(403);
   });
 });

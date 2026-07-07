@@ -4,7 +4,8 @@
  * Handles admin-specific trial operations including filtering, statistics, exports, and manual management
  */
 
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
+import AppError from '../utils/AppError';
 import User from '../models/User';
 import Vertrag from '../models/Vertrag';
 import logger from '../utils/logger';
@@ -20,7 +21,7 @@ import mongoose from 'mongoose';
  * @complexity O(n log n) where n is number of matching trials (due to sorting and aggregation)
  * @security Admin only endpoint with comprehensive trial data
  */
-export const getAllTrials = async (req: Request, res: Response): Promise<void> => {
+export const getAllTrials = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const {
       status,
@@ -131,11 +132,7 @@ export const getAllTrials = async (req: Request, res: Response): Promise<void> =
       }
     });
   } catch (error) {
-    logger.error('Error getting trials:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Internal server error'
-    });
+    next(new AppError('Internal server error', 500, error));
   }
 };
 
@@ -148,7 +145,7 @@ export const getAllTrials = async (req: Request, res: Response): Promise<void> =
  * @complexity O(n) where n is number of contracts for the trial
  * @security Admin only endpoint with ID validation
  */
-export const getTrialById = async (req: Request, res: Response): Promise<void> => {
+export const getTrialById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id } = req.params;
 
@@ -194,11 +191,7 @@ export const getTrialById = async (req: Request, res: Response): Promise<void> =
       }
     });
   } catch (error) {
-    logger.error('Error getting trial by ID:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Internal server error'
-    });
+    next(new AppError('Internal server error', 500, error));
   }
 };
 
@@ -211,7 +204,7 @@ export const getTrialById = async (req: Request, res: Response): Promise<void> =
  * @complexity O(1) - Single database update with validation
  * @security Admin only endpoint with ID validation and update validation
  */
-export const updateTrial = async (req: Request, res: Response): Promise<void> => {
+export const updateTrial = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id } = req.params;
     const updates = req.body;
@@ -244,11 +237,7 @@ export const updateTrial = async (req: Request, res: Response): Promise<void> =>
       data: user
     });
   } catch (error) {
-    logger.error('Error updating trial:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Internal server error'
-    });
+    next(new AppError('Internal server error', 500, error));
   }
 };
 
@@ -261,7 +250,7 @@ export const updateTrial = async (req: Request, res: Response): Promise<void> =>
  * @complexity O(n) where n is number of trials to process
  * @security Admin only endpoint with operation validation and error tracking
  */
-export const bulkOperations = async (req: Request, res: Response): Promise<void> => {
+export const bulkOperations = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { operation, trialIds, data } = req.body;
 
@@ -317,11 +306,7 @@ export const bulkOperations = async (req: Request, res: Response): Promise<void>
       data: results
     });
   } catch (error) {
-    logger.error('Error in bulk operations:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Internal server error'
-    });
+    next(new AppError('Internal server error', 500, error));
   }
 };
 
@@ -334,7 +319,7 @@ export const bulkOperations = async (req: Request, res: Response): Promise<void>
  * @complexity O(n) where n is number of trials for statistics calculation
  * @security Admin only endpoint
  */
-export const getTrialStatistics = async (req: Request, res: Response): Promise<void> => {
+export const getTrialStatistics = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const stats = await TrialService.getTrialStatistics();
     
@@ -343,11 +328,7 @@ export const getTrialStatistics = async (req: Request, res: Response): Promise<v
       data: stats
     });
   } catch (error) {
-    logger.error('Error getting trial statistics:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Internal server error'
-    });
+    next(new AppError('Internal server error', 500, error));
   }
 };
 
@@ -360,7 +341,7 @@ export const getTrialStatistics = async (req: Request, res: Response): Promise<v
  * @complexity O(n) where n is number of trials to export
  * @security Admin only endpoint with format validation
  */
-export const exportTrialData = async (req: Request, res: Response): Promise<void> => {
+export const exportTrialData = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { format = 'csv' } = req.query;
     
@@ -397,11 +378,7 @@ export const exportTrialData = async (req: Request, res: Response): Promise<void
       });
     }
   } catch (error) {
-    logger.error('Error exporting trial data:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Internal server error'
-    });
+    next(new AppError('Internal server error', 500, error));
   }
 };
 
@@ -414,7 +391,7 @@ export const exportTrialData = async (req: Request, res: Response): Promise<void
  * @complexity O(1) - Single trial conversion with logging
  * @security Admin only endpoint with action logging
  */
-export const manualTrialConversion = async (req: Request, res: Response): Promise<void> => {
+export const manualTrialConversion = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id } = req.params;
     const { reason } = req.body;
@@ -447,11 +424,7 @@ export const manualTrialConversion = async (req: Request, res: Response): Promis
       data: result
     });
   } catch (error) {
-    logger.error('Error in manual trial conversion:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Internal server error'
-    });
+    next(new AppError('Internal server error', 500, error));
   }
 };
 
@@ -464,7 +437,7 @@ export const manualTrialConversion = async (req: Request, res: Response): Promis
  * @complexity O(1) - Single trial extension with logging
  * @security Admin only endpoint with action logging
  */
-export const manualTrialExtension = async (req: Request, res: Response): Promise<void> => {
+export const manualTrialExtension = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id } = req.params;
     const { extensionDays, reason } = req.body;
@@ -497,11 +470,7 @@ export const manualTrialExtension = async (req: Request, res: Response): Promise
       data: result
     });
   } catch (error) {
-    logger.error('Error in manual trial extension:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Internal server error'
-    });
+    next(new AppError('Internal server error', 500, error));
   }
 };
 
@@ -514,7 +483,7 @@ export const manualTrialExtension = async (req: Request, res: Response): Promise
  * @complexity O(1) - Single trial cancellation with logging
  * @security Admin only endpoint with action logging
  */
-export const manualTrialCancellation = async (req: Request, res: Response): Promise<void> => {
+export const manualTrialCancellation = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id } = req.params;
     const { reason } = req.body;
@@ -547,10 +516,6 @@ export const manualTrialCancellation = async (req: Request, res: Response): Prom
       data: result
     });
   } catch (error) {
-    logger.error('Error in manual trial cancellation:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Internal server error'
-    });
+    next(new AppError('Internal server error', 500, error));
   }
 };

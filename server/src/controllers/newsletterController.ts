@@ -4,14 +4,15 @@
  * Handles newsletter subscriptions, confirmations, and unsubscriptions
  */
 
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import User from '../models/User';
 import crypto from 'crypto';
 import { sendNewsletterConfirmation } from '../utils/emailService';
 import logger from '../utils/logger';
+import AppError from '../utils/AppError';
 
 // Newsletter-Anmeldung mit erweiterten Logs
-export const subscribeNewsletter = async (req: Request, res: Response): Promise<void> => {
+export const subscribeNewsletter = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   logger.debug('Newsletter subscription request received', { body: req.body });
   
   try {
@@ -70,11 +71,7 @@ export const subscribeNewsletter = async (req: Request, res: Response): Promise<
         await existingUser.save();
         logger.debug('User updated successfully');
       } catch (saveError) {
-        logger.error('Error saving existing user:', saveError);
-        res.status(500).json({ 
-          success: false, 
-          message: 'Fehler beim Speichern der Benutzerdaten' 
-        });
+        next(new AppError('Fehler beim Speichern der Benutzerdaten', 500, saveError));
         return;
       }
       
@@ -83,11 +80,7 @@ export const subscribeNewsletter = async (req: Request, res: Response): Promise<
       const emailSent = await sendNewsletterConfirmation(email, token, type);
       
       if (!emailSent) {
-        logger.error('Failed to send confirmation email');
-        res.status(500).json({ 
-          success: false, 
-          message: 'Fehler beim Senden der Bestätigungs-E-Mail' 
-        });
+        next(new AppError('Fehler beim Senden der Bestätigungs-E-Mail', 500));
         return;
       }
       
@@ -128,11 +121,7 @@ export const subscribeNewsletter = async (req: Request, res: Response): Promise<
       await newUser.save();
       logger.info('New newsletter user created successfully', { userId: newUser._id });
     } catch (saveError) {
-      logger.error('Error saving new user:', saveError);
-      res.status(500).json({ 
-        success: false, 
-        message: 'Fehler beim Erstellen des Benutzers' 
-      });
+      next(new AppError('Fehler beim Erstellen des Benutzers', 500, saveError));
       return;
     }
     
@@ -141,11 +130,7 @@ export const subscribeNewsletter = async (req: Request, res: Response): Promise<
     const emailSent = await sendNewsletterConfirmation(email, token, type);
     
     if (!emailSent) {
-      logger.error('Failed to send confirmation email to new user');
-      res.status(500).json({ 
-        success: false, 
-        message: 'Fehler beim Senden der Bestätigungs-E-Mail' 
-      });
+      next(new AppError('Fehler beim Senden der Bestätigungs-E-Mail', 500));
       return;
     }
     
@@ -155,16 +140,12 @@ export const subscribeNewsletter = async (req: Request, res: Response): Promise<
       message: 'Bitte bestätige deine E-Mail-Adresse' 
     });
   } catch (err) {
-    logger.error('Unexpected error in newsletter subscription:', err);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Ein Serverfehler ist aufgetreten' 
-    });
+    next(new AppError('Ein Serverfehler ist aufgetreten', 500, err));
   }
 };
 
 // Newsletter-Anmeldung bestätigen
-export const confirmNewsletter = async (req: Request, res: Response): Promise<void> => {
+export const confirmNewsletter = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { token } = req.params;
     
@@ -229,16 +210,12 @@ export const confirmNewsletter = async (req: Request, res: Response): Promise<vo
       message: 'Newsletter-Anmeldung erfolgreich bestätigt' 
     });
   } catch (err) {
-    logger.error('Fehler bei der Bestätigung der Newsletter-Anmeldung:', err);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Ein Serverfehler ist aufgetreten' 
-    });
+    next(new AppError('Ein Serverfehler ist aufgetreten', 500, err));
   }
 };
 
 // Newsletter-Abmeldung
-export const unsubscribeNewsletter = async (req: Request, res: Response): Promise<void> => {
+export const unsubscribeNewsletter = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { email } = req.body;
     
@@ -268,10 +245,6 @@ export const unsubscribeNewsletter = async (req: Request, res: Response): Promis
       message: 'Du wurdest erfolgreich vom Newsletter abgemeldet' 
     });
   } catch (err) {
-    logger.error('Fehler bei der Newsletter-Abmeldung:', err);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Ein Serverfehler ist aufgetreten' 
-    });
+    next(new AppError('Ein Serverfehler ist aufgetreten', 500, err));
   }
 };

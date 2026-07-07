@@ -4,13 +4,14 @@
  * Handles admin login authentication, JWT token generation, and initial admin account creation
  */
 
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import User from '../models/User';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import config from '../config/config';
 import securityLogger from '../utils/securityLogger';
 import logger from '../utils/logger';
+import AppError from '../utils/AppError';
 
 /**
  * Authenticates admin users and generates JWT tokens
@@ -21,7 +22,7 @@ import logger from '../utils/logger';
  * @complexity O(1) - Single database lookup with bcrypt password verification
  * @security Includes rate limiting, security logging, and privilege validation
  */
-export const login = async (req: Request, res: Response): Promise<void> => {
+export const login = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { username, password } = req.body;
     
@@ -107,15 +108,11 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       }
     });
   } catch (err) {
-    logger.error('Login-Fehler:', err);
     securityLogger.logLoginAttempt(req, req.body.username || 'unknown', false, { 
       reason: 'server_error',
       error: err instanceof Error ? err.message : 'Unknown error' 
     });
-    res.status(500).json({ 
-      success: false, 
-      message: 'Serverfehler bei der Anmeldung' 
-    });
+    next(new AppError('Serverfehler bei der Anmeldung', 500, err));
   }
 };
 
@@ -128,7 +125,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
  * @complexity O(1) - Single database operation with password hashing
  * @security Requires valid setup key, prevents multiple admin creation, includes security logging
  */
-export const setupAdmin = async (req: Request, res: Response): Promise<void> => {
+export const setupAdmin = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   logger.debug('Admin setup controller reached', {
     fields: Object.keys(req.body),
     email: req.body.email
@@ -221,14 +218,10 @@ export const setupAdmin = async (req: Request, res: Response): Promise<void> => 
       }
     });
   } catch (err) {
-    logger.error('Fehler bei der Admin-Erstellung:', err);
     securityLogger.logAdminSetup(req, req.body.username || 'unknown', false, { 
       reason: 'server_error',
       error: err instanceof Error ? err.message : 'Unknown error' 
     });
-    res.status(500).json({ 
-      success: false, 
-      message: 'Serverfehler bei der Admin-Erstellung' 
-    });
+    next(new AppError('Serverfehler bei der Admin-Erstellung', 500, err));
   }
 };

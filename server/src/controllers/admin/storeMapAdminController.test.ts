@@ -4,7 +4,7 @@
  * @created 2026-06-11
  */
 
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { getStoreMapAdmin, updateStoreMapPositions } from './storeMapAdminController';
 import Mietfach from '../../models/Mietfach';
 import { getActiveOccupancyMap } from '../../services/storeMapService';
@@ -46,7 +46,8 @@ describe('getStoreMapAdmin', () => {
     );
 
     const res = mockResponse();
-    await getStoreMapAdmin({} as Request, res);
+    const next = jest.fn();
+    await getStoreMapAdmin({} as Request, res, next as unknown as NextFunction);
 
     const payload = (res.json as jest.Mock).mock.calls[0][0];
     expect(payload.success).toBe(true);
@@ -66,7 +67,8 @@ describe('updateStoreMapPositions', () => {
 
   const call = async (body: any) => {
     const res = mockResponse();
-    await updateStoreMapPositions({ body } as Request, res);
+    const next = jest.fn();
+    await updateStoreMapPositions({ body } as Request, res, next as unknown as NextFunction);
     return res;
   };
 

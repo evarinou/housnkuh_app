@@ -20,6 +20,7 @@ import * as vertragController from '../controllers/vertragController';
 import { adminAuth } from '../middleware/auth';
 // import { cacheMiddleware, cacheInvalidationMiddleware } from '../middleware/cacheMiddleware';
 import ScheduledJobs from '../services/scheduledJobs';
+import AppError from '../utils/AppError';
 
 /**
  * Admin routes router instance
@@ -108,30 +109,30 @@ router.post('/trials/activate/:vendorId', adminController.activateVendorTrial);
 router.get('/jobs/status', adminController.getScheduledJobsStatus);
 
 // Manual monitoring triggers
-router.post('/monitoring/health-check', async (_req, res) => {
+router.post('/monitoring/health-check', async (_req, res, next) => {
   try {
     const result = await ScheduledJobs.triggerHealthCheck();
     res.json(result);
   } catch (error) {
-    res.status(500).json({ success: false, error: error instanceof Error ? error.message : 'Unknown error' });
+    next(new AppError(error instanceof Error ? error.message : 'Unknown error', 500, error));
   }
 });
 
-router.post('/monitoring/performance-check', async (_req, res) => {
+router.post('/monitoring/performance-check', async (_req, res, next) => {
   try {
     const result = await ScheduledJobs.triggerPerformanceCheck();
     res.json(result);
   } catch (error) {
-    res.status(500).json({ success: false, error: error instanceof Error ? error.message : 'Unknown error' });
+    next(new AppError(error instanceof Error ? error.message : 'Unknown error', 500, error));
   }
 });
 
-router.get('/monitoring/statistics', (_req, res) => {
+router.get('/monitoring/statistics', (_req, res, next) => {
   try {
     const stats = ScheduledJobs.getMonitoringStatistics();
     res.json(stats);
   } catch (error) {
-    res.status(500).json({ success: false, error: error instanceof Error ? error.message : 'Unknown error' });
+    next(new AppError(error instanceof Error ? error.message : 'Unknown error', 500, error));
   }
 });
 

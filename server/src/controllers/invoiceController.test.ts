@@ -52,6 +52,7 @@ describe('invoiceController', () => {
   let jsonMock: jest.Mock;
   let statusMock: jest.Mock;
   let setHeaderMock: jest.Mock;
+  let next: jest.Mock;
 
   const mockUserId = new Types.ObjectId().toString();
   const mockInvoiceId = new Types.ObjectId().toString();
@@ -80,7 +81,8 @@ describe('invoiceController', () => {
     jsonMock = jest.fn();
     statusMock = jest.fn().mockReturnThis();
     setHeaderMock = jest.fn();
-    
+    next = jest.fn();
+
     res = {
       json: jsonMock,
       status: statusMock,
@@ -108,7 +110,7 @@ describe('invoiceController', () => {
       MockedInvoice.find = jest.fn().mockReturnValue(mockFind);
       MockedInvoice.countDocuments = jest.fn().mockResolvedValue(1);
 
-      await getInvoices(req as AuthRequest, res as Response);
+      await getInvoices(req as AuthRequest, res as Response, next);
 
       expect(MockedInvoice.find).toHaveBeenCalledWith({ vendor: mockUserId });
       expect(jsonMock).toHaveBeenCalledWith({
@@ -138,7 +140,7 @@ describe('invoiceController', () => {
       MockedInvoice.find = jest.fn().mockReturnValue(mockFind);
       MockedInvoice.countDocuments = jest.fn().mockResolvedValue(1);
 
-      await getInvoices(req as AuthRequest, res as Response);
+      await getInvoices(req as AuthRequest, res as Response, next);
 
       expect(MockedInvoice.find).toHaveBeenCalledWith({});
       expect(jsonMock).toHaveBeenCalledWith(expect.objectContaining({
@@ -159,7 +161,7 @@ describe('invoiceController', () => {
       MockedInvoice.find = jest.fn().mockReturnValue(mockFind);
       MockedInvoice.countDocuments = jest.fn().mockResolvedValue(0);
 
-      await getInvoices(req as AuthRequest, res as Response);
+      await getInvoices(req as AuthRequest, res as Response, next);
 
       expect(MockedInvoice.find).toHaveBeenCalledWith({ 
         vendor: mockUserId, 
@@ -172,13 +174,12 @@ describe('invoiceController', () => {
         throw new Error('Database error');
       });
 
-      await getInvoices(req as AuthRequest, res as Response);
+      await getInvoices(req as AuthRequest, res as Response, next);
 
-      expect(statusMock).toHaveBeenCalledWith(500);
-      expect(jsonMock).toHaveBeenCalledWith({
-        success: false,
+      expect(next).toHaveBeenCalledWith(expect.objectContaining({
+        statusCode: 500,
         message: 'Serverfehler beim Abrufen der Rechnungen'
-      });
+      }));
     });
   });
 
@@ -201,7 +202,7 @@ describe('invoiceController', () => {
       
       MockedInvoice.findById = jest.fn().mockReturnValue(mockPopulate);
 
-      await getInvoiceById(req as AuthRequest, res as Response);
+      await getInvoiceById(req as AuthRequest, res as Response, next);
 
       expect(MockedInvoice.findById).toHaveBeenCalledWith(mockInvoiceId);
       expect(jsonMock).toHaveBeenCalledWith({
@@ -213,7 +214,7 @@ describe('invoiceController', () => {
     it('should return 400 for invalid ObjectId', async () => {
       req.params = { id: 'invalid-id' };
 
-      await getInvoiceById(req as AuthRequest, res as Response);
+      await getInvoiceById(req as AuthRequest, res as Response, next);
 
       expect(statusMock).toHaveBeenCalledWith(400);
       expect(jsonMock).toHaveBeenCalledWith({
@@ -229,7 +230,7 @@ describe('invoiceController', () => {
       
       MockedInvoice.findById = jest.fn().mockReturnValue(mockPopulate);
 
-      await getInvoiceById(req as AuthRequest, res as Response);
+      await getInvoiceById(req as AuthRequest, res as Response, next);
 
       expect(statusMock).toHaveBeenCalledWith(404);
       expect(jsonMock).toHaveBeenCalledWith({
@@ -248,7 +249,7 @@ describe('invoiceController', () => {
       
       MockedInvoice.findById = jest.fn().mockReturnValue(mockPopulate);
 
-      await getInvoiceById(req as AuthRequest, res as Response);
+      await getInvoiceById(req as AuthRequest, res as Response, next);
 
       expect(statusMock).toHaveBeenCalledWith(403);
       expect(jsonMock).toHaveBeenCalledWith({
@@ -269,7 +270,7 @@ describe('invoiceController', () => {
       
       MockedInvoice.findById = jest.fn().mockReturnValue(mockPopulate);
 
-      await getInvoiceById(req as AuthRequest, res as Response);
+      await getInvoiceById(req as AuthRequest, res as Response, next);
 
       expect(jsonMock).toHaveBeenCalledWith({
         success: true,
@@ -294,7 +295,7 @@ describe('invoiceController', () => {
         vendor: mockUserId
       });
 
-      await updateInvoiceStatus(req as AuthRequest, res as Response);
+      await updateInvoiceStatus(req as AuthRequest, res as Response, next);
 
       expect(mockInvoice.markAsPaid).toHaveBeenCalled();
       expect(jsonMock).toHaveBeenCalledWith({
@@ -307,7 +308,7 @@ describe('invoiceController', () => {
     it('should return 400 for invalid status', async () => {
       req.body = { status: 'invalid-status' };
 
-      await updateInvoiceStatus(req as AuthRequest, res as Response);
+      await updateInvoiceStatus(req as AuthRequest, res as Response, next);
 
       expect(statusMock).toHaveBeenCalledWith(400);
       expect(jsonMock).toHaveBeenCalledWith({
@@ -324,7 +325,7 @@ describe('invoiceController', () => {
         vendor: mockUserId
       });
 
-      await updateInvoiceStatus(req as AuthRequest, res as Response);
+      await updateInvoiceStatus(req as AuthRequest, res as Response, next);
 
       expect(statusMock).toHaveBeenCalledWith(403);
       expect(jsonMock).toHaveBeenCalledWith({
@@ -346,7 +347,7 @@ describe('invoiceController', () => {
       
       MockedInvoice.findById = jest.fn().mockResolvedValue(mockInvoiceDoc);
 
-      await updateInvoiceStatus(req as AuthRequest, res as Response);
+      await updateInvoiceStatus(req as AuthRequest, res as Response, next);
 
       expect(mockInvoiceDoc.save).toHaveBeenCalled();
       expect(jsonMock).toHaveBeenCalledWith({
@@ -384,7 +385,7 @@ describe('invoiceController', () => {
       mockedFs.existsSync = jest.fn().mockReturnValue(true);
       mockedFs.createReadStream = jest.fn().mockReturnValue(mockFileStream as any);
 
-      await downloadInvoicePdf(req as AuthRequest, res as Response);
+      await downloadInvoicePdf(req as AuthRequest, res as Response, next);
 
       expect(setHeaderMock).toHaveBeenCalledWith('Content-Type', 'application/pdf');
       expect(setHeaderMock).toHaveBeenCalledWith('Content-Disposition', 
@@ -404,7 +405,7 @@ describe('invoiceController', () => {
       mockedPath.join = jest.fn().mockReturnValue('/mock/path');
       mockedFs.existsSync = jest.fn().mockReturnValue(false);
 
-      await downloadInvoicePdf(req as AuthRequest, res as Response);
+      await downloadInvoicePdf(req as AuthRequest, res as Response, next);
 
       expect(statusMock).toHaveBeenCalledWith(404);
       expect(jsonMock).toHaveBeenCalledWith({
@@ -426,7 +427,7 @@ describe('invoiceController', () => {
       const mockResult = { success: true, generated: 5 };
       mockedInvoiceGenerationService.generateInvoicesForAllVendors = jest.fn().mockResolvedValue(mockResult);
 
-      await generateInvoices(req as AuthRequest, res as Response);
+      await generateInvoices(req as AuthRequest, res as Response, next);
 
       expect(mockedInvoiceGenerationService.generateInvoicesForAllVendors)
         .toHaveBeenCalledWith({ month: 9, year: 2024 });
@@ -440,7 +441,7 @@ describe('invoiceController', () => {
     it('should return 403 for non-admin users', async () => {
       req.user = { id: mockUserId, isAdmin: false, isVendor: true };
 
-      await generateInvoices(req as AuthRequest, res as Response);
+      await generateInvoices(req as AuthRequest, res as Response, next);
 
       expect(statusMock).toHaveBeenCalledWith(403);
       expect(jsonMock).toHaveBeenCalledWith({
@@ -452,7 +453,7 @@ describe('invoiceController', () => {
     it('should return 400 for missing month or year', async () => {
       req.body = { month: 9 }; // missing year
 
-      await generateInvoices(req as AuthRequest, res as Response);
+      await generateInvoices(req as AuthRequest, res as Response, next);
 
       expect(statusMock).toHaveBeenCalledWith(400);
       expect(jsonMock).toHaveBeenCalledWith({
@@ -464,7 +465,7 @@ describe('invoiceController', () => {
     it('should return 400 for invalid month or year', async () => {
       req.body = { month: 13, year: 2024 }; // invalid month
 
-      await generateInvoices(req as AuthRequest, res as Response);
+      await generateInvoices(req as AuthRequest, res as Response, next);
 
       expect(statusMock).toHaveBeenCalledWith(400);
       expect(jsonMock).toHaveBeenCalledWith({
@@ -478,7 +479,7 @@ describe('invoiceController', () => {
       const mockResult = { success: true, generated: 1 };
       mockedInvoiceGenerationService.generateMonthlyInvoice = jest.fn().mockResolvedValue(mockResult);
 
-      await generateInvoices(req as AuthRequest, res as Response);
+      await generateInvoices(req as AuthRequest, res as Response, next);
 
       expect(mockedInvoiceGenerationService.generateMonthlyInvoice)
         .toHaveBeenCalledWith(mockVendorId, 2024, 9);
@@ -527,7 +528,7 @@ describe('invoiceController', () => {
         })
       });
 
-      await getInvoiceStats(req as AuthRequest, res as Response);
+      await getInvoiceStats(req as AuthRequest, res as Response, next);
 
       expect(jsonMock).toHaveBeenCalledWith({
         success: true,
@@ -549,7 +550,7 @@ describe('invoiceController', () => {
     it('should deny access to non-admin users', async () => {
       req.user = { id: mockUserId, isAdmin: false };
 
-      await getInvoiceStats(req as AuthRequest, res as Response);
+      await getInvoiceStats(req as AuthRequest, res as Response, next);
 
       expect(statusMock).toHaveBeenCalledWith(403);
       expect(jsonMock).toHaveBeenCalledWith({
@@ -572,7 +573,7 @@ describe('invoiceController', () => {
         .mockResolvedValueOnce({ success: true, generated: 1 })
         .mockResolvedValueOnce({ success: true, generated: 1 });
 
-      await bulkGenerateInvoices(req as AuthRequest, res as Response);
+      await bulkGenerateInvoices(req as AuthRequest, res as Response, next);
 
       expect(mockedInvoiceGenerationService.generateMonthlyInvoice).toHaveBeenCalledTimes(2);
       expect(jsonMock).toHaveBeenCalledWith({
@@ -597,7 +598,7 @@ describe('invoiceController', () => {
       const mockResult = { success: true, generated: 10 };
       mockedInvoiceGenerationService.generateInvoicesForAllVendors = jest.fn().mockResolvedValue(mockResult);
 
-      await bulkGenerateInvoices(req as AuthRequest, res as Response);
+      await bulkGenerateInvoices(req as AuthRequest, res as Response, next);
 
       expect(mockedInvoiceGenerationService.generateInvoicesForAllVendors)
         .toHaveBeenCalledWith({ month: 9, year: 2024 });
@@ -623,7 +624,7 @@ describe('invoiceController', () => {
         .mockResolvedValueOnce({ success: true, generated: 1 })
         .mockRejectedValueOnce(new Error('Generation failed'));
 
-      await bulkGenerateInvoices(req as AuthRequest, res as Response);
+      await bulkGenerateInvoices(req as AuthRequest, res as Response, next);
 
       expect(jsonMock).toHaveBeenCalledWith({
         success: true,
@@ -645,7 +646,7 @@ describe('invoiceController', () => {
     it('should validate required fields', async () => {
       req.body = {};
 
-      await bulkGenerateInvoices(req as AuthRequest, res as Response);
+      await bulkGenerateInvoices(req as AuthRequest, res as Response, next);
 
       expect(statusMock).toHaveBeenCalledWith(400);
       expect(jsonMock).toHaveBeenCalledWith({
@@ -685,7 +686,7 @@ describe('invoiceController', () => {
         status: 'sent'
       };
 
-      await editInvoice(req as AuthRequest, res as Response);
+      await editInvoice(req as AuthRequest, res as Response, next);
 
       expect(mockInvoice.notes).toBe('Updated notes');
       expect(mockInvoice.status).toBe('sent');
@@ -706,7 +707,7 @@ describe('invoiceController', () => {
       mockInvoice.status = 'paid';
       req.body = { notes: 'Updated notes' };
 
-      await editInvoice(req as AuthRequest, res as Response);
+      await editInvoice(req as AuthRequest, res as Response, next);
 
       expect(statusMock).toHaveBeenCalledWith(400);
       expect(jsonMock).toHaveBeenCalledWith({
@@ -719,7 +720,7 @@ describe('invoiceController', () => {
       mockInvoice.status = 'cancelled';
       req.body = { notes: 'Updated notes' };
 
-      await editInvoice(req as AuthRequest, res as Response);
+      await editInvoice(req as AuthRequest, res as Response, next);
 
       expect(statusMock).toHaveBeenCalledWith(400);
       expect(jsonMock).toHaveBeenCalledWith({
@@ -731,7 +732,7 @@ describe('invoiceController', () => {
     it('should reject invalid status changes', async () => {
       req.body = { status: 'paid' };
 
-      await editInvoice(req as AuthRequest, res as Response);
+      await editInvoice(req as AuthRequest, res as Response, next);
 
       expect(statusMock).toHaveBeenCalledWith(400);
       expect(jsonMock).toHaveBeenCalledWith({
@@ -778,7 +779,7 @@ describe('invoiceController', () => {
     });
 
     it('should resend invoice email successfully', async () => {
-      await resendInvoiceEmail(req as AuthRequest, res as Response);
+      await resendInvoiceEmail(req as AuthRequest, res as Response, next);
 
       expect(mockInvoice.emailStatus).toBe('sent');
       expect(mockInvoice.emailAttempts).toBe(2);
@@ -801,7 +802,7 @@ describe('invoiceController', () => {
     it('should prevent resending for cancelled invoices', async () => {
       mockInvoice.status = 'cancelled';
 
-      await resendInvoiceEmail(req as AuthRequest, res as Response);
+      await resendInvoiceEmail(req as AuthRequest, res as Response, next);
 
       expect(statusMock).toHaveBeenCalledWith(400);
       expect(jsonMock).toHaveBeenCalledWith({
@@ -813,7 +814,7 @@ describe('invoiceController', () => {
     it('should prevent resending for inactive vendors', async () => {
       mockInvoice.vendor.isActive = false;
 
-      await resendInvoiceEmail(req as AuthRequest, res as Response);
+      await resendInvoiceEmail(req as AuthRequest, res as Response, next);
 
       expect(statusMock).toHaveBeenCalledWith(400);
       expect(jsonMock).toHaveBeenCalledWith({
@@ -825,7 +826,7 @@ describe('invoiceController', () => {
     it('should enforce rate limiting', async () => {
       mockInvoice.lastEmailAttempt = new Date(); // Just now
 
-      await resendInvoiceEmail(req as AuthRequest, res as Response);
+      await resendInvoiceEmail(req as AuthRequest, res as Response, next);
 
       expect(statusMock).toHaveBeenCalledWith(429);
       expect(jsonMock).toHaveBeenCalledWith({
@@ -857,7 +858,7 @@ describe('invoiceController', () => {
     });
 
     it('should cancel invoice with reason', async () => {
-      await cancelInvoice(req as AuthRequest, res as Response);
+      await cancelInvoice(req as AuthRequest, res as Response, next);
 
       expect(mockInvoice.status).toBe('cancelled');
       expect(mockInvoice.cancelledAt).toBeInstanceOf(Date);
@@ -882,7 +883,7 @@ describe('invoiceController', () => {
     it('should require cancellation reason', async () => {
       req.body = {};
 
-      await cancelInvoice(req as AuthRequest, res as Response);
+      await cancelInvoice(req as AuthRequest, res as Response, next);
 
       expect(statusMock).toHaveBeenCalledWith(400);
       expect(jsonMock).toHaveBeenCalledWith({
@@ -894,7 +895,7 @@ describe('invoiceController', () => {
     it('should prevent cancelling already cancelled invoices', async () => {
       mockInvoice.status = 'cancelled';
 
-      await cancelInvoice(req as AuthRequest, res as Response);
+      await cancelInvoice(req as AuthRequest, res as Response, next);
 
       expect(statusMock).toHaveBeenCalledWith(400);
       expect(jsonMock).toHaveBeenCalledWith({
@@ -906,7 +907,7 @@ describe('invoiceController', () => {
     it('should prevent cancelling paid invoices', async () => {
       mockInvoice.status = 'paid';
 
-      await cancelInvoice(req as AuthRequest, res as Response);
+      await cancelInvoice(req as AuthRequest, res as Response, next);
 
       expect(statusMock).toHaveBeenCalledWith(400);
       expect(jsonMock).toHaveBeenCalledWith({
@@ -918,7 +919,7 @@ describe('invoiceController', () => {
     it('should deny access to non-admin users', async () => {
       req.user = { id: mockUserId, isAdmin: false };
 
-      await cancelInvoice(req as AuthRequest, res as Response);
+      await cancelInvoice(req as AuthRequest, res as Response, next);
 
       expect(statusMock).toHaveBeenCalledWith(403);
       expect(jsonMock).toHaveBeenCalledWith({

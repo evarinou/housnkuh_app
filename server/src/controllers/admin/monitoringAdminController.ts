@@ -4,7 +4,8 @@
  * @created 2026-03-25
  */
 
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
+import AppError from '../../utils/AppError';
 import User from '../../models/User';
 import Settings from '../../models/Settings';
 import ScheduledJobs from '../../services/scheduledJobs';
@@ -18,7 +19,7 @@ import logger from '../../utils/logger';
 // =====================================================
 
 // Email Queue Monitoring für Admin
-export const getEmailQueueStats = async (req: Request, res: Response): Promise<void> => {
+export const getEmailQueueStats = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const emailQueue = require('../../utils/emailQueue').default;
 
@@ -55,16 +56,12 @@ export const getEmailQueueStats = async (req: Request, res: Response): Promise<v
       }
     });
   } catch (err) {
-    logger.error('Fehler beim Abrufen der Email Queue Stats:', err);
-    res.status(500).json({
-      success: false,
-      message: 'Serverfehler beim Abrufen der Email Queue Statistics'
-    });
+    next(new AppError('Serverfehler beim Abrufen der Email Queue Statistics', 500, err));
   }
 };
 
 // Email Queue Jobs retry für Admin
-export const retryFailedEmailJobs = async (req: Request, res: Response): Promise<void> => {
+export const retryFailedEmailJobs = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const emailQueue = require('../../utils/emailQueue').default;
 
@@ -76,11 +73,7 @@ export const retryFailedEmailJobs = async (req: Request, res: Response): Promise
       retriedCount
     });
   } catch (err) {
-    logger.error('Fehler beim Retry der Email Jobs:', err);
-    res.status(500).json({
-      success: false,
-      message: 'Serverfehler beim Retry der E-Mail-Jobs'
-    });
+    next(new AppError('Serverfehler beim Retry der E-Mail-Jobs', 500, err));
   }
 };
 
@@ -89,7 +82,7 @@ export const retryFailedEmailJobs = async (req: Request, res: Response): Promise
 // =====================================================
 
 // Get launch day monitoring metrics
-export const getLaunchDayMetrics = async (req: Request, res: Response): Promise<void> => {
+export const getLaunchDayMetrics = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const settings = await Settings.getSettings();
     const now = new Date();
@@ -186,16 +179,12 @@ export const getLaunchDayMetrics = async (req: Request, res: Response): Promise<
     });
 
   } catch (err) {
-    logger.error('Error getting launch day metrics:', err);
-    res.status(500).json({
-      success: false,
-      message: 'Server error getting launch day metrics'
-    });
+    next(new AppError('Server error getting launch day metrics', 500, err));
   }
 };
 
 // Get scheduled jobs status
-export const getScheduledJobsStatus = async (req: Request, res: Response): Promise<void> => {
+export const getScheduledJobsStatus = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const status = ScheduledJobs.getJobsStatus();
 
@@ -204,11 +193,7 @@ export const getScheduledJobsStatus = async (req: Request, res: Response): Promi
       ...status
     });
   } catch (err) {
-    logger.error('Error getting scheduled jobs status:', err);
-    res.status(500).json({
-      success: false,
-      message: 'Server error getting scheduled jobs status'
-    });
+    next(new AppError('Server error getting scheduled jobs status', 500, err));
   }
 };
 
@@ -254,7 +239,7 @@ export const getSimpleHealthCheck = async (req: Request, res: Response): Promise
   }
 };
 
-export const getComponentHealth = async (req: Request, res: Response): Promise<void> => {
+export const getComponentHealth = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { component } = req.params;
 
@@ -281,11 +266,7 @@ export const getComponentHealth = async (req: Request, res: Response): Promise<v
       component: componentHealth
     });
   } catch (err) {
-    logger.error('Error getting component health:', err);
-    res.status(500).json({
-      success: false,
-      message: 'Server error getting component health'
-    });
+    next(new AppError('Server error getting component health', 500, err));
   }
 };
 
@@ -294,7 +275,7 @@ export const getComponentHealth = async (req: Request, res: Response): Promise<v
 // =====================================================
 
 // Performance Monitoring Endpoints
-export const getPerformanceMetrics = async (req: Request, res: Response): Promise<void> => {
+export const getPerformanceMetrics = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const summary = performanceMonitor.getPerformanceSummary();
     const thresholds = performanceMonitor.checkPerformanceThresholds();
@@ -308,15 +289,11 @@ export const getPerformanceMetrics = async (req: Request, res: Response): Promis
       }
     });
   } catch (err) {
-    logger.error('Error getting performance metrics:', err);
-    res.status(500).json({
-      success: false,
-      message: 'Server error getting performance metrics'
-    });
+    next(new AppError('Server error getting performance metrics', 500, err));
   }
 };
 
-export const getDetailedMetrics = async (req: Request, res: Response): Promise<void> => {
+export const getDetailedMetrics = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { type, limit } = req.query;
     const limitNum = parseInt(limit as string) || 100;
@@ -341,15 +318,11 @@ export const getDetailedMetrics = async (req: Request, res: Response): Promise<v
       count: metrics.length
     });
   } catch (err) {
-    logger.error('Error getting detailed metrics:', err);
-    res.status(500).json({
-      success: false,
-      message: 'Server error getting detailed metrics'
-    });
+    next(new AppError('Server error getting detailed metrics', 500, err));
   }
 };
 
-export const getEndpointMetrics = async (req: Request, res: Response): Promise<void> => {
+export const getEndpointMetrics = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { path } = req.params;
 
@@ -370,11 +343,7 @@ export const getEndpointMetrics = async (req: Request, res: Response): Promise<v
       metrics
     });
   } catch (err) {
-    logger.error('Error getting endpoint metrics:', err);
-    res.status(500).json({
-      success: false,
-      message: 'Server error getting endpoint metrics'
-    });
+    next(new AppError('Server error getting endpoint metrics', 500, err));
   }
 };
 
@@ -383,7 +352,7 @@ export const getEndpointMetrics = async (req: Request, res: Response): Promise<v
 // =====================================================
 
 // Alerting System Endpoints
-export const getActiveAlerts = async (req: Request, res: Response): Promise<void> => {
+export const getActiveAlerts = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const activeAlerts = await AlertingService.getActiveAlerts();
     const alertStats = await AlertingService.getAlertStatistics();
@@ -396,15 +365,11 @@ export const getActiveAlerts = async (req: Request, res: Response): Promise<void
       }
     });
   } catch (err) {
-    logger.error('Error getting active alerts:', err);
-    res.status(500).json({
-      success: false,
-      message: 'Server error getting active alerts'
-    });
+    next(new AppError('Server error getting active alerts', 500, err));
   }
 };;;
 
-export const getAlertHistory = async (req: Request, res: Response): Promise<void> => {
+export const getAlertHistory = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { limit, severity } = req.query;
     const limitNum = parseInt(limit as string) || 50;
@@ -422,15 +387,11 @@ export const getAlertHistory = async (req: Request, res: Response): Promise<void
       count: alerts.length
     });
   } catch (err) {
-    logger.error('Error getting alert history:', err);
-    res.status(500).json({
-      success: false,
-      message: 'Server error getting alert history'
-    });
+    next(new AppError('Server error getting alert history', 500, err));
   }
 };;
 
-export const resolveAlert = async (req: Request, res: Response): Promise<void> => {
+export const resolveAlert = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { alertId } = req.params;
 
@@ -458,15 +419,11 @@ export const resolveAlert = async (req: Request, res: Response): Promise<void> =
       alertId
     });
   } catch (err) {
-    logger.error('Error resolving alert:', err);
-    res.status(500).json({
-      success: false,
-      message: 'Server error resolving alert'
-    });
+    next(new AppError('Server error resolving alert', 500, err));
   }
 };
 
-export const sendTestAlert = async (req: Request, res: Response): Promise<void> => {
+export const sendTestAlert = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const success = await AlertingService.sendTestAlert();
 
@@ -475,11 +432,7 @@ export const sendTestAlert = async (req: Request, res: Response): Promise<void> 
       message: success ? 'Test alert sent successfully' : 'Failed to send test alert'
     });
   } catch (err) {
-    logger.error('Error sending test alert:', err);
-    res.status(500).json({
-      success: false,
-      message: 'Server error sending test alert'
-    });
+    next(new AppError('Server error sending test alert', 500, err));
   }
 };
 
@@ -488,7 +441,7 @@ export const sendTestAlert = async (req: Request, res: Response): Promise<void> 
 // =====================================================
 
 // Monitoring Configuration Endpoints
-export const getMonitoringSettings = async (req: Request, res: Response): Promise<void> => {
+export const getMonitoringSettings = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const settings = await Settings.getSettings();
     const monitoringConfig = settings.getMonitoringConfig();
@@ -498,15 +451,11 @@ export const getMonitoringSettings = async (req: Request, res: Response): Promis
       monitoring: monitoringConfig
     });
   } catch (err) {
-    logger.error('Error getting monitoring settings:', err);
-    res.status(500).json({
-      success: false,
-      message: 'Server error getting monitoring settings'
-    });
+    next(new AppError('Server error getting monitoring settings', 500, err));
   }
 };
 
-export const updateMonitoringSettings = async (req: Request, res: Response): Promise<void> => {
+export const updateMonitoringSettings = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { monitoring } = req.body;
     const adminUser = (req as any).user;
@@ -528,18 +477,14 @@ export const updateMonitoringSettings = async (req: Request, res: Response): Pro
       monitoring: settings.getMonitoringConfig()
     });
   } catch (err) {
-    logger.error('Error updating monitoring settings:', err);
-    res.status(500).json({
-      success: false,
-      message: 'Server error updating monitoring settings'
-    });
+    next(new AppError('Server error updating monitoring settings', 500, err));
   }
 };
 
 // Real-time Monitoring Dashboard Data
 
 // Get trial monitoring dashboard
-export const getTrialMonitoringDashboard = async (req: Request, res: Response): Promise<void> => {
+export const getTrialMonitoringDashboard = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { trialMonitoringService } = await import('../../services/trialMonitoringService');
     const dashboard = await trialMonitoringService.getTrialDashboard();
@@ -549,16 +494,12 @@ export const getTrialMonitoringDashboard = async (req: Request, res: Response): 
       dashboard
     });
   } catch (err) {
-    logger.error('Error getting trial monitoring dashboard:', err);
-    res.status(500).json({
-      success: false,
-      message: 'Server error getting trial monitoring dashboard'
-    });
+    next(new AppError('Server error getting trial monitoring dashboard', 500, err));
   }
 };
 
 // Get trial metrics
-export const getTrialMetrics = async (req: Request, res: Response): Promise<void> => {
+export const getTrialMetrics = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { trialMonitoringService } = await import('../../services/trialMonitoringService');
     const metrics = await trialMonitoringService.getTrialMetrics();
@@ -568,11 +509,7 @@ export const getTrialMetrics = async (req: Request, res: Response): Promise<void
       metrics
     });
   } catch (err) {
-    logger.error('Error getting trial metrics:', err);
-    res.status(500).json({
-      success: false,
-      message: 'Server error getting trial metrics'
-    });
+    next(new AppError('Server error getting trial metrics', 500, err));
   }
 };
 
@@ -581,7 +518,7 @@ export const getTrialMetrics = async (req: Request, res: Response): Promise<void
 // =====================================================
 
 // Get feature flags
-export const getFeatureFlags = async (req: Request, res: Response): Promise<void> => {
+export const getFeatureFlags = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { featureFlagService } = await import('../../services/featureFlagService');
     const featureFlags = await featureFlagService.getAllFeatureFlags();
@@ -591,16 +528,12 @@ export const getFeatureFlags = async (req: Request, res: Response): Promise<void
       data: featureFlags
     });
   } catch (err) {
-    logger.error('Error getting feature flags:', err);
-    res.status(500).json({
-      success: false,
-      message: 'Server error getting feature flags'
-    });
+    next(new AppError('Server error getting feature flags', 500, err));
   }
 };
 
 // Update feature flags
-export const updateFeatureFlags = async (req: Request, res: Response): Promise<void> => {
+export const updateFeatureFlags = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { featureFlags } = req.body;
     const adminUser = (req as any).user;
@@ -625,16 +558,12 @@ export const updateFeatureFlags = async (req: Request, res: Response): Promise<v
       data: updatedSettings.featureFlags
     });
   } catch (err) {
-    logger.error('Error updating feature flags:', err);
-    res.status(500).json({
-      success: false,
-      message: 'Server error updating feature flags'
-    });
+    next(new AppError('Server error updating feature flags', 500, err));
   }
 };
 
 // Set trial automation rollout
-export const setTrialAutomationRollout = async (req: Request, res: Response): Promise<void> => {
+export const setTrialAutomationRollout = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { enabled, rolloutPercentage } = req.body;
     const adminUser = (req as any).user;
@@ -672,16 +601,12 @@ export const setTrialAutomationRollout = async (req: Request, res: Response): Pr
       }
     });
   } catch (err) {
-    logger.error('Error setting trial automation rollout:', err);
-    res.status(500).json({
-      success: false,
-      message: 'Server error setting rollout'
-    });
+    next(new AppError('Server error setting rollout', 500, err));
   }
 };
 
 // Get trial automation status
-export const getTrialAutomationStatus = async (req: Request, res: Response): Promise<void> => {
+export const getTrialAutomationStatus = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { featureFlagService } = await import('../../services/featureFlagService');
     const status = await featureFlagService.getTrialAutomationStatus();
@@ -691,10 +616,6 @@ export const getTrialAutomationStatus = async (req: Request, res: Response): Pro
       data: status
     });
   } catch (err) {
-    logger.error('Error getting trial automation status:', err);
-    res.status(500).json({
-      success: false,
-      message: 'Server error getting automation status'
-    });
+    next(new AppError('Server error getting automation status', 500, err));
   }
 };

@@ -4,9 +4,10 @@
  * Handles FAQ creation, retrieval, updates, deletion, and ordering with category support
  */
 
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import FAQ from '../models/FAQ';
 import logger from '../utils/logger';
+import AppError from '../utils/AppError';
 
 /**
  * FAQ controller object with all FAQ management methods
@@ -22,7 +23,7 @@ export const faqController = {
    * @complexity O(n log n) where n is number of active FAQs (due to sorting)
    * @security Public endpoint - only returns active FAQs
    */
-  getAllPublic: async (req: Request, res: Response) => {
+  getAllPublic: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const faqs = await FAQ.find({ isActive: true })
         .sort({ category: 1, order: 1 })
@@ -33,11 +34,7 @@ export const faqController = {
         faqs
       });
     } catch (error) {
-      logger.error('Error fetching public FAQs:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Fehler beim Abrufen der FAQs'
-      });
+      next(new AppError('Fehler beim Abrufen der FAQs', 500, error));
     }
   },
 
@@ -50,7 +47,7 @@ export const faqController = {
    * @complexity O(n log n) where n is total number of FAQs (due to sorting)
    * @security Admin endpoint - requires authentication
    */
-  getAllAdmin: async (req: Request, res: Response) => {
+  getAllAdmin: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const faqs = await FAQ.find()
         .sort({ category: 1, order: 1 })
@@ -61,11 +58,7 @@ export const faqController = {
         faqs
       });
     } catch (error) {
-      logger.error('Error fetching admin FAQs:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Fehler beim Abrufen der FAQs'
-      });
+      next(new AppError('Fehler beim Abrufen der FAQs', 500, error));
     }
   },
 
@@ -78,7 +71,7 @@ export const faqController = {
    * @complexity O(1) - Single database lookup by ID
    * @security Returns FAQ regardless of active status
    */
-  getById: async (req: Request, res: Response) => {
+  getById: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { id } = req.params;
       const faq = await FAQ.findById(id);
@@ -95,11 +88,7 @@ export const faqController = {
         faq
       });
     } catch (error) {
-      logger.error('Error fetching FAQ:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Fehler beim Abrufen der FAQ'
-      });
+      next(new AppError('Fehler beim Abrufen der FAQ', 500, error));
     }
   },
 
@@ -112,7 +101,7 @@ export const faqController = {
    * @complexity O(1) - Single database insertion
    * @security Validates required fields and handles validation errors
    */
-  create: async (req: Request, res: Response) => {
+  create: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { category, question, answer, keywords, order, isActive } = req.body;
       
@@ -153,10 +142,7 @@ export const faqController = {
         });
       }
       
-      res.status(500).json({
-        success: false,
-        message: 'Fehler beim Erstellen der FAQ'
-      });
+      next(new AppError('Fehler beim Erstellen der FAQ', 500, error));
     }
   },
 
@@ -169,7 +155,7 @@ export const faqController = {
    * @complexity O(1) - Single database update by ID
    * @security Validates existence and runs model validators
    */
-  update: async (req: Request, res: Response) => {
+  update: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { id } = req.params;
       const updateData = req.body;
@@ -204,10 +190,7 @@ export const faqController = {
         });
       }
       
-      res.status(500).json({
-        success: false,
-        message: 'Fehler beim Aktualisieren der FAQ'
-      });
+      next(new AppError('Fehler beim Aktualisieren der FAQ', 500, error));
     }
   },
 
@@ -220,7 +203,7 @@ export const faqController = {
    * @complexity O(1) - Single database deletion by ID
    * @security Validates existence before deletion
    */
-  delete: async (req: Request, res: Response) => {
+  delete: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { id } = req.params;
       
@@ -238,11 +221,7 @@ export const faqController = {
         message: 'FAQ erfolgreich gelöscht'
       });
     } catch (error) {
-      logger.error('Error deleting FAQ:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Fehler beim Löschen der FAQ'
-      });
+      next(new AppError('Fehler beim Löschen der FAQ', 500, error));
     }
   },
 
@@ -255,7 +234,7 @@ export const faqController = {
    * @complexity O(1) - Single database lookup and update
    * @security Validates existence and provides status feedback
    */
-  toggleActive: async (req: Request, res: Response) => {
+  toggleActive: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { id } = req.params;
       
@@ -277,11 +256,7 @@ export const faqController = {
         faq
       });
     } catch (error) {
-      logger.error('Error toggling FAQ status:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Fehler beim Ändern des FAQ-Status'
-      });
+      next(new AppError('Fehler beim Ändern des FAQ-Status', 500, error));
     }
   },
 
@@ -294,7 +269,7 @@ export const faqController = {
    * @complexity O(n) where n is number of FAQs to reorder
    * @security Validates array format and uses Promise.all for batch updates
    */
-  reorder: async (req: Request, res: Response) => {
+  reorder: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { faqs } = req.body; // Array of { id, order }
       
@@ -317,11 +292,7 @@ export const faqController = {
         message: 'FAQ-Reihenfolge erfolgreich aktualisiert'
       });
     } catch (error) {
-      logger.error('Error reordering FAQs:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Fehler beim Aktualisieren der FAQ-Reihenfolge'
-      });
+      next(new AppError('Fehler beim Aktualisieren der FAQ-Reihenfolge', 500, error));
     }
   }
 };
