@@ -226,8 +226,9 @@ class InvoiceGenerationService {
     }));
 
     const subtotal = calculatedItems.reduce((sum, item) => sum + item.totalPrice, 0);
-    const taxRate = 0.19; // 19% VAT
-    const totalAmount = subtotal * (1 + taxRate);
+    // tax ist der absolute USt-Betrag (BUG-INV-TAX-Semantik), nicht der Satz
+    const tax = Math.round(subtotal * 0.19 * 100) / 100;
+    const totalAmount = Math.round((subtotal + tax) * 100) / 100;
 
     // Generate unique invoice number
     const invoiceNumber = await this.getNextInvoiceNumber(period.year, period.month);
@@ -239,7 +240,7 @@ class InvoiceGenerationService {
       period,
       items: calculatedItems,
       subtotal,
-      tax: taxRate,
+      tax,
       totalAmount,
       status: 'draft' as const,
       dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days from now

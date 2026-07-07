@@ -109,13 +109,8 @@ describe('InvoiceGenerationService', () => {
       expect(invoice.vendor).toEqual(testVendorId);
       expect(invoice.period).toEqual({ month: 1, year: 2025 });
       expect(invoice.subtotal).toBe(125.00); // (2*50) + (1*25)
-      // BEKANNTER PRODUKTIONSBUG (BUG-INV-TAX-Rest): generateInvoice() setzt
-      // tax noch auf den SATZ 0.19 statt auf den absoluten Betrag (23,75 €).
-      // Der Model-Hook rechnet dann totalAmount = subtotal + tax = 125,19 €.
-      // Sobald generateInvoice() auf die neue Semantik umgestellt ist, hier
-      // tax=23.75 und totalAmount=148.75 erwarten.
-      expect(invoice.tax).toBe(0.19);
-      expect(invoice.totalAmount).toBe(125.19); // subtotal + tax (Hook-Semantik)
+      expect(invoice.tax).toBe(23.75); // 19 % von 125 € als absoluter Betrag
+      expect(invoice.totalAmount).toBe(148.75); // subtotal + tax
       expect(invoice.status).toBe('draft');
       expect(invoice.items).toHaveLength(2);
       expect(invoice.items[0].totalPrice).toBe(100.00);
@@ -532,10 +527,7 @@ describe('InvoiceGenerationService', () => {
       // Invoice should still be created
       expect(result.invoice).toBeDefined();
       expect(result.invoice.invoiceNumber).toBeDefined();
-      // BEKANNTER PRODUKTIONSBUG (BUG-INV-TAX-Rest): generateInvoice() setzt
-      // tax=0.19 (Satz statt Betrag) → Hook: totalAmount = 35 + 0.19 = 35.19.
-      // Nach dem Fix wäre 41.65 (35 + 6,65 € USt) korrekt.
-      expect(result.invoice.totalAmount).toBeCloseTo(35.19);
+      expect(result.invoice.totalAmount).toBeCloseTo(41.65); // 35 € + 6,65 € USt
     }, 30000);
 
     it.skip('should generate PDF for existing invoice', async () => {

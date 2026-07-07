@@ -200,12 +200,12 @@ Einige Agent-Einstufungen wurden nach Prüfung angepasst (Begründung dabei).
 
 ### Beim Test-Drift-Cleanup T5.5 gefunden (2026-07-07, verifiziert, NICHT gefixt)
 
-- [ ] **BUG-INV-TAX-REST (K)** `invoiceGenerationService.generateInvoice()`
-  (~Z. 229/242) setzt weiterhin `tax: 0.19` (Satz statt Betrag) und
-  `totalAmount = subtotal*1.19`; der Pre-Save-Hook überschreibt dann
-  `totalAmount = subtotal + 0.19` → Rechnungen mit 0,19 € „Steuer". Betrifft
-  `generateInvoice`/`generateInvoiceWithPdf` (Ad-hoc/Bulk-Pfad); der Monatslauf
-  `generateMonthlyInvoice` ist korrekt. **Vor Rechnungs-Go-live fixen.**
+- [x] **BUG-INV-TAX-REST (K)** ✅ behoben 2026-07-07: `generateInvoice()` setzt
+  `tax` jetzt als gerundeten absoluten Betrag (`subtotal*0.19`) und
+  `totalAmount = subtotal + tax` — gleiches Muster wie der Monatslauf.
+  Tests auf Soll-Werte umgestellt (tax 23,75 €/total 148,75 €). Alt: `tax: 0.19`
+  (Satz) → Pre-Save-Hook machte daraus Rechnungen mit 0,19 € „Steuer" im
+  Ad-hoc/Bulk-Pfad (`generateInvoice`/`generateInvoiceWithPdf`).
 - [ ] **BUG-INV-RESEND (W)** `resendInvoiceEmail` prüft `vendor.isActive` — das
   Feld existiert im User-Schema nicht (strict mode) → Endpoint antwortet für
   jeden Vendor 400 „Vendor ist nicht aktiv"; E-Mail-Resend faktisch tot.
