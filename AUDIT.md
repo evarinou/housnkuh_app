@@ -10,19 +10,19 @@
 
 ### Getrackte Altlasten im Repo
 
-- [ ] **S1 (K)** `server/scripts/debug/` — 25 getrackte Debug-Einmalskripte
+- [x] **S1 (K)** ✅ (T5.4: enttrackt, gitignore deckt ab) `server/scripts/debug/` — 25 getrackte Debug-Einmalskripte
   (debug-auth.js, debug-revenue.js, check-pending-bookings.js …). Gehören nicht
   ins Repo; ob sie Secrets/echte IDs enthalten prüft Durchlauf 1b.
   → `git rm --cached` + .gitignore-Abdeckung.
-- [ ] **S2 (K)** `server/uploads/vendor-images/` — echte Nutzerbilder getrackt
+- [x] **S2 (K)** ✅ (T5.4: enttrackt; History-Rewrite separat offen) `server/uploads/vendor-images/` — echte Nutzerbilder getrackt
   (Datenschutz!). Neue sind seit 2026-07-06 ignoriert, alte noch im Repo
   (und in der Historie). → enttracken; History-Rewrite separat entscheiden.
-- [ ] **S3 (W)** `server/backups/*.json` — 3 DB-Dumps/Reports von 2025-06-25
+- [x] **S3 (W)** ✅ (T5.4: enttrackt) `server/backups/*.json` — 3 DB-Dumps/Reports von 2025-06-25
   getrackt (Mietfächer-Backups). → enttracken.
-- [ ] **S4 (W)** `server/scripts/DANGEROUS-*.disabled` — 3 deaktivierte
+- [x] **S4 (W)** ✅ (T5.4: gelöscht, Evas Freigabe) `server/scripts/DANGEROUS-*.disabled` — 3 deaktivierte
   Destruktiv-Skripte (clear-all-data, seed-db, create-sample-data) getrackt.
   → löschen oder bewusst behalten (Eva entscheidet).
-- [ ] **S5 (W)** ~90 untracked Test-Dateien mit bekannter Drift (~30 Client-,
+- [x] **S5 (W)** ✅ (T5.5: alle Suiten repariert/committet, beide Suiten grün) ~90 untracked Test-Dateien mit bekannter Drift (~30 Client-,
   ~60 Server-Failures, erwarten alte UI/Endpunkte) + unkommittete Änderungen an
   `emailService.test.ts`/`adminController.test.ts`. → eigener Cleanup-Pass:
   reparieren was das aktuelle Verhalten testet, löschen was Altes testet,
@@ -30,23 +30,23 @@
 
 ### Verwaiste Dateien (Import-Grep bestätigt: keine Referenzen)
 
-- [ ] **S6 (W)** `client/src/components/Features.tsx` (120 Z.) — fertige, nie
+- [x] **S6 (W)** ✅ (T5.4: gelöscht) `client/src/components/Features.tsx` (120 Z.) — fertige, nie
   eingebundene Komponente. → löschen oder bewusst einbauen.
-- [ ] **S7 (W)** `client/src/components/ConstructionBanner.tsx` (185 Z.) —
+- [x] **S7 (W)** ✅ (T5.4: gelöscht, Evas Entscheidung) `client/src/components/ConstructionBanner.tsx` (185 Z.) —
   Eröffnungs-Countdown-Banner, nirgends importiert. Reaktivierungs-Kandidat
   oder löschen (Eva entscheidet — Feature-Frage für Phase 2).
-- [ ] **S8 (W)** `client/src/utils/priceFormatting.ts` — zentrale
+- [x] **S8 (W)** ✅ (T5.2: PriceFormatter ist jetzt Standard) `client/src/utils/priceFormatting.ts` — zentrale
   `PriceFormatter`-Klasse mit 8 Methoden, wird von NIEMANDEM genutzt,
   während 14+ Komponenten eigene formatPrice/formatCurrency-Inlines haben
   (siehe S13). → Utility zum Standard machen, Inlines migrieren.
-- [ ] **S9 (W)** `server/src/services/priceValidationService.ts` (170 Z.) —
+- [x] **S9 (W)** ✅ (T5.4: gelöscht) `server/src/services/priceValidationService.ts` (170 Z.) —
   exportiert, nie importiert. → löschen oder in Produkt-Validierung einbinden.
-- [ ] **S10 (W)** `server/src/config/database.ts` (226 Z.) — zweite
+- [x] **S10 (W)** ✅ (T5.4: gelöscht) `server/src/config/database.ts` (226 Z.) — zweite
   DB-Config mit QueryPerformance/HealthCheck, nie importiert (aktiv ist
   `config/db.ts`). → löschen oder Monitoring-Teile übernehmen.
-- [ ] **S11 (W)** `server/src/middleware/trialMiddleware.ts` — definiert, aber
+- [x] **S11 (W)** ✅ (T5.4: gelöscht — war obsolet) `server/src/middleware/trialMiddleware.ts` — definiert, aber
   in keiner Route eingehängt. → klären: vergessen oder obsolet?
-- [ ] **S12 (k)** Verwaiste Kleinteile: `server/src/utils/emailTestHelper.ts`
+- [x] **S12 (k)** ✅ (T5.4: gelöscht) Verwaiste Kleinteile: `server/src/utils/emailTestHelper.ts`
   (6,4 KB, Mailpit-Helfer), `server/src/utils/assignDemoTags.ts` (61 Z.,
   hartkodierte Test-Mail), `client/src/utils/clearAuth.js` (19 Z.,
   Legacy-Wrapper), `client/src/components/vendor/PaymentOptionsModal.css`
@@ -56,7 +56,7 @@
 
 ### Doppelte Logik
 
-- [ ] **S13 (W)** Preisformatierung 14+-fach inline dupliziert
+- [x] **S13 (W)** ✅ (T5.2: 12 Dateien auf PriceFormatter migriert) Preisformatierung 14+-fach inline dupliziert
   (ArticleManagementPage, InvoiceDashboard, PriceBreakdownDisplay,
   BookingDetailModal, ProductCard, InvoiceDetail/List, VendorContractsPage,
   FlourioDocumentsPage, ProductLabelPrintModal …) statt `priceFormatting.ts`
@@ -86,7 +86,7 @@
 
 ### Auskommentiertes & Debug-Reste
 
-- [ ] **S19 (W)** `client/src/utils/invoiceApi.js` — Debug-Werkzeug, das sich
+- [x] **S19 (W)** ✅ (bereits in T0.4 gelöscht) `client/src/utils/invoiceApi.js` — Debug-Werkzeug, das sich
   auf `/admin/invoice-dashboard` automatisch ausführt (fetch-Tests +
   console.logs in Produktion). → entfernen oder hinter Debug-Flag.
 - [ ] **S20 (W)** console.log/error in 62 Client-Dateien (Hotspot:
@@ -95,7 +95,7 @@
 - [ ] **S21 (k)** Auskommentierte Routen/Importe in `adminRoutes.ts`
   (M005-Routen, cacheMiddleware) und `flourioRoutes.ts`
   (`/tags/sync`, sauber als @deprecated markiert). → entfernen.
-- [ ] **S22 (k)** TODO-Marker für nie gebaute WebSocket-Anbindung in
+- [x] **S22 (k)** ✅ (T4.3: WebSocket ist gebaut, TODOs weg) TODO-Marker für nie gebaute WebSocket-Anbindung in
   `useBookingUpdates.ts` / `useDashboardMessages.ts` (Polling ist Stand). →
   TODOs entfernen oder als Feature in Phase 2 entscheiden.
 
@@ -330,7 +330,7 @@ Agent-Schätzung.
   Follow-up: darf das Detail-Leak entfallen?), Monitoring-Formate,
   500er außerhalb von catch. Alt: 214× direktes `res.status(500)`,
   Shapes gemischt.
-- [ ] **KON2 (W)** `any` weit verbreitet: ~464× Server, ~172× Client. Hotspots
+- [x] **KON2 (W)** ✅ Hotspots (T5.3): req/res-any in Handlern + catch-any→unknown typisiert (Warnings 61→20 auf den Dateien). Flächendeckendes any-Cleanup bewusst nicht Scope. Alt: `any` weit verbreitet: ~464× Server, ~172× Client. Hotspots
   mit `req: any`/`res: any` (flourioController, vendorProductController,
   einzelne Routes) — dort am wertvollsten zu typisieren. → Express-Handler
   typisieren, `catch (error: unknown)` statt `: any` (aktuell ~54× `catch(...: any)`).

@@ -160,13 +160,21 @@
   Ausnahmen (client-sichtbare error-Zusatzfelder in flourio-/produkt-
   Controllern, Monitoring-Formate, Nicht-catch-500er) — Follow-up, wenn
   das error-Detail-Feld entfallen darf. Volle Suite grün.
-- [ ] **T5.2 – Preisformatierung zentralisieren** (AUDIT S13/S8): auf
-  `PriceFormatter` migrieren.
-- [ ] **T5.3 – `any`-Hotspots typisieren** (AUDIT KON2): Express-Handler,
-  `catch (error: unknown)`.
-- [ ] **T5.4 – Toten Code & Altlasten entfernen** (AUDIT S1/S2/S3/S6–S12,
-  KON4 require→import): getrackte Debug-Skripte/Backups/Bilder enttracken,
-  verwaiste Dateien löschen — nach Freigabe.
+- [x] **T5.2 – Preisformatierung zentralisieren** (AUDIT S13/S8). ✅ 12 Dateien
+  mit Inline-formatPrice/formatCurrency auf `PriceFormatter` migriert
+  (Sonderformen als dünne Wrapper); Output byte-identisch, preis-assertierende
+  Tests liefen ohne Anpassung grün.
+- [x] **T5.3 – `any`-Hotspots typisieren** (AUDIT KON2). ✅ req/res-any in
+  flourio-/vendorProduct-Controllern + Routes/Middleware auf AuthRequest/
+  Request/Response; catch-any → unknown mit Narrowing (flour.io-error.response
+  über Type-Guard erhalten). Warnings auf den Dateien 61→20. Flächendeckendes
+  any-Cleanup bewusst nicht Scope.
+- [x] **T5.4 – Toten Code & Altlasten entfernen** (AUDIT S1–S4/S6–S12). ✅ Mit
+  Evas Freigabe: Debug-Skripte/Uploads/Backups enttrackt (bleiben lokal),
+  13 verwaiste Dateien + 3 DANGEROUS-Skripte + 4 Bilder gelöscht,
+  trialMiddleware/ConstructionBanner entfernt. History-Rewrite für alte
+  Uploads separat offen. KON4 (require→import) bewusst offen gelassen
+  (Zyklus-Analyse nötig, s. AUDIT).
 - [x] **T5.5 – Test-Drift-Cleanup** (AUDIT S5). ✅ Alle 25 gedrifteten Suiten
   repariert (flour.io 8, Invoice 9, E-Mail/Alerting 3, Client 5), alle
   untracked Tests committet. Nur 5 Client-Tests gelöscht (testeten belegt
