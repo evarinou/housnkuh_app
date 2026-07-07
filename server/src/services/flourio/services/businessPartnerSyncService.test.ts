@@ -78,6 +78,24 @@ describe('BusinessPartnerSyncService', () => {
       expect(mockBusinessPartnerService.syncVendor).toHaveBeenCalledTimes(2);
     });
 
+    it('queries changed-since-sync vendors via $expr field comparison (BUG-BP-SYNC-QUERY)', async () => {
+      mockFind.mockResolvedValue([]);
+
+      await service.syncAllVendors();
+
+      expect(mockFind).toHaveBeenCalledWith(
+        expect.objectContaining({
+          isVendor: true,
+          $or: expect.arrayContaining([
+            expect.objectContaining({
+              flourioSyncStatus: 'synced',
+              $expr: { $gt: ['$updatedAt', '$flourioLastSyncAt'] }
+            })
+          ])
+        })
+      );
+    });
+
     it('should skip vendors with validation errors', async () => {
       const invalidVendor = createMockVendor({
         kontakt: {

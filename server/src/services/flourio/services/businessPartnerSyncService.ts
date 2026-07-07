@@ -72,10 +72,15 @@ export class BusinessPartnerSyncService {
     const query: any = { isVendor: true };
 
     if (!forceResync) {
-      // Only sync vendors that are not synced or have errors
+      // Only sync vendors that are not synced or have errors.
+      // BUG-BP-SYNC-QUERY: Feldvergleich braucht $expr — der frühere String
+      // '$flourioLastSyncAt' wurde als Literal verglichen und traf nie.
       query.$or = [
         { flourioSyncStatus: { $in: [undefined, 'pending', 'error'] } },
-        { flourioSyncStatus: 'synced', updatedAt: { $gt: '$flourioLastSyncAt' } }
+        {
+          flourioSyncStatus: 'synced',
+          $expr: { $gt: ['$updatedAt', '$flourioLastSyncAt'] }
+        }
       ];
     }
 
