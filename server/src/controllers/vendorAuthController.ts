@@ -13,6 +13,7 @@ import config from '../config/config';
 import { sendPreRegistrationConfirmation, sendTrialActivationEmail, sendBookingConfirmation, sendCustomEmail } from '../utils/emailService';
 import Settings from '../models/Settings';
 import { BookingStatus } from '../types/modelTypes';
+import { syncVendorToFlourio } from '../services/flourio/services/businessPartnerSyncService';
 import logger from '../utils/logger';
 
 /**
@@ -130,6 +131,13 @@ export const preRegisterVendor = async (req: Request, res: Response): Promise<vo
     
     const savedUser = await newUser.save();
     logger.info('Pre-Registration erfolgreich:', { userId: savedUser._id });
+
+    // flour.io-BusinessPartner nicht-blockierend anlegen (Registrierung nie daran scheitern lassen)
+    void syncVendorToFlourio(String(savedUser._id)).catch(err =>
+      logger.error('[preRegister] flour.io BusinessPartner-Sync fehlgeschlagen', {
+        vendorId: String(savedUser._id), error: err.message
+      })
+    );
     
     // Eröffnungsdatum für Response vorbereiten
     const openingInfo = settings.storeOpening.enabled && settings.storeOpening.openingDate 
@@ -400,9 +408,16 @@ export const registerVendorWithBooking = async (req: Request, res: Response): Pr
     }
     
     const savedUser = await user.save();
-    
+
     logger.info('User saved successfully:', { userId: savedUser._id });
     logger.info('User pendingBooking status:', { status: savedUser.pendingBooking?.status });
+
+    // flour.io-BusinessPartner nicht-blockierend anlegen (Registrierung nie daran scheitern lassen)
+    void syncVendorToFlourio(String(savedUser._id)).catch(err =>
+      logger.error('[register] flour.io BusinessPartner-Sync fehlgeschlagen', {
+        vendorId: String(savedUser._id), error: err.message
+      })
+    );
     logger.info('User isVendor:', { isVendor: savedUser.isVendor });
     
     // Buchungsbestätigungs-E-Mail senden (mit Package-Details und Bestätigungslink)

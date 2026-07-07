@@ -6,6 +6,8 @@
 
 import { BusinessPartnerService } from './BusinessPartnerService';
 import { BusinessPartnerMapper } from './businessPartnerMapping';
+import { FlourioClient } from '../client/FlourioClient';
+import { flourioConfig } from '../client/config';
 import User from '../../../models/User';
 import type { IUser } from '../../../types/modelTypes';
 import logger from '../../../utils/logger';
@@ -25,6 +27,25 @@ export interface SyncOptions {
   forceResync?: boolean;  // Resync even if already synced
   dryRun?: boolean;       // Don't actually sync, just validate
   batchSize?: number;     // Process in batches (default: 10)
+}
+
+/**
+ * Nicht-blockierender Anstoß nach der Vendor-Registrierung: legt den flour.io-
+ * BusinessPartner an bzw. verknüpft ihn. Ohne konfiguriertes flour.io (kein
+ * Bearer-Token) passiert nichts. Fehler setzen im Service flourioSyncStatus='error'
+ * (per Batch/Admin später erneut versuchbar) — die Registrierung scheitert NIE daran.
+ */
+export async function syncVendorToFlourio(vendorId: string): Promise<void> {
+  if (!flourioConfig.bearerToken) {
+    logger.debug('[flourio] BusinessPartner-Sync übersprungen (kein Token)', { vendorId });
+    return;
+  }
+  const client = new FlourioClient(flourioConfig);
+  const service = new BusinessPartnerSyncService(new BusinessPartnerService(client));
+  const result = await service.syncVendorsByIds([vendorId]);
+  logger.info('[flourio] BusinessPartner-Sync nach Registrierung', {
+    vendorId, synced: result.synced, failed: result.failed
+  });
 }
 
 export class BusinessPartnerSyncService {
