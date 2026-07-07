@@ -14,7 +14,7 @@ export interface MonthlyChargeItem {
   description: string;
   quantity: number;
   unitPrice: number;
-  type: 'mietfach' | 'zusatzleistung' | 'sonstiges';
+  type: 'mietfach' | 'zusatzleistung' | 'sonstiges' | 'provision';
   referenceId?: Types.ObjectId;
   period?: {
     from: Date;
@@ -658,7 +658,7 @@ export class InvoiceCalculationService {
       quantity: number;
       unitPrice: number;
       totalPrice: number;
-      type: 'mietfach' | 'zusatzleistung' | 'sonstiges';
+      type: 'mietfach' | 'zusatzleistung' | 'sonstiges' | 'provision';
       referenceId?: any;
       period?: {
         from?: Date;

@@ -43,8 +43,11 @@ export interface IVendorSale extends Document {
   salesInvoice?: mongoose.Types.ObjectId | null;
   salesInvoicedAt?: Date | null;
 
-  // Abrechnungs-Zustand 2 — Provision im Monatslauf (F2c), unabhängig von Zustand 1
-  provisionPeriod?: string | null; // 'YYYY-MM' des Provisionslaufs
+  // Abrechnungs-Zustand 2 — Provision im Monatslauf (F2c), unabhängig von Zustand 1.
+  // provisionInvoice = die housnkuh-Monatsrechnung, in deren Provisionsposition dieser
+  // Verkauf eingerechnet wurde (eindeutiger Claim-Marker, symmetrisch zu salesInvoice).
+  provisionInvoice?: mongoose.Types.ObjectId | null;
+  provisionPeriod?: string | null; // 'YYYY-MM' des Provisionslaufs (Label/Reporting)
   provisionSettledAt?: Date | null;
 
   createdAt: Date;
@@ -74,6 +77,7 @@ const VendorSaleSchema = new Schema<IVendorSale>({
   salesInvoice: { type: Schema.Types.ObjectId, ref: 'Invoice', default: null },
   salesInvoicedAt: { type: Date, default: null },
 
+  provisionInvoice: { type: Schema.Types.ObjectId, ref: 'Invoice', default: null },
   provisionPeriod: { type: String, default: null },
   provisionSettledAt: { type: Date, default: null }
 }, { timestamps: true });
@@ -82,8 +86,8 @@ const VendorSaleSchema = new Schema<IVendorSale>({
 VendorSaleSchema.index({ flourioDocument: 1, lineIndex: 1 }, { unique: true });
 // F2a: noch nicht in eine Verkaufsrechnung übernommene Positionen je Vendor.
 VendorSaleSchema.index({ vendorId: 1, salesInvoice: 1, saleDate: 1 });
-// F2c: Provisionslauf je Vendor/Monat.
-VendorSaleSchema.index({ vendorId: 1, provisionPeriod: 1, saleDate: 1 });
+// F2c: noch nicht provisionierte Zeilen je Vendor.
+VendorSaleSchema.index({ vendorId: 1, provisionInvoice: 1, saleDate: 1 });
 
 export const VendorSale = mongoose.model<IVendorSale>('VendorSale', VendorSaleSchema);
 export default VendorSale;

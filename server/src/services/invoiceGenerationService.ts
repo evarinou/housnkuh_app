@@ -24,7 +24,7 @@ interface IInvoiceDocument extends mongoose.Document {
     quantity: number;
     unitPrice: number;
     totalPrice: number;
-    type: 'mietfach' | 'zusatzleistung' | 'sonstiges';
+    type: 'mietfach' | 'zusatzleistung' | 'sonstiges' | 'provision';
     referenceId?: mongoose.Types.ObjectId;
     period?: {
       from?: Date;
@@ -55,7 +55,7 @@ interface InvoiceGenerationData {
     description: string;
     quantity: number;
     unitPrice: number;
-    type: 'mietfach' | 'zusatzleistung' | 'sonstiges';
+    type: 'mietfach' | 'zusatzleistung' | 'sonstiges' | 'provision';
     referenceId?: mongoose.Types.ObjectId;
     period?: {
       from?: Date;
@@ -375,7 +375,7 @@ class InvoiceGenerationService {
         throw new Error(`Item ${index + 1}: Unit price must be a non-negative number`);
       }
 
-      const validTypes = ['mietfach', 'zusatzleistung', 'sonstiges'];
+      const validTypes = ['mietfach', 'zusatzleistung', 'sonstiges', 'provision'];
       if (!validTypes.includes(item.type)) {
         throw new Error(`Item ${index + 1}: Type must be one of ${validTypes.join(', ')}`);
       }
@@ -534,55 +534,84 @@ class InvoiceGenerationService {
         month
       );
 
-      // Validate that there's something to invoice
+      // Validate that there's something to invoice. Empty = Probemonat oder kein
+      // aktiver Vertrag → keine Rechnung UND keine Provision (Trial ist ganz frei).
       if (!invoiceData.items || invoiceData.items.length === 0) {
         logger.info('No billable items found for vendor', { vendorName: vendor.kontakt?.name, month, year });
         return null;
       }
 
-      // Generate invoice number
-      const invoiceNumber = await this.getNextInvoiceNumber(year, month);
-
-      // Create validation data object  
       const mongoose = await import('mongoose');
-      const validationData = {
-        vendorId: new mongoose.Types.ObjectId(vendorId),
-        period: {
-          month,
-          year
-        },
-        items: invoiceData.items,
-        subtotal: invoiceData.subtotal,
-        tax: invoiceData.tax,
-        totalAmount: invoiceData.totalAmount
-      };
+      const { ProvisionService } = await import('./provisionService');
 
-      // Validate invoice data
-      this.validateInvoiceData(validationData);
+      // Rechnungs-_id vorab allozieren → dient als eindeutiger Provisions-Claim-Marker.
+      const invoiceId = new mongoose.Types.ObjectId();
+      const period = `${year}-${String(month).padStart(2, '0')}`;
+      const provisionssatz = (vendor as any).vendorProfile?.provisionssatz
+        ?? (vendor as any).provisionssatz ?? 4;
 
-      // Create invoice document for MongoDB
-      const invoiceDoc = {
-        invoiceNumber,
-        vendor: vendorId,
-        period: {
-          month,
-          year
-        },
-        items: invoiceData.items,
-        subtotal: invoiceData.subtotal,
-        tax: invoiceData.tax,
-        totalAmount: invoiceData.totalAmount,
-        status: 'draft' as const,
-        dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days from now
-      };
+      // F2c: offene Verkäufe des Vendors für diese Rechnung reservieren (claim-first).
+      const { base: provisionBase } = await ProvisionService.claimForInvoice(vendorId, invoiceId, period);
 
-      // Create and save invoice
-      const invoice = new Invoice(invoiceDoc);
-      await invoice.save();
+      try {
+        // Provisionsposition (Netto-Umsatz × Satz) als weitere Position ergänzen.
+        // Summen/USt rechnet der Invoice-Pre-Save-Hook aus den items neu — die
+        // Provision fließt dadurch konsistent wie Miete/Zusatzleistungen ein.
+        // (Hinweis: tax-Semantik im Modell ist vorbestehend inkonsistent, siehe
+        // AUDIT KON-Invoice-Tax — hier NICHT im F2c-Scope korrigiert.)
+        if (provisionBase > 0) {
+          const provisionAmount = Math.round(provisionBase * provisionssatz) / 100;
+          invoiceData.items.push({
+            description: `Provision ${provisionssatz}% auf Netto-Umsatz (${provisionBase.toFixed(2)} €)`,
+            quantity: 1,
+            unitPrice: provisionAmount,
+            totalPrice: provisionAmount,
+            type: 'provision'
+          } as any);
+          invoiceData.subtotal = Math.round((invoiceData.subtotal + provisionAmount) * 100) / 100;
+        }
 
-      logger.info('Invoice created successfully', { invoiceNumber, vendorName: vendor.kontakt?.name });
-      
-      return invoice;
+        // Generate invoice number
+        const invoiceNumber = await this.getNextInvoiceNumber(year, month);
+
+        const validationData = {
+          vendorId: new mongoose.Types.ObjectId(vendorId),
+          period: { month, year },
+          items: invoiceData.items,
+          subtotal: invoiceData.subtotal,
+          tax: invoiceData.tax,
+          totalAmount: invoiceData.totalAmount
+        };
+        this.validateInvoiceData(validationData);
+
+        const invoiceDoc = {
+          _id: invoiceId,
+          invoiceNumber,
+          vendor: vendorId,
+          period: { month, year },
+          items: invoiceData.items,
+          subtotal: invoiceData.subtotal,
+          tax: invoiceData.tax,
+          totalAmount: invoiceData.totalAmount,
+          status: 'draft' as const,
+          dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days from now
+        };
+
+        const invoice = new Invoice(invoiceDoc);
+        await invoice.save();
+
+        logger.info('Invoice created successfully', {
+          invoiceNumber, vendorName: vendor.kontakt?.name,
+          provisionBase, provisionCharged: provisionBase > 0
+        });
+
+        return invoice;
+      } catch (innerError) {
+        // Rollback: Provisions-Reservierung lösen, damit die Verkäufe im nächsten
+        // Lauf erneut drankommen.
+        await ProvisionService.releaseClaim(invoiceId);
+        throw innerError;
+      }
     } catch (error) {
       logger.error('Error generating monthly invoice for vendor', { vendorId, error });
       throw error;

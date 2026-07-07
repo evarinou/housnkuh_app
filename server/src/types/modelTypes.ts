@@ -14,7 +14,7 @@ export interface IInvoiceDocument extends Document {
     quantity: number;
     unitPrice: number;
     totalPrice: number;
-    type: 'mietfach' | 'zusatzleistung' | 'sonstiges';
+    type: 'mietfach' | 'zusatzleistung' | 'sonstiges' | 'provision';
     referenceId?: mongoose.Types.ObjectId;
     period?: {
       from?: Date;

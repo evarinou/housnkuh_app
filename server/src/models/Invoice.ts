@@ -27,7 +27,7 @@ const InvoiceItemSchema = new Schema({
   type: {
     type: String,
     required: true,
-    enum: ['mietfach', 'zusatzleistung', 'sonstiges']
+    enum: ['mietfach', 'zusatzleistung', 'sonstiges', 'provision']
   },
   referenceId: {
     type: Schema.Types.ObjectId,
@@ -200,7 +200,7 @@ interface IInvoiceDocument extends Document {
     quantity: number;
     unitPrice: number;
     totalPrice: number;
-    type: 'mietfach' | 'zusatzleistung' | 'sonstiges';
+    type: 'mietfach' | 'zusatzleistung' | 'sonstiges' | 'provision';
     referenceId?: mongoose.Types.ObjectId;
     period?: {
       from?: Date;
