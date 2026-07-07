@@ -110,7 +110,7 @@
 
 ## Stufe 4 – Weitere Features
 
-- [ ] **T4.1 – F1 Öffentliche Produktsuche.** Öffentlicher Endpunkt auf dem
+- [x] **T4.1 – F1 Öffentliche Produktsuche.** ✅ publicProductService + GET /public/products (Volltext via Product-Text-Index, Filter Ort/Tag/Verfügbarkeit, nur öffentliche Felder, 5 Tests); ProduktePage /produkte + Nav-Link. Build grün. ~~Öffentlicher Endpunkt auf dem
   vorhandenen Product-Text-Index + Frontend-Seite mit Filter (Art/
   Zertifizierung/Standort). Nur öffentliche Felder ausliefern (vgl. AUDIT
   SEC3/öffentliche Projektionen). *Fertig, wenn:* Käufer produktübergreifend
