@@ -20,6 +20,7 @@ import VendorLoginPage from '../pages/VendorLoginPage';
 import DirektvermarkterUebersichtPage from '../pages/DirektvermarkterUebersichtPage';
 import DirektvermarkterDetailPage from '../pages/DirektvermarkterDetailPage';
 import DirektvermarkterMapPage from '../pages/DirektvermarkterMapPage';
+import ProduktePage from '../pages/ProduktePage';
 import WettbewerbPage from '../pages/WettbewerbPage';
 import ImpressumPage from '../pages/ImpressumPage';
 import DatenschutzPage from '../pages/DatenschutzPage';
@@ -296,6 +297,7 @@ const AppContent: React.FC = () => {
       
       {/* Öffentliche Routen mit normaler Navigation */}
       <Route element={<PublicLayout><Outlet /></PublicLayout>}>
+        <Route path="/produkte" element={<ProduktePage />} />
         <Route path="/direktvermarkter" element={<DirektvermarkterPage />} />
         <Route path="/direktvermarkter/uebersicht" element={<DirektvermarkterUebersichtPage />} />
         <Route path="/direktvermarkter/karte" element={<DirektvermarkterMapPage />} />

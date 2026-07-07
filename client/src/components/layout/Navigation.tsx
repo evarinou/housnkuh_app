@@ -115,10 +115,19 @@ const Navigation: React.FC = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
-            <NavLink 
-              to="/direktvermarkter" 
-              className={({ isActive }) => isActive 
-                ? "text-primary border-b-2 border-primary font-medium" 
+            <NavLink
+              to="/produkte"
+              className={({ isActive }) => isActive
+                ? "text-primary border-b-2 border-primary font-medium"
+                : "hover:text-primary text-secondary border-transparent border-b-2 font-medium"
+              }
+            >
+              Produkte
+            </NavLink>
+            <NavLink
+              to="/direktvermarkter"
+              className={({ isActive }) => isActive
+                ? "text-primary border-b-2 border-primary font-medium"
                 : "hover:text-primary text-secondary border-transparent border-b-2 font-medium"
               }
             >
@@ -214,6 +223,15 @@ const Navigation: React.FC = () => {
         isOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
       }`}>
         <div className="px-4 py-2 bg-white shadow-inner">
+          <NavLink
+            to="/produkte"
+            className={({ isActive }) => `block px-3 py-2 rounded-md font-medium hover:bg-gray-100 ${
+              isActive ? 'text-primary' : 'text-secondary'
+            }`}
+            onClick={() => setIsOpen(false)}
+          >
+            Produkte
+          </NavLink>
           <NavLink
             to="/direktvermarkter"
             className={({ isActive }) => `block px-3 py-2 rounded-md font-medium hover:bg-gray-100 ${
