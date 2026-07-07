@@ -10,6 +10,7 @@ import EmailTemplate from './EmailTemplate';
 import Invoice from './Invoice';
 import Alert from './Alert';
 import VendorSale from './VendorSale';
+import SalesInvoice from './SalesInvoice';
 
 export {
   User,
@@ -23,5 +24,6 @@ export {
   EmailTemplate,
   Invoice,
   Alert,
-  VendorSale
+  VendorSale,
+  SalesInvoice
 };
