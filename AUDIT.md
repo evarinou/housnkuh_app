@@ -192,14 +192,11 @@ Einige Agent-Einstufungen wurden nach Prüfung angepasst (Begründung dabei).
 
 ## Nachträglich gefunden (bei Umsetzung)
 
-- [ ] **BUG-INV-TAX (K)** `server/src/models/Invoice.ts:185` — Pre-Save-Hook
-  rechnet `totalAmount = subtotal * (1 + tax)`, behandelt `tax` also als **Satz**
-  (z. B. 0.19). Aber `invoiceCalculationService.calculateInvoiceForPeriod` legt
-  einen **absoluten** USt-Betrag in `tax` (`taxAmount = subtotal*0.19`). Folge:
-  `totalAmount` wird grob falsch (z. B. `subtotal*(1+13.49)`). Betrifft **alle**
-  Monatsrechnungen (housnkuh→Vendor), nicht nur F2c. Gefunden 2026-07-07 beim
-  F2c-Bau; dort bewusst NICHT mitgefixt (Scope). → tax-Semantik vereinheitlichen
-  (Satz ODER Betrag, eine Quelle der Wahrheit) + Bestandsrechnungen prüfen.
+- [x] **BUG-INV-TAX (K)** ✅ behoben 2026-07-07. `Invoice.tax` ist einheitlich der
+  absolute USt-Betrag (wie gespeichert + vom Client gelesen). Drei Satz-Deuter
+  korrigiert: Pre-Save-Hook (`subtotal+tax`), invoicePdfService, invoice.hbs.
+  Integrationstests prüfen Endsummen. Offen: falls bereits Bestandsrechnungen in
+  Prod existieren, deren totalAmount einmalig neu berechnen (hier keine bekannt).
 
 ## Betrieb & Robustheit (Durchlauf 1d)
 
