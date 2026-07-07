@@ -49,8 +49,9 @@
 
 ## Stufe 2 – Abrechnung (Kern-Business)
 
-- [~] **T2.1 – F2a Vendor-Verkaufsrechnung (Gutschriftsverfahren).** IN ARBEIT
-  (Teilschritte):
+- [x] **T2.1 – F2a Vendor-Verkaufsrechnung (Gutschriftsverfahren).** ✅ BACKEND
+  KOMPLETT (12 Tests grün). Anzeige = T2.4/VendorCustomerInvoicesPage.
+  Teilschritte:
   - [x] **Teil 1 – Modell + Aggregation** ✅ `SalesInvoice`-Modell +
     `salesInvoiceService` (USt je Steuerstatus, claim-first, pro-Vendor-Nummer),
     6 Tests grün.
@@ -63,8 +64,9 @@
     `PUPPETEER_EXECUTABLE_PATH` auf ein System-/Playwright-Chromium setzen
     (Service unterstützt das; puppeteer.launch nutzt die Env-Var auch für die
     bestehende invoicePdfService).
-  - [ ] **Teil 3 – 5-Min-Job** mit Lock + Fehlerbehandlung, `generateAll()` +
-    PDF-Erzeugung, in scheduledJobs einhängen.
+  - [x] **Teil 3 – 5-Min-Job** ✅ `salesInvoiceJob` mit In-Process-Lock
+    (Audit OP9), `generateAll()` + `generatePending()` (Batch-PDF, self-healing),
+    in scheduledJobs verdrahtet (+ Shutdown-Stop, manueller Trigger). 2 Tests.
   Ursprüngliche Beschreibung: 5-Min-Job,
   überlappungssicher (Lauf-Lock, AUDIT OP9), erzeugt pro Vendor eine
   aufgeschlüsselte Rechnung aus noch nicht abgerechneten Verkäufen; USt gemäß
