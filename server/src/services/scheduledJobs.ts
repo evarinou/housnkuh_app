@@ -14,6 +14,7 @@ import AlertingService from './alertingService';
 import StockPullJob from '../jobs/stockPullJob';
 import DocumentSyncJob from '../jobs/documentSyncJob';
 import SalesInvoiceJob from '../jobs/salesInvoiceJob';
+import BackupJob from '../jobs/backupJob';
 import { performanceMonitor } from '../utils/performanceMonitor';
 import Settings from '../models/Settings';
 import logger from '../utils/logger';
@@ -67,6 +68,9 @@ export class ScheduledJobs {
 
     // Job 9: Vendor sales invoicing (F2a) — every 5 minutes
     this.scheduleSalesInvoicing();
+
+    // Job 10: MongoDB backups (default daily 02:00)
+    this.scheduleBackups();
 
     // Run Vertrag activation once at startup
     try {
@@ -331,6 +335,32 @@ export class ScheduledJobs {
   }
 
   /**
+   * @description Schedule automatic MongoDB backups (Audit OP12)
+   */
+  private static scheduleBackups(): void {
+    BackupJob.init();
+    logger.info('📅 MongoDB backup job scheduled');
+  }
+
+  /**
+   * @description Manually trigger a MongoDB backup (for admin use)
+   */
+  static async triggerBackup(): Promise<any> {
+    try {
+      logger.info('🔧 Manual MongoDB backup triggered');
+      await BackupJob.run();
+      return { success: true, timestamp: new Date() };
+    } catch (error) {
+      logger.error('❌ Manual MongoDB backup failed:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: new Date()
+      };
+    }
+  }
+
+  /**
    * @description Manually trigger vendor sales invoicing (for admin use)
    */
   static async triggerSalesInvoicing(): Promise<any> {
@@ -412,6 +442,9 @@ export class ScheduledJobs {
 
     // Stop the vendor sales invoicing job
     SalesInvoiceJob.stop();
+
+    // Stop the backup job
+    BackupJob.stop();
 
     // Stop the invoice generation job separately
     const { InvoiceGenerationJob } = require('../jobs/invoiceGenerationJob');
