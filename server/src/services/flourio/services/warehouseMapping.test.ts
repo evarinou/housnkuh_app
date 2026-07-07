@@ -9,6 +9,22 @@ import type { Warehouse } from '../generated/api-types';
 import type { IMietfach } from '../../../types/modelTypes';
 import { MietfachTyp } from '../../../types/modelTypes';
 
+// Deterministische Tenant-Config: Der Mapper nutzt die zentrale housnkuh-
+// Lageradresse aus der Config (nicht den Mietfach-Standort) – siehe
+// flourioTenantConfig.defaultWarehouseAddress.
+jest.mock('../client/config', () => ({
+  flourioTenantConfig: {
+    defaultWarehouseAddress: {
+      company1: 'housnkuh',
+      street: 'Strauer Str.',
+      streetNumber: '15',
+      zipCode: '96317',
+      city: 'Kronach',
+      country: 'DE'
+    }
+  }
+}));
+
 const createMockMietfach = (overrides?: Partial<IMietfach>): IMietfach => ({
   _id: '507f1f77bcf86cd799439011' as any,
   bezeichnung: 'Regal-A1',
@@ -34,35 +50,49 @@ const createMockMietfach = (overrides?: Partial<IMietfach>): IMietfach => ({
 
 describe('WarehouseMapper', () => {
   describe('mietfachToWarehouse', () => {
-    it('should map Mietfach to CreateWarehouseDto', () => {
+    it('should map Mietfach to CreateWarehouseDto with default warehouse address', () => {
       const mietfach = createMockMietfach();
 
       const result = WarehouseMapper.mietfachToWarehouse(mietfach);
 
       expect(result).toEqual({
         name: 'Regal-A1',
-        address: { company1: 'Hauptlager', country: 'DE' }
+        address: {
+          company1: 'housnkuh',
+          street: 'Strauer Str.',
+          streetNumber: '15',
+          zipCode: '96317',
+          city: 'Kronach',
+          country: 'DE'
+        },
+        useBins: false
       });
     });
 
-    it('should omit address if no standort', () => {
+    it('should use default warehouse address even without standort', () => {
       const mietfach = createMockMietfach({ standort: undefined });
 
       const result = WarehouseMapper.mietfachToWarehouse(mietfach);
 
-      expect(result).toEqual({ name: 'Regal-A1' });
-      expect(result.address).toBeUndefined();
+      expect(result.name).toBe('Regal-A1');
+      expect(result.address).toEqual({
+        company1: 'housnkuh',
+        street: 'Strauer Str.',
+        streetNumber: '15',
+        zipCode: '96317',
+        city: 'Kronach',
+        country: 'DE'
+      });
     });
   });
 
   describe('mietfachToUpdateDto', () => {
-    it('should create UpdateWarehouseDto', () => {
+    it('should create UpdateWarehouseDto with name only', () => {
       const mietfach = createMockMietfach();
 
       const result = WarehouseMapper.mietfachToUpdateDto(mietfach);
 
-      expect(result.name).toBe('Regal-A1');
-      expect(result.address).toEqual({ company1: 'Hauptlager', country: 'DE' });
+      expect(result).toEqual({ name: 'Regal-A1' });
     });
   });
 

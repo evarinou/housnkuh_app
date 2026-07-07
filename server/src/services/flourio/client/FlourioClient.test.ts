@@ -7,6 +7,7 @@
 import axios from 'axios';
 import { FlourioClient } from './FlourioClient';
 import { FlourioError } from './errorHandler';
+import logger from '../../../utils/logger';
 
 jest.mock('axios');
 const mockedAxios = axios as jest.Mocked<typeof axios>;
@@ -153,14 +154,14 @@ describe('FlourioClient', () => {
           mockMode: true
         });
 
-        const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+        const loggerSpy = jest.spyOn(logger, 'debug').mockImplementation(() => logger);
         const result = await mockClient.get('/articles');
 
-        expect(consoleSpy).toHaveBeenCalledWith('[FlourioClient] Mock mode: /articles');
+        expect(loggerSpy).toHaveBeenCalledWith('[FlourioClient] Mock mode', { url: '/articles' });
         expect(result).toEqual({});
         expect(mockAxiosInstance.get).not.toHaveBeenCalled();
 
-        consoleSpy.mockRestore();
+        loggerSpy.mockRestore();
       });
     });
 

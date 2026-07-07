@@ -318,12 +318,16 @@ describe('RateLimitHandler', () => {
       await expect(handler.executeWithRetry(mockRequest)).resolves.toEqual({ data: 'success' });
     });
 
-    it('should handle errors without response object', async () => {
-      const genericError = new Error('Network error');
+    it('should not retry non-network errors without response object', async () => {
+      // Seit Audit OP4 werden transiente Netzwerkfehler (z.B. "Network error",
+      // Timeout, ECONNRESET) wiederholt – siehe RateLimitHandler.network.test.ts.
+      // Ein generischer Fehler ohne response/request und ohne Netzwerk-Signatur
+      // darf aber weiterhin NICHT wiederholt werden.
+      const genericError = new Error('Something went wrong');
 
       const mockRequest = jest.fn().mockRejectedValue(genericError);
 
-      await expect(handler.executeWithRetry(mockRequest)).rejects.toThrow('Network error');
+      await expect(handler.executeWithRetry(mockRequest)).rejects.toThrow('Something went wrong');
       expect(mockRequest).toHaveBeenCalledTimes(1); // No retry
     });
   });

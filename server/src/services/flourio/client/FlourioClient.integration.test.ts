@@ -62,7 +62,7 @@ describe('FlourioClient Integration Tests', () => {
       if (stocks.length > 0) {
         const firstStock = stocks[0];
         expect(firstStock).toHaveProperty('_id');
-        expect(firstStock).toHaveProperty('number');
+        expect(firstStock).toHaveProperty('name');
       }
     });
 
@@ -80,7 +80,8 @@ describe('FlourioClient Integration Tests', () => {
       if (businesspartners.length > 0) {
         const firstBP = businesspartners[0];
         expect(firstBP).toHaveProperty('_id');
-        expect(firstBP).toHaveProperty('number');
+        expect(firstBP).toHaveProperty('type');
+        expect(firstBP).toHaveProperty('displayName');
       }
     });
 

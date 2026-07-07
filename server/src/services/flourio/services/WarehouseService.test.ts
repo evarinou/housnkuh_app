@@ -65,10 +65,12 @@ describe('WarehouseService', () => {
       const result = await service.createFromMietfach(mietfach);
 
       expect(result).toEqual(mockWarehouse);
-      expect(mockFlourioClient.post).toHaveBeenCalledWith('/stocks', {
-        name: 'Regal-A1',
-        address: { company1: 'Hauptlager', country: 'DE' }
-      });
+      // Der Mapper baut die Adresse aus der Tenant-Config (housnkuh-Lageradresse),
+      // daher gegen den Mapper-Output statt hartkodierte Werte prüfen.
+      expect(mockFlourioClient.post).toHaveBeenCalledWith(
+        '/stocks',
+        WarehouseMapper.mietfachToWarehouse(mietfach)
+      );
       expect(mietfach.flourioWarehouseId).toBe('wh_123');
       expect(mietfach.flourioSyncStatus).toBe('synced');
       expect(mietfach.save).toHaveBeenCalled();
@@ -91,9 +93,9 @@ describe('WarehouseService', () => {
       const result = await service.updateFromMietfach(mietfach);
 
       expect(result).toEqual(mockWarehouse);
+      // Update-DTO enthält nur noch den Namen (Adresse wird nicht aktualisiert)
       expect(mockFlourioClient.patch).toHaveBeenCalledWith('/stocks/wh_123', {
-        name: 'Regal-A1',
-        address: { company1: 'Hauptlager', country: 'DE' }
+        name: 'Regal-A1'
       });
       expect(mietfach.flourioSyncStatus).toBe('synced');
     });
