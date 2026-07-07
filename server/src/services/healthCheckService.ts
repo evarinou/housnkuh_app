@@ -11,6 +11,8 @@ import mongoose from 'mongoose';
 import { testEmailConnection } from '../utils/emailService';
 import ScheduledJobs from './scheduledJobs';
 import TrialService from './trialService';
+import { FlourioClient } from './flourio/client/FlourioClient';
+import { flourioConfig } from './flourio/client/config';
 import logger from '../utils/logger';
 
 /**
@@ -74,6 +76,7 @@ export class HealthCheckService {
     const [
       databaseHealth,
       emailHealth,
+      flourioHealth,
       scheduledJobsHealth,
       trialServiceHealth,
       memoryHealth,
@@ -81,6 +84,7 @@ export class HealthCheckService {
     ] = await Promise.allSettled([
       this.checkDatabase(),
       this.checkEmailService(),
+      this.checkFlourio(),
       this.checkScheduledJobs(),
       this.checkTrialService(),
       this.checkMemoryUsage(),
@@ -91,6 +95,7 @@ export class HealthCheckService {
     const healthChecks = [
       { name: 'database', result: databaseHealth },
       { name: 'email', result: emailHealth },
+      { name: 'flourio', result: flourioHealth },
       { name: 'scheduledJobs', result: scheduledJobsHealth },
       { name: 'trialService', result: trialServiceHealth },
       { name: 'memory', result: memoryHealth },
@@ -222,6 +227,64 @@ export class HealthCheckService {
         message: `Email service error: ${error instanceof Error ? error.message : 'Unknown error'}`,
         responseTime: Date.now() - startTime,
         lastChecked: new Date()
+      };
+    }
+  }
+
+  /**
+   * @description Check flour.io API connectivity (Audit OP3).
+   * Nicht konfiguriert = 'degraded' (optionaler Dienst, kein Ausfall);
+   * konfiguriert aber nicht erreichbar = 'unhealthy'.
+   * @returns {Promise<ComponentHealth>} flour.io health status
+   */
+  private static async checkFlourio(): Promise<ComponentHealth> {
+    const startTime = Date.now();
+
+    if (!flourioConfig.bearerToken) {
+      return {
+        name: 'flourio',
+        status: 'degraded',
+        message: 'flour.io nicht konfiguriert (kein FLOURIO_BEARER_TOKEN)',
+        responseTime: 0,
+        lastChecked: new Date(),
+        details: { configured: false }
+      };
+    }
+    if (flourioConfig.mockMode) {
+      return {
+        name: 'flourio',
+        status: 'healthy',
+        message: 'flour.io im Mock-Modus',
+        responseTime: 0,
+        lastChecked: new Date(),
+        details: { mockMode: true }
+      };
+    }
+
+    try {
+      const client = new FlourioClient(flourioConfig);
+      // Leichter GET mit hartem Timeout (kein Retry-Backoff im Health-Check).
+      await Promise.race([
+        client.get('/warehouses', { timeout: this.CHECK_TIMEOUT }),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), this.CHECK_TIMEOUT))
+      ]);
+      const responseTime = Date.now() - startTime;
+      return {
+        name: 'flourio',
+        status: responseTime > 3000 ? 'degraded' : 'healthy',
+        message: 'flour.io erreichbar',
+        responseTime,
+        lastChecked: new Date(),
+        details: { configured: true }
+      };
+    } catch (error) {
+      return {
+        name: 'flourio',
+        status: 'unhealthy',
+        message: `flour.io nicht erreichbar: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`,
+        responseTime: Date.now() - startTime,
+        lastChecked: new Date(),
+        details: { configured: true }
       };
     }
   }

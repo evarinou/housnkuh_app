@@ -59,21 +59,32 @@ export class RateLimitHandler {
     try {
       return await request();
     } catch (error: any) {
-      // Check if this is a rate limit error
-      if (this.isRateLimitError(error) && attempt < this.config.maxRetries) {
-        this.metrics.rateLimitHits++;
+      const isRateLimit = this.isRateLimitError(error);
+      const isNetwork = this.isRetryableNetworkError(error);
+
+      // Sowohl Rate-Limit (429) als auch transiente Netzwerkfehler wiederholen
+      // (Audit OP4: vorher nur 429). Rate-Limit nutzt Header-Delay, Netzwerk-
+      // fehler nutzen Exponential Backoff (calculateDelay ohne Header).
+      if ((isRateLimit || isNetwork) && attempt < this.config.maxRetries) {
         this.metrics.totalRetries++;
+        if (isRateLimit) this.metrics.rateLimitHits++;
 
         const delay = this.calculateDelay(error.response?.headers, attempt);
         this.updateAverageDelay(delay);
 
-        logger.warn('[RateLimitHandler] Rate limit hit, retrying', { delayMs: delay, attempt: attempt + 1, maxRetries: this.config.maxRetries });
+        logger.warn('[RateLimitHandler] Retrying request', {
+          reason: isRateLimit ? 'rate-limit' : 'network',
+          code: error.code,
+          delayMs: delay,
+          attempt: attempt + 1,
+          maxRetries: this.config.maxRetries
+        });
 
         await this.sleep(delay);
         return this.executeWithRetry(request, attempt + 1);
       }
 
-      // Not a rate limit error or max retries exceeded
+      // Nicht wiederholbar oder Retries erschöpft
       throw error;
     }
   }
@@ -83,6 +94,23 @@ export class RateLimitHandler {
    */
   private isRateLimitError(error: any): boolean {
     return error.response?.status === 429;
+  }
+
+  /**
+   * Transiente Netzwerkfehler (kein HTTP-Response vom Server): Verbindung
+   * abgelehnt/zurückgesetzt, Timeout, DNS-Fehler. Ein 4xx/5xx mit Response wird
+   * hier NICHT erfasst (der Server hat geantwortet).
+   */
+  private isRetryableNetworkError(error: any): boolean {
+    const retryableCodes = [
+      'ECONNREFUSED', 'ECONNRESET', 'ETIMEDOUT', 'ENOTFOUND',
+      'EAI_AGAIN', 'ECONNABORTED', 'EPIPE'
+    ];
+    if (error?.code && retryableCodes.includes(error.code)) return true;
+    if (typeof error?.message === 'string' && /timeout|network error/i.test(error.message)) return true;
+    // Request gestellt, aber kein Response erhalten → Netzwerkebene.
+    if (!error?.response && error?.request) return true;
+    return false;
   }
 
   /**

@@ -15,10 +15,24 @@ import logger from '../utils/logger';
  * @throws {Error} Exits process if connection fails
  * @complexity O(1) - Single connection establishment
  */
+/**
+ * Registriert Verbindungs-Event-Handler zur Beobachtung von Verbindungsverlust
+ * und automatischem Reconnect. Der MongoDB-Treiber reconnected selbst; diese
+ * Handler machen das im Log sichtbar (Betrieb/Monitoring, Audit OP2).
+ */
+function registerConnectionHandlers(): void {
+  const conn = mongoose.connection;
+  conn.on('disconnected', () => logger.warn('MongoDB-Verbindung getrennt — Treiber versucht Reconnect'));
+  conn.on('reconnected', () => logger.info('MongoDB erneut verbunden'));
+  conn.on('error', (err) => logger.error('MongoDB-Verbindungsfehler', { error: err?.message || err }));
+}
+
 async function connectDB(): Promise<void> {
   try {
     logger.debug('connectDB starting...');
-    
+
+    registerConnectionHandlers();
+
     // Enhanced connection options for performance
     await mongoose.connect(config.mongoURI, {
       maxPoolSize: 10, // Maintain up to 10 socket connections

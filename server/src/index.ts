@@ -242,6 +242,36 @@ process.on('SIGINT', () => {
 });
 
 /**
+ * Unbehandelte Promise-Rejection: geloggt (mit Stacktrace), aber NICHT sofort
+ * beenden — so wird ein Fehler sichtbar, ohne den laufenden Betrieb abzureißen.
+ */
+process.on('unhandledRejection', (reason: any) => {
+  logger.error('Unhandled Promise Rejection', {
+    reason: reason?.message || String(reason),
+    stack: reason?.stack
+  });
+});
+
+/**
+ * Unbehandelte Exception: der Prozesszustand ist danach undefiniert → kontrolliert
+ * herunterfahren und mit Exit-Code 1 beenden. Ein Prozessmanager (systemd/PM2,
+ * siehe TODO T3.2) startet den Prozess neu.
+ */
+process.on('uncaughtException', (err: Error) => {
+  logger.error('Uncaught Exception — controlled shutdown', {
+    error: err.message,
+    stack: err.stack
+  });
+  try {
+    ScheduledJobs.stopAll();
+    cache.destroy();
+  } catch (cleanupErr) {
+    logger.error('Cleanup during uncaughtException failed', { error: cleanupErr });
+  }
+  process.exit(1);
+});
+
+/**
  * Export Express app for testing
  * @description Allows the app to be imported for unit and integration testing
  */
