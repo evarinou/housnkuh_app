@@ -287,8 +287,8 @@ describe('Invoice Flow E2E Integration Tests', () => {
         });
       expect(first.status).toBe(200);
 
-      // Attempt to generate duplicate: generateMonthlyInvoice wirft
-      // "Invoice already exists" → Controller antwortet mit 500.
+      // Attempt to generate duplicate: "Invoice already exists" ist ein
+      // Fachfehler → AppError 400 (BUG-INV-DUP-Fix, vorher 500)
       const response = await request(app)
         .post('/api/invoices/generate')
         .set('Authorization', `Bearer ${adminToken}`)
@@ -298,7 +298,7 @@ describe('Invoice Flow E2E Integration Tests', () => {
           year: 2024
         });
 
-      expect(response.status).toBe(500);
+      expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
 
       // Es bleibt bei genau einer Rechnung
@@ -375,21 +375,27 @@ describe('Invoice Flow E2E Integration Tests', () => {
       testInvoice = await makeInvoice(testVendor._id, { status: 'sent' });
     });
 
-    it('currently rejects resend because User has no isActive field (known bug)', async () => {
-      // BEKANNTER PRODUKTIONSBUG: resendInvoiceEmail prüft vendor.isActive,
-      // das Feld existiert im User-Schema aber nicht (strict mode) → die
-      // Prüfung schlägt für JEDEN Vendor fehl und der Endpoint antwortet
-      // immer mit 400 "Vendor ist nicht aktiv". Sobald der Bug behoben ist,
-      // hier auf 200 + sendCustomEmail-Aufruf umstellen.
+    it('resends the invoice email for active vendors (BUG-INV-RESEND fixed)', async () => {
+      const response = await request(app)
+        .post(`/api/invoices/admin/${testInvoice._id}/resend`)
+        .set('Authorization', `Bearer ${adminToken}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+
+      const emailService = require('../utils/emailService');
+      expect(emailService.sendCustomEmail).toHaveBeenCalled();
+    });
+
+    it('rejects resend for cancelled vendors', async () => {
+      await User.updateOne({ _id: testVendor._id }, { registrationStatus: 'cancelled' });
+
       const response = await request(app)
         .post(`/api/invoices/admin/${testInvoice._id}/resend`)
         .set('Authorization', `Bearer ${adminToken}`);
 
       expect(response.status).toBe(400);
       expect(response.body.message).toContain('nicht aktiv');
-
-      const emailService = require('../utils/emailService');
-      expect(emailService.sendCustomEmail).not.toHaveBeenCalled();
     });
 
     it('should refuse resending cancelled invoices', async () => {
@@ -714,9 +720,12 @@ describe('Invoice Flow E2E Integration Tests', () => {
     });
 
     it('should handle API response times within limits', async () => {
-      // Create test data
+      // Create test data — je Rechnung eine eigene Periode (Unique-Index)
       for (let i = 0; i < 20; i++) {
-        await makeInvoice(testVendor._id, { status: 'sent' });
+        await makeInvoice(testVendor._id, {
+          status: 'sent',
+          period: { month: (i % 12) + 1, year: 2020 + Math.floor(i / 12) }
+        });
       }
 
       const operations = [
@@ -774,8 +783,9 @@ describe('Invoice Flow E2E Integration Tests', () => {
         )
       );
 
-      // Duplikate laufen in den "already exists"-Fehler → 500
-      retries.forEach(response => expect(response.status).toBe(500));
+      // Duplikate sind Fachfehler → 400 (BUG-INV-DUP-Fix); der Unique-Index
+      // garantiert das auch bei echten parallelen Läufen
+      retries.forEach(response => expect(response.status).toBe(400));
 
       // Verify only one invoice was created
       const invoices = await Invoice.find({

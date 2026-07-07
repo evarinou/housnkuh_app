@@ -68,12 +68,13 @@ describe('User Model Integration - Invoice Virtual Populate', () => {
     return await User.create(userData);
   };
 
-  const createTestInvoice = async (invoiceNumber: string, status: string = 'draft') => {
+  const createTestInvoice = async (invoiceNumber: string, status: string = 'draft', month: number = 8) => {
     const invoiceData = {
       invoiceNumber,
       vendor: testUserId,
+      // Unique-Index (BUG-INV-DUP): je Vendor+Periode nur eine Rechnung
       period: {
-        month: 8,
+        month,
         year: 2025
       },
       items: [
@@ -122,9 +123,9 @@ describe('User Model Integration - Invoice Virtual Populate', () => {
 
     it('should populate user with multiple invoices', async () => {
       const user = await createTestUser();
-      await createTestInvoice('RE-2025-08-00001', 'sent');
-      await createTestInvoice('RE-2025-08-00002', 'paid');
-      await createTestInvoice('RE-2025-08-00003', 'draft');
+      await createTestInvoice('RE-2025-08-00001', 'sent', 6);
+      await createTestInvoice('RE-2025-08-00002', 'paid', 7);
+      await createTestInvoice('RE-2025-08-00003', 'draft', 8);
       
       const userWithInvoices = await User.findById(testUserId).populate('invoices');
       
