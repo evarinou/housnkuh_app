@@ -390,7 +390,7 @@ export const confirmPendingBooking = async (req: Request, res: Response): Promis
 export const rejectPendingBooking = async (req: Request, res: Response): Promise<void> => {
   try {
     const { userId } = req.params;
-    const { reason: _reason } = req.body;
+    const { reason } = req.body;
 
     const user = await User.findById(userId);
     if (!user || !user.pendingBooking || user.pendingBooking.status !== 'pending') {
@@ -405,7 +405,19 @@ export const rejectPendingBooking = async (req: Request, res: Response): Promise
     user.pendingBooking.status = BookingStatus.COMPLETED;
     await user.save();
 
-    // TODO: E-Mail an Vendor senden mit Ablehnungsgrund
+    // Vendor über die Ablehnung informieren – ein E-Mail-Fehler bricht die Ablehnung nicht ab
+    try {
+      const { sendBookingRejectionEmail } = require('../../utils/emailService');
+      const emailSent = await sendBookingRejectionEmail(user.kontakt.email, {
+        name: user.kontakt.name,
+        reason
+      });
+      if (!emailSent) {
+        logger.warn('Ablehnungs-E-Mail konnte nicht gesendet werden', { userId, email: user.kontakt.email });
+      }
+    } catch (emailError) {
+      logger.error('Fehler beim Senden der Ablehnungs-E-Mail:', emailError);
+    }
 
     res.json({
       success: true,

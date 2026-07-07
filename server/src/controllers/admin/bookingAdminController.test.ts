@@ -27,6 +27,10 @@ jest.mock('../../utils/validation', () => ({
   validatePriceAdjustments: jest.fn().mockReturnValue({ isValid: true }),
   validateZusatzleistungen: jest.fn().mockReturnValue({ isValid: true }),
 }));
+jest.mock('../../utils/emailService', () => ({
+  sendAdminConfirmationEmail: jest.fn().mockResolvedValue(true),
+  sendBookingRejectionEmail: jest.fn().mockResolvedValue(true),
+}));
 jest.mock('../../utils/logger', () => ({
   __esModule: true,
   default: {
@@ -262,6 +266,47 @@ describe('bookingAdminController', () => {
       await rejectPendingBooking(req as Request, res as Response);
 
       expect(saveMock).toHaveBeenCalled();
+      expect(jsonMock).toHaveBeenCalledWith(expect.objectContaining({ success: true }));
+    });
+
+    it('should send rejection email with reason to vendor', async () => {
+      const { sendBookingRejectionEmail } = require('../../utils/emailService');
+      req = {
+        params: { userId: 'user1' },
+        body: { reason: 'Aktuell keine passenden Mietfächer frei' },
+      };
+      MockedUser.findById = jest.fn().mockResolvedValue({
+        _id: 'user1',
+        pendingBooking: { status: 'pending', packageData: { packageOptions: [] } },
+        kontakt: { email: 'vendor@test.com', name: 'Vendor' },
+        save: jest.fn().mockResolvedValue(true),
+      }) as any;
+
+      await rejectPendingBooking(req as Request, res as Response);
+
+      expect(sendBookingRejectionEmail).toHaveBeenCalledWith('vendor@test.com', {
+        name: 'Vendor',
+        reason: 'Aktuell keine passenden Mietfächer frei',
+      });
+      expect(jsonMock).toHaveBeenCalledWith(expect.objectContaining({ success: true }));
+    });
+
+    it('should still succeed if rejection email fails', async () => {
+      const { sendBookingRejectionEmail } = require('../../utils/emailService');
+      sendBookingRejectionEmail.mockRejectedValueOnce(new Error('SMTP down'));
+      const saveMock = jest.fn().mockResolvedValue(true);
+      req = { params: { userId: 'user1' }, body: { reason: 'Test' } };
+      MockedUser.findById = jest.fn().mockResolvedValue({
+        _id: 'user1',
+        pendingBooking: { status: 'pending', packageData: { packageOptions: [] } },
+        kontakt: { email: 'vendor@test.com', name: 'Vendor' },
+        save: saveMock,
+      }) as any;
+
+      await rejectPendingBooking(req as Request, res as Response);
+
+      expect(saveMock).toHaveBeenCalled();
+      expect(statusMock).not.toHaveBeenCalledWith(500);
       expect(jsonMock).toHaveBeenCalledWith(expect.objectContaining({ success: true }));
     });
   });

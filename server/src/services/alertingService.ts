@@ -644,7 +644,10 @@ export class AlertingService {
       case 'invoice-job-duration-critical':
         const criticalMinutes = Math.round(data.jobDurationSeconds / 60);
         return `Invoice generation job duration critical: ${criticalMinutes} minutes (threshold: 30 minutes)`;
-      
+
+      case 'email-delivery-permanent-failure':
+        return `Email to ${data.email || 'unknown recipient'} (type: ${data.emailType || 'unknown'}) permanently failed after all retries: ${data.errorMessage || 'unknown error'}`;
+
       default:
         return `Alert condition met for ${rule.name}`;
     }
@@ -1115,6 +1118,49 @@ export class AlertingService {
         bySeverity,
         last24Hours: recentAlerts.length
       };
+    }
+  }
+
+  /**
+   * @description Alert admins that an email permanently failed to deliver (AUDIT OP7)
+   * @param {object} details - Failure details from the email queue job
+   * @security Fetches admin recipients directly; cooldown prevents alert spam on mass failures
+   * @complexity Low - Ad-hoc alert creation reusing the standard notification pipeline
+   * @returns {Promise<void>}
+   */
+  static async alertEmailDeliveryFailure(details: {
+    email?: string;
+    emailType?: string;
+    userId?: string;
+    errorMessage: string;
+  }): Promise<void> {
+    const rule: AlertRule = {
+      id: 'email-delivery-permanent-failure',
+      name: 'Email Delivery Permanently Failed',
+      type: 'error',
+      condition: 'email job failed after all retry attempts',
+      threshold: 1,
+      severity: 'critical',
+      enabled: true,
+      cooldownMinutes: 15,
+      recipients: []
+    };
+
+    try {
+      if (!this.canSendAlert(rule.id, rule.cooldownMinutes)) {
+        logger.warn('Email failure alert suppressed (cooldown active)', {
+          email: details.email,
+          emailType: details.emailType
+        });
+        return;
+      }
+
+      const admins = await User.find({ isAdmin: true }).select('kontakt.email');
+      rule.recipients = admins.map(admin => admin.kontakt.email).filter(email => email);
+
+      await this.createAndSendAlert(rule, details);
+    } catch (error) {
+      logger.error('Failed to send email delivery failure alert', { error });
     }
   }
 

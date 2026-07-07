@@ -529,8 +529,22 @@ class EmailQueueService {
       type: jobData.type,
       error: error.message
     });
-    
-    // TODO: Implement admin notification system (Slack, Discord, email to admin)
+
+    // Lazy require: statischer Import würde einen Zyklus
+    // emailQueue → alertingService → healthCheckService → emailService schließen
+    try {
+      const AlertingService = require('../services/alertingService').default;
+      AlertingService.alertEmailDeliveryFailure({
+        userId: jobData.userId,
+        email: jobData.email,
+        emailType: jobData.type,
+        errorMessage: error.message
+      }).catch((alertError: unknown) => {
+        logger.error('Failed to dispatch admin alert for email failure', { alertError });
+      });
+    } catch (alertError) {
+      logger.error('Failed to dispatch admin alert for email failure', { alertError });
+    }
   }
 
   // Get queue statistics

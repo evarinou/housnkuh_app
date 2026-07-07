@@ -1721,6 +1721,149 @@ const sendCancellationConfirmationEmailHardcoded = async (to: string, name: stri
 };
 
 /**
+ * Sends booking rejection notification to vendor
+ * @function sendBookingRejectionEmail
+ * @description Informs a vendor that their pending booking was rejected by the admin,
+ * optionally including the rejection reason
+ * @param {string} to - Vendor's email address
+ * @param {object} data - Rejection details (vendor name, optional reason)
+ * @returns {Promise<boolean>} Promise resolving to true if email sent successfully
+ * @complexity O(1)
+ * @security Recipient comes from the stored user record, not from request input
+ */
+export const sendBookingRejectionEmail = async (
+  to: string,
+  data: { name: string; reason?: string }
+): Promise<boolean> => {
+  try {
+    logger.info(`Sending booking rejection email to: ${to}`);
+
+    // Fake success in development mode if email settings are not available
+    if (process.env.NODE_ENV === 'development' &&
+        (!process.env.EMAIL_HOST || !process.env.EMAIL_USER || !process.env.EMAIL_PASS)) {
+      logger.warn('⚠️ Running in development mode without email configuration');
+      logger.info('📧 Booking rejection email would be sent to:', to);
+      return true;
+    }
+
+    const templateData = {
+      vendorName: data.name,
+      reason: data.reason || null,
+      adminEmail: 'eva-maria.schaller@housnkuh.de',
+      phone: '015222035788',
+      currentYear: new Date().getFullYear(),
+      siteUrl: 'https://housnkuh.de'
+    };
+
+    // Try database template first, fallback to hardcoded
+    const fallbackFunction = async (): Promise<boolean> => {
+      return sendBookingRejectionEmailHardcoded(to, data);
+    };
+
+    return await emailService.sendDatabaseTemplateEmail(
+      'booking_rejection',
+      to,
+      templateData,
+      fallbackFunction
+    );
+  } catch (error) {
+    logger.error('Error in sendBookingRejectionEmail:', error);
+
+    if (process.env.NODE_ENV === 'development') {
+      logger.warn('⚠️ In development mode, treating booking rejection email as sent successfully');
+      return true;
+    }
+
+    return false;
+  }
+};
+
+/**
+ * Hardcoded fallback version of booking rejection email
+ * @function sendBookingRejectionEmailHardcoded
+ * @description Sends booking rejection notification using hardcoded HTML template
+ * when database templates are unavailable
+ * @param {string} to - Vendor's email address
+ * @param {object} data - Rejection details (vendor name, optional reason)
+ * @returns {Promise<boolean>} Promise resolving to true if email sent successfully
+ * @complexity O(1)
+ * @security Uses hardcoded template; reason text is rendered as plain content
+ */
+const sendBookingRejectionEmailHardcoded = async (
+  to: string,
+  data: { name: string; reason?: string }
+): Promise<boolean> => {
+  try {
+    const transporter = createTransporter();
+
+    const subject = 'Deine Buchungsanfrage bei housnkuh';
+
+    const html = `
+      <div style="font-family: 'Quicksand', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
+        <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="color: #09122c; margin: 0;">Deine Buchungsanfrage</h1>
+          </div>
+
+          <p style="color: #333; line-height: 1.6;">Hallo ${data.name},</p>
+          <p style="color: #333; line-height: 1.6;">vielen Dank für dein Interesse an housnkuh. Leider können wir deine Buchungsanfrage aktuell nicht bestätigen.</p>
+
+          ${data.reason ? `
+          <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
+            <p style="color: #333; margin: 0;">
+              <strong>Begründung:</strong><br>
+              ${data.reason}
+            </p>
+          </div>
+          ` : ''}
+
+          <p style="color: #333; line-height: 1.6;">Bei Fragen kannst du dich jederzeit bei uns melden – wir helfen gerne weiter und finden vielleicht gemeinsam eine passende Lösung.</p>
+          <p style="color: #333; line-height: 1.6;">Telefon: 015222035788<br>E-Mail: <a href="mailto:eva-maria.schaller@housnkuh.de" style="color: #e17564;">eva-maria.schaller@housnkuh.de</a></p>
+
+          <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; text-align: center;">
+            <p style="color: #666; font-size: 12px; margin: 0;">
+              © housnkuh - dein regionaler Marktplatz<br>
+              <a href="https://housnkuh.de" style="color: #e17564;">www.housnkuh.de</a>
+            </p>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const mailOptions = {
+      from: `"housnkuh" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`,
+      to,
+      subject,
+      html
+    };
+
+    try {
+      const result = await transporter.sendMail(mailOptions);
+      logger.info('Booking rejection email sent successfully:', result.messageId);
+      return true;
+    } catch (emailError) {
+      logger.error('Booking rejection email sending error:', emailError);
+
+      if (process.env.NODE_ENV === 'development') {
+        logger.warn('⚠️ In development mode, treating booking rejection email as sent successfully');
+        return true;
+      }
+
+      return false;
+    }
+  } catch (error) {
+    logger.error('Error in sendBookingRejectionEmailHardcoded:', error);
+
+    if (process.env.NODE_ENV === 'development') {
+      logger.warn('⚠️ In development mode, treating booking rejection email as sent successfully');
+      return true;
+    }
+
+    return false;
+  }
+};
+
+/**
  * Interface for package booking data structure
  * @interface PackageBookingData
  * @description Contains all necessary information for package booking confirmation emails
