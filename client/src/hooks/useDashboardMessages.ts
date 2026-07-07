@@ -8,6 +8,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { IDashboardMessage } from '../types/booking';
 import { apiUtils } from '../utils/auth';
+import { getVendorSocket } from '../utils/vendorSocket';
 
 interface UseDashboardMessagesOptions {
   userId: string;
@@ -86,21 +87,54 @@ export const useDashboardMessages = ({ userId }: UseDashboardMessagesOptions) =>
     }
   }, []);
 
-  // Subscribe to real-time updates
+  // Subscribe to real-time updates via WebSocket; Polling nur als Fallback ohne Verbindung
   useEffect(() => {
     if (!userId) return;
 
     // Initial fetch
     fetchMessages();
 
-    // TODO: Implement WebSocket subscription for real-time updates
-    // For now, we'll use polling as a fallback
-    const pollInterval = setInterval(() => {
+    let pollInterval: ReturnType<typeof setInterval> | null = null;
+    const startPolling = () => {
+      if (!pollInterval) {
+        pollInterval = setInterval(fetchMessages, 60000);
+      }
+    };
+    const stopPolling = () => {
+      if (pollInterval) {
+        clearInterval(pollInterval);
+        pollInterval = null;
+      }
+    };
+
+    const socket = getVendorSocket();
+    if (!socket) {
+      // Kein Token → wie bisher pollen
+      startPolling();
+      return stopPolling;
+    }
+
+    const handleRefresh = () => fetchMessages();
+    const handleConnect = () => {
+      // Verpasste Änderungen aus der Offline-Zeit nachladen, dann Polling aus
+      stopPolling();
       fetchMessages();
-    }, 60000); // Poll every minute
+    };
+    const handleDisconnect = () => startPolling();
+
+    socket.on('dashboard:refresh', handleRefresh);
+    socket.on('connect', handleConnect);
+    socket.on('disconnect', handleDisconnect);
+
+    if (!socket.connected) {
+      startPolling();
+    }
 
     return () => {
-      clearInterval(pollInterval);
+      socket.off('dashboard:refresh', handleRefresh);
+      socket.off('connect', handleConnect);
+      socket.off('disconnect', handleDisconnect);
+      stopPolling();
     };
   }, [userId, fetchMessages]);
 

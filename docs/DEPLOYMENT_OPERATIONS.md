@@ -113,6 +113,13 @@ sudo nginx -t && sudo systemctl reload nginx   # nur bei Nginx-Änderungen
 
 Vor dem Deploy: `cd server && npm test` und `npx tsc --noEmit` (Client + Server).
 
+**WebSocket (seit T4.3):** Das Vendor-Dashboard nutzt socket.io unter dem Pfad
+`/socket.io` (gleicher Port 4000). `scripts/setup-vps.sh` enthält den nötigen
+Nginx-`location /socket.io`-Block (Upgrade-Header, langes `proxy_read_timeout`).
+**Bestehende Installationen** müssen den Block manuell in
+`/etc/nginx/sites-available/housnkuh.de` nachtragen, sonst fällt der Client
+dauerhaft auf Polling zurück.
+
 ## Offene Punkte
 
 - **Vor Rechnungs-Go-live**: die drei flour.io-Datenvalidierungen (Netto/Brutto,

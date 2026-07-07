@@ -359,6 +359,14 @@ export const confirmPendingBooking = async (req: Request, res: Response): Promis
     user.pendingBooking.status = BookingStatus.COMPLETED;
     await user.save();
 
+    // Statusänderung emittieren (Audit-Log + WebSocket-Push ans Vendor-Dashboard)
+    bookingEvents.emitStatusChange({
+      userId,
+      bookingId: String((user.pendingBooking as any)._id || userId),
+      status: BookingStatus.CONFIRMED,
+      timestamp: new Date()
+    });
+
     res.json({
       success: true,
       message: 'Buchung erfolgreich bestätigt, Vertrag erstellt und E-Mail wird gesendet',
@@ -404,6 +412,14 @@ export const rejectPendingBooking = async (req: Request, res: Response): Promise
     // Pending Booking als abgelehnt markieren
     user.pendingBooking.status = BookingStatus.COMPLETED;
     await user.save();
+
+    // Statusänderung emittieren (Audit-Log + WebSocket-Push ans Vendor-Dashboard)
+    bookingEvents.emitStatusChange({
+      userId,
+      bookingId: String((user.pendingBooking as any)._id || userId),
+      status: BookingStatus.REJECTED,
+      timestamp: new Date()
+    });
 
     // Vendor über die Ablehnung informieren – ein E-Mail-Fehler bricht die Ablehnung nicht ab
     try {

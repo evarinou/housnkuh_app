@@ -140,7 +140,9 @@ export enum BookingStatus {
   PENDING = 'pending',
   CONFIRMED = 'confirmed',
   ACTIVE = 'active',
-  COMPLETED = 'completed'
+  COMPLETED = 'completed',
+  /** Nur für Events/Benachrichtigungen – gespeichert wird weiterhin COMPLETED */
+  REJECTED = 'rejected'
 }
 
 // Booking Dates Interface für Zeitstempel

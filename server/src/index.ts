@@ -34,6 +34,7 @@ import {
 } from './middleware/rateLimiting';
 import routes from './routes';
 import ScheduledJobs from './services/scheduledJobs';
+import socketService from './services/socketService';
 import { performanceMiddleware } from './utils/performanceMonitor';
 import { 
   monitoringMiddleware, 
@@ -226,6 +227,7 @@ app.get('/', (_req, res) => {
 process.on('SIGTERM', () => {
   logger.info('SIGTERM received, shutting down...');
   ScheduledJobs.stopAll();
+  void socketService.close();
   cache.destroy();
   process.exit(0);
 });
@@ -237,6 +239,7 @@ process.on('SIGTERM', () => {
 process.on('SIGINT', () => {
   logger.info('SIGINT received, shutting down...');
   ScheduledJobs.stopAll();
+  void socketService.close();
   cache.destroy();
   process.exit(0);
 });
@@ -283,6 +286,9 @@ export { app };
  * Default port is 4000 if not specified in environment variables
  */
 const PORT = parseInt(process.env.PORT || '4000', 10);
-app.listen(PORT, '0.0.0.0', () => {
+const server = app.listen(PORT, '0.0.0.0', () => {
   logger.info(`Server läuft auf Port ${PORT} auf allen Interfaces`);
 });
+
+// WebSocket-Server (socket.io) auf demselben HTTP-Server für Echtzeit-Dashboard-Updates
+socketService.initialize(server);

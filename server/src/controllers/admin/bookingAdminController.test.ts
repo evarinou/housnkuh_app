@@ -9,7 +9,7 @@ jest.mock('../../models/Mietfach');
 jest.mock('../../models/Vertrag');
 jest.mock('../../utils/bookingEvents', () => ({
   __esModule: true,
-  default: { emit: jest.fn() },
+  default: { emit: jest.fn(), emitStatusChange: jest.fn() },
 }));
 jest.mock('../../services/priceCalculationService', () => ({
   PriceCalculationService: {

@@ -1,13 +1,14 @@
 /**
  * @file useBookingUpdates.ts
- * @purpose Custom hook for real-time booking updates and status monitoring with polling fallback
+ * @purpose Custom hook for real-time booking updates via WebSocket with polling fallback
  * @created 2025-01-15
- * @modified 2025-08-05
+ * @modified 2026-07-07
  */
 
 import { useState, useEffect, useCallback } from 'react';
 import { IBooking } from '../types/booking';
 import { apiUtils } from '../utils/auth';
+import { getVendorSocket } from '../utils/vendorSocket';
 
 /**
  * Configuration options for useBookingUpdates hook
@@ -21,28 +22,24 @@ interface UseBookingUpdatesOptions {
 }
 
 /**
- * Real-time booking update event structure
+ * Real-time booking update event structure (Server-Event 'booking:updated')
  * @interface BookingUpdateEvent
  */
 interface BookingUpdateEvent {
-  /** Type of booking event */
-  type: 'STATUS_CHANGED' | 'BOOKING_CREATED' | 'BOOKING_DELETED';
   /** ID of affected booking */
   bookingId: string;
-  /** New status for status change events */
-  newStatus?: string;
-  /** Confirmation timestamp */
-  confirmedAt?: Date;
-  /** Full booking object for creation events */
-  booking?: IBooking;
+  /** New booking status */
+  status: string;
+  /** Event timestamp */
+  timestamp: string;
 }
 
 /**
  * Custom hook for managing real-time booking updates and status monitoring
  * 
- * @description Provides real-time booking data with status updates using polling fallback.
- * Fetches user's bookings and monitors for changes with 30-second polling interval.
- * Includes manual refresh capability and simulation methods for testing.
+ * @description Provides real-time booking data via WebSocket ('booking:updated'-Events).
+ * Fällt nur bei fehlender Verbindung auf 30-Sekunden-Polling zurück.
+ * Includes manual refresh capability.
  * 
  * @param {UseBookingUpdatesOptions} options - Hook configuration
  * @returns {object} Booking data, loading state, error state, and control functions
@@ -55,14 +52,14 @@ export const useBookingUpdates = ({ userId, onStatusUpdate }: UseBookingUpdatesO
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch bookings from API
-  const fetchBookings = useCallback(async () => {
-    if (!userId) return;
-    
+  // Fetch bookings from API; liefert die frische Liste für Event-Handler zurück
+  const fetchBookings = useCallback(async (): Promise<IBooking[]> => {
+    if (!userId) return [];
+
     try {
       setLoading(true);
       setError(null);
-      
+
       const token = localStorage.getItem('vendorToken');
       const response = await fetch(`${apiUtils.getApiUrl()}/vendor-auth/bookings/${userId}`, {
         headers: {
@@ -76,57 +73,76 @@ export const useBookingUpdates = ({ userId, onStatusUpdate }: UseBookingUpdatesO
       }
 
       const data = await response.json();
-      setBookings(data.bookings || []);
+      const fresh: IBooking[] = data.bookings || [];
+      setBookings(fresh);
+      return fresh;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Ein Fehler ist aufgetreten');
       console.error('Error fetching bookings:', err);
+      return [];
     } finally {
       setLoading(false);
     }
   }, [userId]);
 
-  // Handle real-time updates via WebSocket (simplified version)
+  // Real-time updates via WebSocket; Polling nur als Fallback ohne Verbindung
   useEffect(() => {
     if (!userId) return;
 
     // Initial fetch
     fetchBookings();
 
-    // TODO: Implement WebSocket connection
-    // For now, we'll use polling as a fallback
-    const pollInterval = setInterval(() => {
+    let pollInterval: ReturnType<typeof setInterval> | null = null;
+    const startPolling = () => {
+      if (!pollInterval) {
+        pollInterval = setInterval(fetchBookings, 30000);
+      }
+    };
+    const stopPolling = () => {
+      if (pollInterval) {
+        clearInterval(pollInterval);
+        pollInterval = null;
+      }
+    };
+
+    const socket = getVendorSocket();
+    if (!socket) {
+      // Kein Token → wie bisher pollen
+      startPolling();
+      return stopPolling;
+    }
+
+    const handleBookingUpdate = async (update: BookingUpdateEvent) => {
+      const fresh = await fetchBookings();
+      if (onStatusUpdate) {
+        const affected = fresh.find(booking => booking.id === update.bookingId);
+        if (affected) {
+          onStatusUpdate(affected);
+        }
+      }
+    };
+    const handleConnect = () => {
+      // Verpasste Änderungen aus der Offline-Zeit nachladen, dann Polling aus
+      stopPolling();
       fetchBookings();
-    }, 30000); // Poll every 30 seconds
+    };
+    const handleDisconnect = () => startPolling();
+
+    socket.on('booking:updated', handleBookingUpdate);
+    socket.on('connect', handleConnect);
+    socket.on('disconnect', handleDisconnect);
+
+    if (!socket.connected) {
+      startPolling();
+    }
 
     return () => {
-      clearInterval(pollInterval);
+      socket.off('booking:updated', handleBookingUpdate);
+      socket.off('connect', handleConnect);
+      socket.off('disconnect', handleDisconnect);
+      stopPolling();
     };
-  }, [userId, fetchBookings]);
-
-  // Simulate real-time updates (for demonstration purposes)
-  const simulateUpdate = useCallback((update: BookingUpdateEvent) => {
-    setBookings(prev => {
-      const updated = prev.map(booking => {
-        if (booking.id === update.bookingId) {
-          const updatedBooking = {
-            ...booking,
-            status: update.newStatus as any || booking.status,
-            confirmedAt: update.confirmedAt || booking.confirmedAt
-          };
-          
-          // Call the callback with the updated booking
-          if (onStatusUpdate) {
-            onStatusUpdate(updatedBooking);
-          }
-          
-          return updatedBooking;
-        }
-        return booking;
-      });
-      
-      return updated;
-    });
-  }, [onStatusUpdate]);
+  }, [userId, fetchBookings, onStatusUpdate]);
 
   // Refresh function to manually refetch data
   const refresh = useCallback(() => {
@@ -137,8 +153,7 @@ export const useBookingUpdates = ({ userId, onStatusUpdate }: UseBookingUpdatesO
     bookings,
     loading,
     error,
-    refresh,
-    simulateUpdate // For testing purposes
+    refresh
   };
 };
 

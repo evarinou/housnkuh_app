@@ -8,6 +8,7 @@ import {
   userStorage,
   apiUtils
 } from '../utils/auth';
+import { disconnectVendorSocket } from '../utils/vendorSocket';
 import { useVendorRegistration } from '../hooks/useVendorRegistration';
 import { usePriceCalculation } from '../hooks/usePriceCalculation';
 import { useTrialManagement } from '../hooks/useTrialManagement';
@@ -70,6 +71,7 @@ export const VendorAuthProvider: React.FC<VendorAuthProviderProps> = React.memo(
 
   const logout = useCallback((): void => {
     authOperationsService.logout(() => {
+      disconnectVendorSocket(); // WebSocket mit altem Token nicht weiterleben lassen
       setToken(null);
       setUser(null);
       setIsAuthenticated(false);
