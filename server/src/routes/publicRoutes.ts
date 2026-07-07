@@ -19,9 +19,31 @@ import VendorService from '../services/vendorService';
 import { Request, Response } from 'express';
 import { cacheMiddleware } from '../middleware/cacheMiddleware';
 import { getStoreMapData } from '../services/storeMapService';
+import { searchPublicProducts } from '../services/publicProductService';
 import logger from '../utils/logger';
 
 const router = express.Router();
+
+// Öffentliche Produktsuche für Käufer (F1) — cached 5 min.
+router.get('/products', cacheMiddleware(300), async (req: Request, res: Response): Promise<void> => {
+  try {
+    const categories = req.query.categories
+      ? (req.query.categories as string).split(',').filter(Boolean)
+      : undefined;
+    const result = await searchPublicProducts({
+      q: req.query.q as string,
+      categories,
+      availability: req.query.availability as string,
+      location: req.query.location as string,
+      page: parseInt(req.query.page as string) || 1,
+      limit: Math.min(parseInt(req.query.limit as string) || 20, 50)
+    });
+    res.json({ success: true, data: result });
+  } catch (error) {
+    logger.error('Error searching public products', { error });
+    res.status(500).json({ success: false, message: 'Serverfehler' });
+  }
+});
 
 // Get public vendor listings with optimized performance (cached for 5 minutes)
 router.get('/vendors', cacheMiddleware(300), async (req: Request, res: Response): Promise<void> => {
