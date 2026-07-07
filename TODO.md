@@ -43,9 +43,16 @@
   projiziert idempotent (Unique-Index + `$setOnInsert`) nach jedem
   documentSyncJob-Lauf. Test (grün) deckt Vendor-Split, Auslassen
   unzuordenbarer Zeilen, Idempotenz + Zustandserhalt ab. Commit.
-  ⚑ **Offen für F2a:** Netto/Brutto-Annahme (item.total = netto) und
-  Belegtyp-Filter (`['invoice']`) mit echten flour.io-Daten validieren;
-  einmaliger Backfill via `project()` ohne `since`.
+  ⚑ ✅ **F2a-Validierung erledigt (2026-07-08, gegen Live-API):** Das
+  angenommene Schema war erfunden — echter Vertrag: Belegtyp `'R'`
+  (nicht 'invoice'), Items liefern `totalExVat`/`totalIncVat` GETRENNT
+  (Netto/Brutto-Annahme entfällt), `ref`/`amount`/`price` statt
+  articleId/quantity/total, currency als Objekt. Komplette Kette
+  (Typen→Pull→Model→Projektion→Anzeige) umgestellt; Stornos
+  (Belegabbruch/isVoided/credit/item.cancelled) ausgeschlossen.
+  End-to-End-Smoke: 4/4 echte Belege gepullt, Backfill-Projektion
+  korrekt. Voller Beweis mit Beträgen > 0 folgt mit Evas physischem
+  Kassen-Scan (TASK-085).
 
 ## Stufe 2 – Abrechnung (Kern-Business)
 
