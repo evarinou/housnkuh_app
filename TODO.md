@@ -49,7 +49,20 @@
 
 ## Stufe 2 – Abrechnung (Kern-Business)
 
-- [ ] **T2.1 – F2a Vendor-Verkaufsrechnung (Gutschriftsverfahren).** 5-Min-Job,
+- [~] **T2.1 – F2a Vendor-Verkaufsrechnung (Gutschriftsverfahren).** IN ARBEIT
+  (Teilschritte):
+  - [x] **Teil 1 – Modell + Aggregation** ✅ `SalesInvoice`-Modell +
+    `salesInvoiceService` (USt je Steuerstatus, claim-first, pro-Vendor-Nummer),
+    6 Tests grün.
+  - [x] **Teil 2 – PDF** ✅ `salesInvoicePdfService` (Gutschrift-Layout, §19/USt,
+    Ablage, pdfPath), HTML-Logik getestet. ⚠️ End-to-end-Rendering braucht
+    installiertes Chrome (`npx puppeteer browsers install chrome` in `server/`) —
+    ließ sich in der Agent-Sandbox nicht zuverlässig installieren; von Eva in
+    ihrer Shell ausführen, dann PDF-Verifikation. Betrifft auch die bestehende
+    invoicePdfService (→ T3.2 Deployment).
+  - [ ] **Teil 3 – 5-Min-Job** mit Lock + Fehlerbehandlung, `generateAll()` +
+    PDF-Erzeugung, in scheduledJobs einhängen.
+  Ursprüngliche Beschreibung: 5-Min-Job,
   überlappungssicher (Lauf-Lock, AUDIT OP9), erzeugt pro Vendor eine
   aufgeschlüsselte Rechnung aus noch nicht abgerechneten Verkäufen; USt gemäß
   Vendor-Steuerstatus (T1.1); PDF via `invoicePdfService`; Ablage/Versand
