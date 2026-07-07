@@ -55,11 +55,14 @@
     `salesInvoiceService` (USt je Steuerstatus, claim-first, pro-Vendor-Nummer),
     6 Tests grün.
   - [x] **Teil 2 – PDF** ✅ `salesInvoicePdfService` (Gutschrift-Layout, §19/USt,
-    Ablage, pdfPath), HTML-Logik getestet. ⚠️ End-to-end-Rendering braucht
-    installiertes Chrome (`npx puppeteer browsers install chrome` in `server/`) —
-    ließ sich in der Agent-Sandbox nicht zuverlässig installieren; von Eva in
-    ihrer Shell ausführen, dann PDF-Verifikation. Betrifft auch die bestehende
-    invoicePdfService (→ T3.2 Deployment).
+    Ablage, pdfPath), HTML-Logik getestet + **echtes PDF end-to-end verifiziert**
+    (Layout + USt-Rechnung korrekt). Deployment-Detail (→ T3.2): puppeteer 24.18
+    ist auf Chrome **139** gepinnt; `npx puppeteer browsers install chrome` holt
+    aber die *neueste* (150) → Mismatch. Lösung: entweder `npx puppeteer browsers
+    install` (ohne Arg, installiert die gepinnte 139) ODER
+    `PUPPETEER_EXECUTABLE_PATH` auf ein System-/Playwright-Chromium setzen
+    (Service unterstützt das; puppeteer.launch nutzt die Env-Var auch für die
+    bestehende invoicePdfService).
   - [ ] **Teil 3 – 5-Min-Job** mit Lock + Fehlerbehandlung, `generateAll()` +
     PDF-Erzeugung, in scheduledJobs einhängen.
   Ursprüngliche Beschreibung: 5-Min-Job,
