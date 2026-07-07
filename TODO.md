@@ -74,13 +74,14 @@
   definiert; flour.io-Ausfall/unvollständige Daten sauber abgefangen (AUDIT
   OP4), ohne Verlust/Doppel-Abrechnung. Anzeige: `VendorCustomerInvoicesPage`.
   *Fertig, wenn:* alle sechs Akzeptanzkriterien aus FEATURES F2a erfüllt.
-- [ ] **T2.2 – F2c Provision im Monatslauf.** Neuer Positionstyp `provision` in
-  `invoiceCalculationService`; Provision = `provisionssatz` × **Netto**-
-  Monatsumsatz des Vendors (aus T1.2, Zustand „Provision Monat Y"); Miete +
-  Zusatzleistungen bleiben; housnkuh-USt (19 %) auf die Netto-Provision.
-  *Fertig, wenn:* Monatsrechnung Miete + Zusatzleistungen + korrekte
-  Provision enthält, Umsatz je Monat genau einmal zählt, Steuersubjekte
-  (housnkuh vs. Vendor) sauber getrennt.
+- [x] **T2.2 – F2c Provision im Monatslauf.** ✅ Positionstyp `provision`;
+  `provisionService` claimt offene VendorSale-Zeilen (Netto) claim-first auf die
+  Monatsrechnung (`provisionInvoice`), Rollback bei Fehler; in
+  `generateMonthlyInvoice` integriert (nur Nicht-Trial-Vendors). 7 Tests grün.
+  ⚠️ **Nachgelagert nötig:** BUG-INV-TAX (AUDIT) — Invoice-Tax-Semantik ist
+  vorbestehend falsch (`totalAmount=subtotal*(1+tax)` mit absolutem tax) → die
+  ausgewiesene USt/Gesamtsumme stimmt erst nach diesem Fix. Betrifft alle
+  Monatsrechnungen, bewusst außerhalb F2c.
 - [ ] **T2.3 – F2b housnkuh-Rechnungsansicht anbinden.** `VendorHousnkuhInvoices-
   Page` an das bestehende Invoice-Backend hängen (Liste + Detail + PDF-Download).
   *Fertig, wenn:* Vendor sieht seine Monatsrechnungen und kann PDFs laden.
