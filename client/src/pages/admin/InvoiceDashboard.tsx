@@ -43,7 +43,6 @@ import axios from 'axios';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import StatusBadge, { InvoiceStatus } from '../../components/ui/StatusBadge';
 import ManualInvoiceGenerator from '../../components/admin/ManualInvoiceGenerator';
-import { useAuth } from '../../contexts/AuthContext';
 import { tokenStorage, apiUtils } from '../../utils/auth';
 import { PriceFormatter } from '../../utils/priceFormatting';
 
@@ -107,6 +106,8 @@ interface StatCardProps {
   iconColor: string;
   change?: string;
   changeType?: 'positive' | 'negative' | 'neutral';
+  /** Wert als Euro-Betrag formatieren (BUG-INVDASH-CURRENCY: vorher englische Titel-Heuristik) */
+  isCurrency?: boolean;
 }
 
 // Chart colors
@@ -150,7 +151,8 @@ const StatCard: React.FC<StatCardProps> = ({
   iconBgColor,
   iconColor,
   change,
-  changeType = 'neutral'
+  changeType = 'neutral',
+  isCurrency = false
 }) => (
   <Card className="hover:shadow-lg transition-shadow">
     <CardContent className="p-6">
@@ -158,7 +160,7 @@ const StatCard: React.FC<StatCardProps> = ({
         <div className="flex-1">
           <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider">{title}</h3>
           <p className="text-3xl font-bold text-gray-900 mt-2">
-            {typeof value === 'number' && title.toLowerCase().includes('revenue') 
+            {typeof value === 'number' && isCurrency
               ? PriceFormatter.formatCurrency(value)
               : value
             }
@@ -743,6 +745,7 @@ const InvoiceDashboard: React.FC = () => {
           icon={DollarSign}
           iconBgColor="bg-green-100"
           iconColor="text-green-600"
+          isCurrency
         />
         <StatCard
           title="Bezahlter Umsatz"
@@ -750,6 +753,7 @@ const InvoiceDashboard: React.FC = () => {
           icon={TrendingUp}
           iconBgColor="bg-green-100"
           iconColor="text-green-600"
+          isCurrency
           change={stats?.summary?.totalRevenue ?
             `${Math.round((stats?.summary?.paidRevenue / stats?.summary?.totalRevenue) * 100)}%` : '0%'}
           changeType="positive"

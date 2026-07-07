@@ -60,7 +60,7 @@ describe('ManualInvoiceGenerator', () => {
     fireEvent.click(screen.getByText('Rechnungen generieren'));
 
     await waitFor(() => {
-      expect(mockedAxios.get).toHaveBeenCalledWith('/api/vendors', {
+      expect(mockedAxios.get).toHaveBeenCalledWith('http://localhost:4000/api/vendors', {
         headers: { Authorization: 'Bearer test-token' }
       });
     });

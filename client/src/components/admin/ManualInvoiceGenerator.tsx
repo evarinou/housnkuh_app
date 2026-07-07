@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import axios from 'axios';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { apiUtils, tokenStorage } from '../../utils/auth';
 
 interface Vendor {
   _id: string;
@@ -93,9 +94,9 @@ const ManualInvoiceGenerator: React.FC<ManualInvoiceGeneratorProps> = ({
     setIsLoading(true);
     setError(null);
     try {
-      const response = await axios.get('/api/vendors', {
+      const response = await axios.get(`${apiUtils.getApiUrl()}/vendors`, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('adminToken')}`
+          Authorization: `Bearer ${tokenStorage.getToken('ADMIN')}`
         }
       });
       setVendors(response.data.filter((vendor: Vendor) => vendor.isActive));
@@ -140,9 +141,9 @@ const ManualInvoiceGenerator: React.FC<ManualInvoiceGeneratorProps> = ({
         ...(selectedVendor !== 'all' && { vendorId: selectedVendor })
       };
 
-      const response = await axios.post('/api/invoices/generate', payload, {
+      const response = await axios.post(`${apiUtils.getApiUrl()}/invoices/generate`, payload, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('adminToken')}`,
+          Authorization: `Bearer ${tokenStorage.getToken('ADMIN')}`,
           'Content-Type': 'application/json'
         }
       });
