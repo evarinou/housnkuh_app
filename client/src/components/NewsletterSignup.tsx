@@ -44,13 +44,7 @@ const NewsletterSignup: React.FC = () => {
     // Debug-Informationen sammeln
     const apiUrl = apiUtils.getApiUrl();
     const requestData = { email, name, type };
-    
-    console.log('Newsletter submission:', {
-      apiUrl,
-      requestData,
-      headers: { 'Content-Type': 'application/json' }
-    });
-    
+
     setDebugInfo(`API URL: ${apiUrl}/newsletter/subscribe`);
     
     try {
@@ -60,9 +54,7 @@ const NewsletterSignup: React.FC = () => {
         },
         timeout: 10000 // 10 Sekunden Timeout
       });
-      
-      console.log('Newsletter response:', response);
-      
+
       if (response.data.success) {
         setStatus('success');
         setMessage(response.data.message);

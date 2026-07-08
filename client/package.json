@@ -51,6 +51,17 @@
       "react-app/jest",
       "prettier"
     ],
+    "rules": {
+      "no-console": [
+        "warn",
+        {
+          "allow": [
+            "warn",
+            "error"
+          ]
+        }
+      ]
+    },
     "overrides": [
       {
         "files": [
@@ -58,6 +69,7 @@
           "**/*.test.tsx"
         ],
         "rules": {
+          "no-console": "off",
           "testing-library/no-node-access": "warn",
           "testing-library/no-wait-for-multiple-assertions": "warn",
           "testing-library/no-container": "warn",

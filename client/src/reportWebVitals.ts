@@ -29,7 +29,6 @@ import { ReportHandler } from 'web-vitals';
  * @example
  * // With custom analytics handler
  * reportWebVitals((metric) => {
- *   console.log(metric);
  *   // Send to analytics service
  *   analytics.track('web-vital', metric);
  * });

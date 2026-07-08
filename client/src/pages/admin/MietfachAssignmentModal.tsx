@@ -153,16 +153,8 @@ const MietfachAssignmentModal: React.FC<MietfachAssignmentModalProps> = ({
       'window-large': ['schaufenster']
     };
     
-    console.log('🔍 Debug: packageData.packageCounts:', packageData?.packageCounts);
-    console.log('🔍 Debug: packageData.packageOptions:', packageData?.packageOptions);
-    
-    // CRITICAL DEBUG: Full packageData structure
-    console.log('🔍 CRITICAL DEBUG: Complete packageData structure:', JSON.stringify(packageData, null, 2));
-    
     if (packageData?.packageCounts) {
       Object.entries(packageData.packageCounts).forEach(([packageId, count]) => {
-        console.log(`🔍 Debug: Processing packageId: "${packageId}", count: ${count}`);
-        
         if (Number(count) > 0) {
           // Get the Mietfach types for this package ID
           const mietfachTypes = packageIdToTypesMap[packageId];
@@ -170,40 +162,33 @@ const MietfachAssignmentModal: React.FC<MietfachAssignmentModalProps> = ({
           if (mietfachTypes) {
             mietfachTypes.forEach(type => {
               types.add(type);
-              console.log(`✅ Added type: ${type} (from packageId: ${packageId})`);
             });
           } else {
-            console.log(`⚠️ Warning: No mapping found for packageId: "${packageId}"`);
+            console.warn(`Kein Mietfach-Typ-Mapping für packageId "${packageId}" – rate anhand des Namens`);
             // Fallback: try to guess from package name
             const packageOption = packageData.packageOptions?.find((p: any) => p.id === packageId);
             if (packageOption) {
               const name = packageOption.name.toLowerCase();
               if (name.includes('kühl') || name.includes('gekühlt')) {
                 types.add('kuehl');
-                console.log(`✅ Added type: kuehl (guessed from name: ${packageOption.name})`);
               } else if (name.includes('gefrier') || name.includes('gefroren')) {
                 types.add('gefrier');
-                console.log(`✅ Added type: gefrier (guessed from name: ${packageOption.name})`);
               } else if (name.includes('schaufenster')) {
                 types.add('schaufenster');
-                console.log(`✅ Added type: schaufenster (guessed from name: ${packageOption.name})`);
               } else if (name.includes('tisch')) {
                 types.add('sonstiges');
-                console.log(`✅ Added type: sonstiges (guessed from name: ${packageOption.name})`);
               } else {
                 types.add('regal');
-                console.log(`✅ Added type: regal (fallback for name: ${packageOption.name})`);
               }
             }
           }
         }
       });
     } else {
-      console.log('⚠️ Warning: packageCounts not available in packageData');
+      console.warn('packageCounts fehlt in packageData – zeige alle Mietfach-Typen');
     }
-    
+
     const typesArray = Array.from(types);
-    console.log('🔍 Debug: Final requested types:', typesArray);
     return typesArray.length > 0 ? typesArray : ['all'];
   }, [user.pendingBooking?.packageData]);
 
@@ -223,13 +208,7 @@ const MietfachAssignmentModal: React.FC<MietfachAssignmentModalProps> = ({
       const apiUrl = apiUtils.getApiUrl();
       const duration = user.pendingBooking.packageData.rentalDuration || 1;
       const requestedTypes = getRequestedMietfachTypes();
-      
-      console.log('🔍 Debug: Making availability request with:', {
-        startDate: scheduledStartDate,
-        duration,
-        requestedTypes
-      });
-      
+
       const response = await axios.post(
         `${apiUrl}/admin/check-mietfach-availability`,
         {
@@ -242,16 +221,12 @@ const MietfachAssignmentModal: React.FC<MietfachAssignmentModalProps> = ({
         }
       );
       
-      console.log('🔍 Debug: Availability response:', response.data);
-      
       if (response.data.success) {
-        console.log('🔍 Debug: Setting filtered mietfaecher:', response.data.mietfaecher);
         setFilteredMietfaecher(response.data.mietfaecher);
       }
     } catch (err) {
       console.error('Error checking availability:', err);
       // Fallback to showing all mietfaecher without availability info
-      console.log('🔍 Debug: Falling back to all available mietfaecher:', availableMietfaecher);
       setFilteredMietfaecher(availableMietfaecher.map(mf => ({ ...mf, available: true })));
     } finally {
       setLoadingAvailability(false);

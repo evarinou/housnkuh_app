@@ -391,7 +391,7 @@ export const usePackageBuilder = () => {
   };
 
   const handleRegistrationSuccess = () => {
-    console.log('Registrierung erfolgreich, Package-Daten:', getPackageData());
+    // Registrierung abgeschlossen – aktuell keine weitere Aktion nötig
   };
 
   return {

@@ -130,31 +130,35 @@ describe('VendorProfilePage', () => {
 
       const fileInput = screen.getByLabelText(/profilbild/i) as HTMLInputElement;
       const file = new File(['test'], 'test.png', { type: 'image/png' });
-      
-      // Mock console.log to verify the handler is called
-      const consoleSpy = jest.spyOn(console, 'log');
-      
+
+      // Mock FileReader to verify the handler processes the file each time
+      const mockReadAsDataURL = jest.fn();
+      const mockReader = {
+        readAsDataURL: mockReadAsDataURL,
+        onloadend: null as any,
+        onerror: null as any,
+        result: 'data:image/png;base64,test'
+      };
+      const readerSpy = jest.spyOn(window, 'FileReader').mockImplementation(() => mockReader as any);
+
       // First selection
       fireEvent.change(fileInput, {
         target: { files: [file] }
       });
-      
-      expect(consoleSpy).toHaveBeenCalledWith('🚀 handleFileSelect triggered');
-      expect(consoleSpy).toHaveBeenCalledWith('📁 Selected file:', 'test.png', 4, 'image/png');
-      
-      // Clear console spy calls
-      consoleSpy.mockClear();
-      
+
+      expect(mockReadAsDataURL).toHaveBeenCalledTimes(1);
+      expect(mockReadAsDataURL).toHaveBeenCalledWith(file);
+      expect(fileInput.value).toBe('');
+
       // Second selection of the same file
       fireEvent.change(fileInput, {
         target: { files: [file] }
       });
-      
+
       // Verify handler was called again
-      expect(consoleSpy).toHaveBeenCalledWith('🚀 handleFileSelect triggered');
-      expect(consoleSpy).toHaveBeenCalledWith('📁 Selected file:', 'test.png', 4, 'image/png');
-      
-      consoleSpy.mockRestore();
+      expect(mockReadAsDataURL).toHaveBeenCalledTimes(2);
+
+      readerSpy.mockRestore();
     });
 
     it('should reset banner file input value after selecting a banner image', async () => {
@@ -190,30 +194,35 @@ describe('VendorProfilePage', () => {
       const fileInputs = screen.getAllByLabelText(/profilbild|banner/i);
       const bannerInput = fileInputs[1] as HTMLInputElement;
       const file = new File(['banner'], 'banner.jpg', { type: 'image/jpeg' });
-      
-      const consoleSpy = jest.spyOn(console, 'log');
-      
+
+      // Mock FileReader to verify the handler processes the file each time
+      const mockReadAsDataURL = jest.fn();
+      const mockReader = {
+        readAsDataURL: mockReadAsDataURL,
+        onloadend: null as any,
+        onerror: null as any,
+        result: 'data:image/jpeg;base64,test'
+      };
+      const readerSpy = jest.spyOn(window, 'FileReader').mockImplementation(() => mockReader as any);
+
       // First selection
       fireEvent.change(bannerInput, {
         target: { files: [file] }
       });
-      
-      expect(consoleSpy).toHaveBeenCalledWith('🚀 handleBannerFileSelect triggered');
-      expect(consoleSpy).toHaveBeenCalledWith('📁 Selected banner file:', 'banner.jpg', 6, 'image/jpeg');
-      
-      // Clear console spy calls
-      consoleSpy.mockClear();
-      
+
+      expect(mockReadAsDataURL).toHaveBeenCalledTimes(1);
+      expect(mockReadAsDataURL).toHaveBeenCalledWith(file);
+      expect(bannerInput.value).toBe('');
+
       // Second selection of the same file
       fireEvent.change(bannerInput, {
         target: { files: [file] }
       });
-      
+
       // Verify handler was called again
-      expect(consoleSpy).toHaveBeenCalledWith('🚀 handleBannerFileSelect triggered');
-      expect(consoleSpy).toHaveBeenCalledWith('📁 Selected banner file:', 'banner.jpg', 6, 'image/jpeg');
-      
-      consoleSpy.mockRestore();
+      expect(mockReadAsDataURL).toHaveBeenCalledTimes(2);
+
+      readerSpy.mockRestore();
     });
 
     it('should handle case when no file is selected', async () => {
@@ -224,17 +233,22 @@ describe('VendorProfilePage', () => {
       });
 
       const fileInput = screen.getByLabelText(/profilbild/i) as HTMLInputElement;
-      const consoleSpy = jest.spyOn(console, 'log');
-      
+
+      // Mock FileReader to verify no file processing happens
+      const mockReadAsDataURL = jest.fn();
+      const readerSpy = jest.spyOn(window, 'FileReader').mockImplementation(
+        () => ({ readAsDataURL: mockReadAsDataURL } as any)
+      );
+
       // Simulate change event with no files
       fireEvent.change(fileInput, {
         target: { files: [] }
       });
-      
-      expect(consoleSpy).toHaveBeenCalledWith('❌ No file selected');
+
+      expect(mockReadAsDataURL).not.toHaveBeenCalled();
       expect(fileInput.value).toBe('');
-      
-      consoleSpy.mockRestore();
+
+      readerSpy.mockRestore();
     });
 
     it('should create preview URL when file is selected', async () => {
@@ -256,23 +270,18 @@ describe('VendorProfilePage', () => {
       };
       
       jest.spyOn(window, 'FileReader').mockImplementation(() => mockReader as any);
-      
-      const consoleSpy = jest.spyOn(console, 'log');
-      
+
       // Simulate file selection
       fireEvent.change(fileInput, {
         target: { files: [file] }
       });
-      
+
       // Simulate FileReader onloadend
       if (mockReader.onloadend) {
         mockReader.onloadend({} as any);
       }
-      
-      expect(consoleSpy).toHaveBeenCalledWith('🖼️ Preview created for:', 'test.png');
+
       expect(mockReadAsDataURL).toHaveBeenCalledWith(file);
-      
-      consoleSpy.mockRestore();
     });
   });
 });

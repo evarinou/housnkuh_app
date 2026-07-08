@@ -211,10 +211,6 @@ const VendorProfilePage: React.FC = () => {
         });
         
         if (response.data.success) {
-          console.log('Profile data received:', response.data.profile);
-          console.log('Profile image URL:', response.data.profile.profilBild);
-          console.log('Banner image URL:', response.data.profile.bannerBild);
-          
           const profileData = response.data.profile;
           
           // Handle tag-based fields - ensure they exist and have proper structure
@@ -266,12 +262,9 @@ const VendorProfilePage: React.FC = () => {
       try {
         const apiUrl = apiUtils.getApiUrl();
         const response = await axios.get(`${apiUrl}/tags?active=true`);
-        
-        console.log('Tags API response:', response.data);
-        
+
         if (response.data.success) {
           const tags = (response.data.data || []).map(normalizeTag);
-          console.log('Processed tags:', tags);
           setAvailableTags(tags);
         } else {
           console.warn('Tags API returned success=false:', response.data);
@@ -298,52 +291,41 @@ const VendorProfilePage: React.FC = () => {
   
   // Profilbild auswählen
   const handleFileSelect = (e: ChangeEvent<HTMLInputElement>) => {
-    console.log('🚀 handleFileSelect triggered');
-    
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      console.log('📁 Selected file:', file.name, file.size, file.type);
-      
+
       setSelectedFile(file);
-      
+
       // Vorschau erstellen
       const reader = new FileReader();
       reader.onloadend = () => {
-        console.log('🖼️ Preview created for:', file.name);
         setPreviewUrl(reader.result as string);
       };
-      
+
       reader.onerror = (error) => {
         console.error('❌ FileReader error:', error);
       };
-      
+
       reader.readAsDataURL(file);
-    } else {
-      console.log('❌ No file selected');
     }
-    
+
     // WICHTIG: Input zurücksetzen für erneute Auswahl
     e.target.value = '';
   };
   
   // Banner-Bild auswählen
   const handleBannerFileSelect = (e: ChangeEvent<HTMLInputElement>) => {
-    console.log('🚀 handleBannerFileSelect triggered');
-    
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      console.log('📁 Selected banner file:', file.name, file.size, file.type);
-      
+
       setSelectedBannerFile(file);
-      
+
       // Vorschau erstellen
       const reader = new FileReader();
       reader.onloadend = () => {
         setBannerPreviewUrl(reader.result as string);
       };
       reader.readAsDataURL(file);
-    } else {
-      console.log('❌ No file selected');
     }
     // WICHTIG: Input zurücksetzen für erneute Auswahl
     e.target.value = '';
@@ -663,9 +645,7 @@ const VendorProfilePage: React.FC = () => {
           'Content-Type': 'application/json'
         }
       });
-      
-      console.log('Tag creation response:', response.data);
-      
+
       if (response.data.success) {
         const newTag = normalizeTag(response.data.tag);
         
@@ -688,9 +668,6 @@ const VendorProfilePage: React.FC = () => {
     } catch (err) {
       console.error('Fehler beim Erstellen des Tags:', err);
       if (axios.isAxiosError(err)) {
-        console.log('Response status:', err.response?.status);
-        console.log('Response data:', err.response?.data);
-        
         if (err.response?.status === 401) {
           localStorage.removeItem('vendorToken');
           navigate('/vendor/login');

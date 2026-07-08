@@ -173,8 +173,6 @@ const MietfaecherPage: React.FC = () => {
         
         if (response.data && response.data.length > 0) {
           // Echte Daten verwenden, wenn vorhanden, aber Format umwandeln
-          console.log('Mietfächer vom Server geladen:', response.data);
-          
           // API-Format in Frontend-Format umwandeln
           const convertedMietfaecher: Mietfach[] = response.data.map((m: MietfachAPI) => ({
             _id: m._id || 'temp',
@@ -202,7 +200,7 @@ const MietfaecherPage: React.FC = () => {
           setFilteredMietfaecher(convertedMietfaecher);
         } else {
           // Fallback auf Mock-Daten, wenn keine Daten vom Server
-          console.log('Keine Mietfächer auf dem Server, verwende Mock-Daten');
+          console.warn('Keine Mietfächer vom Server erhalten – verwende Mock-Daten');
           setMietfaecher(mockMietfaecher);
           setFilteredMietfaecher(mockMietfaecher);
         }
@@ -479,7 +477,6 @@ const MietfaecherPage: React.FC = () => {
       
       // Über die API aktualisieren
       const apiUrl = apiUtils.getApiUrl();
-      console.log('Updating mietfach via API:', updateData);
       await axios.put(`${apiUrl}/mietfaecher/${currentMietfach._id}`, updateData);
       
       // Aktualisiertes Mietfach Objekt
@@ -551,12 +548,10 @@ const MietfaecherPage: React.FC = () => {
       
       // An die API senden
       const apiUrl = apiUtils.getApiUrl();
-      console.log('Sending mietfach data to server:', newMietfachData);
       const response = await axios.post(`${apiUrl}/mietfaecher`, newMietfachData);
-      
+
       // Das vom Server zurückgegebene Mietfach mit seiner echten ID verwenden
       const savedMietfach: MietfachAPI = response.data;
-      console.log('Received from server:', savedMietfach);
       
       // Das vom Server gespeicherte Mietfach zum State hinzufügen (API-Format in Frontend-Format umwandeln)
       const newMietfach: Mietfach = {
