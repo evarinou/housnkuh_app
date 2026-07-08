@@ -200,6 +200,17 @@ Einige Agent-Einstufungen wurden nach Prüfung angepasst (Begründung dabei).
 
 ### Beim Test-Drift-Cleanup T5.5 gefunden (2026-07-07, verifiziert, NICHT gefixt)
 
+- [x] **BUG-DEAD-CREATE (W/SEC-nah)** ✅ gefixt 2026-07-08 (bei KON4 entdeckt):
+  `POST /vendor/contracts/create` — toter Legacy-Endpoint ohne Client-Aufrufer,
+  erzeugte Verträge mit monatspreis=0 (Phantom-Feld `mietfach.preis`) und
+  prüfte gegen ein nicht existierendes 15%-Provisionsmodell; jeder Vendor
+  hätte sich einen 0-€-Vertrag anlegen können. Entfernt.
+- [ ] **KON-MIETFACH-PREIS (k)** `mietfach.preis` existiert nicht im Schema,
+  wird aber noch als toter Fallback in `createVertragFromPendingBooking`
+  (vertragController:~372/390, packageOption.price greift real) und in
+  mehreren populate-Selects referenziert; Client-Anzeigen lesen `preis`
+  aus API-Transforms (`service.monatspreis`). → bei Gelegenheit Fallbacks/
+  Selects bereinigen oder bewusst ein Mietfach-Preisfeld einführen.
 - [x] **BUG-EMAILQ-PDF (W)** ✅ gefixt 2026-07-08 (bei KON4 entdeckt):
   `emailQueue.processInvoiceNotification` rief den nicht-existenten Export
   `generateInvoicePDF` auf → Rechnungs-Mails ohne mitgeliefertes PDF
