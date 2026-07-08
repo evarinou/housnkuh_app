@@ -2,6 +2,8 @@
  * @file salesInvoiceJob.test.ts
  * @purpose Sichert den Überlappungs-Lock des Verkaufsrechnungs-Jobs: ein zweiter
  *          run() während eines laufenden run() wird übersprungen.
+ *          Ergänzend (AUDIT OP14): isBusy() als Baustein des Graceful Shutdown
+ *          in index.ts — true während eines Laufs, false danach/nach Fehlern.
  */
 
 import { SalesInvoiceJob } from './salesInvoiceJob';
@@ -49,5 +51,36 @@ describe('SalesInvoiceJob overlap lock', () => {
     await SalesInvoiceJob.run(); // zweiter Lauf: läuft normal → beweist Lock-Freigabe
 
     expect(generateAll).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('SalesInvoiceJob.isBusy() für Graceful Shutdown (AUDIT OP14)', () => {
+  afterEach(() => jest.restoreAllMocks());
+
+  it('ist während eines laufenden run() true, danach false', async () => {
+    let release!: () => void;
+    const gate = new Promise<void>(res => { release = res; });
+    jest.spyOn(SalesInvoiceService, 'generateAll').mockImplementation(async () => {
+      await gate;
+      return { created: 0, vendors: 0, errors: 0 };
+    });
+    jest.spyOn(SalesInvoicePdfService, 'generatePending')
+      .mockResolvedValue({ generated: 0, failed: 0 });
+
+    expect(SalesInvoiceJob.isBusy()).toBe(false);
+    const run = SalesInvoiceJob.run();
+    expect(SalesInvoiceJob.isBusy()).toBe(true); // Shutdown würde jetzt warten
+
+    release();
+    await run;
+    expect(SalesInvoiceJob.isBusy()).toBe(false); // Shutdown darf fortfahren
+  });
+
+  it('ist nach einem Fehler false', async () => {
+    jest.spyOn(SalesInvoiceService, 'generateAll').mockRejectedValue(new Error('boom'));
+
+    await SalesInvoiceJob.run();
+
+    expect(SalesInvoiceJob.isBusy()).toBe(false);
   });
 });

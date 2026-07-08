@@ -3,6 +3,8 @@
  * @purpose Sichert die Überlappungs-Locks (AUDIT OP9) von StockPullJob und
  *          DocumentSyncJob: ein zweiter run() während eines laufenden run()
  *          wird übersprungen; nach Fehlern wird der Lock freigegeben.
+ *          Ergänzend (AUDIT OP14): isBusy() als Baustein des Graceful Shutdown
+ *          in index.ts — true während eines Laufs, false danach/nach Fehlern.
  */
 
 const mockStockPullAll = jest.fn();
@@ -81,5 +83,53 @@ describe('Sync-Job Überlappungs-Locks (AUDIT OP9)', () => {
     await DocumentSyncJob.run();
 
     expect(mockDocPullAll).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('isBusy() für Graceful Shutdown (AUDIT OP14)', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it('StockPullJob.isBusy() ist während eines laufenden run() true, danach false', async () => {
+    let release!: () => void;
+    const gate = new Promise<void>(res => { release = res; });
+    mockStockPullAll.mockImplementation(async () => { await gate; return okStockResult; });
+
+    expect(StockPullJob.isBusy()).toBe(false);
+    const run = StockPullJob.run();
+    expect(StockPullJob.isBusy()).toBe(true); // Shutdown würde jetzt warten
+
+    release();
+    await run;
+    expect(StockPullJob.isBusy()).toBe(false); // Shutdown darf fortfahren
+  });
+
+  it('StockPullJob.isBusy() ist nach einem Fehler false', async () => {
+    mockStockPullAll.mockRejectedValueOnce(new Error('boom'));
+
+    await StockPullJob.run();
+
+    expect(StockPullJob.isBusy()).toBe(false);
+  });
+
+  it('DocumentSyncJob.isBusy() ist während eines laufenden run() true, danach false', async () => {
+    let release!: () => void;
+    const gate = new Promise<void>(res => { release = res; });
+    mockDocPullAll.mockImplementation(async () => { await gate; return okDocResult; });
+
+    expect(DocumentSyncJob.isBusy()).toBe(false);
+    const run = DocumentSyncJob.run();
+    expect(DocumentSyncJob.isBusy()).toBe(true);
+
+    release();
+    await run;
+    expect(DocumentSyncJob.isBusy()).toBe(false);
+  });
+
+  it('DocumentSyncJob.isBusy() ist nach einem Fehler false', async () => {
+    mockDocPullAll.mockRejectedValueOnce(new Error('boom'));
+
+    await DocumentSyncJob.run();
+
+    expect(DocumentSyncJob.isBusy()).toBe(false);
   });
 });

@@ -158,6 +158,113 @@ tolerieren (Retry/Backoff vorhanden, s. o.).
 
 Beim Start außerdem: Tag-Seeding und Aktivierung geplanter Verträge.
 
+## Preisberechnung: Client zeigt an, Server entscheidet (Stand 2026-07-08, Audit S15)
+
+Die Preislogik existiert **dreifach** — zwei davon sind fast identische Kopien:
+
+| Modul | Rolle | Nutzer |
+|---|---|---|
+| `client/src/services/priceCalculationService.ts` | Anzeige-Berechnung im Booking-Flow | `usePackageBuilder` (Live-Preis, plus eigener Fallback-Codepfad Z. 251–287), `VendorConfirmPage` (`calculateDetailedPrice`), `PriceBreakdownDisplay` (nur Typ) |
+| `client/src/hooks/usePriceCalculation.ts` | **rechnet nicht** — liest nur `packageData.totalCost.monthly` und baut die Package-Summary (Name irreführend) | nur `VendorAuthContext` |
+| `server/src/services/priceCalculationService.ts` | Server-Neuberechnung | `vendorAuthController.confirmVendorEmail`, `bookingAdminController.getPendingBookings`, `vertragController.calculatePriceWithZusatzleistungen` |
+
+**Kernformeln sind synchron**: Package-Kosten (Preis × Anzahl), Zusatzleistungen
+(Lagerservice 20 €, Versandservice 5 €, nur bei Provision 7 %), Rabattstaffel
+(10 % ab 12, 5 % ab 6 Monaten), Provision (`monthlyTotal × rate/100`) — Client
+und Server liefern für den Normalfall dieselben Zahlen.
+
+**Aber: der verbindliche Vertragspreis entsteht woanders.**
+`confirmPendingBooking` (`bookingAdminController.ts:145`) ruft
+`createVertragFromPendingBooking` (`vertragController.ts:298`) auf, und der
+nutzt den PriceCalculationService **nicht**: Monatspreise kommen aus dem
+Mietfach-Typ-Mapping bzw. Admin-`priceAdjustments`, Zusatzleistungen sind hart
+kodiert (20/5 €, `vertragController.ts:466–467`), und der Rabatt wird als
+`packageData.discount` **ungeprüft vom Client übernommen**
+(`usePackageBuilder.ts:334` → `vertragController.ts:426–427`). Der Server
+rechnet also nur für Anzeigen neu; beim eigentlichen Vertragsabschluss
+vertraut er dem clientseitig berechneten Rabattsatz.
+
+**Gefundene Divergenzen (⚠ Warnliste, bewusst NICHT nebenbei gefixt):**
+
+1. **Vierte, abweichende Rabattstaffel**: `calculateRabatt` in
+   `server/src/types/zusatzleistungenTypes.ts:99–104` liefert **15/10/5 %** ab
+   12/6/3 Monaten (als Prozentzahl, nicht Dezimal). Aktuell tot — in
+   `vertragController.ts:15–16` importiert, aber nie aufgerufen. Wer sie
+   benutzt, rechnet andere Preise als der Rest des Systems.
+2. **Rabattbasis inkonsistent**: Beide PriceCalculationServices und
+   `createVertragFromPendingBooking` rabattieren die Summe **inkl.**
+   Zusatzleistungen (`vertragController.ts:427`); die Vertragsliste
+   `getAllVertraege` rechnet den Rabatt dagegen **nur auf Mietfachpreise** und
+   addiert Zusatzleistungen danach (`vertragController.ts:63–67`, der Kommentar
+   dort erklärt das zur „korrekten" Rechnung). Beispiel 35 € Mietfach +
+   20 € Lagerservice, 10 % Rabatt: Vertrag speichert 49,50 €
+   ((35+20)×0,9); die Breakdown-Anzeige weist discountAmount 3,50 € aus,
+   zeigt als Total aber das gespeicherte `totalMonthlyPrice` (49,50 €) —
+   Breakdown in sich widersprüchlich (35 − 3,50 + 20 = 51,50 ≠ 49,50).
+3. **Client-Validierung wirkungslos**: `validateZusatzleistungen` gibt im
+   Client ein Objekt `{valid, errors}` zurück; in `calculatePrice`
+   (`client .../priceCalculationService.ts:318`) steht `!this.validate…(…)` —
+   ein Objekt ist immer truthy, der Fehlerpfad ist unerreichbar. Der Server
+   (boolean, `server .../priceCalculationService.ts:108–110`) wirft bei
+   Basic + Zusatzleistungen. Preislich gleich (beide rechnen 0 € bei 4 %),
+   aber der Server lehnt Eingaben ab, die der Client anstandslos anzeigt.
+4. **Discount-Fallback-Semantik (latent)**: Client
+   (`client …:331`) `discount !== undefined ? discount : Staffel`, Server
+   (`server …:204`) `discount || Staffel` — bei explizit übergebenem
+   `discount: 0` und Laufzeit ≥ 6 Monate würde der Server den Laufzeitrabatt
+   anwenden, der Client nicht. Praktisch (noch) nicht auslösbar, weil der
+   Client bei Laufzeit ≥ 6 nie 0 sendet.
+
+## Trial-Services: Zuständigkeiten (Stand 2026-07-08, Audit S18)
+
+Drei Services teilen sich die Trial-Domäne; die Grundidee
+**Core / Admin / Monitoring** ist erkennbar, aber nicht sauber durchgehalten:
+
+| Service | Rolle | Aufrufer |
+|---|---|---|
+| `trialService.ts` (`TrialService`, statisch, ~920 Z.) | **Core-Lifecycle**: `calculateTrialPeriod` (auch Registrierung in `vendorAuthController`), Aktivierung (`activateTrialsOnStoreOpening`, `checkForTrialActivation`, `manuallyActivateVendorTrial`), Statusübergänge + Reminder-Mails (`updateTrialStatuses`), Einzeloperationen (`getTrialStatus/convertTrialToRegular/extendTrial/cancelTrial/getTrialHistory`), Statistiken (`getTrialStatistics`, `getTrialAnalytics`) | `scheduledJobs` (Cron), `vendorTrialController` (`/api/vendor/trial/*`), `adminTrialController` (Root-Datei, `/api/admin/trials` via `adminTrialRoutes`), `healthCheckService` |
+| `trialManagementService.ts` (Singleton, ~540 Z.) | **Admin-Operationen mit Audit**: `extendTrial` (Audit + Reminder-Reset), `bulkUpdateTrialStatus`, `getAuditLog` (⚠ nur In-Memory, nach Neustart weg), `getExpiringTrials` | `admin/trialAdminController` (über adminController-Facade, Routen `/api/admin/trials/extend/:userId`, `/bulk-update`, `/audit-log`, `/expiring` in `adminRoutes`) |
+| `trialMonitoringService.ts` (Singleton, ~460 Z.) | **Read-only Monitoring**: `getTrialMetrics` (5-Min-Cache), `getTrialHealthMetrics`, `getTrialDashboard`, `monitorTrialConversions` | `admin/monitoringAdminController` (`/admin/monitoring/trials*`), `scheduledJobs` |
+
+**Überschneidungen / Konflikte:**
+
+1. **Statistiken doppelt, mit unterschiedlichen Kriterien**:
+   `TrialService.getTrialStatistics` (`trialService.ts:874`) zählt per
+   `registrationStatus`; `trialMonitoringService.getTrialMetrics`
+   (`trialMonitoringService.ts:111`) datumsbasiert per `trialEndDate` +
+   `trialAutomation.trialConversionDate`. Die Zahlen können sich
+   widersprechen: `convertTrialToRegular` (`trialService.ts:741`) setzt nur
+   `registrationStatus='active'`, **nicht** `trialConversionDate` — solche
+   Konversionen fehlen in den Monitoring-Metriken.
+   `trialManagementService` (`getExpiringTrials`) nutzt ein drittes
+   Kriterium (Existenz von `trialConversionDate`).
+2. **`extendTrial` doppelt und divergent**: `TrialService.extendTrial`
+   (`trialService.ts:769` — kein Audit, kein Reminder-Reset, Basis = altes
+   Enddatum) vs. `trialManagementService.extendTrial`
+   (`trialManagementService.ts:106` — Audit + Reminder-Reset, Basis =
+   max(jetzt, Enddatum)). Beide sind als Admin-Endpoint erreichbar:
+   `POST /api/admin/trials/:id/extend` (Root-Controller → TrialService) und
+   `POST /api/admin/trials/extend/:userId` (trialAdminController →
+   trialManagementService). Gleiches Muster bei Bulk (`/trials/bulk` vs.
+   `/trials/bulk-update`).
+3. **Zwei Admin-Controller im selben URL-Raum**:
+   `controllers/adminTrialController.ts` (gemountet als `/admin/trials` via
+   `adminTrialRoutes`) und `controllers/admin/trialAdminController.ts`
+   (Pfade `/trials/*` in `adminRoutes`, gemountet als `/admin`). `adminRoutes`
+   ist zuerst gemountet und gewinnt bei Pfad-Kollisionen. Innerhalb von
+   `adminTrialRoutes` verschattet zudem `GET /:id` (Z. 27) die später
+   registrierten `GET /stats` und `GET /export` (Z. 36/39 — unerreichbar).
+   Das Frontend nutzt aktuell nur `POST /admin/trials/activate`
+   (LaunchDayMonitor); alle übrigen Trial-Endpoints beider Controller sind
+   ohne Client-Aufrufer.
+
+**Ungenutzte Exports/Methoden (nur dokumentiert, nicht gelöscht):**
+`TrialService.sendTrialConversionConfirmation` (`trialService.ts:541`),
+`trialManagementService.searchVendorsByTrialStatus`
+(`trialManagementService.ts:505`), `trialMonitoringService.clearCache`
+(`trialMonitoringService.ts:458`) sowie die ungenutzten Importe
+`calculateRabatt`/`calculateMonthlyTotal` in `vertragController.ts:15–16`.
+
 ## Umgebungsvariablen
 
 Ladereihenfolge in `server/src/index.ts`: `.env.local` → `.env` → Default-Suche.
@@ -223,7 +330,8 @@ Referenz mit Platzhaltern: `server/.env.example`. Gruppen:
 12. Zwei .js-Dateien in TS-Codebase: `utils/clearAuth.js` (Legacy),
     `utils/invoiceApi.js` (Debug-Werkzeug, auto-läuft auf dem Invoice-Dashboard).
 13. Preislogik doppelt: `services/priceCalculationService.ts` und Hook
-    `usePriceCalculation`.
+    `usePriceCalculation` — analysiert, siehe Abschnitt
+    „Preisberechnung: Client zeigt an, Server entscheidet".
 14. Test-Abdeckung dünn und driftend: viele untracked Test-Dateien erwarten
     alte UI/Endpunkte (eigener Cleanup-Pass geplant).
 
