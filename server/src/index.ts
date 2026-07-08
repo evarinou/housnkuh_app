@@ -221,28 +221,54 @@ app.get('/', (_req, res) => {
 
 
 /**
- * Graceful shutdown handler for SIGTERM
- * @description Stops all scheduled jobs before process termination
+ * Graceful Shutdown (AUDIT OP10): neue Läufe stoppen, dann bis zu 15 s auf
+ * laufende Jobs warten (verhindert halbfertige Rechnungsläufe/Pulls), erst
+ * dann beenden. Ein zweites Signal erzwingt den sofortigen Abbruch.
  */
-process.on('SIGTERM', () => {
-  logger.info('SIGTERM received, shutting down...');
-  ScheduledJobs.stopAll();
-  void socketService.close();
-  cache.destroy();
-  process.exit(0);
-});
+const SHUTDOWN_GRACE_MS = 15000;
+let shuttingDown = false;
 
-/**
- * Graceful shutdown handler for SIGINT (Ctrl+C)
- * @description Stops all scheduled jobs and cache before process termination
- */
-process.on('SIGINT', () => {
-  logger.info('SIGINT received, shutting down...');
+async function gracefulShutdown(signal: string): Promise<void> {
+  if (shuttingDown) {
+    logger.warn(`${signal} erneut empfangen — erzwinge sofortigen Abbruch`);
+    process.exit(1);
+  }
+  shuttingDown = true;
+  logger.info(`${signal} received, shutting down...`);
+
+  // Keine neuen Cron-Läufe und keine neuen WebSocket-Events mehr
   ScheduledJobs.stopAll();
   void socketService.close();
+
+  const busyJobs = () => {
+    const { SalesInvoiceJob } = require('./jobs/salesInvoiceJob');
+    const { StockPullJob } = require('./jobs/stockPullJob');
+    const { DocumentSyncJob } = require('./jobs/documentSyncJob');
+    return [
+      SalesInvoiceJob.isBusy() && 'salesInvoiceJob',
+      StockPullJob.isBusy() && 'stockPullJob',
+      DocumentSyncJob.isBusy() && 'documentSyncJob'
+    ].filter(Boolean) as string[];
+  };
+
+  const deadline = Date.now() + SHUTDOWN_GRACE_MS;
+  let busy = busyJobs();
+  while (busy.length > 0 && Date.now() < deadline) {
+    logger.info('Warte auf laufende Jobs vor dem Shutdown...', { busy });
+    await new Promise(resolve => setTimeout(resolve, 500));
+    busy = busyJobs();
+  }
+  if (busy.length > 0) {
+    logger.warn('Grace-Timeout erreicht — beende trotz laufender Jobs', { busy });
+  }
+
   cache.destroy();
+  logger.info('Shutdown abgeschlossen');
   process.exit(0);
-});
+}
+
+process.on('SIGTERM', () => { void gracefulShutdown('SIGTERM'); });
+process.on('SIGINT', () => { void gracefulShutdown('SIGINT'); });
 
 /**
  * Unbehandelte Promise-Rejection: geloggt (mit Stacktrace), aber NICHT sofort

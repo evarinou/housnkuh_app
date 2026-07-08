@@ -19,6 +19,11 @@ export class SalesInvoiceJob {
   private static task: cron.ScheduledTask | null = null;
   private static running = false;
 
+  /** Läuft gerade ein Durchlauf? (für Graceful Shutdown, AUDIT OP10) */
+  static isBusy(): boolean {
+    return SalesInvoiceJob.running;
+  }
+
   static schedule = '*/5 * * * *';
 
   /**

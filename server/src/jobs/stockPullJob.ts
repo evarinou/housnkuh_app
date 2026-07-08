@@ -19,6 +19,11 @@ export class StockPullJob {
   // startet kein zweiter parallel (Race beim Bestands-Update)
   private static running = false;
 
+  /** Läuft gerade ein Durchlauf? (für Graceful Shutdown, AUDIT OP10) */
+  static isBusy(): boolean {
+    return StockPullJob.running;
+  }
+
   // Every 5 minutes
   static schedule = '*/5 * * * *';
 

@@ -20,6 +20,11 @@ export class DocumentSyncJob {
   // Überlappungssicher (AUDIT OP9): kein Parallel-Lauf bei hängendem Pull
   private static running = false;
 
+  /** Läuft gerade ein Durchlauf? (für Graceful Shutdown, AUDIT OP10) */
+  static isBusy(): boolean {
+    return DocumentSyncJob.running;
+  }
+
   /**
    * Run the document pull
    */
