@@ -42,6 +42,8 @@ class InMemoryCache {
     this.cleanupInterval = setInterval(() => {
       this.cleanup();
     }, 5 * 60 * 1000);
+    // Timer soll den Prozess (und Jest) nicht am Beenden hindern
+    this.cleanupInterval.unref?.();
   }
 
   /**
@@ -102,6 +104,23 @@ class InMemoryCache {
    */
   clear(): void {
     this.cache.clear();
+  }
+
+  /**
+   * Delete all entries whose key starts with the given prefix
+   * (Namespace-Invalidierung, z. B. 'mietfach:' nach Vertragsänderungen)
+   * @method deleteByPrefix
+   * @returns {number} Anzahl gelöschter Einträge
+   */
+  deleteByPrefix(prefix: string): number {
+    let deleted = 0;
+    for (const key of this.cache.keys()) {
+      if (key.startsWith(prefix)) {
+        this.cache.delete(key);
+        deleted++;
+      }
+    }
+    return deleted;
   }
 
   /**

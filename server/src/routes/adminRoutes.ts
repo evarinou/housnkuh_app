@@ -19,6 +19,7 @@ import * as storeMapAdminController from '../controllers/admin/storeMapAdminCont
 import * as vertragController from '../controllers/vertragController';
 import { getUserById, updateUser, deleteUser } from '../controllers/userController';
 import { adminAuth } from '../middleware/auth';
+import { noCacheHeaders } from '../middleware/cacheMiddleware';
 import ScheduledJobs from '../services/scheduledJobs';
 import AppError from '../utils/AppError';
 
@@ -29,13 +30,6 @@ import AppError from '../utils/AppError';
  */
 const router = Router();
 
-// Add no-cache headers middleware for debugging
-const noCacheHeaders = (_req: Request, res: Response, next: NextFunction) => {
-  res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
-  res.set('Pragma', 'no-cache');
-  res.set('Expires', '0');
-  next();
-};
 
 // Alle Routen mit adminAuth schützen
 router.use(adminAuth);

@@ -5,7 +5,7 @@
  */
 
 import mongoose, { Schema } from 'mongoose';
-import { CacheInvalidator } from '../utils/queryCache';
+import { cache } from '../utils/cache';
 import { IVertrag } from '../types/modelTypes';
 
 /**
@@ -192,7 +192,7 @@ VertragSchema.pre('save', function(next) {
  * @description Triggers cache invalidation for contract-related queries
  */
 VertragSchema.post('save', async function() {
-  await CacheInvalidator.onContractChange();
+  cache.deleteByPrefix('mietfach:'); // Verfügbarkeits-Cache invalidieren (AUDIT S16)
 });
 
 /**
@@ -200,7 +200,7 @@ VertragSchema.post('save', async function() {
  * @description Triggers cache invalidation for contract-related queries
  */
 VertragSchema.post('deleteOne', async function() {
-  await CacheInvalidator.onContractChange();
+  cache.deleteByPrefix('mietfach:'); // Verfügbarkeits-Cache invalidieren (AUDIT S16)
 });
 
 /**
@@ -208,7 +208,7 @@ VertragSchema.post('deleteOne', async function() {
  * @description Triggers cache invalidation for contract-related queries
  */
 VertragSchema.post('findOneAndUpdate', async function() {
-  await CacheInvalidator.onContractChange();
+  cache.deleteByPrefix('mietfach:'); // Verfügbarkeits-Cache invalidieren (AUDIT S16)
 });
 
 /**
@@ -216,7 +216,7 @@ VertragSchema.post('findOneAndUpdate', async function() {
  * @description Triggers cache invalidation for contract-related queries
  */
 VertragSchema.post('findOneAndDelete', async function() {
-  await CacheInvalidator.onContractChange();
+  cache.deleteByPrefix('mietfach:'); // Verfügbarkeits-Cache invalidieren (AUDIT S16)
 });
 
 /**

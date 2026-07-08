@@ -6,7 +6,7 @@
 
 import mongoose, { Schema } from 'mongoose';
 import { IMietfach, MietfachTyp } from '../types/modelTypes';
-import { queryCache } from '../utils/queryCache';
+import { cache } from '../utils/cache';
 import logger from '../utils/logger';
 
 /**
@@ -197,14 +197,11 @@ MietfachSchema.methods.isAvailableForPeriod = async function(startDate: Date, en
  * @complexity O(n log n) - Optimized with indexes and caching
  */
 MietfachSchema.statics.findAvailableForPeriod = async function(startDate: Date, endDate?: Date) {
-  // Create cache key
-  const cacheKey = {
-    startDate: startDate.toISOString(),
-    endDate: endDate?.toISOString() || null
-  };
-  
+  // Create cache key (zentraler Cache statt separatem queryCache, AUDIT S16)
+  const cacheKey = `mietfach:availability:${startDate.toISOString()}:${endDate?.toISOString() || 'open'}`;
+
   // Try cache first
-  const cached = await queryCache.get('mietfach:availability', cacheKey);
+  const cached = cache.get(cacheKey);
   if (cached) {
     return cached;
   }
@@ -240,7 +237,7 @@ MietfachSchema.statics.findAvailableForPeriod = async function(startDate: Date, 
   });
   
   // Cache result for 5 minutes
-  await queryCache.set('mietfach:availability', cacheKey, result, 300);
+  cache.set(cacheKey, result, 300);
   
   return result;
 };

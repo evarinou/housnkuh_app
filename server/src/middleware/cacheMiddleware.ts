@@ -109,3 +109,14 @@ export const cacheInvalidationMiddleware = (patterns: string[]) => {
 };
 
 export default cacheMiddleware;
+
+/**
+ * Antwort-Header gegen Browser-/Proxy-Caching (für Admin-Live-Daten).
+ * Ausgelagert aus adminRoutes (AUDIT S16).
+ */
+export const noCacheHeaders = (_req: Request, res: Response, next: NextFunction): void => {
+  res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
+  next();
+};
