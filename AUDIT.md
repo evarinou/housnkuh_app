@@ -69,7 +69,7 @@
   (18 KB) und Hook `usePriceCalculation` + Server-Pendant
   `server/src/services/priceCalculationService.ts`. → Abgrenzung
   dokumentieren oder konsolidieren (client rechnet Anzeige, Server verbindlich?).
-- [ ] **S16 (W)** Drei Cache-Systeme im Server (`utils/cache.ts`,
+- [x] **S16 (W)** ✅ (2026-07-08: queryCache gelöscht, Nutzer auf zentralen cache mit deleteByPrefix-Invalidierung; noCacheHeaders ausgelagert; Timer unref → Jest ohne --forceExit) Drei Cache-Systeme im Server (`utils/cache.ts`,
   `utils/queryCache.ts`, `middleware/cacheMiddleware.ts`) ohne gemeinsame
   Invalidierung; in adminRoutes ist der cacheMiddleware-Import auskommentiert
   und stattdessen `noCacheHeaders` inline definiert und ~20× angewendet.
