@@ -16,7 +16,7 @@
 
 import { Router } from 'express';
 import { vendorContractController } from '../controllers/vendorContractController';
-import { calculatePriceWithZusatzleistungen, createVertragWithZusatzleistungen, updateZusatzleistungen } from '../controllers/vertragController';
+import { calculatePriceWithZusatzleistungen, updateZusatzleistungen } from '../controllers/vertragController';
 import { vendorAuth } from '../middleware/auth';
 import rateLimit from 'express-rate-limit';
 
@@ -47,7 +47,6 @@ router.get('/:contractId', vendorContractController.getContractDetails);
 
 // Zusatzleistungen endpoints
 router.post('/calculate-price', calculatePriceWithZusatzleistungen);
-router.post('/create', createVertragWithZusatzleistungen);
 router.put('/:id/zusatzleistungen', updateZusatzleistungen);
 
 export default router;
