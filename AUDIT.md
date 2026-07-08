@@ -89,7 +89,7 @@
 - [x] **S19 (W)** ✅ (bereits in T0.4 gelöscht) `client/src/utils/invoiceApi.js` — Debug-Werkzeug, das sich
   auf `/admin/invoice-dashboard` automatisch ausführt (fetch-Tests +
   console.logs in Produktion). → entfernen oder hinter Debug-Flag.
-- [ ] **S20 (W)** console.log/error in 62 Client-Dateien (Hotspot:
+- [x] **S20 (W)** ✅ (2026-07-08: 41 Debug-logs entfernt, 3 begründete warn, no-console-Lint-Regel) console.log/error in 62 Client-Dateien (Hotspot:
   MietfachAssignmentModal „CRITICAL DEBUG"). → Lint-Regel `no-console`
   (warn) + Aufräum-Pass.
 - [x] **S21 (k)** ✅ (2026-07-08: entfernt) Auskommentierte Routen/Importe in `adminRoutes.ts`
@@ -199,6 +199,12 @@ Einige Agent-Einstufungen wurden nach Prüfung angepasst (Begründung dabei).
   Prod existieren, deren totalAmount einmalig neu berechnen (hier keine bekannt).
 
 ### Beim Test-Drift-Cleanup T5.5 gefunden (2026-07-07, verifiziert, NICHT gefixt)
+
+- [x] **BUG-EMAILQ-PDF (W)** ✅ gefixt 2026-07-08 (bei KON4 entdeckt):
+  `emailQueue.processInvoiceNotification` rief den nicht-existenten Export
+  `generateInvoicePDF` auf → Rechnungs-Mails ohne mitgeliefertes PDF
+  scheiterten immer mit TypeError. Jetzt
+  `invoicePdfService.generatePdfBuffer(invoiceId)`.
 
 - [x] **BUG-INV-TAX-REST (K)** ✅ behoben 2026-07-07: `generateInvoice()` setzt
   `tax` jetzt als gerundeten absoluten Betrag (`subtotal*0.19`) und
@@ -338,7 +344,7 @@ Agent-Schätzung.
   (VendorLogin/Reset/Settings/ForgotPassword) statt `:4000`; insgesamt in ~82
   Dateien inline statt zentral. Deckt sich mit S14. → eine `config/api.ts`
   bzw. `apiUtils.getApiUrl()` konsequent nutzen.
-- [ ] **KON4 (W)** 53× inline `require(...)` in `.ts` (statt `import`),
+- [x] **KON4 (W)** ✅ (2026-07-08: 52 Stellen migriert nach madge-Analyse, Zyklen unverändert; 2 dokumentierte Zyklus-Brecher bleiben) 53× inline `require(...)` in `.ts` (statt `import`),
   meist in if-Zweigen/Funktionen — Verdacht: Umgehung zirkulärer Importe. →
   Ursache (Zyklen) beheben und auf `import` umstellen; nicht blind ersetzen.
 - [x] **KON5 (W)** ✅ (mit T5.1/KON1 erledigt) Services ohne eigenes try/catch
