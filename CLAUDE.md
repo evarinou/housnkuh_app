@@ -26,6 +26,10 @@ housnkuh – Regionaler Marktplatz für Direktvermarkter
 2. **Co-located Tests**: `.test.tsx` neben Komponenten, `.test.ts` neben Modulen; `__tests__/` nur für Integration/Performance
 3. **Conventional Commits**: `feat|fix|docs|style|refactor|test|chore(scope): message` (commit-msg-Hook erzwingt das)
 4. **Datei-Header** `@file`/`@purpose` für neue Dateien empfohlen
+5. **Namenskonvention (AUDIT KON6)**: Domänenbegriffe deutsch (Vertrag,
+   Mietfach, Zusatzleistung, Provision), Technisches englisch. Gewachsene
+   Mischformen (`zusatzleistungenCosts`, `monatlicheKosten`) NICHT umbenennen —
+   nur neuer Code folgt der Regel.
 
 ## Befehle
 
@@ -62,6 +66,10 @@ Betrieb: Server läuft als kompiliertes `node dist/index.js` → nach Fixes
   (personenbezogene Daten; .gitignore deckt das ab).
 - **flour.io-API-Eigenheiten nicht "korrigieren"**: `_id` statt `id`,
   Bilder als Objekte, Fehlerdetails in `error.response` – das ist deren Vertrag.
+- **Keine tsconfig-Pfad-Aliase** (`@utils/…`) einführen (AUDIT KON7, bewusst):
+  `tsc` schreibt Aliase nicht um — der dist-Betrieb bräuchte eine
+  Laufzeit-Auflösung (tsconfig-paths), CRA unterstützt paths nicht.
+  Relative Imports sind der Preis für den einfachen `node dist/index.js`-Betrieb.
 - Bekannte Inkonsistenzen (siehe ARCHITECTURE.md) nur im Rahmen des
   Audit-Plans beheben, nicht nebenbei.
 

@@ -157,5 +157,6 @@ async function auditLog(entry: {
   // 3. Update monitoring metrics
 }
 
-export { bookingEvents, BookingEvent };
+export { bookingEvents };
+export type { BookingEvent };
 export default bookingEvents;
