@@ -494,8 +494,8 @@ export const loginVendor = async (req: Request, res: Response, next: NextFunctio
       return;
     }
     
-    // Passwort prüfen
-    const isMatch = await bcrypt.compare(password, user.password!);
+    // Passwort prüfen (Konto ohne gesetztes Passwort kann sich nicht anmelden)
+    const isMatch = user.password ? await bcrypt.compare(password, user.password) : false;
     if (!isMatch) {
       res.status(401).json({ 
         success: false, 
@@ -752,7 +752,7 @@ export const changeVendorPassword = async (req: Request, res: Response, next: Ne
       return;
     }
 
-    const isMatch = await bcrypt.compare(currentPassword, user.password!);
+    const isMatch = user.password ? await bcrypt.compare(currentPassword, user.password) : false;
     if (!isMatch) {
       res.status(401).json({
         success: false,

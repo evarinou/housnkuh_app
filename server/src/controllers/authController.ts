@@ -56,8 +56,8 @@ export const login = async (req: Request, res: Response, next: NextFunction): Pr
       return;
     }
     
-    // Überprüfe Passwort
-    const isMatch = await bcrypt.compare(password, user.password!);
+    // Überprüfe Passwort (Konto ohne gesetztes Passwort kann sich nicht anmelden)
+    const isMatch = user.password ? await bcrypt.compare(password, user.password) : false;
     
     if (!isMatch) {
       securityLogger.logLoginAttempt(req, username, false, { 

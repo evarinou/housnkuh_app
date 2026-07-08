@@ -129,8 +129,9 @@ const templateCache = new Map<string, Handlebars.TemplateDelegate>();
  * @security Validates template existence, prevents directory traversal
  */
 const loadTemplate = async (templateName: string): Promise<Handlebars.TemplateDelegate> => {
-  if (templateCache.has(templateName)) {
-    return templateCache.get(templateName)!;
+  const cachedTemplate = templateCache.get(templateName);
+  if (cachedTemplate) {
+    return cachedTemplate;
   }
 
   const templatePath = path.join(__dirname, '..', '..', 'templates', `${templateName}.html`);

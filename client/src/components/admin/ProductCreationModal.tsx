@@ -198,7 +198,7 @@ const ProductCreationModal: React.FC<ProductCreationModalProps> = ({
       };
 
       const response = isEdit
-        ? await axios.put(`${baseUrl}/products/${editProduct!._id}`, payload, { headers })
+        ? await axios.put(`${baseUrl}/products/${editProduct?._id}`, payload, { headers })
         : await axios.post(`${baseUrl}/products`, payload, { headers });
 
       if (response.data.success) {

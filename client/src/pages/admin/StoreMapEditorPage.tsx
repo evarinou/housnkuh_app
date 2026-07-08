@@ -98,10 +98,10 @@ const StoreMapEditorPage: React.FC = () => {
     setSaving(true);
     setMessage(null);
     const positions = Array.from(dirtyIds).map((id) => {
-      const item = items.find((i) => i.id === id)!;
+      const item = items.find((i) => i.id === id);
       return {
         mietfachId: id,
-        position: removedIds.has(id) ? null : item.position
+        position: removedIds.has(id) ? null : (item?.position ?? null)
       };
     });
 

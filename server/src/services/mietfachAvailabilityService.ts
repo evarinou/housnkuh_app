@@ -79,7 +79,7 @@ export class MietfachAvailabilityService {
         result.nextAvailable = await this.calculateNextAvailableDate(
           mietfachId,
           requestedRange.end,
-          opts.maxSearchDate!
+          opts.maxSearchDate
         );
       }
 

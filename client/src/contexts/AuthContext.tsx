@@ -147,8 +147,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = React.memo(({ children 
       const apiUrl = apiUtils.getApiUrl();
 
       // Set authentication headers (both formats for compatibility)
-      axiosHeaders.setAuthHeader(storedToken!);
-      axiosHeaders.setLegacyAuthHeader(storedToken!);
+      axiosHeaders.setAuthHeader(storedToken);
+      axiosHeaders.setLegacyAuthHeader(storedToken);
 
       // Verify authentication status with server
       const response = await axios.get(`${apiUrl}/auth/check`);

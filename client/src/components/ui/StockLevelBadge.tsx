@@ -42,7 +42,13 @@ const StockLevelBadge: React.FC<StockLevelBadgeProps> = ({ totalAmount, lastPull
   return (
     <span
       className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded-full ${colorClasses}`}
-      title={isStale ? 'Daten möglicherweise veraltet' : `Letztes Update: ${new Date(lastPulledAt!).toLocaleString('de-DE')}`}
+      title={
+        isStale
+          ? 'Daten möglicherweise veraltet'
+          : lastPulledAt
+            ? `Letztes Update: ${new Date(lastPulledAt).toLocaleString('de-DE')}`
+            : 'Noch kein Bestands-Update aus flour.io'
+      }
     >
       <Package className="w-3 h-3 mr-1" />
       {label}

@@ -239,21 +239,17 @@ const DirektvermarkterDetailPage: React.FC = () => {
            direktvermarkter.adresse.koordinaten.lng !== 0;
   };
 
-  // Prüfen ob irgendwelche Koordinaten verfügbar sind (DB oder geocoded)
-  const hasAnyCoordinates = () => {
-    return hasValidCoordinates() || geocodedCoordinates !== null;
-  };
-
   // Koordinaten für die Karte ermitteln (DB oder geocoded)
   const getMapCoordinates = () => {
-    if (hasValidCoordinates()) {
-      return direktvermarkter!.adresse.koordinaten!;
+    const koordinaten = direktvermarkter?.adresse?.koordinaten;
+    if (hasValidCoordinates() && koordinaten) {
+      return koordinaten;
     }
-    
+
     if (geocodedCoordinates) {
       return geocodedCoordinates;
     }
-    
+
     return null;
   };
 
@@ -271,7 +267,11 @@ const DirektvermarkterDetailPage: React.FC = () => {
       description: fullAddress
     };
   };
-  
+
+  // Einmal pro Render ermitteln – beide sind gemeinsam null oder gesetzt
+  const mapCoordinates = getMapCoordinates();
+  const mapMarker = getMapMarker();
+
   return (
     <div className="container mx-auto py-12 px-4">
       {/* Zurück-Button */}
@@ -575,12 +575,12 @@ const DirektvermarkterDetailPage: React.FC = () => {
               <div className="mt-8">
                 <h3 className="text-xl font-semibold text-gray-900 mb-4">Standort</h3>
                 
-                {hasAnyCoordinates() ? (
+                {mapCoordinates && mapMarker ? (
                   <div className="h-80 rounded-lg overflow-hidden shadow-lg">
                     <SimpleMapComponent
-                      center={getMapCoordinates()!}
+                      center={mapCoordinates}
                       zoom={15}
-                      markers={[getMapMarker()!]}
+                      markers={[mapMarker]}
                       showPopups={true}
                       className="h-full w-full"
                     />

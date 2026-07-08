@@ -438,10 +438,12 @@ class TrialManagementService {
         filteredLog = filteredLog.filter(entry => entry.performedBy === filters.performedBy);
       }
       if (filters.startDate) {
-        filteredLog = filteredLog.filter(entry => entry.timestamp >= filters.startDate!);
+        const startDate = filters.startDate;
+        filteredLog = filteredLog.filter(entry => entry.timestamp >= startDate);
       }
       if (filters.endDate) {
-        filteredLog = filteredLog.filter(entry => entry.timestamp <= filters.endDate!);
+        const endDate = filters.endDate;
+        filteredLog = filteredLog.filter(entry => entry.timestamp <= endDate);
       }
     }
 

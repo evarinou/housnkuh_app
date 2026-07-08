@@ -261,8 +261,8 @@ const DirektvermarkterMapPage: React.FC = () => {
     );
     
     if (vendorsWithCoords.length > 0) {
-      const avgLat = vendorsWithCoords.reduce((sum, v) => sum + v.koordinaten!.lat, 0) / vendorsWithCoords.length;
-      const avgLng = vendorsWithCoords.reduce((sum, v) => sum + v.koordinaten!.lng, 0) / vendorsWithCoords.length;
+      const avgLat = vendorsWithCoords.reduce((sum, v) => sum + v.koordinaten.lat, 0) / vendorsWithCoords.length;
+      const avgLng = vendorsWithCoords.reduce((sum, v) => sum + v.koordinaten.lng, 0) / vendorsWithCoords.length;
       return { lat: avgLat, lng: avgLng };
     }
     
@@ -298,7 +298,7 @@ const DirektvermarkterMapPage: React.FC = () => {
       .filter(vendor => vendor.koordinaten && vendor.koordinaten.lat !== 0 && vendor.koordinaten.lng !== 0)
       .map(vendor => ({
         id: vendor.id,
-        position: vendor.koordinaten!,
+        position: vendor.koordinaten,
         title: vendor.unternehmen,
         description: `${vendor.adresse.ort} • ${vendor.kategorien.slice(0, 2).join(', ')}${vendor.kategorien.length > 2 ? '...' : ''}`
       }));

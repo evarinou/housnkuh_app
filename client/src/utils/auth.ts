@@ -137,9 +137,9 @@ export const authValidation = {
   /**
    * Check if token exists and has valid format
    * @param {string | null} token - Token to validate
-   * @returns {boolean} True if token is valid string with content
+   * @returns {boolean} True if token is valid string with content (type predicate narrows to string)
    */
-  isValidToken: (token: string | null): boolean => {
+  isValidToken: (token: string | null): token is string => {
     return token !== null && token.length > 0 && typeof token === 'string';
   },
 

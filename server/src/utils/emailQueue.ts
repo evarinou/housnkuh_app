@@ -456,7 +456,7 @@ class EmailQueueService {
       await sendInvoiceNotification({
         invoice: invoice.toObject(),
         vendor: vendor.toObject(),
-        pdfBuffer: pdfBuffer!,
+        pdfBuffer,
         companyInfo
       });
       

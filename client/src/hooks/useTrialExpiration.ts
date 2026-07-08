@@ -67,9 +67,11 @@ export const useTrialExpiration = () => {
       return;
     }
 
+    const trialEndDate = user.trialEndDate;
+
     const calculateTrialState = () => {
       const now = new Date();
-      const endDate = new Date(user.trialEndDate!);
+      const endDate = new Date(trialEndDate);
       const timeDiff = endDate.getTime() - now.getTime();
       const daysRemaining = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
 

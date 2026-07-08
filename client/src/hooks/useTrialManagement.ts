@@ -102,6 +102,9 @@ export const useTrialManagement = (): UseTrialManagementReturn => {
       return false;
     }
 
+    // Geprüfter Token als Konstante für die Closures unten (Narrowing bleibt erhalten)
+    const authToken = token;
+
     // Create cache key for auth check
     const cacheKey = `auth-check-${token}`;
     const requestCache = requestCacheRef.current;
@@ -127,10 +130,11 @@ export const useTrialManagement = (): UseTrialManagementReturn => {
     }
     
     // Check if request is already in progress
-    if (requestCache.has(cacheKey)) {
+    const pendingAuthCheck = requestCache.get(cacheKey);
+    if (pendingAuthCheck) {
       try {
         // Return existing promise
-        return await requestCache.get(cacheKey)!;
+        return await pendingAuthCheck;
       } catch (error) {
         console.error('Cached auth check failed:', error);
       }
@@ -148,7 +152,7 @@ export const useTrialManagement = (): UseTrialManagementReturn => {
         const apiUrl = apiUtils.getApiUrl();
 
         // Bearer Token-Header setzen
-        axiosHeaders.setAuthHeader(token!);
+        axiosHeaders.setAuthHeader(authToken);
 
         // Auth-Status überprüfen
         const response = await axios.get(`${apiUrl}/vendor-auth/check`);
@@ -160,8 +164,8 @@ export const useTrialManagement = (): UseTrialManagementReturn => {
             
             // Aktuelles Profil vom Server laden um aktuelle Daten zu haben
             try {
-              const profileResponse = await axios.get(`${apiUrl}/vendor-auth/profile/${userData.id}`, 
-                apiUtils.createAuthConfig(token!)
+              const profileResponse = await axios.get(`${apiUrl}/vendor-auth/profile/${userData.id}`,
+                apiUtils.createAuthConfig(authToken)
               );
               
               if (profileResponse.data && profileResponse.data.success) {
@@ -251,6 +255,9 @@ export const useTrialManagement = (): UseTrialManagementReturn => {
       };
     }
 
+    // Geprüfter Token als Konstante für die Closures unten (Narrowing bleibt erhalten)
+    const authToken = token;
+
     // Create cache key based on token
     const cacheKey = `trial-status-${token}`;
     const requestCache = requestCacheRef.current;
@@ -276,10 +283,11 @@ export const useTrialManagement = (): UseTrialManagementReturn => {
     }
     
     // Check if request is already in progress
-    if (requestCache.has(cacheKey)) {
+    const pendingStatusRequest = requestCache.get(cacheKey);
+    if (pendingStatusRequest) {
       try {
         // Return existing promise
-        return await requestCache.get(cacheKey)!;
+        return await pendingStatusRequest;
       } catch (error) {
         // If cached request failed, it will be removed and we can retry
         // This catch is here for safety but the finally block should handle cleanup
@@ -295,8 +303,8 @@ export const useTrialManagement = (): UseTrialManagementReturn => {
       try {
         const apiUrl = apiUtils.getApiUrl();
 
-        const response = await axios.get(`${apiUrl}/vendor-auth/trial-status`, 
-          apiUtils.createAuthConfig(token!)
+        const response = await axios.get(`${apiUrl}/vendor-auth/trial-status`,
+          apiUtils.createAuthConfig(authToken)
         );
 
         const result = {
@@ -360,6 +368,9 @@ export const useTrialManagement = (): UseTrialManagementReturn => {
       };
     }
 
+    // Geprüfter Token als Konstante für die Closures unten (Narrowing bleibt erhalten)
+    const authToken = token;
+
     // Create cache key based on token and bookingId
     const cacheKey = `cancel-booking-${token}-${bookingId}`;
     const requestCache = requestCacheRef.current;
@@ -385,10 +396,11 @@ export const useTrialManagement = (): UseTrialManagementReturn => {
     }
     
     // Check if request is already in progress
-    if (requestCache.has(cacheKey)) {
+    const pendingCancelRequest = requestCache.get(cacheKey);
+    if (pendingCancelRequest) {
       try {
         // Return existing promise
-        return await requestCache.get(cacheKey)!;
+        return await pendingCancelRequest;
       } catch (error) {
         console.error('Cached cancel request failed:', error);
       }
@@ -405,7 +417,7 @@ export const useTrialManagement = (): UseTrialManagementReturn => {
         const response = await axios.post(
           `${apiUrl}/vendor-auth/cancel-trial-booking/${bookingId}`,
           { reason },
-          apiUtils.createAuthConfig(token!)
+          apiUtils.createAuthConfig(authToken)
         );
 
         const result = {

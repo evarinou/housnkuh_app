@@ -57,8 +57,7 @@ const StoreMapEditor: React.FC<StoreMapEditorProps> = ({
 
   /** Pointer-Event → SVG-Koordinaten (Meter) */
   const svgPoint = (event: React.PointerEvent): { x: number; y: number } => {
-    const svg = svgRef.current!;
-    const ctm = svg.getScreenCTM();
+    const ctm = svgRef.current?.getScreenCTM();
     if (!ctm) return { x: 0, y: 0 };
     const point = new DOMPoint(event.clientX, event.clientY).matrixTransform(ctm.inverse());
     return { x: point.x, y: point.y };

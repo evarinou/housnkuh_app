@@ -968,10 +968,12 @@ class InvoiceGenerationService {
     const errorsByType = new Map<string, BatchFailure[]>();
     errors.forEach(error => {
       const errorType = this.categorizeError(error.error);
-      if (!errorsByType.has(errorType)) {
-        errorsByType.set(errorType, []);
+      const errorsOfType = errorsByType.get(errorType);
+      if (errorsOfType) {
+        errorsOfType.push(error);
+      } else {
+        errorsByType.set(errorType, [error]);
       }
-      errorsByType.get(errorType)!.push(error);
     });
 
     // Check circuit breaker conditions

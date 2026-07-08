@@ -74,7 +74,12 @@ class MigrationRunner {
   async runMigrations() {
     try {
       await this.connect();
-      
+
+      const db = mongoose.connection.db;
+      if (!db) {
+        throw new Error('Database connection not established');
+      }
+
       const migrations = await this.getMigrations();
       const appliedVersions = await this.getAppliedMigrations();
       
@@ -94,7 +99,7 @@ class MigrationRunner {
           await migration.up();
           
           // Record successful migration
-          await mongoose.connection.db!.collection('migrations').insertOne({
+          await db.collection('migrations').insertOne({
             version: migration.version,
             name: migration.name,
             appliedAt: new Date()
@@ -118,7 +123,12 @@ class MigrationRunner {
   async rollback(version?: number) {
     try {
       await this.connect();
-      
+
+      const db = mongoose.connection.db;
+      if (!db) {
+        throw new Error('Database connection not established');
+      }
+
       const migrations = await this.getMigrations();
       const appliedVersions = await this.getAppliedMigrations();
       
@@ -147,7 +157,7 @@ class MigrationRunner {
         await migration.down();
         
         // Remove migration record
-        await mongoose.connection.db!.collection('migrations').deleteOne({
+        await db.collection('migrations').deleteOne({
           version: migration.version
         });
         
