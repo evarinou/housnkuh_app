@@ -213,7 +213,7 @@ Einige Agent-Einstufungen wurden nach Prüfung angepasst (Begründung dabei).
   erzeugte Verträge mit monatspreis=0 (Phantom-Feld `mietfach.preis`) und
   prüfte gegen ein nicht existierendes 15%-Provisionsmodell; jeder Vendor
   hätte sich einen 0-€-Vertrag anlegen können. Entfernt.
-- [ ] **KON-MIETFACH-PREIS (k)** `mietfach.preis` existiert nicht im Schema,
+- [x] **KON-MIETFACH-PREIS (k)** ✅ (2026-07-08: tote Fallbacks+Selects bereinigt — Preis lebt bewusst am Vertrag) `mietfach.preis` existiert nicht im Schema,
   wird aber noch als toter Fallback in `createVertragFromPendingBooking`
   (vertragController:~372/390, packageOption.price greift real) und in
   mehreren populate-Selects referenziert; Client-Anzeigen lesen `preis`
@@ -303,7 +303,7 @@ selbst verifiziert; Agent-Einschätzungen wo nötig korrigiert.
   `AlertingService.alertEmailDeliveryFailure` (Admin-Empfänger, 15-min-Cooldown,
   E-Mail/Webhook/DB-Alert). Alt: war nur ein TODO — nach 3 Fehlversuchen
   (z. B. Rechnungs-Mail) wurde niemand informiert → stiller Verlust.
-- [ ] **OP8 (W)** `emailQueue.ts` — Fällt Redis aus, geht die Queue in einen
+- [x] **OP8 (W)** ✅ (2026-07-08, Evas Entscheidung: Direktversand statt Queue — emailQueue/bull entfernt, sendInvoiceNotificationDirect mit Status-Tracking+Sofort-Alert, Monitoring-Stub mit SMTP-Health) `emailQueue.ts` — Fällt Redis aus, geht die Queue in einen
   In-Memory-Fallback: E-Mails im RAM, bei Neustart verloren. → Redis als
   erforderlich behandeln oder persistente Fallback-Queue.
 - [x] **OP9 (W)** ✅ (2026-07-08: running-Lock in stockPullJob+documentSyncJob wie salesInvoiceJob, 4 Tests; Call-Timeout weiterhin offen → OP14/Robustheit) stockPullJob/documentSyncJob ohne Ausführungs-Lock: `isRunning()`
@@ -350,10 +350,7 @@ Agent-Schätzung.
 - [x] **KON1 (W)** ✅ (T5.1, 2026-07-07) 183 catch-500er auf
   `next(new AppError(message, 500, cause))` migriert; errorHandler sendet
   einheitliches Shape `{success:false, message}` und loggt zentral.
-  Rest (~22 Stellen, dokumentiert im T5.1-Commit): Handler mit
-  client-sichtbarem `error`-Zusatzfeld (flourio-/produkt-Controller —
-  Follow-up: darf das Detail-Leak entfallen?), Monitoring-Formate,
-  500er außerhalb von catch. Alt: 214× direktes `res.status(500)`,
+  Rest-Follow-up erledigt 2026-07-08: die 22 Handler mit error-Detail-Feld sind migriert (Evas Freigabe) — verbleibend nur Monitoring-Formate und Nicht-catch-500er (gewollt). Alt: 214× direktes `res.status(500)`,
   Shapes gemischt.
 - [x] **KON2 (W)** ✅ Hotspots (T5.3): req/res-any in Handlern + catch-any→unknown typisiert (Warnings 61→20 auf den Dateien). Flächendeckendes any-Cleanup bewusst nicht Scope. Alt: `any` weit verbreitet: ~464× Server, ~172× Client. Hotspots
   mit `req: any`/`res: any` (flourioController, vendorProductController,
