@@ -259,17 +259,10 @@ export const resendInvoiceEmail = async (req: Request, res: Response, next: Next
       lastEmailAttempt: new Date(),
     });
 
-    // Queue email for sending
-    const { emailQueue } = await import('../../utils/emailQueue');
-    await emailQueue.addInvoiceNotificationEmail({
-      userId: (invoice.vendor._id as any).toString(),
-      invoiceId: (invoice._id as any).toString(),
-      email: (invoice.vendor as any).email,
-      vendorId: (invoice.vendor._id as any).toString(),
-      invoiceNumber: invoice.invoiceNumber,
-      totalAmount: invoice.totalAmount,
-      dueDate: invoice.dueDate,
-    });
+    // Direktversand (ersetzt die frühere Bull/Redis-E-Mail-Queue, AUDIT OP8);
+    // setzt emailStatus 'sent'/'failed' und alarmiert den Admin bei Fehlern
+    const { sendInvoiceNotificationDirect } = await import('../../utils/emailService');
+    await sendInvoiceNotificationDirect((invoice._id as any).toString());
 
     // Log resend for audit trail
     const auditEntry = {
@@ -284,7 +277,7 @@ export const resendInvoiceEmail = async (req: Request, res: Response, next: Next
 
     res.json({
       success: true,
-      message: 'Email erfolgreich zur Warteschlange hinzugefügt',
+      message: 'E-Mail erfolgreich versendet',
     });
   } catch (error) {
     next(new AppError('Interner Serverfehler beim Erneuten Senden der Invoice-Email', 500, error));

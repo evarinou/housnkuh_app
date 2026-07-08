@@ -13,45 +13,27 @@ import HealthCheckService from '../../services/healthCheckService';
 import AlertingService from '../../services/alertingService';
 import { performanceMonitor } from '../../utils/performanceMonitor';
 import logger from '../../utils/logger';
-import emailQueue from '../../utils/emailQueue';
 
 // =====================================================
-// Domain 6: Email Queue
+// Domain 6: Email-Versand (früher Bull/Redis-Queue)
 // =====================================================
+// Die Bull/Redis-E-Mail-Queue wurde durch Direktversand ersetzt (AUDIT OP8).
+// Die Endpoints bleiben als ehrliche Stubs bestehen (Response-Shape erhalten),
+// damit bestehende Aufrufer nicht brechen.
 
-// Email Queue Monitoring für Admin
+// Email-Versand-Status für Admin (Stub: Direktversand, keine Queue mehr)
 export const getEmailQueueStats = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    // Get queue statistics
-    const stats = await emailQueue.getStats();
-    const recentJobs = await emailQueue.getRecentJobs(20);
-    const isHealthy = await emailQueue.isHealthy();
-
-    // Format recent jobs for frontend
-    const formattedJobs = recentJobs.map((job: any) => ({
-      id: job.id,
-      name: job.name,
-      data: {
-        email: job.data.email,
-        userId: job.data.userId,
-        type: job.data.type
-      },
-      opts: job.opts,
-      progress: job.progress(),
-      delay: job.delay,
-      timestamp: job.timestamp,
-      processedOn: job.processedOn,
-      finishedOn: job.finishedOn,
-      failedReason: job.failedReason,
-      attemptsMade: job.attemptsMade
-    }));
+    const { testEmailConnection } = await import('../../utils/emailService');
+    const isHealthy = await testEmailConnection();
 
     res.json({
       success: true,
       emailQueue: {
-        stats,
+        mode: 'direct',
+        stats: { waiting: 0, active: 0, completed: 0, failed: 0, delayed: 0 },
         isHealthy,
-        recentJobs: formattedJobs
+        recentJobs: []
       }
     });
   } catch (err) {
@@ -59,15 +41,13 @@ export const getEmailQueueStats = async (req: Request, res: Response, next: Next
   }
 };
 
-// Email Queue Jobs retry für Admin
+// Retry-Endpoint (Stub: beim Direktversand gibt es keine Warteschlange)
 export const retryFailedEmailJobs = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const retriedCount = await emailQueue.retryFailedJobs();
-
     res.json({
       success: true,
-      message: `${retriedCount} fehlgeschlagene E-Mail-Jobs wurden erneut versucht`,
-      retriedCount
+      message: 'E-Mails werden direkt versendet – keine Warteschlange, keine Jobs zum Wiederholen',
+      retriedCount: 0
     });
   } catch (err) {
     next(new AppError('Serverfehler beim Retry der E-Mail-Jobs', 500, err));

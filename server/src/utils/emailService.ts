@@ -62,7 +62,7 @@ export type {
   LagerserviceActivationData
 } from './email/bookingEmails';
 
-export { sendInvoiceNotification } from './email/invoiceEmails';
+export { sendInvoiceNotification, sendInvoiceNotificationDirect } from './email/invoiceEmails';
 
 export { sendMonitoringAlert } from './email/monitoringEmails';
 export type { MonitoringAlertData } from './email/monitoringEmails';
