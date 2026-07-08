@@ -17,6 +17,7 @@ import StockPullJob from '../jobs/stockPullJob';
 import DocumentSyncJob from '../jobs/documentSyncJob';
 import SalesInvoiceJob from '../jobs/salesInvoiceJob';
 import BackupJob from '../jobs/backupJob';
+import FlourioSyncRetryJob from '../jobs/flourioSyncRetryJob';
 import { performanceMonitor } from '../utils/performanceMonitor';
 import Settings from '../models/Settings';
 import logger from '../utils/logger';
@@ -73,6 +74,9 @@ export class ScheduledJobs {
 
     // Job 10: MongoDB backups (default daily 02:00)
     this.scheduleBackups();
+
+    // Job 11: Flourio sync retry (AUDIT OP6 + T4.2) — hourly at :15
+    this.scheduleFlourioSyncRetry();
 
     // Run Vertrag activation once at startup
     try {
@@ -342,6 +346,14 @@ export class ScheduledJobs {
   }
 
   /**
+   * @description Schedule Flourio sync retry (AUDIT OP6 + T4.2) - hourly at :15
+   */
+  private static scheduleFlourioSyncRetry(): void {
+    FlourioSyncRetryJob.init();
+    logger.info('📅 Flourio sync retry job scheduled (hourly at :15)');
+  }
+
+  /**
    * @description Manually trigger a MongoDB backup (for admin use)
    */
   static async triggerBackup(): Promise<any> {
@@ -444,6 +456,9 @@ export class ScheduledJobs {
 
     // Stop the backup job
     BackupJob.stop();
+
+    // Stop the Flourio sync retry job
+    FlourioSyncRetryJob.stop();
 
     // Stop the invoice generation job separately
     InvoiceGenerationJob.stop();

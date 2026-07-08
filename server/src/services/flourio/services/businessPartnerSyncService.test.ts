@@ -270,4 +270,58 @@ describe('BusinessPartnerSyncService', () => {
       expect(result.errors[0].error).toContain('Persistent error');
     });
   });
+
+  describe('Retry-Zähler (AUDIT OP6)', () => {
+    it('inkrementiert Zähler und setzt lastAttempt bei Fehler', async () => {
+      const vendor = createMockVendor({
+        flourioSyncStatus: 'error',
+        flourioSyncRetryCount: 2
+      });
+
+      mockFind.mockResolvedValue([vendor]);
+      mockBusinessPartnerService.syncVendor = jest
+        .fn()
+        .mockRejectedValue(new Error('API Error'));
+
+      await service.retryFailedSyncs();
+
+      expect(vendor.flourioSyncRetryCount).toBe(3);
+      expect(vendor.flourioSyncLastAttempt).toBeInstanceOf(Date);
+      expect(mockSave).toHaveBeenCalled();
+    });
+
+    it('setzt Zähler und lastAttempt bei Erfolg zurück', async () => {
+      const vendor = createMockVendor({
+        flourioSyncStatus: 'error',
+        flourioSyncRetryCount: 5,
+        flourioSyncLastAttempt: new Date('2026-07-01T10:00:00Z')
+      });
+
+      mockFind.mockResolvedValue([vendor]);
+      mockBusinessPartnerService.syncVendor = jest.fn().mockResolvedValue({});
+
+      const result = await service.retryFailedSyncs();
+
+      expect(result.synced).toBe(1);
+      expect(vendor.flourioSyncRetryCount).toBeUndefined();
+      expect(vendor.flourioSyncLastAttempt).toBeUndefined();
+      expect(mockSave).toHaveBeenCalled();
+    });
+
+    it('überspringt Vendors mit Zähler >= 12 (Deckel, manuelles Admin-Retry nötig)', async () => {
+      const cappedVendor = createMockVendor({
+        flourioSyncStatus: 'error',
+        flourioSyncRetryCount: 12
+      });
+
+      mockFind.mockResolvedValue([cappedVendor]);
+      mockBusinessPartnerService.syncVendor = jest.fn().mockResolvedValue({});
+
+      const result = await service.retryFailedSyncs();
+
+      expect(result.skipped).toBe(1);
+      expect(result.synced).toBe(0);
+      expect(mockBusinessPartnerService.syncVendor).not.toHaveBeenCalled();
+    });
+  });
 });

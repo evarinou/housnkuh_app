@@ -30,6 +30,13 @@ export interface SyncOptions {
 }
 
 /**
+ * AUDIT OP6: Maximale Anzahl automatischer Retry-Versuche. Ab diesem Deckel
+ * überspringt retryFailedSyncs den Vendor — nur ein manuelles Admin-Retry
+ * (syncVendorsByIds) versucht es dann noch einmal.
+ */
+export const MAX_SYNC_RETRIES = 12;
+
+/**
  * Nicht-blockierender Anstoß nach der Vendor-Registrierung: legt den flour.io-
  * BusinessPartner an bzw. verknüpft ihn. Ohne konfiguriertes flour.io (kein
  * Bearer-Token) passiert nichts. Fehler setzen im Service flourioSyncStatus='error'
@@ -143,6 +150,13 @@ export class BusinessPartnerSyncService {
       await this.businessPartnerService.syncVendor(vendor);
       result.synced++;
 
+      // AUDIT OP6: Erfolg → Retry-Zähler zurücksetzen
+      if (vendor.flourioSyncRetryCount !== undefined || vendor.flourioSyncLastAttempt !== undefined) {
+        vendor.flourioSyncRetryCount = undefined;
+        vendor.flourioSyncLastAttempt = undefined;
+        await vendor.save();
+      }
+
     } catch (error: any) {
       result.failed++;
       result.errors.push({
@@ -154,6 +168,19 @@ export class BusinessPartnerSyncService {
       // Update vendor with error status
       vendor.flourioSyncStatus = 'error';
       vendor.flourioSyncError = error.message;
+      // AUDIT OP6: Retry-Zähler inkrementieren, Versuchszeitpunkt festhalten
+      vendor.flourioSyncRetryCount = (vendor.flourioSyncRetryCount ?? 0) + 1;
+      vendor.flourioSyncLastAttempt = new Date();
+      if (vendor.flourioSyncRetryCount === MAX_SYNC_RETRIES) {
+        // Erstmaliges Erreichen des Deckels: dauerhaft fehlgeschlagener Sync,
+        // automatische Retries stoppen — manuelles Admin-Retry nötig.
+        logger.error('[flourio] BusinessPartner-Sync dauerhaft fehlgeschlagen — manuelles Admin-Retry nötig', {
+          vendorId: String(vendor._id),
+          vendorName: vendor.kontakt?.name || 'Unknown',
+          retryCount: vendor.flourioSyncRetryCount,
+          error: error.message
+        });
+      }
       await vendor.save();
     }
   }
@@ -250,6 +277,11 @@ export class BusinessPartnerSyncService {
     logger.info('Retrying failed syncs', { count: vendors.length });
 
     for (const vendor of vendors) {
+      // AUDIT OP6: Deckel erreicht → kein automatischer Retry mehr
+      if ((vendor.flourioSyncRetryCount ?? 0) >= MAX_SYNC_RETRIES) {
+        result.skipped++;
+        continue;
+      }
       await this.syncSingleVendor(vendor, result, dryRun);
     }
 

@@ -308,6 +308,15 @@ const UserSchema = new Schema({
     type: String,
     default: undefined
   },
+  // AUDIT OP6: Retry-Zähler für fehlgeschlagene Syncs
+  flourioSyncRetryCount: {
+    type: Number,
+    default: undefined
+  },
+  flourioSyncLastAttempt: {
+    type: Date,
+    default: undefined
+  },
 
   // Top-level email field for index compatibility
   email: {

@@ -26,7 +26,17 @@ export interface WarehouseSyncOptions {
   forceResync?: boolean;
   dryRun?: boolean;
   batchSize?: number;
+  // AUDIT OP6: Einträge mit flourioSyncStatus 'error' auslassen — die behandelt
+  // retryFailedSyncs() mit Retry-Deckel; so umgeht syncAllMietfaecher() den Deckel nicht.
+  excludeErrors?: boolean;
 }
+
+/**
+ * AUDIT OP6: Maximale Anzahl automatischer Retry-Versuche. Ab diesem Deckel
+ * überspringt retryFailedSyncs das Mietfach — nur ein manuelles Admin-Retry
+ * (syncMietfaecherByIds) versucht es dann noch einmal.
+ */
+export const MAX_SYNC_RETRIES = 12;
 
 export class WarehouseSyncService {
   constructor(private warehouseService: WarehouseService) {}
@@ -38,7 +48,8 @@ export class WarehouseSyncService {
     const {
       forceResync = false,
       dryRun = false,
-      batchSize = 10
+      batchSize = 10,
+      excludeErrors = false
     } = options;
 
     const result: WarehouseSyncResult = {
@@ -51,9 +62,16 @@ export class WarehouseSyncService {
     const query: any = {};
 
     if (!forceResync) {
+      const retryableStatuses = excludeErrors
+        ? [undefined, 'pending']
+        : [undefined, 'pending', 'error'];
       query.$or = [
-        { flourioSyncStatus: { $in: [undefined, 'pending', 'error'] } },
-        { flourioSyncStatus: 'synced', updatedAt: { $gt: '$flourioLastSyncAt' } }
+        { flourioSyncStatus: { $in: retryableStatuses } },
+        {
+          flourioSyncStatus: 'synced',
+          // Feldvergleich braucht $expr (gleiches Muster wie BUG-BP-SYNC-QUERY)
+          $expr: { $gt: ['$updatedAt', '$flourioLastSyncAt'] }
+        }
       ];
     }
 
@@ -113,6 +131,13 @@ export class WarehouseSyncService {
       await this.warehouseService.syncMietfach(mietfach);
       result.synced++;
 
+      // AUDIT OP6: Erfolg → Retry-Zähler zurücksetzen
+      if (mietfach.flourioSyncRetryCount !== undefined || mietfach.flourioSyncLastAttempt !== undefined) {
+        mietfach.flourioSyncRetryCount = undefined;
+        mietfach.flourioSyncLastAttempt = undefined;
+        await mietfach.save();
+      }
+
     } catch (error: any) {
       result.failed++;
       result.errors.push({
@@ -123,6 +148,19 @@ export class WarehouseSyncService {
 
       mietfach.flourioSyncStatus = 'error';
       mietfach.flourioSyncError = error.message;
+      // AUDIT OP6: Retry-Zähler inkrementieren, Versuchszeitpunkt festhalten
+      mietfach.flourioSyncRetryCount = (mietfach.flourioSyncRetryCount ?? 0) + 1;
+      mietfach.flourioSyncLastAttempt = new Date();
+      if (mietfach.flourioSyncRetryCount === MAX_SYNC_RETRIES) {
+        // Erstmaliges Erreichen des Deckels: dauerhaft fehlgeschlagener Sync,
+        // automatische Retries stoppen — manuelles Admin-Retry nötig.
+        logger.error('[WarehouseSyncService] Warehouse-Sync dauerhaft fehlgeschlagen — manuelles Admin-Retry nötig', {
+          mietfachId: String(mietfach._id),
+          mietfachName: mietfach.bezeichnung || 'Unknown',
+          retryCount: mietfach.flourioSyncRetryCount,
+          error: error.message
+        });
+      }
       await mietfach.save();
     }
   }
@@ -217,6 +255,11 @@ export class WarehouseSyncService {
     logger.info('[WarehouseSyncService] Retrying failed syncs', { count: mietfaecher.length });
 
     for (const mietfach of mietfaecher) {
+      // AUDIT OP6: Deckel erreicht → kein automatischer Retry mehr
+      if ((mietfach.flourioSyncRetryCount ?? 0) >= MAX_SYNC_RETRIES) {
+        result.skipped++;
+        continue;
+      }
       await this.syncSingleMietfach(mietfach, result, dryRun);
     }
 

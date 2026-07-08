@@ -178,4 +178,61 @@ describe('WarehouseSyncService', () => {
       expect(Mietfach.find).toHaveBeenCalledWith({ flourioSyncStatus: 'error' });
     });
   });
+
+  describe('Retry-Zähler (AUDIT OP6)', () => {
+    it('inkrementiert Zähler und setzt lastAttempt bei Fehler, Reset bei Erfolg', async () => {
+      const mietfach = createMockMietfach({
+        flourioSyncStatus: 'error',
+        flourioSyncRetryCount: 1
+      });
+      (Mietfach.find as jest.Mock).mockResolvedValue([mietfach]);
+      (WarehouseMapper.validateMietfachForSync as jest.Mock).mockReturnValue([]);
+      (WarehouseMapper.hasMietfachChanged as jest.Mock).mockReturnValue(true);
+      mockWarehouseService.syncMietfach.mockRejectedValue(new Error('API error'));
+
+      await syncService.retryFailedSyncs();
+
+      expect(mietfach.flourioSyncRetryCount).toBe(2);
+      expect(mietfach.flourioSyncLastAttempt).toBeInstanceOf(Date);
+
+      // Zweiter Lauf: Sync gelingt → Zähler und lastAttempt werden zurückgesetzt
+      mockWarehouseService.syncMietfach.mockResolvedValue({} as any);
+
+      const result = await syncService.retryFailedSyncs();
+
+      expect(result.synced).toBe(1);
+      expect(mietfach.flourioSyncRetryCount).toBeUndefined();
+      expect(mietfach.flourioSyncLastAttempt).toBeUndefined();
+    });
+
+    it('überspringt Mietfaecher mit Zähler >= 12 (Deckel, manuelles Admin-Retry nötig)', async () => {
+      const capped = createMockMietfach({
+        flourioSyncStatus: 'error',
+        flourioSyncRetryCount: 12
+      });
+      (Mietfach.find as jest.Mock).mockResolvedValue([capped]);
+      (WarehouseMapper.validateMietfachForSync as jest.Mock).mockReturnValue([]);
+      mockWarehouseService.syncMietfach.mockResolvedValue({} as any);
+
+      const result = await syncService.retryFailedSyncs();
+
+      expect(result.skipped).toBe(1);
+      expect(result.synced).toBe(0);
+      expect(mockWarehouseService.syncMietfach).not.toHaveBeenCalled();
+    });
+
+    it('syncAllMietfaecher({ excludeErrors: true }) fragt error-Einträge nicht ab', async () => {
+      (Mietfach.find as jest.Mock).mockResolvedValue([]);
+
+      await syncService.syncAllMietfaecher({ excludeErrors: true });
+
+      expect(Mietfach.find).toHaveBeenCalledWith(
+        expect.objectContaining({
+          $or: expect.arrayContaining([
+            { flourioSyncStatus: { $in: [undefined, 'pending'] } }
+          ])
+        })
+      );
+    });
+  });
 });

@@ -230,6 +230,8 @@ export interface IUser extends Document {
   flourioSyncStatus?: 'pending' | 'synced' | 'error' | 'deleted';
   flourioLastSyncAt?: Date;
   flourioSyncError?: string;
+  flourioSyncRetryCount?: number; // AUDIT OP6: Anzahl fehlgeschlagener Sync-Versuche
+  flourioSyncLastAttempt?: Date;  // AUDIT OP6: Zeitpunkt des letzten Sync-Versuchs
 
   // Virtual populate for invoice references
   invoices?: IInvoiceDocument[];
@@ -279,6 +281,8 @@ export interface IMietfach extends Document {
   flourioSyncStatus?: 'pending' | 'synced' | 'error' | 'deleted';
   flourioLastSyncAt?: Date;
   flourioSyncError?: string;
+  flourioSyncRetryCount?: number; // AUDIT OP6: Anzahl fehlgeschlagener Sync-Versuche
+  flourioSyncLastAttempt?: Date;  // AUDIT OP6: Zeitpunkt des letzten Sync-Versuchs
 
   createdAt: Date;
   updatedAt: Date;

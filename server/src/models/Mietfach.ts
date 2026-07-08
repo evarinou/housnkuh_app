@@ -103,6 +103,15 @@ const MietfachSchema = new Schema({
   flourioSyncError: {
     type: String,
     default: undefined
+  },
+  // AUDIT OP6: Retry-Zähler für fehlgeschlagene Syncs
+  flourioSyncRetryCount: {
+    type: Number,
+    default: undefined
+  },
+  flourioSyncLastAttempt: {
+    type: Date,
+    default: undefined
   }
 }, { timestamps: true });
 
