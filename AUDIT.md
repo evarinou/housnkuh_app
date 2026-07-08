@@ -200,7 +200,7 @@ Einige Agent-Einstufungen wurden nach Prüfung angepasst (Begründung dabei).
 
 ### Beim Test-Drift-Cleanup T5.5 gefunden (2026-07-07, verifiziert, NICHT gefixt)
 
-- [ ] **BUG-DISCOUNT-TRUST (W/SEC-nah)** Bei S15-Analyse gefunden (2026-07-08):
+- [x] **BUG-DISCOUNT-TRUST (W/SEC-nah)** ✅ gefixt 2026-07-08 (Rabatt serverseitig aus Laufzeit, Client-Wert ignoriert+geloggt; Anzeige-Basis vereinheitlicht; 2 Tests). Bei S15-Analyse gefunden (2026-07-08):
   `createVertragFromPendingBooking` (vertragController:~426) übernimmt
   `packageData.discount` UNGEPRÜFT vom Client (usePackageBuilder:334) und
   nutzt den serverseitigen PriceCalculationService nicht — ein manipulierter
