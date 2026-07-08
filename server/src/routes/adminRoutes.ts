@@ -17,6 +17,7 @@ import * as adminController from '../controllers/adminController';
 import * as bookingAdminController from '../controllers/admin/bookingAdminController';
 import * as storeMapAdminController from '../controllers/admin/storeMapAdminController';
 import * as vertragController from '../controllers/vertragController';
+import { getUserById, updateUser, deleteUser } from '../controllers/userController';
 import { adminAuth } from '../middleware/auth';
 import ScheduledJobs from '../services/scheduledJobs';
 import AppError from '../utils/AppError';
@@ -72,9 +73,9 @@ router.patch('/store-map/positions', storeMapAdminController.updateStoreMapPosit
 
 // Benutzerverwaltung (no cache for debugging)
 router.get('/users', noCacheHeaders, adminController.getAllUsers);
-router.get('/users/:id', require('../controllers/userController').getUserById);
-router.patch('/users/:id', require('../controllers/userController').updateUser);
-router.delete('/users/:id', require('../controllers/userController').deleteUser);
+router.get('/users/:id', getUserById);
+router.patch('/users/:id', updateUser);
+router.delete('/users/:id', deleteUser);
 
 // Vendor Visibility Management (R004)
 router.patch('/vendors/:vendorId/visibility', adminController.toggleVendorVisibility);

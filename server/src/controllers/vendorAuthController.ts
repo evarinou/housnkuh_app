@@ -16,6 +16,10 @@ import { BookingStatus } from '../types/modelTypes';
 import { syncVendorToFlourio } from '../services/flourio/services/businessPartnerSyncService';
 import logger from '../utils/logger';
 import AppError from '../utils/AppError';
+import { validateEmail, validatePackageData, validateComment } from '../utils/validation';
+import { calculateTrialPeriod } from '../services/trialService';
+import securityLogger from '../utils/securityLogger';
+import { PriceCalculationService } from '../services/priceCalculationService';
 
 /**
  * Pre-registration for vendors before store opening
@@ -207,9 +211,6 @@ export const registerVendorWithBooking = async (req: Request, res: Response, nex
       unternehmen
     } = req.body;
     
-    // Import validation utilities
-    const { validateEmail, validatePackageData, validateComment } = require('../utils/validation');
-    
     // Validierung
     if (!email || !password || !name || !strasse || !hausnummer || !plz || !ort || !packageData) {
       res.status(400).json({ 
@@ -292,7 +293,6 @@ export const registerVendorWithBooking = async (req: Request, res: Response, nex
       
       // Set registration status based on store status
       if (isStoreOpen) {
-        const { calculateTrialPeriod } = require('../services/trialService');
         const { start, end } = calculateTrialPeriod(new Date());
         user.registrationStatus = 'trial_active';
         user.trialStartDate = start;
@@ -363,7 +363,6 @@ export const registerVendorWithBooking = async (req: Request, res: Response, nex
         registrationStatus: isStoreOpen ? 'trial_active' : 'preregistered',
         registrationDate: new Date(),
         ...(isStoreOpen ? (() => {
-          const { calculateTrialPeriod } = require('../services/trialService');
           const { start, end } = calculateTrialPeriod(new Date());
           return { trialStartDate: start, trialEndDate: end };
         })() : {}),
@@ -537,8 +536,6 @@ export const loginVendor = async (req: Request, res: Response, next: NextFunctio
 
 // E-Mail-Bestätigung für Direktvermarkter
 export const confirmVendorEmail = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  const securityLogger = require('../utils/securityLogger').default;
-  
   try {
     const { token } = req.params;
     
@@ -660,7 +657,6 @@ export const confirmVendorEmail = async (req: Request, res: Response, next: Next
     let correctedPackageData = null;
     if (user.pendingBooking?.packageData) {
       try {
-        const { PriceCalculationService } = require('../services/priceCalculationService');
         const packageData = user.pendingBooking.packageData;
         
         // Prepare package options for price calculation
@@ -778,8 +774,6 @@ export const changeVendorPassword = async (req: Request, res: Response, next: Ne
 
 // Passwort-Reset anfordern (öffentlich)
 export const requestPasswordReset = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  const securityLogger = require('../utils/securityLogger').default;
-
   try {
     const { email } = req.body;
 
@@ -854,8 +848,6 @@ export const requestPasswordReset = async (req: Request, res: Response, next: Ne
 
 // Passwort zurücksetzen mit Token (öffentlich)
 export const resetPassword = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  const securityLogger = require('../utils/securityLogger').default;
-
   try {
     const { token, newPassword } = req.body;
 

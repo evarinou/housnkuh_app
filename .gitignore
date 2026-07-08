@@ -39,6 +39,8 @@ npm-debug.log*
 server/uploads/
 server/storage/
 server/backups/*.json
+server/backups/*.archive.gz
+server/backups/*.gz
 
 # Datenexporte (personenbezogene Daten – nie committen)
 *.csv

@@ -9,8 +9,10 @@
  */
 
 import Bull from 'bull';
-import { sendBookingConfirmationWithSchedule } from './emailService';
+import { sendBookingConfirmationWithSchedule, sendInvoiceNotification } from './emailService';
 import logger from './logger';
+import Invoice from '../models/Invoice';
+import User from '../models/User';
 
 /**
  * Enhanced email job data interfaces for type safety and structure
@@ -420,16 +422,13 @@ class EmailQueueService {
   // Process invoice notification email
   private async processInvoiceNotification(data: InvoiceNotificationJobData): Promise<void> {
     try {
-      const { sendInvoiceNotification } = require('./emailService');
-      const Invoice = require('../models/Invoice').default;
-
       // Get invoice and vendor details
       const invoice = await Invoice.findById(data.invoiceId).populate('vendor');
       if (!invoice) {
         throw new Error(`Invoice not found: ${data.invoiceId}`);
       }
       
-      const vendor = invoice.vendor;
+      const vendor = invoice.vendor as any;
       if (!vendor) {
         throw new Error(`Vendor not found for invoice: ${data.invoiceId}`);
       }
@@ -437,6 +436,9 @@ class EmailQueueService {
       // Generate PDF if not provided
       let pdfBuffer = data.pdfBuffer;
       if (!pdfBuffer) {
+        // Bewusst require statt Import: invoiceGenerationService exportiert kein
+        // generateInvoicePDF (latenter Bug) – ein statischer Import wäre ein TS-Fehler.
+        // Verhalten (TypeError → Job-Retry) bleibt unverändert erhalten.
         const { generateInvoicePDF } = require('../services/invoiceGenerationService');
         pdfBuffer = await generateInvoicePDF(invoice);
       }
@@ -455,7 +457,7 @@ class EmailQueueService {
       await sendInvoiceNotification({
         invoice: invoice.toObject(),
         vendor: vendor.toObject(),
-        pdfBuffer,
+        pdfBuffer: pdfBuffer!,
         companyInfo
       });
       
@@ -474,7 +476,6 @@ class EmailQueueService {
     jobId?: string
   ): Promise<void> {
     try {
-      const Invoice = require('../models/Invoice').default;
       const updateData: any = {
         emailStatus: status,
         lastEmailAttempt: timestamp
@@ -506,7 +507,6 @@ class EmailQueueService {
   // Update booking email status in database
   private async updateBookingEmailStatus(bookingId: string, status: 'sent' | 'failed', timestamp: Date): Promise<void> {
     try {
-      const User = require('../models/User').default;
       await User.updateOne(
         { 'pendingBooking._id': bookingId },
         {

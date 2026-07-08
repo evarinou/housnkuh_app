@@ -8,7 +8,8 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
-const { body, param, validationResult } = require('express-validator');
+import { body, param, validationResult } from 'express-validator';
+import logger from '../utils/logger';
 
 /** Password validation rules */
 import { PASSWORD_MIN_LENGTH, PASSWORD_REGEX } from '../constants/validation';
@@ -35,12 +36,10 @@ export const handleValidationErrors = (req: Request, res: Response, next: NextFu
   
   // Debug log for setup endpoint
   if (req.url.includes('setup')) {
-    const logger = require('../utils/logger').default;
     logger.debug('Setup validation', { body: req.body, errors: errors.array() });
   }
-  
+
   if (!errors.isEmpty()) {
-    const logger = require('../utils/logger').default;
     logger.error('Validation errors:', {
       url: req.url,
       method: req.method,

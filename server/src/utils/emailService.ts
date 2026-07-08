@@ -14,6 +14,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { EmailTemplateHelpers } from './emailHelpers';
 import EmailTemplate from '../models/EmailTemplate';
+import Settings from '../models/Settings';
 import logger from './logger';
 
 dotenv.config();
@@ -2288,7 +2289,6 @@ export const sendAdminConfirmationEmail = async (adminConfirmationData: AdminCon
     }
 
     // Prepare template data
-    const Settings = require('../models/Settings').default;
     const settings = await Settings.getSettings();
     const isStoreOpen = settings.isStoreOpen();
     

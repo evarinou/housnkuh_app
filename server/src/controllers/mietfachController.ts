@@ -5,6 +5,7 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
+import mongoose from 'mongoose';
 import Mietfach from '../models/Mietfach';
 import logger from '../utils/logger';
 import AppError from '../utils/AppError';
@@ -29,7 +30,6 @@ export const getAllMietfaecher = async (req: Request, res: Response, next: NextF
 // Alle Mietfächer mit Vertragsinformationen abrufen
 export const getAllMietfaecherWithContracts = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const mongoose = require('mongoose');
     const Vertrag = mongoose.model('Vertrag');
 
     // Step 1: Get all Mietfächer

@@ -8,6 +8,7 @@
  */
 
 import { Types } from 'mongoose';
+import { ZUSATZLEISTUNGEN_PREISE } from '../models/Vertrag';
 
 /**
  * Valid package types for Mietfach rental units
@@ -400,9 +401,6 @@ export const validateZusatzleistungen = (
   packageData: any,
   _zusatzleistungenData?: any
 ): ZusatzleistungenValidationResult => {
-  // Import pricing constants from Vertrag model
-  const { ZUSATZLEISTUNGEN_PREISE } = require('../models/Vertrag');
-  
   // Basis-Validierung: Nur bei Premium-Modell erlaubt
   const isPremium = packageData?.selectedProvisionType === 'premium';
   const hasZusatzleistungen = packageData?.zusatzleistungen && 

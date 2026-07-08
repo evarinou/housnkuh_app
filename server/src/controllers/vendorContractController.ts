@@ -10,6 +10,7 @@ import AppError from '../utils/AppError';
 import { sendCancellationConfirmationEmail } from '../utils/emailService';
 import Vertrag from '../models/Vertrag';
 import User from '../models/User';
+import PackageTracking from '../models/PackageTracking';
 import logger from '../utils/logger';
 
 export class VendorContractController {
@@ -311,7 +312,6 @@ export class VendorContractController {
       .lean();
 
       // Get packages for each contract
-      const PackageTracking = require('../models/PackageTracking').default;
       const contractsWithPackages = await Promise.all(
         contracts.map(async (contract) => {
           const packages = await PackageTracking.find({

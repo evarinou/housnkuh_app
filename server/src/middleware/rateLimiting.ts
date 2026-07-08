@@ -8,7 +8,7 @@
  */
 
 import { Request, Response } from 'express';
-const rateLimit = require('express-rate-limit');
+import rateLimit from 'express-rate-limit';
 
 /**
  * Generic rate limiting error response handler

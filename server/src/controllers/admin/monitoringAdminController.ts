@@ -13,6 +13,7 @@ import HealthCheckService from '../../services/healthCheckService';
 import AlertingService from '../../services/alertingService';
 import { performanceMonitor } from '../../utils/performanceMonitor';
 import logger from '../../utils/logger';
+import emailQueue from '../../utils/emailQueue';
 
 // =====================================================
 // Domain 6: Email Queue
@@ -21,8 +22,6 @@ import logger from '../../utils/logger';
 // Email Queue Monitoring für Admin
 export const getEmailQueueStats = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const emailQueue = require('../../utils/emailQueue').default;
-
     // Get queue statistics
     const stats = await emailQueue.getStats();
     const recentJobs = await emailQueue.getRecentJobs(20);
@@ -63,8 +62,6 @@ export const getEmailQueueStats = async (req: Request, res: Response, next: Next
 // Email Queue Jobs retry für Admin
 export const retryFailedEmailJobs = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const emailQueue = require('../../utils/emailQueue').default;
-
     const retriedCount = await emailQueue.retryFailedJobs();
 
     res.json({

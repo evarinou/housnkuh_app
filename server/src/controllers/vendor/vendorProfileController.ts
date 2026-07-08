@@ -13,6 +13,7 @@ import multer from 'multer';
 import mongoose from 'mongoose';
 import logger from '../../utils/logger';
 import AppError from '../../utils/AppError';
+import { sendCancellationConfirmationEmail } from '../../utils/emailService';
 
 // Vendor Profile abrufen
 export const getVendorProfile = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -816,11 +817,10 @@ export const cancelVendorSubscription = async (req: Request, res: Response, next
 
     // Send cancellation confirmation email
     try {
-      const { sendCancellationConfirmationEmail } = require('../../utils/emailService');
       await sendCancellationConfirmationEmail(
         user.kontakt.email,
         user.kontakt.name,
-        user.trialEndDate
+        user.trialEndDate ?? null
       );
     } catch (emailError) {
       logger.error('Failed to send cancellation confirmation email:', emailError);

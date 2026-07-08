@@ -15,6 +15,15 @@ import { BookingStatus } from '../../types/modelTypes';
 import bookingEvents from '../../utils/bookingEvents';
 import { PriceCalculationService } from '../../services/priceCalculationService';
 import logger from '../../utils/logger';
+import PackageTracking from '../../models/PackageTracking';
+import { validatePriceAdjustments, validateZusatzleistungen } from '../../utils/validation';
+import { createVertragFromPendingBooking } from '../vertragController';
+import {
+  sendAdminConfirmationEmail,
+  sendBookingRejectionEmail,
+  sendPackageArrivalConfirmation,
+  sendLagerserviceActivationNotification
+} from '../../utils/emailService';
 
 // Alle Users mit ausstehenden Buchungen abrufen
 export const getPendingBookings = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -140,9 +149,6 @@ export const confirmPendingBooking = async (req: Request, res: Response, next: N
 
     logger.info('confirmPendingBooking called with:', { userId, assignedMietfaecher, priceAdjustments, scheduledStartDate, zusatzleistungenData });
 
-    // Import validation utilities
-    const { validatePriceAdjustments, validateZusatzleistungen } = require('../../utils/validation');
-
     if (!assignedMietfaecher || !Array.isArray(assignedMietfaecher) || assignedMietfaecher.length === 0) {
       logger.warn('Validation failed: assignedMietfaecher invalid', { assignedMietfaecher });
       res.status(400).json({
@@ -254,9 +260,6 @@ export const confirmPendingBooking = async (req: Request, res: Response, next: N
       return;
     }
 
-    // Vertrag aus pendingBooking-Daten erstellen
-    const { createVertragFromPendingBooking } = require('../vertragController');
-
     logger.info('Starting contract creation...');
     const vertragData = await Promise.race([
       createVertragFromPendingBooking(
@@ -267,7 +270,7 @@ export const confirmPendingBooking = async (req: Request, res: Response, next: N
         scheduledStartDate ? new Date(scheduledStartDate) : new Date(),
         zusatzleistungenValidation
       ),
-      new Promise((_, reject) =>
+      new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error('Contract creation timeout after 10 seconds')), 10000)
       )
     ]);
@@ -316,8 +319,6 @@ export const confirmPendingBooking = async (req: Request, res: Response, next: N
     const emailJobId = 'direct-email-' + Date.now();
 
     try {
-      const { sendAdminConfirmationEmail } = require('../../utils/emailService');
-
       // Verwende das richtige Template mit allen Mietfach-Details
       await sendAdminConfirmationEmail({
         vendorName: user.kontakt.name,
@@ -411,7 +412,6 @@ export const rejectPendingBooking = async (req: Request, res: Response, next: Ne
 
     // Vendor über die Ablehnung informieren – ein E-Mail-Fehler bricht die Ablehnung nicht ab
     try {
-      const { sendBookingRejectionEmail } = require('../../utils/emailService');
       const emailSent = await sendBookingRejectionEmail(user.kontakt.email, {
         name: user.kontakt.name,
         reason
@@ -561,8 +561,6 @@ export const checkMietfachAvailability = async (req: Request, res: Response, nex
 
           // If not available, find conflicts and next available date
           if (!available) {
-            const Vertrag = require('../../models/Vertrag').default;
-
             // Find overlapping contracts
             const conflicts = await Vertrag.find({
               'services.mietfach': mietfach._id,
@@ -766,7 +764,6 @@ export const getContractsWithZusatzleistungen = async (req: Request, res: Respon
       .sort({ createdAt: -1 });
 
     // Get package tracking for each contract
-    const PackageTracking = require('../../models/PackageTracking').default;
     const contractsWithTracking = await Promise.all(
       contracts.map(async (contract) => {
         const packages = await PackageTracking.find({ vertrag_id: contract._id });
@@ -823,7 +820,6 @@ export const confirmPackageArrival = async (req: Request, res: Response, next: N
     }
 
     // Find or create package tracking
-    const PackageTracking = require('../../models/PackageTracking').default;
     let packageTracking = await PackageTracking.findOne({
       vertrag_id: id,
       package_typ: package_typ
@@ -854,7 +850,7 @@ export const confirmPackageArrival = async (req: Request, res: Response, next: N
       });
     }
 
-    const updatedPackage = await PackageTracking.findById(packageTracking._id)
+    const updatedPackage: any = await PackageTracking.findById(packageTracking._id)
       .populate({
         path: 'vertrag_id',
         populate: {
@@ -867,7 +863,6 @@ export const confirmPackageArrival = async (req: Request, res: Response, next: N
     // Send email notification to vendor
     if (updatedPackage && updatedPackage.vertrag_id?.user?.kontakt?.email) {
       try {
-        const { sendPackageArrivalConfirmation } = require('../../utils/emailService');
         await sendPackageArrivalConfirmation({
           vendorName: updatedPackage.vertrag_id.user.kontakt.name,
           vendorEmail: updatedPackage.vertrag_id.user.kontakt.email,
@@ -911,7 +906,6 @@ export const confirmPackageStored = async (req: Request, res: Response, next: Ne
     }
 
     // Find lagerservice package tracking
-    const PackageTracking = require('../../models/PackageTracking').default;
     const packageTracking = await PackageTracking.findOne({
       vertrag_id: id,
       package_typ: 'lagerservice',
@@ -995,7 +989,6 @@ export const adminUpdateZusatzleistungen = async (req: Request, res: Response, n
         updatedVertrag?.user && typeof updatedVertrag.user === 'object' && 'kontakt' in updatedVertrag.user) {
       try {
         const user = updatedVertrag.user as any;
-        const { sendLagerserviceActivationNotification } = require('../../utils/emailService');
         await sendLagerserviceActivationNotification({
           vendorName: user.kontakt.name,
           vendorEmail: user.kontakt.email,

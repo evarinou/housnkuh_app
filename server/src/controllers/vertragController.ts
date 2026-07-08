@@ -18,6 +18,10 @@ import {
 } from '../types/zusatzleistungenTypes';
 import logger from '../utils/logger';
 import AppError from '../utils/AppError';
+import Mietfach from '../models/Mietfach';
+import Settings from '../models/Settings';
+import PackageTracking from '../models/PackageTracking';
+import { sendAdminZusatzleistungenNotification } from '../utils/emailService';
 
 /**
  * Retrieves all contracts with populated user and Mietfach data
@@ -310,9 +314,6 @@ export const createVertragFromPendingBooking = async (
       scheduledStartDate,
       hasZusatzleistungen: !!zusatzleistungenValidation?.zusatzleistungen
     });
-    const Mietfach = require('../models/Mietfach').default;
-    const Settings = require('../models/Settings').default;
-    
     // Load user to check trial status
     const user = await User.findById(userId);
     if (!user) {
@@ -366,7 +367,9 @@ export const createVertragFromPendingBooking = async (
     
     for (const mietfach of mietfaecher) {
       // Preis basierend auf Mietfach-Typ aus packageData ermitteln
-      let monatspreis = mietfach.preis || 0;
+      // Hinweis: 'preis' existiert nicht im Mietfach-Schema (bekannte Inkonsistenz),
+      // der Fallback auf 0 bleibt wie zuvor erhalten
+      let monatspreis = (mietfach as any).preis || 0;
       
       // Versuche den Preis aus den packageOptions zu ermitteln
       if (packageData.packageOptions) {
@@ -384,14 +387,14 @@ export const createVertragFromPendingBooking = async (
           
           // Prüfe ob der Mietfach-Typ zu diesem Package-Option passt
           if (typeMapping[packageOption.id]?.includes(mietfach.typ)) {
-            monatspreis = packageOption.price || mietfach.preis || 0;
+            monatspreis = packageOption.price || (mietfach as any).preis || 0;
             break;
           }
         }
       }
       
       // Preis-Anpassungen durch Admin anwenden
-      const mietfachId = mietfach._id.toString();
+      const mietfachId = (mietfach._id as any).toString();
       if (priceAdjustments && priceAdjustments[mietfachId]) {
         const adjustedPrice = priceAdjustments[mietfachId];
         if (adjustedPrice > 0 && adjustedPrice <= 1000) { // Validierung: Preis zwischen 0 und 1000 Euro
@@ -640,8 +643,6 @@ export const updateZusatzleistungen = async (req: Request, res: Response, next: 
      .populate('services.mietfach', 'bezeichnung typ beschreibung standort');
 
     // Create package tracking entries for newly booked services
-    const PackageTracking = require('../models/PackageTracking').default;
-    
     if (lagerservice && !vertrag.zusatzleistungen?.lagerservice) {
       await new PackageTracking({
         vertrag_id: id,
@@ -665,7 +666,6 @@ export const updateZusatzleistungen = async (req: Request, res: Response, next: 
     if (hasNewBookings && updatedVertrag?.user && typeof updatedVertrag.user === 'object' && 'kontakt' in updatedVertrag.user) {
       try {
         const user = updatedVertrag.user as any;
-        const { sendAdminZusatzleistungenNotification } = require('../utils/emailService');
         await sendAdminZusatzleistungenNotification({
           vendorName: user.kontakt.name,
           vendorEmail: user.kontakt.email,
@@ -720,9 +720,6 @@ export const createVertragWithZusatzleistungen = async (req: Request, res: Respo
       }
     }
 
-    // Import Mietfach model
-    const Mietfach = require('../models/Mietfach').default;
-    
     // Validate mietfach exists and is available
     const mietfach = await Mietfach.findById(mietfachId);
     if (!mietfach) {
@@ -748,7 +745,8 @@ export const createVertragWithZusatzleistungen = async (req: Request, res: Respo
     }
 
     // Calculate prices
-    const grundpreis = mietfach.preis || 0;
+    // Hinweis: 'preis' existiert nicht im Mietfach-Schema (bekannte Inkonsistenz)
+    const grundpreis = (mietfach as any).preis || 0;
     const monatlicheKosten = calculateMonthlyTotal(grundpreis, zusatzleistungen);
     const rabatt = calculateRabatt(laufzeitMonate);
     const discount = rabatt / 100;

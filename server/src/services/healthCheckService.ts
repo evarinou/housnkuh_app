@@ -8,6 +8,8 @@
 
 // server/src/services/healthCheckService.ts
 import mongoose from 'mongoose';
+import fs from 'fs';
+import User from '../models/User';
 import { testEmailConnection } from '../utils/emailService';
 import ScheduledJobs from './scheduledJobs';
 import TrialService from './trialService';
@@ -161,7 +163,6 @@ export class HealthCheckService {
       }
 
       // Test simple query performance
-      const User = require('../models/User').default;
       await User.countDocuments({}).maxTimeMS(5000);
       
       const responseTime = Date.now() - startTime;
@@ -397,7 +398,6 @@ export class HealthCheckService {
    */
   private static async checkDiskSpace(): Promise<ComponentHealth> {
     try {
-      const fs = require('fs');
       fs.statSync('.');
       
       // This is a basic check - in production you might want more sophisticated disk monitoring

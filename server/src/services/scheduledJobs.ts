@@ -8,7 +8,9 @@
 
 // server/src/services/scheduledJobs.ts
 import * as cron from 'node-cron';
+import mongoose from 'mongoose';
 import TrialService from './trialService';
+import { InvoiceGenerationJob } from '../jobs/invoiceGenerationJob';
 import HealthCheckService from './healthCheckService';
 import AlertingService from './alertingService';
 import StockPullJob from '../jobs/stockPullJob';
@@ -74,7 +76,6 @@ export class ScheduledJobs {
 
     // Run Vertrag activation once at startup
     try {
-      const mongoose = require('mongoose');
       const Vertrag = mongoose.model('Vertrag');
       const activated = await Vertrag.updateMany(
         { status: 'scheduled', 'availabilityImpact.from': { $lte: new Date() } },
@@ -161,7 +162,6 @@ export class ScheduledJobs {
 
         // Activate scheduled Verträge where mietbeginn has passed
         try {
-          const mongoose = require('mongoose');
           const Vertrag = mongoose.model('Vertrag');
           const activated = await Vertrag.updateMany(
             { status: 'scheduled', 'availabilityImpact.from': { $lte: new Date() } },
@@ -272,8 +272,7 @@ export class ScheduledJobs {
   static async triggerInvoiceGeneration(year?: number, month?: number, vendorId?: string): Promise<any> {
     try {
       logger.info('🔧 Manual invoice generation triggered');
-      const { InvoiceGenerationJob } = require('../jobs/invoiceGenerationJob');
-      
+
       if (vendorId && year && month) {
         await InvoiceGenerationJob.generateForVendor(vendorId, year, month);
         return {
@@ -447,7 +446,6 @@ export class ScheduledJobs {
     BackupJob.stop();
 
     // Stop the invoice generation job separately
-    const { InvoiceGenerationJob } = require('../jobs/invoiceGenerationJob');
     InvoiceGenerationJob.stop();
     
     this.jobs.clear();
@@ -640,7 +638,6 @@ export class ScheduledJobs {
    * @returns {void}
    */
   private static scheduleInvoiceGeneration(): void {
-    const { InvoiceGenerationJob } = require('../jobs/invoiceGenerationJob');
     InvoiceGenerationJob.init();
     logger.info('📅 Invoice generation job scheduled (monthly on 1st at 3 AM)');
   }

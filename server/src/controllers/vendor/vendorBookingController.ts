@@ -15,6 +15,7 @@ import Invoice from '../../models/Invoice';
 import fs from 'fs';
 import path from 'path';
 import { sendBookingConfirmation, sendCancellationConfirmationEmail } from '../../utils/emailService';
+import { createVertragFromPendingBooking } from '../vertragController';
 import { AuthRequest } from '../../middleware/auth';
 import AppError from '../../utils/AppError';
 
@@ -40,9 +41,6 @@ export const completeBooking = async (req: AuthRequest, res: Response, next: Nex
       return;
     }
 
-    // Vertrag aus pendingBooking-Daten erstellen
-    const { createVertragFromPendingBooking } = require('../vertragController');
-
     // Wenn kein pendingBooking vorhanden ist, abbrechen
     if (!user.pendingBooking) {
       res.status(400).json({
@@ -53,7 +51,9 @@ export const completeBooking = async (req: AuthRequest, res: Response, next: Nex
     }
 
     // Vertrag erstellen
-    const success = await createVertragFromPendingBooking(userId, user.pendingBooking.packageData);
+    // Legacy-Aufruf mit 2 Argumenten (assignedMietfaecher fehlt) – Verhalten
+    // bewusst unverändert erhalten, daher Cast statt Signatur-Anpassung
+    const success = await (createVertragFromPendingBooking as any)(userId, user.pendingBooking.packageData);
 
     if (!success) {
       res.status(500).json({

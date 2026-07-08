@@ -14,6 +14,8 @@ import Vertrag from '../models/Vertrag';
 import Settings from '../models/Settings';
 import { cache, CACHE_KEYS, CACHE_TTL } from '../utils/cache';
 import logger from '../utils/logger';
+import VendorContest from '../models/VendorContest';
+import { sendOpeningDateChangeNotification } from '../utils/emailService';
 
 // ===== DASHBOARD =====
 
@@ -62,14 +64,8 @@ export const getDashboardOverview = async (req: Request, res: Response, next: Ne
             pendingBooking: { $exists: true, $ne: null },
             'pendingBooking.status': 'pending',
           }),
-          (async () => {
-            const VendorContest = require('../models/VendorContest').default;
-            return await VendorContest.countDocuments();
-          })(),
-          (async () => {
-            const VendorContest = require('../models/VendorContest').default;
-            return await VendorContest.countDocuments({ isRead: false });
-          })(),
+          VendorContest.countDocuments(),
+          VendorContest.countDocuments({ isRead: false }),
           User.find({
             'kontakt.mailNewsletter': true,
             'kontakt.newsletterConfirmed': true,
@@ -214,7 +210,6 @@ export const updateStoreOpeningSettings = async (req: Request, res: Response, ne
         'pendingBooking.status': 'pending',
       });
 
-      const { sendOpeningDateChangeNotification } = require('../utils/emailService');
       vendors.forEach((vendor) => {
         sendOpeningDateChangeNotification(vendor.kontakt.email, {
           name: vendor.kontakt.name,
