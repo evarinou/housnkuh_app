@@ -305,7 +305,7 @@ selbst verifiziert; Agent-Einschätzungen wo nötig korrigiert.
 - [ ] **OP10 (W)** Graceful Shutdown stoppt Jobs und ruft sofort `process.exit(0)`
   ohne auf laufende Jobs zu warten → halbfertige Invoice-Generierung möglich.
   → Shutdown mit Grace-Timeout auf laufende Jobs.
-- [ ] **OP11 (W)** `alertingService` — unklar, ob Alerts tatsächlich zugestellt
+- [x] **OP11 (W)** ✅ verifiziert 2026-07-08: Zustellweg ist implementiert und getestet — createAndSendAlert → sendEmailNotifications → emailService.sendMonitoringAlert (Aufruf inkl. Empfänger durch T4.4-Tests belegt), Slack/Discord-Webhooks mit Retry (Tests grün), DB-Persistenz (AlertModel). Voraussetzung in Prod: EMAIL_*-Env gesetzt + Admin-User mit E-Mail vorhanden (AlertingService.initialize lädt Empfänger). Alt: unklar, ob Alerts tatsächlich zugestellt
   werden (E-Mail/Kanal) oder nur als DB-Eintrag existieren. → Zustellweg
   verifizieren/implementieren (hängt mit OP7 zusammen).
 - [x] **OP12 (W) ✅ (T3.2) backupJob** — mongodump+Retention. Alt: `.env.example` dokumentiert `BACKUP_SCHEDULE` etc.,
