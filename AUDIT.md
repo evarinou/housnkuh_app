@@ -284,10 +284,10 @@ selbst verifiziert; Agent-Einschätzungen wo nötig korrigiert.
 
 ### Wichtig
 
-- [ ] **OP5 (W)** `server/src/jobs/invoiceGenerationJob.ts:184` — Retry nach
+- [x] **OP5 (W)** ✅ (2026-07-08: setTimeout-Retry ersetzt durch persistenten Nachzügler-Cron Tag 2-5 03:30 — idempotent dank Unique-Index) `server/src/jobs/invoiceGenerationJob.ts:184` — Retry nach
   Fehler via `setTimeout(… , 3600000)`: lebt nur im RAM, geht bei Neustart
   verloren, kann sich stapeln. → über node-cron/Queue mit Backoff persistieren.
-- [ ] **OP6 (W)** Flourio-Sync-Fehler setzen `flourioSyncStatus='error'` ohne
+- [x] **OP6 (W)** ✅ (2026-07-08: flourioSyncRetryCount/lastAttempt an User+Mietfach, Deckel 12, stündlicher flourioSyncRetryJob) Flourio-Sync-Fehler setzen `flourioSyncStatus='error'` ohne
   Retry-Zähler/Wiedervorlage (warehouseSyncService u. a.). Fehler-Items
   bleiben liegen bis manuelles Admin-Retry. → `flourioSyncRetryCount`/
   `lastAttempt`, gezielte Wiederholung im nächsten Lauf.

@@ -125,7 +125,7 @@
   Zertifizierung/Standort). Nur öffentliche Felder ausliefern (vgl. AUDIT
   SEC3/öffentliche Projektionen). *Fertig, wenn:* Käufer produktübergreifend
   suchen/filtern und zum Vendor-Profil gelangen.
-- [x] **T4.2 – F4 flour.io-BusinessPartner-Sync verdrahten.** ✅ syncVendorToFlourio in preRegister + registerWithBooking (nicht-blockierend, Token-Guard, Fehler→flourioSyncStatus=error), 2 Tests. OFFEN (klein): Warehouse-Sync verdrahten + periodischer Retry fehlgeschlagener Syncs. ~~Bei Vendor-
+- [x] **T4.2 – F4 flour.io-BusinessPartner-Sync verdrahten.** ✅ syncVendorToFlourio in preRegister + registerWithBooking (nicht-blockierend, Token-Guard, Fehler→flourioSyncStatus=error), 2 Tests. ✅ Rest erledigt 2026-07-08 (mit AUDIT OP6): stündlicher flourioSyncRetryJob retried fehlgeschlagene Syncs (Deckel 12 Versuche) und synct pending Mietfächer als Warehouses. ~~Bei Vendor-
   Registrierung automatisch flour.io-BusinessPartner anlegen/verknüpfen
   (Service existiert); Warehouse-Sync mitklären. *Fertig, wenn:* neuer Vendor
   landet automatisch als BusinessPartner in flour.io, Fehler werden geloggt
