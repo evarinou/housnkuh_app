@@ -7,7 +7,7 @@
  * dürfen jedes Produkt bearbeiten — ohne Mietfach-/Ownership-Checks.
  */
 
-import { Response } from 'express';
+import { Response, NextFunction } from 'express';
 import { AuthRequest } from '../../middleware/auth';
 import User from '../../models/User';
 import { Product } from '../../models/Product';
@@ -17,12 +17,13 @@ import {
   findPopulatedProduct
 } from '../../services/productService';
 import logger from '../../utils/logger';
+import AppError from '../../utils/AppError';
 
 /**
  * POST /api/admin/products
  * Create a product on behalf of a vendor (vendorId required in body).
  */
-export const createProduct = async (req: AuthRequest, res: Response): Promise<void> => {
+export const createProduct = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { vendorId } = req.body;
 
@@ -49,12 +50,7 @@ export const createProduct = async (req: AuthRequest, res: Response): Promise<vo
       message: 'Produkt erfolgreich erstellt'
     });
   } catch (error) {
-    logger.error('Error creating product (admin):', error);
-    res.status(500).json({
-      success: false,
-      message: 'Fehler beim Erstellen des Produkts',
-      error: (error as Error).message
-    });
+    next(new AppError('Fehler beim Erstellen des Produkts', 500, error));
   }
 };
 
@@ -62,7 +58,7 @@ export const createProduct = async (req: AuthRequest, res: Response): Promise<vo
  * PUT /api/admin/products/:id
  * Update any product. vendorId is intentionally not updatable.
  */
-export const updateProduct = async (req: AuthRequest, res: Response): Promise<void> => {
+export const updateProduct = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id } = req.params;
 
@@ -83,11 +79,6 @@ export const updateProduct = async (req: AuthRequest, res: Response): Promise<vo
       message: 'Produkt erfolgreich aktualisiert'
     });
   } catch (error) {
-    logger.error('Error updating product (admin):', error);
-    res.status(500).json({
-      success: false,
-      message: 'Fehler beim Aktualisieren des Produkts',
-      error: (error as Error).message
-    });
+    next(new AppError('Fehler beim Aktualisieren des Produkts', 500, error));
   }
 };

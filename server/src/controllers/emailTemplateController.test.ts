@@ -117,7 +117,7 @@ describe('emailTemplateController', () => {
 
       (emailService.compileTemplate as jest.Mock) = mockCompileTemplate;
 
-      await previewEmailTemplate(req as Request, res as Response);
+      await previewEmailTemplate(req as Request, res as Response, next);
 
       expect(mockCompileTemplate).toHaveBeenCalledTimes(2);
       expect(jsonMock).toHaveBeenCalledWith({
@@ -151,7 +151,7 @@ describe('emailTemplateController', () => {
 
       (emailService.compileTemplate as jest.Mock) = mockCompileTemplate;
 
-      await previewEmailTemplate(req as Request, res as Response);
+      await previewEmailTemplate(req as Request, res as Response, next);
 
       expect(jsonMock).toHaveBeenCalledWith({
         success: true,
@@ -171,7 +171,7 @@ describe('emailTemplateController', () => {
         }
       };
 
-      await previewEmailTemplate(req as Request, res as Response);
+      await previewEmailTemplate(req as Request, res as Response, next);
 
       expect(statusMock).toHaveBeenCalledWith(400);
       expect(jsonMock).toHaveBeenCalledWith({
@@ -208,7 +208,7 @@ describe('emailTemplateController', () => {
       (emailService.compileTemplate as jest.Mock) = mockCompileTemplate;
       (emailService.sendEmail as jest.Mock).mockResolvedValue(true);
 
-      await sendTestEmail(req as Request, res as Response);
+      await sendTestEmail(req as Request, res as Response, next);
 
       expect(EmailTemplate.findById).toHaveBeenCalledWith('template123');
       expect(emailService.sendEmail).toHaveBeenCalledWith({
@@ -233,7 +233,7 @@ describe('emailTemplateController', () => {
 
       (EmailTemplate.findById as jest.Mock).mockResolvedValue(null);
 
-      await sendTestEmail(req as Request, res as Response);
+      await sendTestEmail(req as Request, res as Response, next);
 
       expect(statusMock).toHaveBeenCalledWith(404);
       expect(jsonMock).toHaveBeenCalledWith({
@@ -250,7 +250,7 @@ describe('emailTemplateController', () => {
         }
       };
 
-      await sendTestEmail(req as Request, res as Response);
+      await sendTestEmail(req as Request, res as Response, next);
 
       expect(statusMock).toHaveBeenCalledWith(400);
       expect(jsonMock).toHaveBeenCalledWith({

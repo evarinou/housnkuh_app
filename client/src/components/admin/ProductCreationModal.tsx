@@ -214,7 +214,6 @@ const ProductCreationModal: React.FC<ProductCreationModalProps> = ({
       console.error('Error creating product:', err);
       const errorMessage =
         err.response?.data?.message ||
-        err.response?.data?.error ||
         'Fehler beim Erstellen des Produkts';
       setApiError(errorMessage);
     } finally {

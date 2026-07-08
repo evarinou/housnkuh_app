@@ -7,7 +7,6 @@
 import { Request, Response, NextFunction } from 'express';
 import EmailTemplate from '../models/EmailTemplate';
 import { emailService } from '../utils/emailService';
-import logger from '../utils/logger';
 import AppError from '../utils/AppError';
 
 // GET /api/admin/email-templates - Alle Templates auflisten
@@ -99,7 +98,7 @@ export const updateEmailTemplate = async (req: Request, res: Response, next: Nex
 };
 
 // POST /api/admin/email-templates/preview - Template-Vorschau generieren
-export const previewEmailTemplate = async (req: Request, res: Response) => {
+export const previewEmailTemplate = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { htmlBody, subject, templateData = {} } = req.body;
 
@@ -134,17 +133,12 @@ export const previewEmailTemplate = async (req: Request, res: Response) => {
       }
     });
   } catch (error) {
-    logger.error('Error generating email preview:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Fehler beim Generieren der Template-Vorschau',
-      error: error instanceof Error ? error.message : 'Unknown error'
-    });
+    next(new AppError('Fehler beim Generieren der Template-Vorschau', 500, error));
   }
 };
 
 // POST /api/admin/email-templates/send-test - Test-Email versenden
-export const sendTestEmail = async (req: Request, res: Response) => {
+export const sendTestEmail = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { templateId, testEmail, templateData = {} } = req.body;
 
@@ -187,12 +181,7 @@ export const sendTestEmail = async (req: Request, res: Response) => {
       message: `Test-Email erfolgreich an ${testEmail} gesendet`
     });
   } catch (error) {
-    logger.error('Error sending test email:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Fehler beim Versenden der Test-Email',
-      error: error instanceof Error ? error.message : 'Unknown error'
-    });
+    next(new AppError('Fehler beim Versenden der Test-Email', 500, error));
   }
 };
 

@@ -35,7 +35,7 @@ export const getAllVertraege = async (req: Request, res: Response, next: NextFun
   try {
     const vertraege = await Vertrag.find()
       .populate('user', 'username kontakt.name kontakt.email')
-      .populate('services.mietfach', 'bezeichnung typ beschreibung standort groesse preis')
+      .populate('services.mietfach', 'bezeichnung typ beschreibung standort groesse')
       .sort({ createdAt: -1 });
     
     // Verträge in das erwartete Frontend-Format transformieren
@@ -366,10 +366,8 @@ export const createVertragFromPendingBooking = async (
     const mietfaecher = await Mietfach.find({ _id: { $in: assignedMietfaecher } });
     
     for (const mietfach of mietfaecher) {
-      // Preis basierend auf Mietfach-Typ aus packageData ermitteln
-      // Hinweis: 'preis' existiert nicht im Mietfach-Schema (bekannte Inkonsistenz),
-      // der Fallback auf 0 bleibt wie zuvor erhalten
-      let monatspreis = (mietfach as any).preis || 0;
+      // Preis kommt aus packageOption/priceAdjustments, Mietfach hat bewusst kein Preisfeld
+      let monatspreis = 0;
       
       // Versuche den Preis aus den packageOptions zu ermitteln
       if (packageData.packageOptions) {
@@ -387,7 +385,7 @@ export const createVertragFromPendingBooking = async (
           
           // Prüfe ob der Mietfach-Typ zu diesem Package-Option passt
           if (typeMapping[packageOption.id]?.includes(mietfach.typ)) {
-            monatspreis = packageOption.price || (mietfach as any).preis || 0;
+            monatspreis = packageOption.price || 0;
             break;
           }
         }
@@ -508,7 +506,7 @@ export const createVertragFromPendingBooking = async (
     // Vollständigen Vertrag für E-Mail-Benachrichtigung laden
     const populatedVertrag = await Vertrag.findById(savedVertrag._id)
       .populate('user', 'kontakt.name kontakt.email')
-      .populate('services.mietfach', 'bezeichnung typ beschreibung standort groesse preis');
+      .populate('services.mietfach', 'bezeichnung typ beschreibung standort groesse');
     
     return {
       success: true,
@@ -705,7 +703,7 @@ export const updateZusatzleistungen = async (req: Request, res: Response, next: 
  * PATCH /api/admin/vertraege/:id/cancel
  * Cancel a Vertrag (Admin only)
  */
-export const cancelVertrag = async (req: Request, res: Response): Promise<void> => {
+export const cancelVertrag = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id } = req.params;
 
@@ -736,8 +734,7 @@ export const cancelVertrag = async (req: Request, res: Response): Promise<void> 
       message: 'Vertrag erfolgreich storniert'
     });
   } catch (error: unknown) {
-    logger.error('Fehler beim Stornieren des Vertrags:', error);
-    res.status(500).json({ success: false, message: 'Fehler beim Stornieren', error: error instanceof Error ? error.message : String(error) });
+    next(new AppError('Fehler beim Stornieren', 500, error));
   }
 };
 
@@ -745,7 +742,7 @@ export const cancelVertrag = async (req: Request, res: Response): Promise<void> 
  * PATCH /api/admin/vertraege/:id/activate
  * Manually activate a scheduled Vertrag (Admin only)
  */
-export const activateVertrag = async (req: Request, res: Response): Promise<void> => {
+export const activateVertrag = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id } = req.params;
 
@@ -777,7 +774,6 @@ export const activateVertrag = async (req: Request, res: Response): Promise<void
       message: 'Vertrag erfolgreich aktiviert'
     });
   } catch (error: unknown) {
-    logger.error('Fehler beim Aktivieren des Vertrags:', error);
-    res.status(500).json({ success: false, message: 'Fehler beim Aktivieren', error: error instanceof Error ? error.message : String(error) });
+    next(new AppError('Fehler beim Aktivieren', 500, error));
   }
 };

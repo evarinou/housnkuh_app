@@ -128,7 +128,7 @@ export const getAvailableMietfaecher = async (req: Request, res: Response, next:
       verfuegbar: true,                    // Must be explicitly available
       zugewiesenAn: { $exists: false },    // Not assigned to any user
       aktuellerVertrag: { $exists: false } // No active contract
-    }).select('bezeichnung typ beschreibung groesse preis standort features');
+    }).select('bezeichnung typ beschreibung groesse standort features'); // 'preis' war Phantom (Preis lebt am Vertrag)
 
     logger.info('Found available Mietfächer for booking assignment:', { count: availableMietfaecher.length });
 
@@ -294,8 +294,8 @@ export const confirmPendingBooking = async (req: Request, res: Response, next: N
       }
     );
 
-    // E-Mail via Queue system senden (enhanced booking confirmation)
-    // Note: emailQueue bypassed in favor of direct sending below
+    // E-Mail direkt senden (enhanced booking confirmation) – die frühere
+    // Bull/Redis-E-Mail-Queue wurde entfernt (AUDIT OP8)
 
     // Prepare enhanced email data with complete assignment details
     const mietfachDetails = mietfaecher.map((mf: any) => {

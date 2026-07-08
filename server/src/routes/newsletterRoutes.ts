@@ -20,11 +20,12 @@ import * as newsletterController from '../controllers/newsletterController';
 import { testEmailConnection } from '../utils/emailService';
 import { validateNewsletterSubscription } from '../middleware/validation';
 import { newsletterRateLimit } from '../middleware/rateLimiting';
+import AppError from '../utils/AppError';
 
 const router = Router();
 
 // Test-Route für E-Mail-Verbindung
-router.get('/test-email', async (req, res) => {
+router.get('/test-email', async (req, res, next) => {
   try {
     const isConnected = await testEmailConnection();
     res.json({
@@ -32,11 +33,7 @@ router.get('/test-email', async (req, res) => {
       message: isConnected ? 'E-Mail-Verbindung erfolgreich' : 'E-Mail-Verbindung fehlgeschlagen'
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Fehler beim Testen der E-Mail-Verbindung',
-      error: error instanceof Error ? error.message : String(error)
-    });
+    next(new AppError('Fehler beim Testen der E-Mail-Verbindung', 500, error));
   }
 });
 
