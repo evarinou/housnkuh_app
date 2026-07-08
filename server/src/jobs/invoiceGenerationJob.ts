@@ -13,9 +13,13 @@ import invoiceMonitoringService from '../services/invoiceMonitoringService';
 
 export class InvoiceGenerationJob {
   private static task: cron.ScheduledTask | null = null;
+  private static retryTask: cron.ScheduledTask | null = null;
   
   // Run on the 1st of each month at 3 AM
   static schedule = '0 3 1 * *';
+  // AUDIT OP5: Nachzügler-Läufe an den Folgetagen ersetzen den früheren
+  // setTimeout-Retry — Neustart-fest, nicht stapelbar, idempotent
+  static retrySchedule = '30 3 2-5 * *';
   
   /**
    * Run the monthly invoice generation for all eligible vendors
@@ -182,13 +186,10 @@ export class InvoiceGenerationJob {
       
       // Complete batch job with failure
       invoiceMonitoringService.completeBatchJob(batchCorrelationId, 'scheduled');
-      
-      // Retry in 1 hour for critical invoice generation
-      logger.info('Scheduling retry in 1 hour...');
-      setTimeout(() => {
-        logger.info('Retrying invoice generation...');
-        this.run();
-      }, 3600000); // 1 hour
+
+      // AUDIT OP5: kein setTimeout-Retry mehr (RAM-flüchtig, stapelbar) —
+      // der persistente Nachzügler-Cron (retrySchedule, Tage 2–5) wiederholt
+      // den idempotenten Lauf; Vendors mit Rechnung werden übersprungen.
     }
   }
   
@@ -362,9 +363,13 @@ export class InvoiceGenerationJob {
     this.task = cron.schedule(this.schedule, () => this.run(), {
       timezone: 'Europe/Berlin'
     });
-    
+    this.retryTask = cron.schedule(this.retrySchedule, () => this.run(), {
+      timezone: 'Europe/Berlin'
+    });
+
     this.task.start();
-    logger.info('Invoice generation job scheduled for 1st of each month at 03:00');
+    this.retryTask.start();
+    logger.info('Invoice generation job scheduled for 1st of each month at 03:00 (+ Nachzügler-Läufe Tag 2-5, 03:30)');
   }
   
   /**
@@ -376,6 +381,11 @@ export class InvoiceGenerationJob {
       this.task.destroy();
       this.task = null;
       logger.info('Invoice generation job stopped');
+    }
+    if (this.retryTask) {
+      this.retryTask.stop();
+      this.retryTask.destroy();
+      this.retryTask = null;
     }
   }
   

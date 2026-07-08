@@ -73,9 +73,15 @@ describe('InvoiceGenerationJob', () => {
         expect.any(Function),
         { timezone: 'Europe/Berlin' }
       );
+      // AUDIT OP5: persistenter Nachzügler-Cron statt setTimeout-Retry
+      expect(mockCron.schedule).toHaveBeenCalledWith(
+        '30 3 2-5 * *',
+        expect.any(Function),
+        { timezone: 'Europe/Berlin' }
+      );
       expect(mockTask.start).toHaveBeenCalled();
       expect(mockLogger.info).toHaveBeenCalledWith(
-        'Invoice generation job scheduled for 1st of each month at 03:00'
+        'Invoice generation job scheduled for 1st of each month at 03:00 (+ Nachzügler-Läufe Tag 2-5, 03:30)'
       );
     });
 
@@ -372,7 +378,7 @@ describe('InvoiceGenerationJob', () => {
       expect(mockInvoiceGenerationService.generateMonthlyInvoice).not.toHaveBeenCalled();
     });
 
-    it('should schedule retry in 1 hour when batch completion fails', async () => {
+    it('does not schedule an in-memory retry on failure (AUDIT OP5)', async () => {
       mockUser.find.mockReturnValue({
         select: jest.fn().mockResolvedValue([])
       } as any);
@@ -393,8 +399,8 @@ describe('InvoiceGenerationJob', () => {
         'Invoice generation job failed',
         expect.objectContaining({ error: expect.anything() })
       );
-      expect(mockLogger.info).toHaveBeenCalledWith('Scheduling retry in 1 hour...');
-      expect(setTimeoutSpy).toHaveBeenCalledWith(expect.any(Function), 3600000); // 1 hour
+      // Kein RAM-flüchtiger Retry mehr — der Nachzügler-Cron (Tag 2-5) übernimmt
+      expect(setTimeoutSpy).not.toHaveBeenCalledWith(expect.any(Function), 3600000);
 
       setTimeoutSpy.mockRestore();
     });
