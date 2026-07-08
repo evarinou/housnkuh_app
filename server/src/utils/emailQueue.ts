@@ -433,14 +433,13 @@ class EmailQueueService {
         throw new Error(`Vendor not found for invoice: ${data.invoiceId}`);
       }
       
-      // Generate PDF if not provided
+      // Generate PDF if not provided (BUG-EMAILQ-PDF gefixt: der frühere Aufruf
+      // ging auf den nicht-existenten Export generateInvoicePDF → TypeError,
+      // Rechnungs-Mails ohne mitgeliefertes PDF scheiterten immer)
       let pdfBuffer = data.pdfBuffer;
       if (!pdfBuffer) {
-        // Bewusst require statt Import: invoiceGenerationService exportiert kein
-        // generateInvoicePDF (latenter Bug) – ein statischer Import wäre ein TS-Fehler.
-        // Verhalten (TypeError → Job-Retry) bleibt unverändert erhalten.
-        const { generateInvoicePDF } = require('../services/invoiceGenerationService');
-        pdfBuffer = await generateInvoicePDF(invoice);
+        const { invoicePdfService } = await import('../services/pdf/invoicePdfService');
+        pdfBuffer = (await invoicePdfService.generatePdfBuffer(data.invoiceId)) as Buffer;
       }
       
       // Company info for template
