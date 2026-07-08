@@ -74,7 +74,7 @@
   Invalidierung; in adminRoutes ist der cacheMiddleware-Import auskommentiert
   und stattdessen `noCacheHeaders` inline definiert und ~20× angewendet.
   → Strategie vereinheitlichen, noCacheHeaders auslagern.
-- [ ] **S17 (W)** `server/src/utils/emailService.ts` (~4000 Z. / 173 KB)
+- [x] **S17 (W)** ✅ (2026-07-08: utils/email/-Domänenmodule + Re-Export-Fassade, Export-Oberfläche identisch, Tests ohne Anpassung grün; Build kopiert Templates jetzt nach dist — vorher im Prod-Betrieb unauffindbar. Queue-Bypass bleibt dokumentiert offen) `server/src/utils/emailService.ts` (~4000 Z. / 173 KB)
   Monolith neben `emailQueue.ts` (645 Z.) und `emailHelpers.ts`; in
   bookingAdminController wird die Queue laut Kommentar bewusst umgangen
   („emailQueue bypassed in favor of direct sending"). → modularisieren,
