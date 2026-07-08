@@ -65,7 +65,7 @@
   (`process.env.REACT_APP_API_URL || …`) statt `apiUtils.getApiUrl()` aus
   `utils/auth.ts`. Folgeproblem: divergierende Fallbacks (`:4000` vs `:5000`
   vs `/api`) — Detail in Durchlauf 1c. → zentrale Helper-Nutzung.
-- [ ] **S15 (W)** Preisberechnung doppelt: `client/src/services/priceCalculationService.ts`
+- [x] **S15 (W)** ✅ (2026-07-08: Abgrenzung + 4 Divergenzen in ARCHITECTURE.md dokumentiert; Folge-Befund BUG-DISCOUNT-TRUST) Preisberechnung doppelt: `client/src/services/priceCalculationService.ts`
   (18 KB) und Hook `usePriceCalculation` + Server-Pendant
   `server/src/services/priceCalculationService.ts`. → Abgrenzung
   dokumentieren oder konsolidieren (client rechnet Anzeige, Server verbindlich?).
@@ -79,7 +79,7 @@
   bookingAdminController wird die Queue laut Kommentar bewusst umgangen
   („emailQueue bypassed in favor of direct sending"). → modularisieren,
   Versandweg vereinheitlichen (Größenordnung: eigener Task).
-- [ ] **S18 (k)** Drei Trial-Services (trialService 920 Z.,
+- [x] **S18 (k)** ✅ (2026-07-08: Zuständigkeiten + Konflikte in ARCHITECTURE.md; tote Methoden gelistet) Drei Trial-Services (trialService 920 Z.,
   trialManagementService 538 Z., trialMonitoringService ~400 Z.) — Trennung
   Core/Admin/Monitoring ist plausibel, Überschneidungen bei Status-Abfragen
   im Zuge anderer Arbeiten prüfen.
@@ -200,6 +200,14 @@ Einige Agent-Einstufungen wurden nach Prüfung angepasst (Begründung dabei).
 
 ### Beim Test-Drift-Cleanup T5.5 gefunden (2026-07-07, verifiziert, NICHT gefixt)
 
+- [ ] **BUG-DISCOUNT-TRUST (W/SEC-nah)** Bei S15-Analyse gefunden (2026-07-08):
+  `createVertragFromPendingBooking` (vertragController:~426) übernimmt
+  `packageData.discount` UNGEPRÜFT vom Client (usePackageBuilder:334) und
+  nutzt den serverseitigen PriceCalculationService nicht — ein manipulierter
+  Request kann sich beliebigen Rabatt geben. Außerdem rabattiert die
+  Vertragserstellung inkl. Zusatzleistungen, getAllVertraege nur Mietfächer
+  (widersprüchliche Anzeige). → discount serverseitig aus rentalDuration
+  ableiten (calculateDiscount), Anzeige-Basis vereinheitlichen.
 - [x] **BUG-DEAD-CREATE (W/SEC-nah)** ✅ gefixt 2026-07-08 (bei KON4 entdeckt):
   `POST /vendor/contracts/create` — toter Legacy-Endpoint ohne Client-Aufrufer,
   erzeugte Verträge mit monatspreis=0 (Phantom-Feld `mietfach.preis`) und
@@ -316,7 +324,7 @@ selbst verifiziert; Agent-Einschätzungen wo nötig korrigiert.
   PM2-`ecosystem.config.js`, kein Start-Skript). Nach Reboot kein Autostart. →
   systemd-Unit oder PM2-Config versionieren (verbindet sich mit der offenen
   Deployment-/Kiosk-Update-Frage aus ARCHITECTURE.md).
-- [ ] **OP14 (W)** Ungetestete kritische Pfade: flour.io-Ausfallszenarien
+- [x] **OP14 (W)** ✅ (2026-07-08: 14 gezielte Tests — stockPull-Ausfall, Mongo-Reconnect-Handler, isBusy/Shutdown-Bausteine) Ungetestete kritische Pfade: flour.io-Ausfallszenarien
   (kein stockPullJob-Test), MongoDB-Reconnect, Graceful Shutdown. → gezielte
   Tests für Ausfall-/Recovery-Verhalten (unabhängig von der Test-Drift S5).
 
