@@ -366,15 +366,15 @@ Agent-Schätzung.
 
 ### Kosmetisch
 
-- [ ] **KON6 (k)** Deutsch/Englisch-Mix in Bezeichnern über Domänenbegriffe
+- [x] **KON6 (k)** ✅ (2026-07-08: Konvention in CLAUDE.md festgeschrieben; Bestand bleibt) Deutsch/Englisch-Mix in Bezeichnern über Domänenbegriffe
   hinaus (`zusatzleistungenCosts`, `lagerserviceKosten`, `monatlicheKosten`).
   Konvention „Domäne deutsch, Technik englisch" festschreiben.
-- [ ] **KON7 (k)** Nur relative Imports, keine Pfad-Aliase (`@utils/…`);
+- [x] **KON7 (k)** ✅ (2026-07-08: bewusst KEINE Aliase — als No-Go in CLAUDE.md dokumentiert; dist-Betrieb bräuchte Laufzeit-Auflösung, CRA kann keine paths) Nur relative Imports, keine Pfad-Aliase (`@utils/…`);
   tiefe `../../../`-Ketten. → optional tsconfig-Paths einführen.
-- [ ] **KON8 (k)** tsconfig Server minimalistischer als Client (beide
+- [x] **KON8 (k)** ✅ (2026-07-08: Server-tsconfig um noFallthroughCasesInSwitch+isolatedModules ergänzt) tsconfig Server minimalistischer als Client (beide
   `strict:true`, aber Client mit `noFallthroughCasesInSwitch`,
   `isolatedModules` etc.). → angleichen.
-- [ ] **KON9 (k)** Non-null-Assertions (`!`): ~17× Server, ~25× Client →
+- [x] **KON9 (k)** ✅ (2026-07-08: 31 ersetzt, Rest begründet belassen; StockLevelBadge-Tooltip-Minibug mitgefixt) Non-null-Assertions (`!`): ~17× Server, ~25× Client →
   wo einfach, durch `?.`/Guards ersetzen.
 
 ### Geprüft und in Ordnung
