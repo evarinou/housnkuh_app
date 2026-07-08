@@ -60,11 +60,11 @@ export const getAllVertraege = async (req: Request, res: Response, next: NextFun
         }
       }
       
-      // Use the correct calculation: discount applies to base price, not with zusatzleistungen
-      const subtotal = monthlyMietfachTotal; // Only Mietfach price gets discount
+      // Fallback-Berechnung nach derselben Basis wie die Vertragserstellung:
+      // Rabatt wirkt auf Mietfächer + Zusatzleistungen (verbindlich ist ohnehin
+      // der gespeicherte totalMonthlyPrice)
       const discount = vertrag.discount || 0;
-      const discountedMietfachTotal = subtotal * (1 - discount);
-      const monthlyTotal = discountedMietfachTotal + zusatzleistungenCosts;
+      const monthlyTotal = (monthlyMietfachTotal + zusatzleistungenCosts) * (1 - discount);
       
       // Use the totalMonthlyPrice from the contract if it exists (it's already calculated correctly)
       const finalMonthlyTotal = vertrag.totalMonthlyPrice || monthlyTotal;
@@ -94,9 +94,9 @@ export const getAllVertraege = async (req: Request, res: Response, next: NextFun
         monthlyBreakdown: {
           mietfaecherCosts: monthlyMietfachTotal,
           zusatzleistungenCosts: zusatzleistungenCosts,
-          subtotal: subtotal, // Only Mietfach cost
+          subtotal: monthlyMietfachTotal + zusatzleistungenCosts,
           discount: discount,
-          discountAmount: subtotal * discount,
+          discountAmount: (monthlyMietfachTotal + zusatzleistungenCosts) * discount,
           total: finalMonthlyTotal
         },
         // Add provision information
@@ -421,7 +421,16 @@ export const createVertragFromPendingBooking = async (
                              (zusatzleistungenValidation.zusatzleistungen_kosten.versandservice_monatlich || 0);
     }
     
-    const discount = packageData.discount || 0;
+    // BUG-DISCOUNT-TRUST: Rabatt NIE vom Client übernehmen — serverseitig aus
+    // der Laufzeit ableiten (gleiche Staffel wie PriceCalculationService:
+    // 10 % ab 12, 5 % ab 6 Monaten). packageData.discount wird nur geloggt.
+    const PriceCalc = (await import('../services/priceCalculationService')).default;
+    const discount = PriceCalc.calculateDiscountRate(packageData.rentalDuration || 3);
+    if (packageData.discount !== undefined && packageData.discount !== discount) {
+      logger.warn('Client-Discount weicht von Server-Staffel ab und wird ignoriert', {
+        clientDiscount: packageData.discount, serverDiscount: discount, userId
+      });
+    }
     const finalMonthlyPrice = (totalMonthlyPrice + zusatzleistungenCosts) * (1 - discount);
     
     // Vertrag erstellen - nur mit den Feldern, die im Schema definiert sind
